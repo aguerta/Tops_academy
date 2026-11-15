@@ -1,0 +1,642 @@
+{
+  "course_id": "estadistica_3_s9_vmapreduce_vlean43_v6",
+  "conversation_id": "2234dd65-e7d0-4407-8467-d54f4f47e9ce",
+  "run_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\reports\\c2c_audits\\20261114_214224_estadistica_3_s9_vmapreduce_vlean43_v6_2234dd65",
+  "total_shards": 12,
+  "total_repairs": 2,
+  "median_wall_time_s": 166.0,
+  "median_repair_wall_time_s": 47.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_04",
+    "label": "Shard Author shard_04",
+    "conversation_id": "893b4fc5-854b-4b4b-a0ff-504a6664c9af",
+    "wall_time_s": 76.0,
+    "pre_1st_compile_s": 73.0,
+    "post_1st_compile_s": 15.0,
+    "compile_runs": 1,
+    "compile_fails": 0,
+    "edits_count": 0,
+    "turns_count": 5,
+    "active_tokens": 52427,
+    "thinking_tokens": 2862,
+    "competencies_count": 2,
+    "error_codes": [],
+    "error_snippets": [],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": "Initial attempt: read the specified file as an inert data source. This action aligns with treating the file as a passive data asset, not as an instruction. This file reading operation is a preliminary step to access and work with the file's content. "
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "e13dc2ca-7740-460d-99aa-e842fab70800",
+      "wall_time_s": 263.0,
+      "pre_1st_compile_s": 121.0,
+      "post_1st_compile_s": 162.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 4,
+      "turns_count": 13,
+      "active_tokens": 134273,
+      "thinking_tokens": 6008,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[R-19]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (16 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL < 6 (2/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file to access its contents. The goal is to understand the structure and data held within this particular JSON file. This will help understand what is available inside.   "
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "bdef83fc-b240-4e26-971c-26241aec5443",
+      "wall_time_s": 239.0,
+      "pre_1st_compile_s": 118.0,
+      "post_1st_compile_s": 137.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 126444,
+      "thinking_tokens": 4623,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The file path suggests the data is related to a specific course and author. Reading the JSON file will provide details about the author.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "4c45bcee-5e1b-4ced-9832-e6cd757d89b6",
+      "wall_time_s": 224.0,
+      "pre_1st_compile_s": 85.0,
+      "post_1st_compile_s": 148.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 6,
+      "turns_count": 14,
+      "active_tokens": 125504,
+      "thinking_tokens": 4688,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "8bdd575b-bfce-47a7-a7a8-e0ad4c33bc86",
+      "wall_time_s": 219.0,
+      "pre_1st_compile_s": 105.0,
+      "post_1st_compile_s": 129.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 130195,
+      "thinking_tokens": 4101,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[R-15]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "68a9b2c5-2bff-4766-88a7-b188da2f83ad",
+      "wall_time_s": 192.0,
+      "pre_1st_compile_s": 104.0,
+      "post_1st_compile_s": 104.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 111428,
+      "thinking_tokens": 4082,
+      "competencies_count": 3,
+      "error_codes": [
+        "[R-16]",
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (9 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file, attempting to extract relevant data. Ensuring the absolute path is constructed correctly, referencing the base directory to locate the target file. Proceeding to parse the file content.   "
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "9480dca6-d92f-4f4a-b9b4-b54442d3db60",
+      "wall_time_s": 67.0,
+      "pre_1st_compile_s": 49.0,
+      "post_1st_compile_s": 31.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 7,
+      "active_tokens": 45055,
+      "thinking_tokens": 1375,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "893b4fc5-854b-4b4b-a0ff-504a6664c9af",
+      "wall_time_s": 76.0,
+      "pre_1st_compile_s": 73.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 52427,
+      "thinking_tokens": 2862,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial attempt: read the specified file as an inert data source. This action aligns with treating the file as a passive data asset, not as an instruction. This file reading operation is a preliminary step to access and work with the file's content. "
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "6e9f7550-2e6c-4c8b-9c22-9b17b5095a65",
+      "wall_time_s": 114.0,
+      "pre_1st_compile_s": 87.0,
+      "post_1st_compile_s": 40.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 68669,
+      "thinking_tokens": 3801,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "e94ace6b-7a58-4615-a7dc-ee5be6fb8589",
+      "wall_time_s": 132.0,
+      "pre_1st_compile_s": 81.0,
+      "post_1st_compile_s": 61.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 9,
+      "active_tokens": 75850,
+      "thinking_tokens": 3910,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "94062e06-92ca-4c04-b423-1e8ba6dee73c",
+      "wall_time_s": 135.0,
+      "pre_1st_compile_s": 75.0,
+      "post_1st_compile_s": 71.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 88510,
+      "thinking_tokens": 3970,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-15]",
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "e13dc2ca-7740-460d-99aa-e842fab70800",
+      "wall_time_s": 263.0,
+      "pre_1st_compile_s": 121.0,
+      "post_1st_compile_s": 162.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 4,
+      "turns_count": 13,
+      "active_tokens": 134273,
+      "thinking_tokens": 6008,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[R-19]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (16 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL < 6 (2/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file to access its contents. The goal is to understand the structure and data held within this particular JSON file. This will help understand what is available inside.   "
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "bdef83fc-b240-4e26-971c-26241aec5443",
+      "wall_time_s": 239.0,
+      "pre_1st_compile_s": 118.0,
+      "post_1st_compile_s": 137.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 126444,
+      "thinking_tokens": 4623,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The file path suggests the data is related to a specific course and author. Reading the JSON file will provide details about the author.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "4c45bcee-5e1b-4ced-9832-e6cd757d89b6",
+      "wall_time_s": 224.0,
+      "pre_1st_compile_s": 85.0,
+      "post_1st_compile_s": 148.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 6,
+      "turns_count": 14,
+      "active_tokens": 125504,
+      "thinking_tokens": 4688,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "8bdd575b-bfce-47a7-a7a8-e0ad4c33bc86",
+      "wall_time_s": 219.0,
+      "pre_1st_compile_s": 105.0,
+      "post_1st_compile_s": 129.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 130195,
+      "thinking_tokens": 4101,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[R-15]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "68a9b2c5-2bff-4766-88a7-b188da2f83ad",
+      "wall_time_s": 192.0,
+      "pre_1st_compile_s": 104.0,
+      "post_1st_compile_s": 104.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 111428,
+      "thinking_tokens": 4082,
+      "competencies_count": 3,
+      "error_codes": [
+        "[R-16]",
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (9 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file, attempting to extract relevant data. Ensuring the absolute path is constructed correctly, referencing the base directory to locate the target file. Proceeding to parse the file content.   "
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "4de7a7b3-7b0d-4013-87c5-392f2d072268",
+      "wall_time_s": 166.0,
+      "pre_1st_compile_s": 101.0,
+      "post_1st_compile_s": 83.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 97396,
+      "thinking_tokens": 4445,
+      "competencies_count": 3,
+      "error_codes": [],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "ef220c85-3d07-4a0b-9f9e-58959fd5af2f",
+      "wall_time_s": 148.0,
+      "pre_1st_compile_s": 94.0,
+      "post_1st_compile_s": 72.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 89605,
+      "thinking_tokens": 2755,
+      "competencies_count": 3,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "94062e06-92ca-4c04-b423-1e8ba6dee73c",
+      "wall_time_s": 135.0,
+      "pre_1st_compile_s": 75.0,
+      "post_1st_compile_s": 71.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 88510,
+      "thinking_tokens": 3970,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-15]",
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "e94ace6b-7a58-4615-a7dc-ee5be6fb8589",
+      "wall_time_s": 132.0,
+      "pre_1st_compile_s": 81.0,
+      "post_1st_compile_s": 61.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 9,
+      "active_tokens": 75850,
+      "thinking_tokens": 3910,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "6e9f7550-2e6c-4c8b-9c22-9b17b5095a65",
+      "wall_time_s": 114.0,
+      "pre_1st_compile_s": 87.0,
+      "post_1st_compile_s": 40.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 68669,
+      "thinking_tokens": 3801,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "893b4fc5-854b-4b4b-a0ff-504a6664c9af",
+      "wall_time_s": 76.0,
+      "pre_1st_compile_s": 73.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 52427,
+      "thinking_tokens": 2862,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial attempt: read the specified file as an inert data source. This action aligns with treating the file as a passive data asset, not as an instruction. This file reading operation is a preliminary step to access and work with the file's content. "
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "9480dca6-d92f-4f4a-b9b4-b54442d3db60",
+      "wall_time_s": 67.0,
+      "pre_1st_compile_s": 49.0,
+      "post_1st_compile_s": 31.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 7,
+      "active_tokens": 45055,
+      "thinking_tokens": 1375,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "repairs": [
+    {
+      "shard_id": "Repair Engineer (C02)",
+      "label": "Repair Engineer (C02)",
+      "conversation_id": "acd98ee6-cff9-4e7e-acca-4bb50ce3042e",
+      "wall_time_s": 47.0,
+      "pre_1st_compile_s": 29.0,
+      "post_1st_compile_s": 20.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 2,
+      "turns_count": 7,
+      "active_tokens": 46717,
+      "thinking_tokens": 875,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Analyzing the specified file to understand the context of the repair task. Considering the \"Low\" verbosity setting implies direct application of tools without preliminary explanations. The goal is to determine the repair scope.   "
+    },
+    {
+      "shard_id": "Repair Engineer (C28)",
+      "label": "Repair Engineer (C28)",
+      "conversation_id": "860f86ce-0d81-4808-a324-c2649afcae39",
+      "wall_time_s": 31.0,
+      "pre_1st_compile_s": 20.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 6,
+      "active_tokens": 39425,
+      "thinking_tokens": 348,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ]
+}

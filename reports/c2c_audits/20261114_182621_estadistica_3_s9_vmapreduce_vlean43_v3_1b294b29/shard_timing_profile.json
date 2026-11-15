@@ -1,0 +1,535 @@
+{
+  "course_id": "estadistica_3_s9_vmapreduce_vlean43_v3",
+  "conversation_id": "1b294b29-c14f-414d-8d96-2b253845ef3d",
+  "run_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\reports\\c2c_audits\\20261114_182621_estadistica_3_s9_vmapreduce_vlean43_v3_1b294b29",
+  "total_shards": 6,
+  "total_repairs": 2,
+  "median_wall_time_s": 644.0,
+  "median_repair_wall_time_s": 98.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_06",
+    "label": "Shard Author shard_06",
+    "conversation_id": "55c893a3-f2ee-4aae-b79d-0296bd64300e",
+    "wall_time_s": 337.0,
+    "pre_1st_compile_s": 163.0,
+    "post_1st_compile_s": 184.0,
+    "compile_runs": 4,
+    "compile_fails": 3,
+    "edits_count": 1,
+    "turns_count": 14,
+    "active_tokens": 176536,
+    "thinking_tokens": 11849,
+    "competencies_count": 3,
+    "error_codes": [
+      "[TPL-DRY]",
+      "[R-15]",
+      "[TPL-VAR]"
+    ],
+    "error_snippets": [
+      "IndexError: list index out of range",
+      "[UMBRAL >= 6 (40 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+      "</SYSTEM_MESSAGE>"
+    ],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": ""
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "e9cbf799-ef0f-4f53-a213-c180d8fdb47c",
+      "wall_time_s": 1038.0,
+      "pre_1st_compile_s": 246.0,
+      "post_1st_compile_s": 800.0,
+      "compile_runs": 8,
+      "compile_fails": 7,
+      "edits_count": 23,
+      "turns_count": 40,
+      "active_tokens": 558645,
+      "thinking_tokens": 31851,
+      "competencies_count": 4,
+      "error_codes": [
+        "[R-15]",
+        "[TPL-VAR]",
+        "NameError: name '_MSG' is not defined. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r",
+        "[R-16]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "877cecf1-009d-447b-806d-a97e433a41e5",
+      "wall_time_s": 676.0,
+      "pre_1st_compile_s": 208.0,
+      "post_1st_compile_s": 476.0,
+      "compile_runs": 6,
+      "compile_fails": 5,
+      "edits_count": 14,
+      "turns_count": 22,
+      "active_tokens": 322516,
+      "thinking_tokens": 18153,
+      "competencies_count": 4,
+      "error_codes": [
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Attempting to read the specified file to examine its contents. The path is being verified to ensure proper access. Will proceed with file reading upon confirming the path's validity.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "321b85e6-499e-49e2-b017-be5ace805c95",
+      "wall_time_s": 644.0,
+      "pre_1st_compile_s": 134.0,
+      "post_1st_compile_s": 515.0,
+      "compile_runs": 6,
+      "compile_fails": 5,
+      "edits_count": 14,
+      "turns_count": 28,
+      "active_tokens": 342010,
+      "thinking_tokens": 22237,
+      "competencies_count": 3,
+      "error_codes": [
+        "[R-19]",
+        "ValueError'. Las funciones generadoras de ítems deben retornar un diccionario de variables y opciones, sin sentencias 'raise' de depuración. | Acción: Corregir el archivo infractor.\r",
+        "[R-16]",
+        "[R-26]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (19 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "[UMBRAL < 6 (5/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "82d559db-09cb-4ab3-a58e-4b22625f849a",
+      "wall_time_s": 636.0,
+      "pre_1st_compile_s": 161.0,
+      "post_1st_compile_s": 482.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 16,
+      "turns_count": 30,
+      "active_tokens": 322277,
+      "thinking_tokens": 19596,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (11 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Attempting to read the specified JSON file to extract relevant information. The file path is carefully constructed, avoiding restricted directories and files based on pre-defined scope restrictions. Extracting data from this file may reveal the under"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "b5aa7af3-a70c-45b8-a099-1ce6f28ec359",
+      "wall_time_s": 389.0,
+      "pre_1st_compile_s": 182.0,
+      "post_1st_compile_s": 214.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 6,
+      "turns_count": 15,
+      "active_tokens": 208324,
+      "thinking_tokens": 11586,
+      "competencies_count": 3,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (4/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file using the absolute path. Now checking the contents.   "
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "55c893a3-f2ee-4aae-b79d-0296bd64300e",
+      "wall_time_s": 337.0,
+      "pre_1st_compile_s": 163.0,
+      "post_1st_compile_s": 184.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 1,
+      "turns_count": 14,
+      "active_tokens": 176536,
+      "thinking_tokens": 11849,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[R-15]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "IndexError: list index out of range",
+        "[UMBRAL >= 6 (40 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "b5aa7af3-a70c-45b8-a099-1ce6f28ec359",
+      "wall_time_s": 389.0,
+      "pre_1st_compile_s": 182.0,
+      "post_1st_compile_s": 214.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 6,
+      "turns_count": 15,
+      "active_tokens": 208324,
+      "thinking_tokens": 11586,
+      "competencies_count": 3,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (4/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file using the absolute path. Now checking the contents.   "
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "82d559db-09cb-4ab3-a58e-4b22625f849a",
+      "wall_time_s": 636.0,
+      "pre_1st_compile_s": 161.0,
+      "post_1st_compile_s": 482.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 16,
+      "turns_count": 30,
+      "active_tokens": 322277,
+      "thinking_tokens": 19596,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (11 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Attempting to read the specified JSON file to extract relevant information. The file path is carefully constructed, avoiding restricted directories and files based on pre-defined scope restrictions. Extracting data from this file may reveal the under"
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "321b85e6-499e-49e2-b017-be5ace805c95",
+      "wall_time_s": 644.0,
+      "pre_1st_compile_s": 134.0,
+      "post_1st_compile_s": 515.0,
+      "compile_runs": 6,
+      "compile_fails": 5,
+      "edits_count": 14,
+      "turns_count": 28,
+      "active_tokens": 342010,
+      "thinking_tokens": 22237,
+      "competencies_count": 3,
+      "error_codes": [
+        "[R-19]",
+        "ValueError'. Las funciones generadoras de ítems deben retornar un diccionario de variables y opciones, sin sentencias 'raise' de depuración. | Acción: Corregir el archivo infractor.\r",
+        "[R-16]",
+        "[R-26]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (19 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "[UMBRAL < 6 (5/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "877cecf1-009d-447b-806d-a97e433a41e5",
+      "wall_time_s": 676.0,
+      "pre_1st_compile_s": 208.0,
+      "post_1st_compile_s": 476.0,
+      "compile_runs": 6,
+      "compile_fails": 5,
+      "edits_count": 14,
+      "turns_count": 22,
+      "active_tokens": 322516,
+      "thinking_tokens": 18153,
+      "competencies_count": 4,
+      "error_codes": [
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Attempting to read the specified file to examine its contents. The path is being verified to ensure proper access. Will proceed with file reading upon confirming the path's validity.   "
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "e9cbf799-ef0f-4f53-a213-c180d8fdb47c",
+      "wall_time_s": 1038.0,
+      "pre_1st_compile_s": 246.0,
+      "post_1st_compile_s": 800.0,
+      "compile_runs": 8,
+      "compile_fails": 7,
+      "edits_count": 23,
+      "turns_count": 40,
+      "active_tokens": 558645,
+      "thinking_tokens": 31851,
+      "competencies_count": 4,
+      "error_codes": [
+        "[R-15]",
+        "[TPL-VAR]",
+        "NameError: name '_MSG' is not defined. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r",
+        "[R-16]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "877cecf1-009d-447b-806d-a97e433a41e5",
+      "wall_time_s": 676.0,
+      "pre_1st_compile_s": 208.0,
+      "post_1st_compile_s": 476.0,
+      "compile_runs": 6,
+      "compile_fails": 5,
+      "edits_count": 14,
+      "turns_count": 22,
+      "active_tokens": 322516,
+      "thinking_tokens": 18153,
+      "competencies_count": 4,
+      "error_codes": [
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Attempting to read the specified file to examine its contents. The path is being verified to ensure proper access. Will proceed with file reading upon confirming the path's validity.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "321b85e6-499e-49e2-b017-be5ace805c95",
+      "wall_time_s": 644.0,
+      "pre_1st_compile_s": 134.0,
+      "post_1st_compile_s": 515.0,
+      "compile_runs": 6,
+      "compile_fails": 5,
+      "edits_count": 14,
+      "turns_count": 28,
+      "active_tokens": 342010,
+      "thinking_tokens": 22237,
+      "competencies_count": 3,
+      "error_codes": [
+        "[R-19]",
+        "ValueError'. Las funciones generadoras de ítems deben retornar un diccionario de variables y opciones, sin sentencias 'raise' de depuración. | Acción: Corregir el archivo infractor.\r",
+        "[R-16]",
+        "[R-26]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (19 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "[UMBRAL < 6 (5/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "82d559db-09cb-4ab3-a58e-4b22625f849a",
+      "wall_time_s": 636.0,
+      "pre_1st_compile_s": 161.0,
+      "post_1st_compile_s": 482.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 16,
+      "turns_count": 30,
+      "active_tokens": 322277,
+      "thinking_tokens": 19596,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (11 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Attempting to read the specified JSON file to extract relevant information. The file path is carefully constructed, avoiding restricted directories and files based on pre-defined scope restrictions. Extracting data from this file may reveal the under"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "b5aa7af3-a70c-45b8-a099-1ce6f28ec359",
+      "wall_time_s": 389.0,
+      "pre_1st_compile_s": 182.0,
+      "post_1st_compile_s": 214.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 6,
+      "turns_count": 15,
+      "active_tokens": 208324,
+      "thinking_tokens": 11586,
+      "competencies_count": 3,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL < 6 (4/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the specified file using the absolute path. Now checking the contents.   "
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "55c893a3-f2ee-4aae-b79d-0296bd64300e",
+      "wall_time_s": 337.0,
+      "pre_1st_compile_s": 163.0,
+      "post_1st_compile_s": 184.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 1,
+      "turns_count": 14,
+      "active_tokens": 176536,
+      "thinking_tokens": 11849,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[R-15]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "IndexError: list index out of range",
+        "[UMBRAL >= 6 (40 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "repairs": [
+    {
+      "shard_id": "Repair Engineer (HAB07)",
+      "label": "Repair Engineer (HAB07)",
+      "conversation_id": "f6d95c96-60f0-4d99-82dc-16aa81768209",
+      "wall_time_s": 98.0,
+      "pre_1st_compile_s": 48.0,
+      "post_1st_compile_s": 53.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 76886,
+      "thinking_tokens": 2420,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[UMBRAL >= 6 (16 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file("
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The work order points to a specific shard within the data. Need to examine this shard's contents. Using a function to read the file.   "
+    },
+    {
+      "shard_id": "Repair Engineer (C26)",
+      "label": "Repair Engineer (C26)",
+      "conversation_id": "fbd11685-ed5c-4263-8c2d-c8d8ff6d3c22",
+      "wall_time_s": 67.0,
+      "pre_1st_compile_s": 31.0,
+      "post_1st_compile_s": 39.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 9,
+      "active_tokens": 53994,
+      "thinking_tokens": 1611,
+      "competencies_count": 0,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tien"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ]
+}

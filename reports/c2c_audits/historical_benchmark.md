@@ -1,12 +1,16 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-09 02:10:01`. Total de ejecuciones auditadas: **53**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-14 21:42:24`. Total de ejecuciones auditadas: **57**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-15 02:42` | **estadistica_3_s9_vmapreduce_vlean43_v6** (`2234dd65`) | 80 pág (0.93 MB) | 29 comp / 680 preg | 12.9 min (773.0s) | **4.57x** | 14,291,480 | **21,016.9** | **1.14s** | ✅ Limpio | 🛠️ 0 | ✅ 0 |
+| `2026-11-15 02:30` | **estadistica_3_s9_vmapreduce_vlean43_v5** (`961c9393`) | 80 pág (0.93 MB) | 20 comp / 490 preg | 20.7 min (1242.0s) | **4.28x** | 15,800,488 | **32,245.9** | **2.53s** | ✅ Limpio | 🛠️ 0 | ⚠️ 1 |
+| `2026-11-15 00:10` | **estadistica_3_s9_vmapreduce_vlean43_v4** (`421fdcfd`) | 80 pág (0.93 MB) | 20 comp / 470 preg | 30.4 min (1821.0s) | **3.92x** | 35,896,478 | **76,375.5** | **3.87s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
+| `2026-11-14 23:26` | **estadistica_3_s9_vmapreduce_vlean43_v3** (`1b294b29`) | 80 pág (0.93 MB) | 20 comp / 490 preg | 31.7 min (1901.0s) | **3.65x** | 25,709,471 | **52,468.3** | **3.88s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-11-09 07:10` | **saul_pc_sistemas_de_ecuaciones_vmapreduce6** (`12fe6d7c`) | 93 pág (4.23 MB) | 60 comp / 1410 preg | 38.1 min (2289.0s) | **12.55x** | 44,440,969 | **31,518.4** | **1.62s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-11-09 04:12` | **solow_new_pipeline_direct** (`539b37fa`) | 36 pág (1.49 MB) | 15 comp / 350 preg | 18.8 min (1130.0s) | **4.5x** | 11,155,512 | **31,872.9** | **3.23s** | ✅ Limpio | 🛠️ 0 | ⚠️ 2 |
 | `2026-11-09 04:12` | **solow_new_pipeline_mapreduce** (`3981c7eb`) | 36 pág (1.49 MB) | 21 comp / 500 preg | 41.9 min (2513.0s) | **3.88x** | 33,418,639 | **66,837.3** | **5.03s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
@@ -65,10 +69,10 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.25x`
-- **Densidad de Tokens Promedio por Pregunta**: `60,152.2 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `6.85 s/pregunta`
-- **Rendimiento Promedio de Generación**: `22.42 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `5.17x`
+- **Densidad de Tokens Promedio por Pregunta**: `58,880.4 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `6.5 s/pregunta`
+- **Rendimiento Promedio de Generación**: `22.81 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*
