@@ -2,7 +2,7 @@
 
 - **Course ID:** `estadistica_3_pre_pc2`
 - **Macro-Competency:** Dominio y aplicación analítica integral de Estadistica 3 Pre Pc2
-- **Structure:** 57 total competencies (0 Facts, 32 Concepts, 25 Skills) with 373 fused distractors.
+- **Structure:** 54 total competencies (0 Facts, 32 Concepts, 22 Skills) with 373 fused distractors.
 
 ## Curriculum Overview
 
@@ -15,7 +15,6 @@
 | `C-04` | Convergencia en Media r-ésima y Media Cuadrática | Concept | Understand | Unidad 11: Convergencia en Media r-ésima y Media Cuadrática | C-02, C-03 | 10 |
 | `Hab-02` | Análisis Asintótico del Mínimo Muestral Exponencial | Skill | Apply | Unidad 12: Análisis Asintótico del Mínimo Muestral Exponencial | C-04 | 6 |
 | `C-05` | Desigualdad de Markov | Concept | Understand | Unidad 14: Desigualdad de Markov | C-03 | 5 |
-| `Hab-03` | Derivación y Cálculo de Cotas de Chebyshev | Skill | Apply | Unidad 15: Aplicación de la Desigualdad de Chebyshev | C-05 | 10 |
 | `C-06` | Desigualdad de Jensen | Concept | Understand | Unidad 17: Desigualdad de Jensen | - | 10 |
 | `Hab-04` | Sesgo por No Linealidad | Skill | Apply | Unidad 18: Sesgo por No Linealidad | C-06 | 6 |
 | `C-07` | Desigualdad de Cauchy-Schwarz | Concept | Understand | Unidad 18: Desigualdad de Cauchy-Schwarz | - | 6 |
@@ -55,8 +54,6 @@
 | `Hab-19` | Gradiente e Inferencia No Lineal de Punto de Quiebre | Skill | Apply | Unidad 19: Gradiente e Inferencia No Lineal de Punto de Quiebre | C-33, Hab-17 | 6 |
 | `C-34` | Eficiencia Asintótica, Endogeneidad y Test de Hausman | Concept | Evaluate | Unidad 20: Eficiencia Asintótica, Endogeneidad y Test de Hausman | C-29 | 6 |
 | `Hab-20` | Cuantificación del Sesgo de Atenuación por Error de Medición | Skill | Apply | Unidad 22: Cuantificación del Sesgo de Atenuación por Error de Medición | C-34 | 6 |
-| `Hab-21` | Método Delta y Covarianza | Skill | Apply | Unidad 4: Método Delta y Covarianza | C-27, C-28 | 6 |
-| `Hab-22` | Consistencia Varianza Residual | Skill | Apply | Unidad 9: Consistencia Varianza Residual | C-27, C-29 | 6 |
 | `C-39` | Escala √n y Notación Límite | Concept | Analyze | Unidad 12: Escala √n y Notación Límite | C-31 | 6 |
 | `C-40` | Distribución Asintótica del Estadístico t | Concept | Understand | Unidad 15: Distribución Asintótica del Estadístico t | C-30, C-31 | 6 |
 | `C-41` | Estadístico de Wald y Equivalencia F | Concept | Understand | Unidad 16: Estadístico de Wald y Equivalencia F | C-40 | 6 |
@@ -284,39 +281,6 @@ Enunciado de la desigualdad de Markov $\mathbb{P}(Y\ge\delta)\le\frac{\mathbb{E}
 
 ---
 
-### [Hab-03] Derivación y Cálculo de Cotas de Chebyshev (Skill)
-
-- **Bloom Level:** Apply
-- **Session:** Unidad 15: Aplicación de la Desigualdad de Chebyshev
-- **Prerequisites:** C-05
-- **Evidence Citations:** `01_semana_9_apuntes.pdf` (page 15), `02_EST3_LEC07_26.2_V2.pdf` (page 24)
-
-#### Description & Cognitive Model
-Derivación desde Markov usando $Y=|X-c|^r$ y $\delta=\varepsilon^r$, y aplicación de las formas generalizada $\mathbb{P}(|X-c|\ge\varepsilon)\le\frac{\mathbb{E}[|X-c|^r]}{\varepsilon^r}$ y clásica $\mathbb{P}(|X-\mu|\ge\varepsilon)\le\frac{\mathrm{Var}(X)}{\varepsilon^2}=\frac{1}{k^2}$ con $k=\varepsilon/\sigma$, comparando su conservadurismo frente a la normal.
-
-#### Fused Distractor Models (10)
-
-| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
-|:---|:---|:---:|:---:|:---|:---|
-| `D-Hab03-01` | Olvida potencia en epsilon | skipped_step | high | $\mathbb{P}(|X-\mu|\ge\varepsilon)\le\frac{\mathrm{Var}(X)}{\varepsilon}$ | Eleve $\varepsilon$ al mismo orden $r$ que el momento del numerador; para la varianza ($r=2$), el denominador debe ser $\varepsilon^2$. |
-| `D-Hab03-07` | Confunde sigma y var | skipped_step | high | Usa $\sigma/\epsilon^2$ en vez de $\sigma^2/\epsilon^2$ | Eleve la desviación estándar $\sigma$ al cuadrado para obtener $\text{Var}(X) = \sigma^2$ antes de dividir entre $\epsilon^2$. |
-| `D-Hab03-02` | Usa desviación estándar | skipped_step | high | $\mathbb{P}(|X-\mu|\ge\varepsilon)\le\frac{\sigma}{\varepsilon^2}$ | Verifique consistencia dimensional: el numerador es $\mathbb{E}[(X-\mu)^2]=\sigma^2$ (varianza), no la desviación estándar $\sigma$. |
-| `D-Hab03-08` | Calcula k incorrecto | skipped_step | high | Usa $k = \epsilon$ sin dividir por $\sigma$ | Calcule primero $k = \epsilon/\sigma$ para expresar la distancia $\epsilon$ en unidades de desviación estándar antes de aplicar $1/k^2$. |
-| `D-Hab03-03` | Aplica sin momento finito | conceptual_swap | high | Usa Chebyshev clásica cuando $\mathrm{Var}(X)=\infty$ | Compruebe previamente que $\mathbb{E}[|X-c|^r]<\infty$ (o $\mathrm{Var}(X)<\infty$) antes de aplicar la desigualdad de Chebyshev. |
-| `D-Hab03-09` | Usa regla normal | conceptual_swap | high | Reporta $4.6\%$ en vez de $25\%$ para $k=2$ | Reporte la cota $1/k^2$ cuando no conoce la distribución; la regla normal subestima severamente las colas en distribuciones generales. |
-| `D-Hab03-04` | Cola de un solo lado igual | conceptual_swap | high | $\mathbb{P}(X-\mu\ge\varepsilon)\le\frac{\mathrm{Var}(X)}{\varepsilon^2}$ es exacta | Reconozca que Chebyshev acota la probabilidad bilateral $|X-\mu|\ge\varepsilon$, aunque por contención acota también la cola unilateral. |
-| `D-Hab03-10` | Omite cuadrado en k | conceptual_swap | high | Calcula $1/k$ en vez de $1/k^2$ | Eleve $k$ al cuadrado en el denominador: para $k=2$ la cota es $1/2^2 = 0.25$ y para $k=3$ es $1/9 \approx 11.1\%$. |
-| `D-Hab03-05` | Exige r entero o par | conceptual_swap | high | Solo válida para $r=2$ o $r$ par | Recuerde que $h(u)=u^r$ es estrictamente creciente en $[0,\infty)$ para todo real $r>0$, validando la equivalencia de eventos. |
-| `D-Hab03-11` | Reporta complemento | conceptual_swap | high | Calcula $1 - 1/k^2$ para la cola | Distinga que $1/k^2$ acota la probabilidad de estar fuera del intervalo, mientras $1 - 1/k^2$ es la cota mínima de estar dentro. |
-
-#### Formal Mathematical Assumptions (2)
-
-| Assumption ID | Name / Label | Formal Statement (LaTeX) | Violation Consequence | Role in Proof |
-|:---|:---|:---|:---|:---|
-| `A-Hab03-01` | - | Existencia del momento de orden $r>0$: $\mathbb{E}[|X-c|^r]<\infty$ (o $\mathrm{Var}(X)<\infty$ para $r=2$) y $\varepsilon>0$ | Sin momento finito la cota carece de sentido y $r>0$ garantiza monotonía estricta de $u^r$. | - |
-| `A-Hab03-02` | - | La desviación estándar $\sigma > 0$ y la varianza $\sigma^2$ son finitas y conocidas | Sin varianza finita conocida no es posible evaluar numéricamente la cota. | - |
-
----
 
 ### [C-06] Desigualdad de Jensen (Concept)
 
@@ -1477,63 +1441,7 @@ Cálculo e interpretación del sesgo de atenuación $\text{plim }\hat{\beta} = \
 
 ---
 
-### [Hab-21] Método Delta y Covarianza (Skill)
 
-- **Bloom Level:** Apply
-- **Session:** Unidad 4: Método Delta y Covarianza
-- **Prerequisites:** C-27, C-28
-- **Evidence Citations:** `04_semana_10_apuntes.pdf` (page 4)
-
-#### Description & Cognitive Model
-Linealización de Taylor $\sqrt{n}(g(\hat{\theta}_n)-g(\theta)) \xrightarrow{d} \mathcal{N}(0, GVG')$, varianza bivariada y efecto amortiguador de covarianza en razones
-
-#### Fused Distractor Models (6)
-
-| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
-|:---|:---|:---:|:---:|:---|:---|
-| `D-Hab21-01` | Omite término cruzado | skipped_step | high | $\widehat{\operatorname{Var}}(g) \approx \hat{g}_1^2\widehat{\operatorname{Var}}(\hat{\theta}_1) + \hat{g}_2^2\widehat{\operatorname{Var}}(\hat{\theta}_2)$ | Incluya $2\hat{g}_1\hat{g}_2\widehat{\operatorname{Cov}}(\hat{\theta}_1,\hat{\theta}_2)$ cuando $\hat{\theta}_1,\hat{\theta}_2$ provengan de la misma muestra. |
-| `D-Hab21-02` | Olvida cuadrado derivada | skipped_step | high | $\operatorname{Var}(g(\hat{\theta})) \approx g'(\theta)\operatorname{Var}(\hat{\theta})$ | Eleve al cuadrado la derivada $g'(\theta)^2$ en la varianza (o tome $|g'(\theta)|$ en el error estándar). |
-| `D-Hab21-03` | Signo igual en razón | conceptual_swap | high | $g_1 = 1/b > 0$ y $g_2 = a/b^2 > 0$ | Calcule $\partial(a/b)/\partial b = -a/b^2 < 0$; el signo opuesto respecto a $g_1=1/b$ hace que $\operatorname{Cov}>0$ reduzca la varianza. |
-| `D-Hab21-04` | Covarianza aumenta var. | conceptual_swap | high | $\operatorname{Cov}(\hat{\theta}_1,\hat{\theta}_2)>0$ siempre eleva $\operatorname{Var}(\hat{\theta}_1/\hat{\theta}_2)$ | Respete los signos de $g_1>0$ y $g_2<0$: al ser $g_1 g_2 < 0$, una covarianza positiva amortigua y reduce la varianza de la razón. |
-| `D-Hab21-05` | Aplica con derivada nula | conceptual_swap | high | Método Delta primer orden vale con $g'(\theta)=0$ | Verifique $g'(\theta)\neq 0$ (o $G(\theta)\neq 0'$); si el gradiente se anula, la aproximación de primer orden degenera. |
-| `D-Hab21-06` | Usa ee en vez de Var | conceptual_swap | high | $\operatorname{ee}(g) \approx \hat{g}_1^2 \operatorname{ee}_1 + \hat{g}_2^2 \operatorname{ee}_2$ | Calcule primero la varianza combinada con $\widehat{\operatorname{Var}}$ y $\widehat{\operatorname{Cov}}$, y extraiga la raíz cuadrada solo al final. |
-
-#### Formal Mathematical Assumptions (1)
-
-| Assumption ID | Name / Label | Formal Statement (LaTeX) | Violation Consequence | Role in Proof |
-|:---|:---|:---|:---|:---|
-| `A-Hab21-01` | - | Diferenciabilidad continua de $g$ con gradiente $G(\theta)\neq 0'$ | Si $G(\theta)=0'$, la aproximación normal de primer orden colapsa. | - |
-
----
-
-### [Hab-22] Consistencia Varianza Residual (Skill)
-
-- **Bloom Level:** Apply
-- **Session:** Unidad 9: Consistencia Varianza Residual
-- **Prerequisites:** C-27, C-29
-- **Evidence Citations:** `04_semana_10_apuntes.pdf` (page 9)
-
-#### Description & Cognitive Model
-Descomposición exacta de $s^2=\frac{1}{n-k}\sum \hat{u}_i^2$ en función de $u_i$, $(\hat{\beta}-\beta)$ y $\frac{n}{n-k}$ para demostrar $s^2 \xrightarrow{p} \sigma^2$ y $s \xrightarrow{p} \sigma$
-
-#### Fused Distractor Models (6)
-
-| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
-|:---|:---|:---:|:---:|:---|:---|
-| `D-Hab22-01` | LGN directa a residuos | skipped_step | high | $\frac{1}{n}\sum \hat{u}_i^2 \xrightarrow{p} \mathbb{E}[\hat{u}_i^2]$ directamente | Sustituya $\hat{u}_i = u_i - x_i'(\hat{\beta}-\beta)$ porque los residuos dependen de $\hat{\beta}$ y no son independientes. |
-| `D-Hab22-02` | Factor n-k no tiende a 1 | skipped_step | high | $\frac{n}{n-k} \to 0$ o distinto de $1$ cuando $n\to\infty$ | Divida numerador y denominador por $n$: $\frac{1}{1-k/n} \to 1$ con $k$ fijo, por lo que $s^2$ y $\tilde{\sigma}^2=\text{SCR}/n$ coinciden. |
-| `D-Hab22-03` | Signo más en SCR | conceptual_swap | high | $\sum \hat{u}_i^2 = \sum u_i^2 + 2(\hat{\beta}-\beta)'X'u + \dots$ | Desarrolle $(u - X(\hat{\beta}-\beta))'(u - X(\hat{\beta}-\beta))$ con cuidado: el doble producto cruzado lleva signo negativo $-2$. |
-| `D-Hab22-04` | Olvida transponer X | conceptual_swap | high | $(\hat{\beta}-\beta)'(\frac{1}{n}X'u)$ escrito como escalar sin $\hat{\beta}-\beta$ | Verifique que el tercer término sea la forma cuadrática $(\hat{\beta}-\beta)'(\frac{1}{n}X'X)(\hat{\beta}-\beta)$, que tiende a $0'Q0=0$. |
-| `D-Hab22-05` | Omite cuarto momento | conceptual_swap | high | No requiere $\mathbb{E}[u_i^2]=\sigma^2 < \infty$ para LGN | Exija segundo momento finito $\mathbb{E}[u_i^2]=\sigma^2 < \infty$ para garantizar la convergencia de $\frac{1}{n}\sum u_i^2$ por LGN. |
-| `D-Hab22-06` | Insesgadez de s por s2 | conceptual_swap | high | $s^2 \xrightarrow{p} \sigma^2 \Rightarrow \mathbb{E}[s]=\sigma$ | Recuerde que CMT garantiza consistencia $s=\sqrt{s^2}\xrightarrow{p}\sigma$, pero $s$ sigue siendo sesgado en muestras finitas. |
-
-#### Formal Mathematical Assumptions (1)
-
-| Assumption ID | Name / Label | Formal Statement (LaTeX) | Violation Consequence | Role in Proof |
-|:---|:---|:---|:---|:---|
-| `A-Hab22-01` | - | Segundo momento del error finito $\mathbb{E}[u_i^2]=\sigma^2<\infty$ y $k$ fijo | Si $\mathbb{E}[u_i^2]=\infty$, la media muestral $\frac{1}{n}\sum u_i^2$ no converge. | - |
-
----
 
 ### [C-39] Escala √n y Notación Límite (Concept)
 

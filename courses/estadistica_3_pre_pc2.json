@@ -9,6 +9,82 @@
   "created_at": "2026-11-15T07:33:55.785539+00:00",
   "competencies": [
     {
+      "id": "C-10",
+      "code": "C-10",
+      "name": "Espacio de Probabilidad y Axiomas",
+      "category": "Concept",
+      "description": "Axiomas de Kolmogorov en $(\\Omega,\\mathcal{F},P)$ con $0\\le P(A)\\le 1$, $P(\\Omega)=1$ y $P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$",
+      "mastery_target": 100,
+      "prerequisites": [],
+      "session": "Unidad 13: Espacio de Probabilidad y Axiomas",
+      "unit_index": 13,
+      "evidence": [
+        {
+          "doc": "02_EST3_LEC07_26.2_V2.pdf",
+          "page": 13
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C10-01",
+          "statement_latex": "La colección de eventos $\\mathcal{F}$ forma una $\\sigma$-álgebra sobre $\\Omega$.",
+          "violation_consequence": "Sin estructura de $\\sigma$-álgebra no se garantiza que uniones o complementos tengan probabilidad definida."
+        }
+      ]
+    },
+    {
+      "id": "C-11",
+      "code": "C-11",
+      "name": "Variable Aleatoria y Distribución",
+      "category": "Concept",
+      "description": "Regla medible $X:\\Omega\\to\\mathbb{R}$ que asigna $X(\\omega)=x$ y traslada probabilidades mediante $P(X=x)=P(\\{\\omega:X(\\omega)=x\\})$",
+      "mastery_target": 100,
+      "prerequisites": [
+        "C-10"
+      ],
+      "session": "Unidad 15: Variable Aleatoria y Distribución",
+      "unit_index": 15,
+      "evidence": [
+        {
+          "doc": "02_EST3_LEC07_26.2_V2.pdf",
+          "page": 15
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C11-01",
+          "statement_latex": "Cada evento $\\{ \\omega : X(\\omega) = x \\}$ pertenece a $\\mathcal{F}$.",
+          "violation_consequence": "Sin medibilidad respecto a $\\mathcal{F}$ no es posible asignar probabilidades a los valores de $X$."
+        }
+      ]
+    },
+    {
+      "id": "C-12",
+      "code": "C-12",
+      "name": "Muestra Aleatoria i.i.d. y Estimador",
+      "category": "Concept",
+      "description": "Muestra aleatoria $Y_1,\\dots,Y_n\\ \\mathrm{i.i.d.}\\sim F_Y$ y distinción entre estimador $\\hat{\\theta}_n=T(Y_1,\\dots,Y_n)$ y estimación numérica",
+      "mastery_target": 100,
+      "prerequisites": [
+        "C-11"
+      ],
+      "session": "Unidad 3: Muestra Aleatoria i.i.d. y Estimador",
+      "unit_index": 3,
+      "evidence": [
+        {
+          "doc": "02_EST3_LEC07_26.2_V2.pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C12-01",
+          "statement_latex": "Las observaciones $Y_1,\\dots,Y_n$ son independientes e idénticamente distribuidas según $F_Y$.",
+          "violation_consequence": "Sin el supuesto i.i.d., las fórmulas estándar de distribución muestral dejan de ser válidas."
+        }
+      ]
+    },
+    {
       "id": "C-01",
       "code": "C-01",
       "name": "Sesgo, Insesgadez y Eficiencia Relativa",
@@ -218,41 +294,6 @@
           "id": "A-C05-03",
           "statement_latex": "Umbral estrictamente positivo $\\delta > 0$",
           "violation_consequence": "Si $\\delta \\le 0$, el cociente $E[Y]/\\delta$ queda indefinido o negativo."
-        }
-      ]
-    },
-    {
-      "id": "Hab-03",
-      "code": "HAB-03",
-      "name": "Derivación y Cálculo de Cotas de Chebyshev",
-      "category": "Skill",
-      "description": "Derivación desde Markov usando $Y=|X-c|^r$ y $\\delta=\\varepsilon^r$, y aplicación de las formas generalizada $\\mathbb{P}(|X-c|\\ge\\varepsilon)\\le\\frac{\\mathbb{E}[|X-c|^r]}{\\varepsilon^r}$ y clásica $\\mathbb{P}(|X-\\mu|\\ge\\varepsilon)\\le\\frac{\\mathrm{Var}(X)}{\\varepsilon^2}=\\frac{1}{k^2}$ con $k=\\varepsilon/\\sigma$, comparando su conservadurismo frente a la normal.",
-      "mastery_target": 100,
-      "prerequisites": [
-        "C-05"
-      ],
-      "session": "Unidad 15: Aplicación de la Desigualdad de Chebyshev",
-      "unit_index": 15,
-      "evidence": [
-        {
-          "doc": "01_semana_9_apuntes.pdf",
-          "page": 15
-        },
-        {
-          "doc": "02_EST3_LEC07_26.2_V2.pdf",
-          "page": 24
-        }
-      ],
-      "assumptions": [
-        {
-          "id": "A-Hab03-01",
-          "statement_latex": "Existencia del momento de orden $r>0$: $\\mathbb{E}[|X-c|^r]<\\infty$ (o $\\mathrm{Var}(X)<\\infty$ para $r=2$) y $\\varepsilon>0$",
-          "violation_consequence": "Sin momento finito la cota carece de sentido y $r>0$ garantiza monotonía estricta de $u^r$."
-        },
-        {
-          "id": "A-Hab03-02",
-          "statement_latex": "La desviación estándar $\\sigma > 0$ y la varianza $\\sigma^2$ son finitas y conocidas",
-          "violation_consequence": "Sin varianza finita conocida no es posible evaluar numéricamente la cota."
         }
       ]
     },
@@ -470,82 +511,6 @@
       ]
     },
     {
-      "id": "C-10",
-      "code": "C-10",
-      "name": "Espacio de Probabilidad y Axiomas",
-      "category": "Concept",
-      "description": "Axiomas de Kolmogorov en $(\\Omega,\\mathcal{F},P)$ con $0\\le P(A)\\le 1$, $P(\\Omega)=1$ y $P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$",
-      "mastery_target": 100,
-      "prerequisites": [],
-      "session": "Unidad 13: Espacio de Probabilidad y Axiomas",
-      "unit_index": 13,
-      "evidence": [
-        {
-          "doc": "02_EST3_LEC07_26.2_V2.pdf",
-          "page": 13
-        }
-      ],
-      "assumptions": [
-        {
-          "id": "A-C10-01",
-          "statement_latex": "La colección de eventos $\\mathcal{F}$ forma una $\\sigma$-álgebra sobre $\\Omega$.",
-          "violation_consequence": "Sin estructura de $\\sigma$-álgebra no se garantiza que uniones o complementos tengan probabilidad definida."
-        }
-      ]
-    },
-    {
-      "id": "C-11",
-      "code": "C-11",
-      "name": "Variable Aleatoria y Distribución",
-      "category": "Concept",
-      "description": "Regla medible $X:\\Omega\\to\\mathbb{R}$ que asigna $X(\\omega)=x$ y traslada probabilidades mediante $P(X=x)=P(\\{\\omega:X(\\omega)=x\\})$",
-      "mastery_target": 100,
-      "prerequisites": [
-        "C-10"
-      ],
-      "session": "Unidad 15: Variable Aleatoria y Distribución",
-      "unit_index": 15,
-      "evidence": [
-        {
-          "doc": "02_EST3_LEC07_26.2_V2.pdf",
-          "page": 15
-        }
-      ],
-      "assumptions": [
-        {
-          "id": "A-C11-01",
-          "statement_latex": "Cada evento $\\{ \\omega : X(\\omega) = x \\}$ pertenece a $\\mathcal{F}$.",
-          "violation_consequence": "Sin medibilidad respecto a $\\mathcal{F}$ no es posible asignar probabilidades a los valores de $X$."
-        }
-      ]
-    },
-    {
-      "id": "C-12",
-      "code": "C-12",
-      "name": "Muestra Aleatoria i.i.d. y Estimador",
-      "category": "Concept",
-      "description": "Muestra aleatoria $Y_1,\\dots,Y_n\\ \\mathrm{i.i.d.}\\sim F_Y$ y distinción entre estimador $\\hat{\\theta}_n=T(Y_1,\\dots,Y_n)$ y estimación numérica",
-      "mastery_target": 100,
-      "prerequisites": [
-        "C-11"
-      ],
-      "session": "Unidad 3: Muestra Aleatoria i.i.d. y Estimador",
-      "unit_index": 3,
-      "evidence": [
-        {
-          "doc": "02_EST3_LEC07_26.2_V2.pdf",
-          "page": 3
-        }
-      ],
-      "assumptions": [
-        {
-          "id": "A-C12-01",
-          "statement_latex": "Las observaciones $Y_1,\\dots,Y_n$ son independientes e idénticamente distribuidas según $F_Y$.",
-          "violation_consequence": "Sin el supuesto i.i.d., las fórmulas estándar de distribución muestral dejan de ser válidas."
-        }
-      ]
-    },
-    {
       "id": "Hab-07",
       "code": "HAB-07",
       "name": "Cálculo de Esperanza y Varianza",
@@ -749,6 +714,14 @@
         {
           "doc": "02_EST3_LEC07_26.2_V2.pdf",
           "page": 23
+        },
+        {
+          "doc": "01_semana_9_apuntes.pdf",
+          "page": 15
+        },
+        {
+          "doc": "02_EST3_LEC07_26.2_V2.pdf",
+          "page": 24
         }
       ],
       "assumptions": [
@@ -756,6 +729,16 @@
           "id": "A-C17-01",
           "statement_latex": "Existencia de media finita $\\mu = E[X]$ y varianza finita $\\text{Var}(X) = \\sigma^2 < \\infty$",
           "violation_consequence": "Si la varianza es infinita, la cota de Chebyshev es trivial o inaplicable."
+        },
+        {
+          "id": "A-Hab03-01",
+          "statement_latex": "Existencia del momento de orden $r>0$: $\\mathbb{E}[|X-c|^r]<\\infty$ (o $\\mathrm{Var}(X)<\\infty$ para $r=2$) y $\\varepsilon>0$",
+          "violation_consequence": "Sin momento finito la cota carece de sentido y $r>0$ garantiza monotonía estricta de $u^r$."
+        },
+        {
+          "id": "A-Hab03-02",
+          "statement_latex": "La desviación estándar $\\sigma > 0$ y la varianza $\\sigma^2$ son finitas y conocidas",
+          "violation_consequence": "Sin varianza finita conocida no es posible evaluar numéricamente la cota."
         }
       ]
     },
@@ -1109,7 +1092,8 @@
       "description": "Convergencia en probabilidad $s^2 = \\frac{n}{n-k}[\\frac{1}{n}\\sum u_i^2 - 2(\\hat{\\boldsymbol{\\beta}}-\\boldsymbol{\\beta})'\\frac{1}{n}\\mathbf{X}'\\mathbf{u} + (\\hat{\\boldsymbol{\\beta}}-\\boldsymbol{\\beta})'\\frac{1}{n}\\mathbf{X}'\\mathbf{X}(\\hat{\\boldsymbol{\\beta}}-\\boldsymbol{\\beta})] \\xrightarrow{p} \\sigma^2$ y $\\hat{\\sigma}=s \\xrightarrow{p} \\sigma$ para construir inferencia.",
       "mastery_target": 100,
       "prerequisites": [
-        "C-29"
+        "C-29",
+        "C-27"
       ],
       "session": "Unidad 6: Consistencia del Estimador de Varianza del Error",
       "unit_index": 6,
@@ -1117,6 +1101,10 @@
         {
           "doc": "03_EST3_LEC08_26.2_v1.pdf",
           "page": 6
+        },
+        {
+          "doc": "04_semana_10_apuntes.pdf",
+          "page": 9
         }
       ],
       "assumptions": [
@@ -1124,6 +1112,11 @@
           "id": "A-C30-01",
           "statement_latex": "Consistencia previa de $\\hat{\\boldsymbol{\\beta}}$ y existencia de momento finito $E[u_i^2] < \\infty$",
           "violation_consequence": "Si $E[u_i^2]$ diverge, la LGN no aplica a $\\frac{1}{n}\\sum u_i^2$ y $s^2$ no converge."
+        },
+        {
+          "id": "A-Hab22-01",
+          "statement_latex": "Segundo momento del error finito $\\mathbb{E}[u_i^2]=\\sigma^2<\\infty$ y $k$ fijo",
+          "violation_consequence": "Si $\\mathbb{E}[u_i^2]=\\infty$, la media muestral $\\frac{1}{n}\\sum u_i^2$ no converge."
         }
       ]
     },
@@ -1349,60 +1342,6 @@
       ]
     },
     {
-      "id": "Hab-21",
-      "code": "HAB-21",
-      "name": "Método Delta y Covarianza",
-      "category": "Skill",
-      "description": "Linealización de Taylor $\\sqrt{n}(g(\\hat{\\theta}_n)-g(\\theta)) \\xrightarrow{d} \\mathcal{N}(0, GVG')$, varianza bivariada y efecto amortiguador de covarianza en razones",
-      "mastery_target": 100,
-      "prerequisites": [
-        "C-27",
-        "C-28"
-      ],
-      "session": "Unidad 4: Método Delta y Covarianza",
-      "unit_index": 4,
-      "evidence": [
-        {
-          "doc": "04_semana_10_apuntes.pdf",
-          "page": 4
-        }
-      ],
-      "assumptions": [
-        {
-          "id": "A-Hab21-01",
-          "statement_latex": "Diferenciabilidad continua de $g$ con gradiente $G(\\theta)\\neq 0'$",
-          "violation_consequence": "Si $G(\\theta)=0'$, la aproximación normal de primer orden colapsa."
-        }
-      ]
-    },
-    {
-      "id": "Hab-22",
-      "code": "HAB-22",
-      "name": "Consistencia Varianza Residual",
-      "category": "Skill",
-      "description": "Descomposición exacta de $s^2=\\frac{1}{n-k}\\sum \\hat{u}_i^2$ en función de $u_i$, $(\\hat{\\beta}-\\beta)$ y $\\frac{n}{n-k}$ para demostrar $s^2 \\xrightarrow{p} \\sigma^2$ y $s \\xrightarrow{p} \\sigma$",
-      "mastery_target": 100,
-      "prerequisites": [
-        "C-27",
-        "C-29"
-      ],
-      "session": "Unidad 9: Consistencia Varianza Residual",
-      "unit_index": 9,
-      "evidence": [
-        {
-          "doc": "04_semana_10_apuntes.pdf",
-          "page": 9
-        }
-      ],
-      "assumptions": [
-        {
-          "id": "A-Hab22-01",
-          "statement_latex": "Segundo momento del error finito $\\mathbb{E}[u_i^2]=\\sigma^2<\\infty$ y $k$ fijo",
-          "violation_consequence": "Si $\\mathbb{E}[u_i^2]=\\infty$, la media muestral $\\frac{1}{n}\\sum u_i^2$ no converge."
-        }
-      ]
-    },
-    {
       "id": "C-39",
       "code": "C-39",
       "name": "Escala √n y Notación Límite",
@@ -1573,7 +1512,9 @@
       "description": "Cálculo de estimación puntual, derivadas parciales $\\hat{g}_1, \\hat{g}_2$, error estándar, IC al $95\\%$ y efecto de $\\mathrm{Cov}(\\bar{Y}_1,\\bar{Y}_2)$ para razones $\\theta=\\mu_1/\\mu_2$",
       "mastery_target": 100,
       "prerequisites": [
-        "C-42"
+        "C-42",
+        "C-27",
+        "C-28"
       ],
       "session": "Unidad 25: Aplicación del Método Delta Bivariado",
       "unit_index": 25,
@@ -1581,6 +1522,10 @@
         {
           "doc": "04_semana_10_apuntes.pdf",
           "page": 25
+        },
+        {
+          "doc": "04_semana_10_apuntes.pdf",
+          "page": 4
         }
       ],
       "assumptions": [
@@ -1588,6 +1533,11 @@
           "id": "A-Hab25-01",
           "statement_latex": "Ingreso medio poblacional estrictamente positivo ($\\mu_2 > 0$)",
           "violation_consequence": "Si $\\mu_2 = 0$, la razón $\\mu_1/\\mu_2$ y sus derivadas parciales no están definidas."
+        },
+        {
+          "id": "A-Hab21-01",
+          "statement_latex": "Diferenciabilidad continua de $g$ con gradiente $G(\\theta)\\neq 0'$",
+          "violation_consequence": "Si $G(\\theta)=0'$, la aproximación normal de primer orden colapsa."
         }
       ]
     },
@@ -11348,7 +11298,7 @@
     },
     {
       "id": "Q-Hab03-161",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11431,7 +11381,7 @@
     },
     {
       "id": "Q-Hab03-162",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11514,7 +11464,7 @@
     },
     {
       "id": "Q-Hab03-163",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11597,7 +11547,7 @@
     },
     {
       "id": "Q-Hab03-164",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11680,7 +11630,7 @@
     },
     {
       "id": "Q-Hab03-165",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11763,7 +11713,7 @@
     },
     {
       "id": "Q-Hab03-166",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11846,7 +11796,7 @@
     },
     {
       "id": "Q-Hab03-167",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -11929,7 +11879,7 @@
     },
     {
       "id": "Q-Hab03-168",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -12012,7 +11962,7 @@
     },
     {
       "id": "Q-Hab03-169",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12046,7 +11996,7 @@
     },
     {
       "id": "Q-Hab03-170",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12080,7 +12030,7 @@
     },
     {
       "id": "Q-Hab03-171",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12114,7 +12064,7 @@
     },
     {
       "id": "Q-Hab03-172",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12148,7 +12098,7 @@
     },
     {
       "id": "Q-Hab03-173",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12182,7 +12132,7 @@
     },
     {
       "id": "Q-Hab03-174",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12216,7 +12166,7 @@
     },
     {
       "id": "Q-Hab03-175",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12250,7 +12200,7 @@
     },
     {
       "id": "Q-Hab03-176",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -12284,7 +12234,7 @@
     },
     {
       "id": "Q-Hab03-177",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12367,7 +12317,7 @@
     },
     {
       "id": "Q-Hab03-178",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12450,7 +12400,7 @@
     },
     {
       "id": "Q-Hab03-179",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12533,7 +12483,7 @@
     },
     {
       "id": "Q-Hab03-180",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12616,7 +12566,7 @@
     },
     {
       "id": "Q-Hab03-181",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12699,7 +12649,7 @@
     },
     {
       "id": "Q-Hab03-182",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12782,7 +12732,7 @@
     },
     {
       "id": "Q-Hab03-183",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "multiple_choice_7_options",
@@ -12865,7 +12815,7 @@
     },
     {
       "id": "Q-Hab03-184",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -12926,7 +12876,7 @@
     },
     {
       "id": "Q-Hab03-185",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -12987,7 +12937,7 @@
     },
     {
       "id": "Q-Hab03-186",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -13048,7 +12998,7 @@
     },
     {
       "id": "Q-Hab03-187",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -13109,7 +13059,7 @@
     },
     {
       "id": "Q-Hab03-188",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -13170,7 +13120,7 @@
     },
     {
       "id": "Q-Hab03-189",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -13231,7 +13181,7 @@
     },
     {
       "id": "Q-Hab03-190",
-      "competency_id": "Hab-03",
+      "competency_id": "C-17",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -68334,7 +68284,7 @@
     },
     {
       "id": "Q-Hab21-1131",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68417,7 +68367,7 @@
     },
     {
       "id": "Q-Hab21-1132",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68500,7 +68450,7 @@
     },
     {
       "id": "Q-Hab21-1133",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68583,7 +68533,7 @@
     },
     {
       "id": "Q-Hab21-1134",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68666,7 +68616,7 @@
     },
     {
       "id": "Q-Hab21-1135",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68749,7 +68699,7 @@
     },
     {
       "id": "Q-Hab21-1136",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68832,7 +68782,7 @@
     },
     {
       "id": "Q-Hab21-1137",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68915,7 +68865,7 @@
     },
     {
       "id": "Q-Hab21-1138",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -68998,7 +68948,7 @@
     },
     {
       "id": "Q-Hab21-1139",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69032,7 +68982,7 @@
     },
     {
       "id": "Q-Hab21-1140",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69066,7 +69016,7 @@
     },
     {
       "id": "Q-Hab21-1141",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69100,7 +69050,7 @@
     },
     {
       "id": "Q-Hab21-1142",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69134,7 +69084,7 @@
     },
     {
       "id": "Q-Hab21-1143",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69168,7 +69118,7 @@
     },
     {
       "id": "Q-Hab21-1144",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69202,7 +69152,7 @@
     },
     {
       "id": "Q-Hab21-1145",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69236,7 +69186,7 @@
     },
     {
       "id": "Q-Hab21-1146",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -69270,7 +69220,7 @@
     },
     {
       "id": "Q-Hab21-1147",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69304,7 +69254,7 @@
     },
     {
       "id": "Q-Hab21-1148",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69338,7 +69288,7 @@
     },
     {
       "id": "Q-Hab21-1149",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69372,7 +69322,7 @@
     },
     {
       "id": "Q-Hab21-1150",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69406,7 +69356,7 @@
     },
     {
       "id": "Q-Hab21-1151",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69440,7 +69390,7 @@
     },
     {
       "id": "Q-Hab21-1152",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69474,7 +69424,7 @@
     },
     {
       "id": "Q-Hab21-1153",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -69508,7 +69458,7 @@
     },
     {
       "id": "Q-Hab21-1154",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69569,7 +69519,7 @@
     },
     {
       "id": "Q-Hab21-1155",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69630,7 +69580,7 @@
     },
     {
       "id": "Q-Hab21-1156",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69691,7 +69641,7 @@
     },
     {
       "id": "Q-Hab21-1157",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69752,7 +69702,7 @@
     },
     {
       "id": "Q-Hab21-1158",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69813,7 +69763,7 @@
     },
     {
       "id": "Q-Hab21-1159",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69874,7 +69824,7 @@
     },
     {
       "id": "Q-Hab21-1160",
-      "competency_id": "Hab-21",
+      "competency_id": "Hab-25",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -69935,7 +69885,7 @@
     },
     {
       "id": "Q-Hab22-1161",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70018,7 +69968,7 @@
     },
     {
       "id": "Q-Hab22-1162",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70101,7 +70051,7 @@
     },
     {
       "id": "Q-Hab22-1163",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70184,7 +70134,7 @@
     },
     {
       "id": "Q-Hab22-1164",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70267,7 +70217,7 @@
     },
     {
       "id": "Q-Hab22-1165",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70350,7 +70300,7 @@
     },
     {
       "id": "Q-Hab22-1166",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70433,7 +70383,7 @@
     },
     {
       "id": "Q-Hab22-1167",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70516,7 +70466,7 @@
     },
     {
       "id": "Q-Hab22-1168",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "easy",
       "interaction_type": "multiple_choice_7_options",
@@ -70599,7 +70549,7 @@
     },
     {
       "id": "Q-Hab22-1169",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70633,7 +70583,7 @@
     },
     {
       "id": "Q-Hab22-1170",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70667,7 +70617,7 @@
     },
     {
       "id": "Q-Hab22-1171",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70701,7 +70651,7 @@
     },
     {
       "id": "Q-Hab22-1172",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70735,7 +70685,7 @@
     },
     {
       "id": "Q-Hab22-1173",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70769,7 +70719,7 @@
     },
     {
       "id": "Q-Hab22-1174",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70803,7 +70753,7 @@
     },
     {
       "id": "Q-Hab22-1175",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70837,7 +70787,7 @@
     },
     {
       "id": "Q-Hab22-1176",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "fill_in_the_blank",
@@ -70871,7 +70821,7 @@
     },
     {
       "id": "Q-Hab22-1177",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -70905,7 +70855,7 @@
     },
     {
       "id": "Q-Hab22-1178",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -70939,7 +70889,7 @@
     },
     {
       "id": "Q-Hab22-1179",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -70973,7 +70923,7 @@
     },
     {
       "id": "Q-Hab22-1180",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -71007,7 +70957,7 @@
     },
     {
       "id": "Q-Hab22-1181",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -71041,7 +70991,7 @@
     },
     {
       "id": "Q-Hab22-1182",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -71075,7 +71025,7 @@
     },
     {
       "id": "Q-Hab22-1183",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Analyze",
       "difficulty": "hard",
       "interaction_type": "fill_in_the_blank",
@@ -71109,7 +71059,7 @@
     },
     {
       "id": "Q-Hab22-1184",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -71170,7 +71120,7 @@
     },
     {
       "id": "Q-Hab22-1185",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -71231,7 +71181,7 @@
     },
     {
       "id": "Q-Hab22-1186",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -71292,7 +71242,7 @@
     },
     {
       "id": "Q-Hab22-1187",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -71353,7 +71303,7 @@
     },
     {
       "id": "Q-Hab22-1188",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -71414,7 +71364,7 @@
     },
     {
       "id": "Q-Hab22-1189",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
@@ -71475,7 +71425,7 @@
     },
     {
       "id": "Q-Hab22-1190",
-      "competency_id": "Hab-22",
+      "competency_id": "C-30",
       "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "multiple_select",
