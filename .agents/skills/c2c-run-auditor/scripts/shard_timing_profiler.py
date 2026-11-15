@@ -17,6 +17,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
+ERROR_CODE_RE = re.compile(
+    r"(\[(?:TPL|CTA|DIAG|VERIFIER)-[A-Z0-9-]+\]|\[R-\d+\]|\[GATE-[A-Z0-9-]+\]|\[TIMEOUT_INFINITE_LOOP\]|\[INVARIANT\])"
+)
+
+
 def parse_iso(ts: Optional[str]) -> Optional[datetime]:
     if not ts:
         return None
@@ -110,9 +115,10 @@ def _profile_agent_record(
                     if "Command exited with code" in content and "code 0" not in content:
                         compile_fails += 1
                         # Extract error code or trace
+                        for f_code in ERROR_CODE_RE.findall(content):
+                            if f_code not in error_codes:
+                                error_codes.append(f_code)
                         for code_pat in [
-                            r"\[R-\d+\]",
-                            r"\[TPL-[A-Z]+\]",
                             r"\[GATEKEEPER\]",
                             r"SyntaxError[^\n]+",
                             r"NameError[^\n]+",

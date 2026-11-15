@@ -1200,6 +1200,7 @@ class DiagnosticRationaleAlignmentLinter(BaseLinter):
 
     MAGIC_MULTIPLIERS = (1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15)
     NUM_RE = re.compile(r"-?\d+\.\d+|-?\d+")
+    NUM_LITERAL_RE = re.compile(r"\b\d+(?:\.\d+)?\b")
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         questions = course_data.get("questions", [])
@@ -1277,8 +1278,9 @@ class DiagnosticRationaleAlignmentLinter(BaseLinter):
         else:
             magic_mult_items = []
 
+        normalized_rationales = [self.NUM_LITERAL_RE.sub("<NUM>", rat) for rat in all_rationales]
         total_rats = len(all_rationales)
-        unique_rats = len(set(all_rationales))
+        unique_rats = len(set(normalized_rationales))
         uniqueness_pct = round((unique_rats / total_rats * 100.0) if total_rats else 100.0, 2)
 
         if total_rats >= 60 and uniqueness_pct < 15.0 and questions:
@@ -1442,6 +1444,240 @@ class AntiGamingPsychometricLinter(BaseLinter):
             "cross_domain_prefix_sample_items": list(set(cross_domain_items))[:15],
             "vacuous_quantifier_items_count": len(set(vacuous_quantifier_items)),
             "vacuous_quantifier_sample_items": list(set(vacuous_quantifier_items))[:15],
+        }
+
+
+class DomainImpossibleDistractorLinter(BaseLinter):
+    """Detects distractors that violate fundamental mathematical domain bounds.
+
+    1. Negative values (< 0) when the stem asks for variance, standard deviation,
+       standard error, MSE/ECM, or sample size.
+    2. Values > 1.0 when the stem asks for an exact probability (excluding Markov/Chebyshev
+       or explicit inequality/bound contexts and percentage-formatted options).
+    """
+    name = "domain_impossible_distractor_linter"
+    dimension = "D2_assessment"
+
+    NON_NEGATIVE_STEM_PAT = re.compile(
+        r"\b(?:varianza|desviaci[oó]n\s+(?:est[aá]ndar|t[ií]pica)|"
+        r"error\s+(?:est[aá]ndar|t[ií]pico|cuadr[aá]tico\s+medio)|"
+        r"ecm|mse|tama[ñn]o\s+de\s+(?:la\s+)?muestra)\b",
+        re.IGNORECASE,
+    )
+    EXACT_PROB_STEM_PAT = re.compile(
+        r"(?:\b(?:calcule|calcula|determine|determina|halle|halla|encuentre|encuentra|"
+        r"cu[aá]l\s+es|obtenga|eval[uú]e)\s+(?:la\s+)?probabilidad\b|"
+        r"\bprobabilidad\s+(?:de\s+que|exacta)\b|\bP\s*\()",
+        re.IGNORECASE,
+    )
+    BOUND_EXCLUSION_PAT = re.compile(
+        r"\b(?:markov|chebyshev|chebychev|desigualdad|cota\s+(?:superior|inferior)|"
+        r"l[ií]mite\s+superior|acotar|cota\s+m[aá]xima)\b",
+        re.IGNORECASE,
+    )
+    NUMERIC_OPT_PAT = re.compile(r"^(?:[a-zA-Z_\\(){}\[\]]+\s*=\s*)?(-?\d+(?:\.\d+)?)$")
+
+    @classmethod
+    def _extract_numeric_value(cls, text: str) -> Optional[float]:
+        if "%" in text or "por ciento" in text.lower():
+            return None
+        cleaned = text.replace("$", "").replace("\u2212", "-").strip()
+        cleaned = re.sub(r"\\text\{[^}]*\}", "", cleaned).strip()
+        m = cls.NUMERIC_OPT_PAT.fullmatch(cleaned)
+        if not m:
+            return None
+        try:
+            return float(m.group(1))
+        except ValueError:
+            return None
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        negative_domain_items: list[str] = []
+        prob_gt_one_items: list[str] = []
+
+        for q in questions:
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+            stem = str(q.get("stem") or "")
+            options = q.get("options", []) or []
+            if not isinstance(options, list) or not stem:
+                continue
+
+            requires_non_neg = bool(self.NON_NEGATIVE_STEM_PAT.search(stem))
+            requires_exact_prob = bool(self.EXACT_PROB_STEM_PAT.search(stem)) and not bool(
+                self.BOUND_EXCLUSION_PAT.search(stem)
+            )
+            if not requires_non_neg and not requires_exact_prob:
+                continue
+
+            for o_idx, opt in enumerate(options):
+                if not isinstance(opt, dict) or opt.get("is_correct", False):
+                    continue
+                txt = _get_opt_text(opt).strip()
+                val = self._extract_numeric_value(txt)
+                if val is None:
+                    continue
+
+                if requires_non_neg and val < 0.0:
+                    negative_domain_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="critical",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=(
+                            f"Distractor imposible por dominio en opción {o_idx}: "
+                            f"valor negativo ({val}) para magnitud estrictamente no negativa."
+                        ),
+                        snippet=txt[:60],
+                    ))
+                    break
+
+                if requires_exact_prob and val > 1.0:
+                    prob_gt_one_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="critical",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=(
+                            f"Distractor imposible por dominio en opción {o_idx}: "
+                            f"probabilidad exacta > 1.0 ({val})."
+                        ),
+                        snippet=txt[:60],
+                    ))
+                    break
+
+        flagged = set(negative_domain_items) | set(prob_gt_one_items)
+        return {
+            "domain_impossible_items_count": len(flagged),
+            "negative_non_neg_magnitude_count": len(set(negative_domain_items)),
+            "prob_gt_one_count": len(set(prob_gt_one_items)),
+            "domain_impossible_sample_items": list(flagged)[:15],
+        }
+
+
+class FibRoundingContractLinter(BaseLinter):
+    """Penalizes FIB items without calculator whose correct_answer has >= 3 decimals
+    and whose stem lacks an explicit rounding instruction.
+    """
+    name = "fib_rounding_contract_linter"
+    dimension = "D2_assessment"
+
+    ROUNDING_INSTRUCTION_PAT = re.compile(
+        r"\b(?:decimales?|redonde\w*|cifras?\s+significativas?|aproxim\w+\s+a\s+\d+|trunc\w*)\b",
+        re.IGNORECASE,
+    )
+    THREE_PLUS_DECIMALS_PAT = re.compile(r"^-?\d+\.(\d{3,})$")
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        uncontracted_items: list[str] = []
+
+        for q in questions:
+            qtype = str(q.get("type") or "").strip().lower()
+            if qtype not in ("fill_in_the_blank", "fib"):
+                continue
+            if q.get("allow_calculator") is not False:
+                continue
+
+            ans = q.get("correct_answer")
+            if ans is None:
+                continue
+            ans_str = str(ans).strip()
+            if not self.THREE_PLUS_DECIMALS_PAT.fullmatch(ans_str):
+                continue
+
+            stem = str(q.get("stem") or "")
+            if self.ROUNDING_INSTRUCTION_PAT.search(stem):
+                continue
+
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+            uncontracted_items.append(qid)
+            issues.append(LintIssue(
+                linter=self.name,
+                dimension=self.dimension,
+                severity="warning",
+                item_id=qid,
+                competency_id=cid,
+                message=(
+                    f"Ítem FIB sin calculadora con respuesta '{ans_str}' (>= 3 decimales) "
+                    f"carece de instrucción explícita de redondeo en el enunciado."
+                ),
+                snippet=ans_str,
+            ))
+
+        return {
+            "fib_uncontracted_rounding_count": len(set(uncontracted_items)),
+            "fib_uncontracted_rounding_items": list(set(uncontracted_items))[:15],
+        }
+
+
+class MsLengthBiasLinter(BaseLinter):
+    """Audits average option length ratio len(true_options) / len(false_options)
+    in multiple_select items and flags courses where > 60% exceed 1.08x.
+    """
+    name = "ms_length_bias_linter"
+    dimension = "D2_assessment"
+
+    RATIO_THRESHOLD = 1.08
+    ITEM_PCT_THRESHOLD = 0.60
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        evaluated_ms = 0
+        biased_items: list[tuple[str, str, float]] = []
+
+        for q in questions:
+            qtype = str(q.get("type") or "").strip().lower()
+            if qtype != "multiple_select":
+                continue
+
+            options = q.get("options", []) or []
+            if not isinstance(options, list):
+                continue
+
+            true_lens = [len(_get_opt_text(o).strip()) for o in options if isinstance(o, dict) and o.get("is_correct")]
+            false_lens = [len(_get_opt_text(o).strip()) for o in options if isinstance(o, dict) and not o.get("is_correct")]
+            if not true_lens or not false_lens:
+                continue
+
+            avg_true = sum(true_lens) / len(true_lens)
+            avg_false = sum(false_lens) / len(false_lens)
+            if avg_false <= 0:
+                continue
+
+            evaluated_ms += 1
+            ratio = avg_true / avg_false
+            if ratio > self.RATIO_THRESHOLD:
+                qid = q.get("id", "unknown")
+                cid = q.get("competency_id", "unassigned")
+                biased_items.append((qid, cid, round(ratio, 3)))
+
+        biased_pct = round((len(biased_items) / evaluated_ms * 100.0) if evaluated_ms else 0.0, 2)
+        if evaluated_ms > 0 and (len(biased_items) / evaluated_ms) > self.ITEM_PCT_THRESHOLD:
+            rep_qid, rep_cid, _ = biased_items[0]
+            issues.append(LintIssue(
+                linter=self.name,
+                dimension=self.dimension,
+                severity="warning",
+                item_id=rep_qid,
+                competency_id=rep_cid,
+                message=(
+                    f"Sesgo sistemático de longitud en multiple_select: {len(biased_items)}/{evaluated_ms} "
+                    f"({biased_pct}%) ítems presentan ratio len(true)/len(false) > {self.RATIO_THRESHOLD}x."
+                ),
+            ))
+
+        return {
+            "total_ms_items": evaluated_ms,
+            "biased_ms_items_count": len(biased_items),
+            "biased_ms_pct": biased_pct,
+            "biased_ms_sample_items": [qid for qid, _, _ in biased_items[:15]],
         }
 
 
@@ -2134,6 +2370,9 @@ class AuditLinterRegistry:
             AntiGamingPsychometricLinter(),
             DAGMasteryTopologyLinter(),
             KaTeXFrontendErgonomicsLinter(),
+            DomainImpossibleDistractorLinter(),
+            FibRoundingContractLinter(),
+            MsLengthBiasLinter(),
         ]
         self.domain_linters: dict[str, list[BaseLinter]] = {}
 

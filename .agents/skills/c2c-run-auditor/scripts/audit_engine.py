@@ -1578,8 +1578,36 @@ class ExecutionAuditor:
                 if "passed" in snap.get("metadata", {}):
                     judge_compare_passed_v3 = bool(snap["metadata"]["passed"])
 
+        round_1_data: Optional[Dict[str, Any]] = None
+        rounds_history: List[Dict[str, Any]] = []
+        has_rejudge = False
+
+        def _extract_disc_count(report: Dict[str, Any]) -> int:
+            disc_list = (
+                report.get("disagreements")
+                or report.get("discordances")
+                or report.get("discrepancies")
+            )
+            if isinstance(disc_list, list):
+                return len(disc_list)
+            if "discrepancies_count" in report:
+                return int(report["discrepancies_count"])
+            if "failed_items" in report:
+                val = report["failed_items"]
+                return len(val) if isinstance(val, list) else int(val)
+            return 0
+
         if workload.get("work_dir"):
-            jr_file = Path(workload["work_dir"]) / "judge_report.json"
+            work_path = Path(workload["work_dir"])
+            jr_r1_file = work_path / "judge_report_round_1.json"
+            if jr_r1_file.is_file():
+                try:
+                    round_1_data = json.loads(jr_r1_file.read_text(encoding="utf-8"))
+                    has_rejudge = True
+                except Exception:
+                    pass
+
+            jr_file = work_path / "judge_report.json"
             if jr_file.is_file():
                 try:
                     jr_data = json.loads(jr_file.read_text(encoding="utf-8"))
@@ -1589,15 +1617,38 @@ class ExecutionAuditor:
                         agreement_rate = float(jr_data["agreement_rate"])
                     if "total_items" in jr_data:
                         batch_items = int(jr_data["total_items"])
-                    disc_list = (
-                        jr_data.get("disagreements")
-                        or jr_data.get("discordances")
-                        or jr_data.get("discrepancies")
-                    )
-                    if isinstance(disc_list, list):
-                        discrepancies_count = len(disc_list)
+                    discrepancies_count = _extract_disc_count(jr_data)
+
+                    raw_history = jr_data.get("rounds_history")
+                    if isinstance(raw_history, list) and raw_history:
+                        rounds_history = [r for r in raw_history if isinstance(r, dict)]
+                        if round_1_data is None:
+                            round_1_data = next(
+                                (r for r in rounds_history if r.get("round") == 1),
+                                rounds_history[0],
+                            )
+                        if len(rounds_history) > 1:
+                            has_rejudge = True
+
+                    if jr_data.get("rejudge") or jr_data.get("round", 1) > 1 or jr_data.get("rounds_count", 1) > 1:
+                        has_rejudge = True
                 except Exception:
                     pass
+
+        round_1_discrepancies_count = _extract_disc_count(round_1_data) if round_1_data else 0
+        round_1_agreement_rate: Optional[float] = None
+        round_1_passed: Optional[bool] = None
+        if round_1_data:
+            if "agreement_rate" in round_1_data and round_1_data["agreement_rate"] is not None:
+                round_1_agreement_rate = float(round_1_data["agreement_rate"])
+            if "passed" in round_1_data:
+                round_1_passed = bool(round_1_data["passed"])
+            else:
+                round_1_passed = (round_1_discrepancies_count == 0)
+            if round_1_discrepancies_count > 0:
+                round_1_passed = False
+            if round_1_passed is False or round_1_discrepancies_count > 0:
+                has_rejudge = True
 
         if agreement_rate is None and re.search(r"Agreement rate:\s*100\.0%|All \d+ items agreed", rec_str):
             agreement_rate = 1.0
@@ -1631,7 +1682,14 @@ class ExecutionAuditor:
         ]
         infra_judge_interventions = [it for it in interv_list if "judge.py" in it.get("file", "").lower()]
 
-        if judge_compare_passed_v3 is True and discrepancies_count == 0 and len(judge_content_interventions) == 0:
+        round_1_failed = (round_1_passed is False) or (round_1_discrepancies_count > 0)
+        if (
+            judge_compare_passed_v3 is True
+            and discrepancies_count == 0
+            and len(judge_content_interventions) == 0
+            and not has_rejudge
+            and not round_1_failed
+        ):
             passed_first_attempt = True
             badge = f"✅ 100% ACUERDO AL PRIMER INTENTO ({batch_items}/{batch_items} REACTIVOS)"
             summary_desc = (
@@ -1652,19 +1710,43 @@ class ExecutionAuditor:
                 )
         else:
             passed_first_attempt = False
-            badge = "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)"
-            interv_files = sorted(list(set(it.get("file", "") for it in interv_list if it.get("file"))))
-            interv_files_str = ", ".join(f"`{f}`" for f in interv_files[:5]) if interv_files else "archivos de reactivos"
-            err_str = f"con {initial_errors} errores iniciales" if initial_errors > 0 else "con discrepancias detectadas"
-            summary_desc = (
-                f"Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. "
-                f"La validación previa operó {err_str}, requiriendo rondas de auto-reparación o intervención técnica."
-            )
-            actions_taken = [
-                f"1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
-                f"2. **Intervenciones de Supervisor ({len(interv_list)} operaciones)**: Operaciones sobre {interv_files_str}.",
-                f"3. **Certificación y Verificación Final**: Se concluyó la validación tras {repair_iters or 1} iteraciones sobre el lote de {batch_items} reactivos."
-            ]
+            final_passed = (judge_compare_passed_v3 is True and discrepancies_count == 0)
+            final_agr_pct = f"{(agreement_rate if agreement_rate is not None else (1.0 if final_passed else 0.0)) * 100:.1f}%"
+            r1_agr_str = f" (`{round_1_agreement_rate * 100:.1f}% agreement rate`)" if round_1_agreement_rate is not None else ""
+
+            if has_rejudge or round_1_failed:
+                if final_passed:
+                    badge = f"⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE ({batch_items}/{batch_items} REACTIVOS)"
+                    summary_desc = (
+                        f"La Ronda 1 de Blind Judges registró {round_1_discrepancies_count} discrepancia(s){r1_agr_str}, "
+                        f"por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, "
+                        f"el resultado final alcanzó {final_agr_pct} de acuerdo ({discrepancies_count} discrepancias)."
+                    )
+                else:
+                    badge = "❌ NO PASARON AL PRIMER INTENTO (FALLOS EN RONDA 1 Y POST-REJUDGE)"
+                    summary_desc = (
+                        f"La Ronda 1 registró {round_1_discrepancies_count} discrepancia(s){r1_agr_str}, y el resultado final "
+                        f"post-Rejudge cerró con {final_agr_pct} de acuerdo y {discrepancies_count} discrepancia(s) pendiente(s)."
+                    )
+                actions_taken = [
+                    f"1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: {round_1_discrepancies_count} discrepancia(s) detectada(s){r1_agr_str}.",
+                    f"2. **Bucle de Auto-Reparación / Rejudge**: {repair_iters or 1} iteración(es) ejecutada(s) ({len(interv_list)} intervenciones de supervisor).",
+                    f"3. **Resultado Final Post-Rejudge (`judge_report.json`)**: {'✅ Aprobado' if final_passed else '❌ No aprobado'} (`{final_agr_pct} agreement rate`, `{discrepancies_count} discrepancias` sobre {batch_items} reactivos).",
+                ]
+            else:
+                badge = "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)"
+                interv_files = sorted(list(set(it.get("file", "") for it in interv_list if it.get("file"))))
+                interv_files_str = ", ".join(f"`{f}`" for f in interv_files[:5]) if interv_files else "archivos de reactivos"
+                err_str = f"con {initial_errors} errores iniciales" if initial_errors > 0 else "con discrepancias detectadas"
+                summary_desc = (
+                    f"Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. "
+                    f"La validación previa operó {err_str}, requiriendo rondas de auto-reparación o intervención técnica."
+                )
+                actions_taken = [
+                    f"1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+                    f"2. **Intervenciones de Supervisor ({len(interv_list)} operaciones)**: Operaciones sobre {interv_files_str}.",
+                    f"3. **Certificación y Verificación Final**: Se concluyó la validación tras {repair_iters or 1} iteraciones sobre el lote de {batch_items} reactivos."
+                ]
 
         stage_5 = {
             "judges_count": len(judge_subs),
@@ -1673,6 +1755,12 @@ class ExecutionAuditor:
             "repairs_count": len(repair_subs),
             "repairs": repair_subs,
             "passed_first_attempt": passed_first_attempt,
+            "has_rejudge": has_rejudge,
+            "round_1_passed": round_1_passed,
+            "round_1_discrepancies_count": round_1_discrepancies_count,
+            "round_1_agreement_rate": round_1_agreement_rate,
+            "final_passed": (judge_compare_passed_v3 is True and discrepancies_count == 0) if judge_compare_passed_v3 is not None else passed_first_attempt,
+            "rounds_history": rounds_history,
             "agreement_rate": agreement_rate if agreement_rate is not None else (1.0 if passed_first_attempt else 0.0),
             "discrepancies_count": discrepancies_count,
             "badge": badge,
@@ -2288,9 +2376,33 @@ class ReportGenerator:
 
         bj = stg["stage_5_judges"]
         first_att_res = "✅ 100% Limpio (Sin Discrepancias)" if bj["passed_first_attempt"] else "❌ Falló al primer intento"
-        first_att_obs = "Sin discrepancias ni arbitraje necesario" if bj["passed_first_attempt"] else f"{bj['initial_errors_count']} violaciones iniciales registradas"
+        if bj["passed_first_attempt"]:
+            first_att_obs = "Sin discrepancias ni arbitraje necesario"
+        elif bj.get("has_rejudge") or bj.get("round_1_discrepancies_count", 0) > 0:
+            r1_disc = bj.get("round_1_discrepancies_count", 0)
+            r1_agr = bj.get("round_1_agreement_rate")
+            r1_agr_txt = f" ({r1_agr * 100:.1f}% acuerdo)" if r1_agr is not None else ""
+            first_att_obs = f"Ronda 1: {r1_disc} discrepancia(s){r1_agr_txt}; {bj['initial_errors_count']} violaciones iniciales"
+        else:
+            first_att_obs = f"{bj['initial_errors_count']} violaciones iniciales registradas"
         rep_obs = "0 requeridas" if bj["passed_first_attempt"] else f"{bj['repair_iterations']} iteraciones ejecutadas"
         orch_obs = "Ninguna (ejecución autónoma)" if bj["supervisor_interventions_count"] == 0 else f"{bj['supervisor_interventions_count']} ediciones registradas"
+
+        judge_rows = [
+            f"| **Lote Estratificado Ciego** | `{bj['batch_items_count']} reactivos` ({w['competencies_count']} comps × 2) | Lote de evaluación sin soluciones (`judge_batch.json`) |",
+            f"| **Subagentes Jueces Ciegos** | `{bj.get('judges_count', 0)} jueces` | Aislamiento epistémico en Stage 5 |",
+            f"| **Resultado al Primer Intento** | **`{first_att_res}`** | {first_att_obs} |",
+        ]
+        if bj.get("has_rejudge") or bj.get("round_1_discrepancies_count", 0) > 0:
+            final_res = "✅ Aprobado" if bj.get("final_passed") else "❌ Con discrepancias"
+            final_agr = f"{bj.get('agreement_rate', 0.0) * 100:.1f}%"
+            judge_rows.append(
+                f"| **Resultado Final Post-Rejudge** | **`{final_res}`** | `{final_agr}` acuerdo, `{bj.get('discrepancies_count', 0)}` discrepancia(s) |"
+            )
+        judge_rows.extend([
+            f"| **Iteraciones de Auto-Reparación** | `{bj['repair_iterations']} iteraciones` en sandbox | {rep_obs} |",
+            f"| **Intervenciones del Supervisor** | 🛠️ `{bj['supervisor_interventions_count']} operaciones directas` | {orch_obs} |",
+        ])
 
         md.extend([
             "",
@@ -2300,11 +2412,7 @@ class ReportGenerator:
             "",
             "| Dimensión de Arbitraje Ciego | Valor Registrado | Observación Técnica |",
             "| :--- | :--- | :--- |",
-            f"| **Lote Estratificado Ciego** | `{bj['batch_items_count']} reactivos` ({w['competencies_count']} comps × 2) | Lote de evaluación sin soluciones (`judge_batch.json`) |",
-            f"| **Subagentes Jueces Ciegos** | `{bj.get('judges_count', 0)} jueces` | Aislamiento epistémico en Stage 5 |",
-            f"| **Resultado al Primer Intento** | **`{first_att_res}`** | {first_att_obs} |",
-            f"| **Iteraciones de Auto-Reparación** | `{bj['repair_iterations']} iteraciones` en sandbox | {rep_obs} |",
-            f"| **Intervenciones del Supervisor** | 🛠️ `{bj['supervisor_interventions_count']} operaciones directas` | {orch_obs} |",
+            *judge_rows,
             "",
             "#### Detalle de Acciones Registradas:"
         ])
