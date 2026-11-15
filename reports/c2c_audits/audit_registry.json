@@ -3468,5 +3468,67 @@
       "output_tokens_per_question": 798.5
     },
     "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261115_023406_estadistica_3_pre_pc2_e0291cf4",
+    "timestamp": "2026-11-15T07:34:06.160507+00:00",
+    "course_id": "estadistica_3_pre_pc2",
+    "course_title": "Estadistica 3 Pre Pc2",
+    "conversation_id": "e0291cf4-7aae-45dc-be49-f0f5ecad26b4",
+    "workload": {
+      "source_files_count": 4,
+      "pages_or_slides": 129,
+      "input_mb": 1.88,
+      "competencies": 57,
+      "questions": 1390,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 7472.0,
+      "agent_compute_seconds": 69558.0,
+      "speedup": 9.31,
+      "total_tokens": 87698601,
+      "total_active_tokens": 12959805,
+      "input_tokens": 9031361,
+      "output_tokens": 2080550,
+      "cache_read_tokens": 74738796,
+      "total_turns": 1204,
+      "subagents_count": 103,
+      "tool_errors": 223,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 326.0,
+      "stage_3_max_wall": 3034.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 0 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 0 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 679834.1,
+      "active_tokens_per_page": 100463.6,
+      "tokens_per_input_kb": 45641.4,
+      "tokens_per_competency": 1538571.9,
+      "active_tokens_per_competency": 227365.0,
+      "author_tokens_per_competency": 91658.8,
+      "tokens_per_question": 63092.5,
+      "active_tokens_per_question": 9323.6,
+      "seconds_per_page": 57.92,
+      "seconds_per_question": 5.38,
+      "questions_per_minute": 11.16,
+      "agent_seconds_per_question": 50.04,
+      "output_tokens_per_question": 1598.5
+    },
+    "bottlenecks_count": 3
   }
 ]
