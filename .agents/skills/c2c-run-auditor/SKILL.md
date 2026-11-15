@@ -28,7 +28,7 @@ inputs:
     required: false
   format:
     type: string
-    description: Formatos a generar ('all', 'md', 'json', 'html').
+    description: Formatos a generar ('all', 'md', 'json').
     default: all
 outputs:
   report_file:
@@ -37,9 +37,6 @@ outputs:
   telemetry_file:
     type: string
     description: Ruta al archivo JSON con el árbol y telemetría granular de todos los agentes.
-  dashboard_file:
-    type: string
-    description: Ruta al dashboard HTML interactivo con visualización de línea de tiempo y métricas.
   registry_file:
     type: string
     description: Ruta al registro histórico consolidado de auditorías (audit_registry.json).
@@ -79,7 +76,6 @@ flowchart TD
     RunDir --> TraceMD["traceback_deepdive_<id>.md (Sección 1.2 + 16 Categorías)"]
     RunDir --> TelJSON["telemetry.json & traceback_deepdive_<id>.json"]
     RunDir --> ShardMD["shard_timing_decomposition.md & shard_timing_profile.json"]
-    RunDir --> DashHTML["dashboard.html (Dashboard interactivo autónomo)"]
     
     Persistence --> Registry["Registro Histórico Longitudinal (Deduplicado por conversation_id)"]
     Registry --> RegJSON["audit_registry.json (Preserva múltiples corridas del mismo curso)"]
@@ -103,7 +99,7 @@ Cuando el usuario solicita una auditoría estándar sin pedir intervención agé
 ### Modo 2: Auditoría Forense Mediante Agente ("No Headless" / "Mediante Agente" / "Con Subagente")
 > [!IMPORTANT]
 > Cuando el usuario especifica explícitamente **`mediante agente`**, **`no headless`**, **`con subagente`** o solicita una **investigación forense profunda de causa raíz**:
-> 1. **Paso A (Baseline Cuantitativo Determinista):** Ejecuta primero `audit_engine.py --conversation <ID_O_ENLACE> --traceback` para generar la estructura base (`telemetry.json`, `traceback_deepdive_<id>.json`, `shard_timing_profile.json`, `dashboard.html`).
+> 1. **Paso A (Baseline Cuantitativo Determinista):** Ejecuta primero `audit_engine.py --conversation <ID_O_ENLACE> --traceback` para generar la estructura base (`telemetry.json`, `traceback_deepdive_<id>.json`, `shard_timing_profile.json`, `report.md`).
 > 2. **Paso B (Despacho del Subagente Especializado `c2c_run_auditor`):** Define e invoca mediante `define_subagent` + `invoke_subagent` un subagente forense dedicado (`c2c_run_auditor`, con `enable_write_tools=True`) encargado de verificar el aislamiento estricto de `conversation_id`, inspeccionar turnos de fallos y redactar el reporte forense enriquecido.
 
 ### Modo 3: Orquestación Forense Jerárquica Paralela (Ultra-Escala $\ge 10$ Shards / Gavilano Pattern)
@@ -150,7 +146,7 @@ Para comparar justamente corridas de diferente tamaño y complejidad pedagógica
 ### 5.1. CLI Global: `audit_engine.py`
 ```text
 Uso: audit_engine.py [-h] [--conversation CONVERSATION] [--output-dir OUTPUT_DIR]
-                     [--work-dir WORK_DIR] [--format {all,md,json,html}]
+                     [--work-dir WORK_DIR] [--format {all,md,json}]
                      [--recent] [--history] [--compare [RUN_A] [RUN_B]]
                      [--traceback]
 
@@ -162,7 +158,7 @@ Opciones:
   --history            Muestra el histórico comparativo y matriz longitudinal.
   --compare            Genera la comparativa forense entre dos corridas (por run_id, course_id o conversation_id).
   --traceback          Ejecuta además el análisis forense profundo de traceback en la misma corrida.
-  --format             Formatos a emitir: all, md, json, html.
+  --format             Formatos a emitir: all, md, json.
 ```
 
 ### 5.2. CLI de Traceback Granular: `traceback_analyzer.py`

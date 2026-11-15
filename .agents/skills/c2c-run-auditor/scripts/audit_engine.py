@@ -1150,6 +1150,14 @@ class ExecutionAuditor:
             "stage_snapshots": (workload.get("pipeline_state") or {}).get("thinking_traces_summary", {})
         }
 
+        pipeline_state = workload.get("pipeline_state")
+        telemetry_snapshots = workload.get("telemetry_snapshots", [])
+        workload_clean = {
+            k: v
+            for k, v in workload.items()
+            if k not in ("pipeline_state", "telemetry_snapshots")
+        }
+
         return {
             "meta": {
                 "audit_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -1178,7 +1186,7 @@ class ExecutionAuditor:
                 "tool_calls_total": root_metrics["tool_calls_count"] + sum(s["tool_calls_count"] for s in subagent_nodes),
                 "tool_errors_total": root_metrics["tool_errors_count"] + sum(s["tool_errors_count"] for s in subagent_nodes)
             },
-            "workload": workload,
+            "workload": workload_clean,
             "unit_economics": unit_economics,
             "stage_telemetry_v3": stage_telemetry_v3,
             "stage_deep_dives": stage_deep_dives,
@@ -1190,8 +1198,8 @@ class ExecutionAuditor:
             },
             "bottlenecks": bottlenecks,
             "subagents": subagent_nodes,
-            "pipeline_state": workload.get("pipeline_state"),
-            "telemetry_snapshots": workload.get("telemetry_snapshots", []),
+            "pipeline_state": pipeline_state,
+            "telemetry_snapshots": telemetry_snapshots,
             "thinking_traces_summary": thinking_traces_summary
         }
 
@@ -2382,200 +2390,6 @@ class ReportGenerator:
         return "\n".join(md)
 
     @staticmethod
-    def generate_html_dashboard(audit: Dict[str, Any]) -> str:
-        meta = audit["meta"]
-        summary = audit["summary"]
-        w = audit["workload"]
-        ue = audit["unit_economics"]
-        stg = audit["stage_deep_dives"]
-        orch = audit["orchestrator_audit"]
-
-        html = f"""<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>C2C Architectural Forensic Dashboard - {meta['course_id']}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    :root {{
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --border: #334155;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-green: #4ade80;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
-      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }}
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{ background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }}
-    .header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }}
-    .header h1 {{ font-size: 1.5rem; color: var(--accent); }}
-    .header .meta {{ color: var(--text-muted); font-size: 0.85rem; }}
-    .grid-kpi {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }}
-    .kpi-card {{ background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }}
-    .kpi-card .label {{ font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }}
-    .kpi-card .val {{ font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }}
-    .kpi-card .sub {{ font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }}
-    .section {{ background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }}
-    .section h2 {{ font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }}
-    th, td {{ padding: 10px 12px; border-bottom: 1px solid var(--border); }}
-    th {{ color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }}
-    tr:hover td {{ background: rgba(255,255,255,0.02); }}
-    .badge {{ display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }}
-    .badge-high {{ background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }}
-    .badge-med {{ background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }}
-    .badge-ok {{ background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }}
-  </style>
-</head>
-<body>
-
-  <div class="header">
-    <div>
-      <h1>C2C Architectural Forensic Telemetry</h1>
-      <div class="meta">{meta['course_title']} (<code>{meta['course_id']}</code>) | Conv: <code>{meta['orchestrator_conversation_id'][:12]}...</code></div>
-    </div>
-    <div class="meta">Audit Date: {meta['audit_timestamp'][:19]} UTC</div>
-  </div>
-
-  <div class="grid-kpi">
-    <div class="kpi-card">
-      <div class="label">Wall-Clock Time</div>
-      <div class="val">{summary['wall_clock_minutes']} min</div>
-      <div class="sub">{summary['wall_clock_seconds']}s elapsed</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Parallel Speedup</div>
-      <div class="val">{summary['parallel_speedup_factor']}x</div>
-      <div class="sub">{summary['agent_compute_minutes']}m compute time</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Total Tokens</div>
-      <div class="val">{summary['total_tokens']:,}</div>
-      <div class="sub">Active: {summary['total_active_tokens']:,} | Cache: {summary['total_cache_read_tokens']:,}</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Tokens / Question</div>
-      <div class="val">{ue['tokens_per_question']:,}</div>
-      <div class="sub">{w['questions_count']} questions generated</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Seconds / Question</div>
-      <div class="val">{ue['seconds_per_question']}s</div>
-      <div class="sub">{ue['questions_per_minute']} questions/min</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Supervisor Interventions</div>
-      <div class="val">{orch['interventions_count']}</div>
-      <div class="sub">{orch['time_decomposition']['supervisor_repair_minutes']}m spent repairing</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
-    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
-      Critical Straggler: <strong>{stg['stage_3_authors']['straggler_shard']}</strong> ({stg['stage_3_authors']['max_duration_seconds']}s | +{stg['stage_3_authors']['straggler_delay_vs_median']}s vs median) |
-      Avg Tokens / Competency: <strong>{stg['stage_3_authors']['avg_tokens_per_competency']:,}</strong>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Shard ID</th>
-          <th>Competencias</th>
-          <th>Comps</th>
-          <th>Tokens In</th>
-          <th>Tokens Out</th>
-          <th>Active Tokens</th>
-          <th>Tokens / Comp</th>
-          <th>Turns</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-        {"".join([f'''<tr>
-          <td><strong>{sa['label']}</strong></td>
-          <td><code>{", ".join(sa.get("competencies", [])[:3])}{"..." if len(sa.get("competencies", []))>3 else ""}</code></td>
-          <td>{sa.get("competencies_count", 0)}</td>
-          <td>{sa['input_tokens']:,}</td>
-          <td>{sa['output_tokens']:,}</td>
-          <td><strong>{sa['active_tokens']:,}</strong></td>
-          <td><strong>{sa.get("tokens_per_competency", 0):,}</strong></td>
-          <td>{sa['turns_count']}</td>
-          <td><strong>{sa['duration_seconds']}s</strong></td>
-        </tr>''' for sa in stg['stage_3_authors']['shards']])}
-      </tbody>
-    </table>
-  </div>
-
-  <div class="section">
-    <h2>Blind Judges & Psychometric Verification</h2>
-    <div style="margin-bottom: 12px; font-size: 0.9rem;">
-      <span class="badge {'badge-ok' if stg['stage_5_judges']['passed_first_attempt'] else 'badge-high'}">{stg['stage_5_judges']['badge']}</span>
-    </div>
-    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-      {stg['stage_5_judges']['summary_desc']}
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Lote Estratificado</th>
-          <th>Primer Intento</th>
-          <th>Auto-Repair Iterations</th>
-          <th>Supervisor Fixes</th>
-          <th>Status Final</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>{stg['stage_5_judges']['batch_items_count']} reactivos</strong></td>
-          <td><span class="badge {'badge-ok' if stg['stage_5_judges']['passed_first_attempt'] else 'badge-high'}">{'PASSED' if stg['stage_5_judges']['passed_first_attempt'] else 'FAILED'}</span></td>
-          <td>{stg['stage_5_judges']['repair_iterations']} iteraciones</td>
-          <td><strong>{stg['stage_5_judges']['supervisor_interventions_count']} fixes</strong></td>
-          <td><span class="badge badge-ok">CERTIFICADO</span></td>
-        </tr>
-      </tbody>
-    </table>
-    <div style="margin-top: 14px; font-size: 0.85rem;">
-      <strong>Acciones Correctivas Tomadas:</strong>
-      <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
-        {"".join([f'<li>{act}</li>' for act in stg['stage_5_judges']['actions_taken']])}
-      </ul>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>Orchestrator Manual Interventions (Supervisor Repair Anti-Pattern)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Step</th>
-          <th>Target File</th>
-          <th>Action Type</th>
-          <th>Root Cause / Snippet</th>
-          <th>Tool</th>
-        </tr>
-      </thead>
-      <tbody>
-        {"".join([f'''<tr>
-          <td><strong>{it['step']}</strong></td>
-          <td><code>{it['file']}</code></td>
-          <td>{it['action_type']}</td>
-          <td>{it['cause']}</td>
-          <td><code>{it['tool']}</code></td>
-        </tr>''' for it in orch['interventions']])}
-      </tbody>
-    </table>
-  </div>
-
-</body>
-</html>
-"""
-        return html
-
-    @staticmethod
     def generate_comparison(run_a: Dict[str, Any], run_b: Dict[str, Any]) -> str:
         """Generates the comparative table and analysis matching Section 1 of solow_vs_estadistica_definitive_architectural_audit.md."""
         name_a = run_a.get("course_title", run_a.get("course_id", "Run A")) + f" (`{run_a.get('course_id')}`)"
@@ -2709,7 +2523,7 @@ def main():
     parser.add_argument("--conversation", "-c", help="Conversation ID, chat link, or path to transcript.jsonl")
     parser.add_argument("--output-dir", "-o", default="reports/c2c_audits", help="Output directory for persistent audit artifacts")
     parser.add_argument("--work-dir", "-w", help="Path to work directory containing intermediate C2C artifacts")
-    parser.add_argument("--format", choices=["all", "md", "json", "html"], default="all", help="Output artifact formats")
+    parser.add_argument("--format", choices=["all", "md", "json"], default="all", help="Output artifact formats (md, json, or all)")
     parser.add_argument("--recent", action="store_true", help="List recent C2C runs found in Antigravity brain")
     parser.add_argument("--history", action="store_true", help="Print or regenerate the historical benchmark comparison table")
     parser.add_argument("--compare", nargs="*", help="Compare two runs (e.g. --compare run_a run_b, or --compare to compare latest against previous/baseline)")
@@ -2815,15 +2629,13 @@ def main():
 
     # 5. Persist Artifacts
     telemetry_file = run_dir / "telemetry.json"
-    telemetry_file.write_text(json.dumps(audit_result, indent=2, ensure_ascii=False), encoding="utf-8")
+    if args.format in ("all", "json"):
+        telemetry_file.write_text(json.dumps(audit_result, indent=2, ensure_ascii=False), encoding="utf-8")
 
     report_file = run_dir / "report.md"
-    report_md = ReportGenerator.generate_markdown(audit_result)
-    report_file.write_text(report_md, encoding="utf-8")
-
-    dashboard_file = run_dir / "dashboard.html"
-    dashboard_html = ReportGenerator.generate_html_dashboard(audit_result)
-    dashboard_file.write_text(dashboard_html, encoding="utf-8")
+    if args.format in ("all", "md"):
+        report_md = ReportGenerator.generate_markdown(audit_result)
+        report_file.write_text(report_md, encoding="utf-8")
 
     # 6. Register into Longitudinal Benchmark Registry
     registry_mgr.register_run(audit_result, run_dir_name)
@@ -2861,9 +2673,10 @@ def main():
     print(f"    - Shards Straggler:{audit_result['stage_deep_dives']['stage_3_authors']['straggler_shard']} ({audit_result['stage_deep_dives']['stage_3_authors']['max_duration_seconds']}s)")
     print(f"    - Supervisor Fixes:{audit_result['orchestrator_audit']['interventions_count']} manual interventions detected")
     print(f"    - Run Directory:   {run_dir}")
-    print(f"    - Markdown Report: {report_file}")
-    print(f"    - Telemetry JSON:  {telemetry_file}")
-    print(f"    - Dashboard HTML:  {dashboard_file}")
+    if args.format in ("all", "md"):
+        print(f"    - Markdown Report: {report_file}")
+    if args.format in ("all", "json"):
+        print(f"    - Telemetry JSON:  {telemetry_file}")
     print(f"    - Registry & Log:  {registry_mgr.benchmark_md_file}\n")
 
 
