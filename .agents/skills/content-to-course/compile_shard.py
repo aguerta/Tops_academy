@@ -2761,7 +2761,17 @@ cross_check=verify
             for s_idx, sv in enumerate(stem_variants):
                 clean_sv = re.sub(r"\$\$[\s\S]*?\$\$", " ", sv)
                 clean_sv = re.sub(r"\$[^\$]*?\$", " ", clean_sv)
-                clean_for_punct = re.sub(r"\b(?:p\.\s*ej|ej|etc|vs|cap|pág|pag|vol|art|inc)\.", "ABBR", clean_sv, flags=re.IGNORECASE)
+                clean_for_punct = re.sub(
+                    r"\b(?:p\.\s*ej|ej|etc|vs|cap|pág|pag|vol|art|inc)\.",
+                    "ABBR",
+                    clean_sv,
+                    flags=re.IGNORECASE,
+                )
+                clean_for_punct = re.sub(
+                    r"\b(?:i\.i\.d|v\.a|c\.s|p\.p|s\.t|d\.f|a\.s)\.",
+                    "ABBR",
+                    clean_for_punct,
+                )
                 m_dot = re.search(r"\.\s+[a-záéíóúñ]", clean_for_punct)
                 if m_dot:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)

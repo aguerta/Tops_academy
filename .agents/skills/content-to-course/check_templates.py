@@ -3945,7 +3945,11 @@ def check_templates_file_or_dir(
                 if uncovered:
                     tpl_d3_failed = True
                     snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando (MC7 exige 6/6)."
+                    cause_msg = (
+                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando "
+                        "en su semilla representativa (TPL-D3 evalúa los distractor_ids de la semilla representativa por plantilla; "
+                        "rotar distractores entre semillas en generate() NO los cubre y MC7 exige 6/6)."
+                    )
             elif has_ms:
                 valid_ref = referenced_set.intersection(declared_set)
                 if len(valid_ref) < 2:
@@ -3959,7 +3963,11 @@ def check_templates_file_or_dir(
                 if uncovered:
                     tpl_d3_failed = True
                     snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando."
+                    cause_msg = (
+                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando "
+                        "en su semilla representativa (TPL-D3 evalúa los distractor_ids de la semilla representativa por plantilla; "
+                        "rotar distractores entre semillas NO los cubre)."
+                    )
 
             if tpl_d3_failed:
                 err_diag = format_diagnostic_error(
@@ -3971,8 +3979,8 @@ def check_templates_file_or_dir(
                     snippet=snippet_msg,
                     cause=cause_msg,
                     actions=[
-                        f"Asignar los distractores correspondientes en las plantillas existentes de '{cid}'.",
-                        "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
+                        f"Añadir plantillas MC7 adicionales en '{cid}' que emitan en su semilla representativa los distractores faltantes (rotar distractores entre semillas en una sola plantilla NO cubre TPL-D3).",
+                        f"O asignar los distractores faltantes en los distractor_ids de la semilla representativa de las plantillas existentes de '{cid}'.",
                         "Asegurar la cobertura de distractores requerida por el contrato psicométrico.",
                     ],
                 )

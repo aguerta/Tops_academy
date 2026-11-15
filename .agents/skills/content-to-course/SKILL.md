@@ -1,4 +1,4 @@
----
+﻿---
 name: content-to-course
 description: End-to-end Antigravity skill that converts any academic course materials (PDFs, handwritten ink, large images) into interactive Top's Academy courses using strict JSON stage contracts, parametric templates in a sandboxed Python engine, blind LLM arbitration, and automated validation without domain-specific code.
 triggers:
@@ -135,7 +135,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > - **Fail-Total en Compilador (`--fail-total`)**: `compile_shard.py` opera con `--fail-total` tanto en autoría como en reparación para abortar ante errores fatales sin tolerar compilaciones inconsistentes.
 > - **Herramientas Nativas Estándar**: Subagentes y runner operan con herramientas nativas de plataforma (`read_file`, `write_file`, `edit_file`, `run_command`, `send_message`) con soporte retrocompatible.
 > - **Juez Epistémico 1-Seed con Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$)**: 1 única semilla pre-verificada por plantilla enfocada en suficiencia epistémica y no-giveaway semántico; ninguna objeción heurística revoca una prueba matemática formal.
-> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N`), el Director no ejecuta herramientas, reporta `Progreso de ola: k/N subagentes completados.` y finaliza en `< 2s`.
+> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: Al iniciar una ola, el Director emite 1 línea mínima (`Iniciando etapa: <nombre> (<N> unidades).`). En despertares reactivos parciales (`k < N` sin `BLOCKED:` ni timer), no ejecuta herramientas ni emite texto visible (`tools=[]`, respuesta vacía) y finaliza en `< 2s`. Solo vuelve a hablar al completar `N/N` (`Listo, se completó la etapa de <nombre> (<N>/<N>).`), cuando vence el timer del watchdog, o si un subagente reporta `BLOCKED:`.
 > - **Weighted Waves (`1 Hab/shard`, olas ≤ 100)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$ (soporte continuo de hasta 100 shards concurrentes en una sola ola paralela).
 > - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada ante objeciones de jueces no resueltas o incumplimiento psicométrico (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad de racionalizaciones $\ge 30\%$, 0 hard penalties).
 > - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`.
@@ -168,8 +168,8 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Stage 2: Sizing Ponderado y Sharding (run.py --stage shard)                 │
-│ - Aislamiento estricto: máximo 1 Skill (Hab-*) por shard                    │
-│ - Conceptos y Hechos contiguos en parejas de 2 (hasta 3 Facts si N >= 30)   │
+│ - Aislamiento estricto: máximo 2 Skills (Hab-*) por shard                   │
+│ - Conceptos y Hechos contiguos en bloques de hasta 3 por shard              │
 │ - Genera work/shards/pre_shard_manifest.json ordenado Heaviest-First        │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -180,7 +180,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 │ - Contrato Form-C Quad-Band: 4 arquetipos disjuntos (1 MC7 + 2 FIB + 1 MS)  │
 │ - Triple contrato ver_* (Soundness + Refutación Estricta de Distractores)   │
 │ - Emite shard_XX.cert.json al aprobar 50 semillas (< 5 ms en downstream)   │
-│ - Silent Reactive Barrier: 0 herramientas en mensajes parciales (k < N)    │
+│ - Silent Reactive Barrier: 0 texto y 0 herramientas en parciales (k < N) │
 │ - Matriz 2D de edición en caso de error (edit_file vs shard_fixes/<CID>.py) │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
@@ -207,40 +207,41 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 │ - run.py --stage gates: build + verify + QA dry-run + repair-matrix         │
 │ - run.py --stage certify: verificación formal completa multi-etapa          │
 │ - Publica a courses/<course_id>.json, emite publish.cert.json               │
-│ - Evalúa Rúbrica Determinista QA y emite reports/qa_audits/<id>_qa_report.* │
+│ - Evalúa Rúbrica Determinista QA y emite reports/qa_audits/<id>_qa_report.md│
 │ - Libera cerrojo .c2c_subagent_lock.json y reporta URL y métricas de calidad│
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ⚡ Regla de Oro: Protocolo de Barrera Reactiva Silenciosa y Auto-Kill Inmediato
+## ⚡ Regla de Oro: Protocolo de Barrera Reactiva Silenciosa y Batch-Kill en Barrera N/N
 
 El Director de Proyecto debe mantener una interacción conversacional ultra-eficiente (~12–16 turnos en toda la corrida).
 
-> [!IMPORTANT]
-> **AUTO-KILL OBLIGATORIO DE CUALQUIER SUBAGENTE AL DECIR 'DONE':**
-> En cuanto CUALQUIER subagente (sea `c2c_cta_architect`, `c2c_cta_harmonizer`, `c2c_shard_author`, `c2c_repair`, `c2c_judge`, etc.) reporte `DONE: ...`, el Director **DEBE TERMINARLO INMEDIATAMENTE** llamando a:
-> ```python
-> manage_subagents(Action='kill', ConversationIds=[subagent_conversation_id])
-> ```
-> Dejar subagentes terminados vivos en segundo plano genera procesos zombis, sobreconsumo de inferencia y asfixia por cuota de API (HTTP 429). El auto-kill al recibir `DONE:` es una regla universal e inviolable.
-
 > [!CAUTION]
-> **COMPORTAMIENTO EN DESPERTARES PARCIALES (`k < N`):**
-> Cuando un subagente finaliza y envía `DONE: ...`, la plataforma despierta al Director:
-> 1. Ejecuta **únicamente** `manage_subagents(Action='kill', ConversationIds=[subagent_conversation_id])` para apagar al trabajador que concluyó.
-> 2. Si aún restan subagentes activos (`k < N`) y el temporizador no ha vencido:
->    - 🚫 **PROHIBIDO** ejecutar `Get-ChildItem`, `dir`, `run.py`, `view_file` o inspecciones exploratorias.
->    - Emite una línea de texto informativo: `Progreso de ola: k/N subagentes completados.` y **detén inmediatamente tu turno** (`< 2s` de ejecución).
->    - La plataforma volverá a despertarte reactivamente cuando el siguiente subagente reporte `DONE:` o cuando la ola completa `N/N` esté lista.
+> **BARRERA REACTIVA SILENCIOSA EN DESPERTARES PARCIALES (`k < N`):**
+> - **Al iniciar la ola:** Emite únicamente **1 línea mínima** (ej. `Iniciando etapa: Autores (9 shards).`), sin párrafos ni frases como `"Esperando notificaciones..."`.
+> - **Cuando un subagente finaliza (`DONE:`) y aún restan trabajadores activos (`k < N`):**
+>   1. **`tools=[]` obligatorio:** 🚫 **PROHIBIDO** llamar a `manage_subagents(Action='kill', ...)`, `manage_subagents(Action='kill_all')`, `Get-ChildItem`, `dir`, `run.py`, `view_file` o cualquier herramienta en despertares parciales (salvo excepción explícita de un subagente que reporte `BLOCKED:`).
+>   2. **Cero texto visible (silencio total):** **NO** imprimas `Progreso de ola: k/N`, listas de `Completados`/`Pendientes`, UUIDs ni mensajes de espera. Lleva la contabilidad `k/N` únicamente en tu contexto interno y termina el turno con respuesta vacía (`< 2s`).
+> - **Al completar `N/N`:** Emite **1 línea** de cierre (ej. `Listo, se completó la etapa de Autores (9/9).`) y ejecuta el Batch-Kill para pasar a la siguiente etapa.
+> - **Si un subagente reporta `BLOCKED:` / `CIRCUIT BREAKER`:** Avisa en **1 línea** qué unidad se bloqueó y gestiona su reparación.
+
+> [!IMPORTANT]
+> **BATCH-KILL EN BARRERA N/N (CERTIFICACIÓN + FRESCURA EN DISCO):**
+> Solo cuando **todos** los `N/N` subagentes de la ola (`Pendientes: []`) hayan reportado `DONE:` (o `BLOCKED:`/`CIRCUIT BREAKER`) **y** los artefactos de la ola estén certificados en disco (para `authors`/`shards`/`repair`: `<shard_id>.cert.json` con `passed_50_seeds: true` y `<shard_id>.json` con `compiled_status: "PASS"`, nunca `"FAIL"`, y en `repair.json` con timestamp posterior a `dispatched_at`; para `cta_parts`: `pass_cta_<part_id>.json` = `PASS`), el Director debe ejecutar un **único** apagado en lote:
+> ```python
+> manage_subagents(Action='kill_all')
+> ```
+> El hook `PreToolUse` (`c2c_hook_guard.py`, configurado con `manage_subagents` y `run_command` en `.agents/hooks.json` / `.agents/hooks.template.json`) bloqueará cualquier `kill`, `kill_all` o `run.py --stage ...` prematuro mientras queden subagentes sin `DONE:`/`BLOCKED:` o artefactos sin certificar (salvo `kill` individual sobre UUIDs cuyo `transcript.jsonl` contenga `BLOCKED:` explícito). Nota operativa: Antigravity carga cambios de `.agents/hooks.json` al iniciar nuevas invocaciones/subagentes, no a mitad de turno.
 
 > [!NOTE]
 > **GESTIÓN DE STRAGGLERS A LOS 10 MINUTOS (WATCHDOG ACTIVO):**
-> Si un subagente de shard o reparación supera los 10 minutos de pared sin reportar `DONE:` y el watchdog despierta al Director:
+> Si un subagente de shard o reparación supera el timer del watchdog sin reportar `DONE:` y el watchdog despierta al Director:
 > 1. El Director debe leer el transcript del subagente (`transcript.jsonl`) para auditar su estado real.
 > 2. **Si el subagente está convergiendo y terminando sus últimas verificaciones:** déjalo continuar y reprograma el watchdog.
 > 3. **Si el subagente está ciclado o atascado:** envíale un mensaje de ayuda directa analítica (`send_message(Recipient=cid, Message="...")`) indicándole la causa exacta del bloqueo y cómo destrabarlo.
+> 4. **Resumen al usuario:** Únicamente cuando venza este timer, emite **1 resumen breve** de la situación (`k/N` completados, cuáles siguen pendientes y la acción tomada).
 
 > [!TIP]
 > **MANEJO DE I/O EN WINDOWS (NTFS) Y PREVENCIÓN DE SONDEOS ERRÓNEOS:**
@@ -345,7 +346,7 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
    ```
-   El cerrojo `.c2c_subagent_lock.json` se libera automáticamente, el motor ejecuta la **Rúbrica Determinista del QA Evaluator** (< 300 ms) y el **Pipeline Auditor Determinista (`c2c-run-auditor`)**, genera los reportes `reports/qa_audits/<course_id>_qa_report.*` y `reports/c2c_audits/<timestamp>_<course_id>_<conv_id[:8]>/`, y emite ambas telemetrías completas en stdout.
+   El cerrojo `.c2c_subagent_lock.json` se libera automáticamente, el motor ejecuta la **Rúbrica Determinista del QA Evaluator** (< 300 ms) y el **Pipeline Auditor Determinista (`c2c-run-auditor`)**, genera los reportes `reports/qa_audits/<course_id>_qa_report.md` (autocontenido) y `reports/c2c_audits/<timestamp>_<course_id>_<conv_id[:8]>/`, y emite ambas telemetrías completas en stdout.
 
 2. > [!IMPORTANT]
    > ### 🎓 Pantalla de Cierre Obligatoria (Presentación de Calidad y Ejecución al Usuario)
@@ -427,11 +428,9 @@ Este comando ejecuta en `< 1s`:
    > ### 📁 Artefactos Generados y Enlace Directo
    > - **Archivo del Curso (JSON):** `courses/{course_id}.json` ({size_mb} MB, {total_questions} reactivos en {total_comps} competencias)
    > - **Análisis Curricular CTA:** `courses/competence_analysis_{course_id}.md`
-   > - **Informe de Calidad QA (Markdown):** `reports/qa_audits/{course_id}_qa_report.md`
-   > - **Informe de Calidad QA (JSON):** `reports/qa_audits/{course_id}_qa_report.json`
-   > - **Payload Enriquecido de Telemetría:** `reports/qa_audits/{course_id}_payload.json`
+   > - **Informe de Calidad QA (Markdown autocontenido):** `reports/qa_audits/{course_id}_qa_report.md`
    > - **Informe Run Auditor (Markdown):** `reports/c2c_audits/{run_dir}/report.md`
    > - **Telemetría Run Auditor (JSON):** `reports/c2c_audits/{run_dir}/telemetry.json`
-   > - **Dashboard Interactivo (HTML):** `reports/c2c_audits/{run_dir}/dashboard.html`
+   > - **Benchmark Histórico:** `reports/c2c_audits/historical_benchmark.md`
    > - **URL de Interacción Directa:** http://localhost:3000/#/course/{course_id}
    > ```

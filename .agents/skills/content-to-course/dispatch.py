@@ -53,6 +53,12 @@ logger = logging.getLogger("dispatch")
 # Directory of the skill
 SKILL_DIR = Path(__file__).parent.resolve()
 
+GRANULARITY_SPECS: Dict[str, Tuple[str, float, float]] = {
+    "standard": ("0.35-0.65 comp/pág (3-5 comps c/5-10 págs)", 0.35, 0.65),
+    "fine": ("1.0-1.6 comp/pág (6-10 comps c/5-10 págs)", 1.0, 1.6),
+    "coarse": ("0.15-0.30 comp/pág (1-2 comps/módulo)", 0.15, 0.30),
+}
+
 
 def _resolve_repo_python_and_env() -> Tuple[str, str, str]:
     """Resolves repo root, python executable, and compile command prefix.
@@ -468,8 +474,30 @@ def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True
     types_list = list(get_type_definitions(lean=lean))
     type_files: List[str] = []
 
+    granularity = "standard"
+    for m_name in ("pre_cta_manifest.json", "ingestion_manifest.json"):
+        m_path = work / m_name
+        if m_path.is_file():
+            try:
+                m_data = json.loads(m_path.read_text(encoding="utf-8"))
+                g_val = m_data.get("granularity")
+                if isinstance(g_val, str) and g_val in GRANULARITY_SPECS:
+                    granularity = g_val
+                break
+            except Exception as e:
+                logger.warning("Could not read granularity from %s: %s", m_path, e)
+
+    gran_label = GRANULARITY_SPECS[granularity][0]
+
     for t_spec in types_list:
         t_name = t_spec["name"]
+        if t_name == "c2c_cta_architect" and "system_prompt" in t_spec:
+            t_spec["system_prompt"] = re.sub(
+                r'granularity="[^"]*"',
+                f'granularity="{gran_label}"',
+                t_spec["system_prompt"],
+                count=1,
+            )
         clean_name = t_name.replace("-", "_")
         t_file = types_dir / f"{clean_name}.json"
         t_file.write_text(json.dumps(t_spec, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -532,6 +560,9 @@ def dispatch_cta(
     manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
     cta_mode = mode or manifest_data.get("cta_mode") or manifest_data.get("mode") or "direct"
     granularity = manifest_data.get("granularity", "standard")
+    if granularity not in GRANULARITY_SPECS:
+        granularity = "standard"
+    gran_label, low_rate, high_rate = GRANULARITY_SPECS[granularity]
     manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
 
     # Append Delta context detection
@@ -611,6 +642,36 @@ def dispatch_cta(
             reverse=True,
         )
 
+        syllabus_map: List[Dict[str, Any]] = []
+        for idx_sm, sp_sm in enumerate(subparts, start=1):
+            p_idx_sm = sp_sm.get("part_index") or idx_sm
+            sp_id_sm = sp_sm.get("subpart_id") or f"part_{p_idx_sm:02d}"
+            sp_doc_sm = sp_sm.get("doc") or sp_sm.get("doc_name") or sp_sm.get("name") or "document.pdf"
+            sp_range_sm = sp_sm.get("page_range") or sp_sm.get("valid_page_range") or [1, sp_sm.get("total_pages", 1)]
+            sp_s_sm = sp_range_sm[0] if len(sp_range_sm) > 0 else 1
+            sp_e_sm = sp_range_sm[1] if len(sp_range_sm) > 1 else sp_s_sm
+            sp_total_sm = sp_sm.get("total_pages") or (sp_e_sm - sp_s_sm + 1)
+            syllabus_map.append({
+                "subpart_id": sp_id_sm,
+                "doc": sp_doc_sm,
+                "page_range": [sp_s_sm, sp_e_sm],
+                "total_pages": sp_total_sm,
+            })
+
+        syllabus_lines = [
+            "",
+            "## 2.1 MAPA GLOBAL DE SUBPARTES (SYLLABUS MAP — EVITAR EXTRACCIÓN REDUNDANTE)",
+            "> Extrae SOLO competencias del slice asignado arriba; las demás subpartes cubren sus propios rangos:",
+            "| Subparte | Documento | Rango Físico | Páginas |",
+            "|---|---|---|---|",
+        ]
+        for sm in syllabus_map:
+            s_r = sm["page_range"]
+            syllabus_lines.append(
+                f"| `{sm['subpart_id']}` | `{sm['doc']}` | `{s_r[0]}..{s_r[1]}` | {sm['total_pages']} |"
+            )
+        syllabus_section = "\n".join(syllabus_lines)
+
         for idx, sp in enumerate(subparts, start=1):
             part_idx = sp.get("part_index") or idx
             subpart_id = sp.get("subpart_id") or f"part_{part_idx:02d}"
@@ -644,6 +705,9 @@ def dispatch_cta(
                 done_signal=f"DONE: {json_target}",
             )
 
+            min_c = max(2, round(low_rate * total_p))
+            max_c = max(min_c + 1, round(high_rate * total_p))
+
             prompt_lines = [
                 f"# Asignación de Tarea: Cognitive Task Analysis Architect ({subpart_id} - MapReduce C2C v3.21)",
                 "",
@@ -652,7 +716,7 @@ def dispatch_cta(
                 "## 1. PARÁMETROS DE LA SUBPARTE",
                 f"- **Manifest:** `{manifest_rel}`",
                 f"- **CTA Mode:** `mapreduce` (Subpart: `{subpart_id}`)",
-                f"- **Granularity:** `{granularity}`",
+                f"- **Granularity:** `{granularity}` ({gran_label}; presupuesto slice: **{min_c}–{max_c} competencias** para {total_p} págs)",
                 f"- **Total Physical Pages:** {total_physical_pages}",
                 f"- **Archivo Python de Salida:** `{out_py}`",
                 f"- **Destino JSON Final:** `{json_target}`",
@@ -664,6 +728,7 @@ def dispatch_cta(
                 "",
                 "## 2. DOCUMENTO ASIGNADO A ESTA SUBPARTE Y RANGO DE PÁGINAS (1..N)",
                 subpart_table,
+                syllabus_section,
                 "",
                 "> [!CRITICAL]",
                 "> **REGLA MANDATORIA DE PAGINACIÓN `evidence.page`:**",
@@ -692,6 +757,8 @@ def dispatch_cta(
                 "compile_cmd": compile_cmd,
                 "compile_command": compile_cmd,
                 "prompt_sha256": prompt_sha256,
+                "syllabus_map": syllabus_map,
+                "target_competency_range": [min_c, max_c],
             }
             item_data = {
                 "TypeName": "c2c_cta_architect",

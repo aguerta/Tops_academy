@@ -78,7 +78,7 @@ STRONG_EVIDENCE_RATIO: float = 0.60
 SHARED_DISTRACTORS_MIN: int = 2
 SCORE_CANDIDATE_THRESHOLD: float = 0.35
 SCORE_STRONG_THRESHOLD: float = 0.60
-DESCRIPTION_SNIPPET_CHARS: int = 120
+DESCRIPTION_SNIPPET_CHARS: int = 280
 
 
 def tokenize_text(text: str) -> Set[str]:
@@ -813,10 +813,30 @@ def _short(text: str, limit: int = DESCRIPTION_SNIPPET_CHARS) -> str:
     return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
 
 
+def _extract_math_tokens(text: str) -> Set[str]:
+    """Extract normalized LaTeX commands and math identifiers from $...$ / $$...$$ spans."""
+    if not text:
+        return set()
+    tokens: Set[str] = set()
+    for disp, inline in re.findall(r"\$\$(.+?)\$\$|\$([^$]+?)\$", text, flags=re.DOTALL):
+        span = disp or inline
+        for cmd in re.findall(r"\\[a-zA-Z]+", span):
+            tokens.add(cmd.lower())
+        for var in re.findall(
+            r"(?<!\\)[a-zA-Z][a-zA-Z0-9]*(?:_\{?[a-zA-Z0-9,]+\}?|\^\{?[a-zA-Z0-9,\-+]+\}?)+",
+            span,
+        ):
+            tokens.add(var.replace("{", "").replace("}", "").lower())
+        for word in re.findall(r"(?<![\\a-zA-Z])[a-zA-Z]{2,}", span):
+            tokens.add(word.lower())
+    return tokens
+
+
 def _comp_view(c: Dict[str, Any]) -> Dict[str, Any]:
     """Normalized view of a competency (works for new competencies and base-course entries)."""
     name = c.get("name") or c.get("title", "")
     desc = c.get("description_latex") or c.get("description", "")
+    ev_keys = extract_evidence_keys(c.get("evidence", []))
     return {
         "id": c.get("id") or c.get("competency_id", ""),
         "type": (c.get("type") or c.get("category", "concept")).lower(),
@@ -826,7 +846,9 @@ def _comp_view(c: Dict[str, Any]) -> Dict[str, Any]:
         "name_tokens": tokenize_text(name),
         "name_stems": normalized_stems(name),
         "desc_stems": normalized_stems(desc),
-        "ev": extract_evidence_keys(c.get("evidence", [])),
+        "math_tokens": _extract_math_tokens(f"{name} {desc}"),
+        "ev": ev_keys,
+        "ev_docs": {d for d, _ in ev_keys},
         "distractors": _distractor_set(c),
     }
 
@@ -849,9 +871,13 @@ def _pair_candidate(v1: Dict[str, Any], v2: Dict[str, Any]) -> Optional[Dict[str
     name_tri = trigram_dice(name1, name2)
     name_sim = max(name_stem_sim, name_tri)
     desc_sim = jaccard_similarity(v1["desc_stems"], v2["desc_stems"])
+    math_sim = jaccard_similarity(v1.get("math_tokens", set()), v2.get("math_tokens", set()))
     ev_min = min(len(v1["ev"]), len(v2["ev"]))
     ev_ratio = (len(shared_ev) / ev_min) if ev_min else 0.0
     shared_dis = v1["distractors"] & v2["distractors"]
+    ev_docs1 = v1.get("ev_docs", set())
+    ev_docs2 = v2.get("ev_docs", set())
+    cross_doc = bool(ev_docs1 and ev_docs2 and ev_docs1.isdisjoint(ev_docs2))
 
     signals: List[str] = []
     if jaccard_lex >= JACCARD_DUPLICATE_THRESHOLD:
@@ -871,13 +897,23 @@ def _pair_candidate(v1: Dict[str, Any], v2: Dict[str, Any]) -> Optional[Dict[str
         + 0.20 * min(1.0, ev_ratio)
         + 0.10 * (min(len(shared_dis), 3) / 3.0)
     )
+    if cross_doc:
+        score = min(1.0, (score / 0.80) + 0.15 * math_sim)
+        if name_sim >= 0.45 or (desc_sim >= 0.25 and math_sim >= 0.30) or math_sim >= 0.40:
+            signals.append("cross_pdf_match")
+
     if not signals and score >= _env_float("C2C_DUP_SCORE_MIN", SCORE_CANDIDATE_THRESHOLD):
         signals.append("combined_score")
     if not signals:
         return None
 
     same_type = v1["type"] == v2["type"]
-    strong = score >= _env_float("C2C_DUP_STRONG_SCORE", SCORE_STRONG_THRESHOLD) and same_type
+    strong_thresh = _env_float("C2C_DUP_STRONG_SCORE", SCORE_STRONG_THRESHOLD)
+    if same_type or {v1["type"], v2["type"]} == {"fact", "concept"}:
+        strong = score >= strong_thresh
+    else:
+        strong = score >= strong_thresh + 0.05
+
     return {
         "pair": [v1["id"], v2["id"]],
         "type": v1["type"] if same_type else f"{v1['type']}_vs_{v2['type']}",
@@ -936,6 +972,64 @@ def find_duplicate_candidates(
     # Stable ordering: strong first, then by descending score (ties keep detection order)
     candidates.sort(key=lambda c: (c["strength"] != "strong", -c["score"]))
     return candidates
+
+
+def _build_outline_payload(
+    course_id: str,
+    course_title: str,
+    macro_competency: str,
+    draft_competencies: List[Dict[str, Any]],
+    existing_competencies: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Build cta_outline.json payload with full description_latex, assumptions_count, and budget."""
+    outline_competencies: List[Dict[str, Any]] = []
+    if existing_competencies:
+        for bc in existing_competencies:
+            bc_id = bc.get("id") or bc.get("competency_id", "")
+            outline_competencies.append({
+                "id": bc_id,
+                "name": bc.get("name") or bc.get("title", ""),
+                "type": (bc.get("type") or bc.get("category", "concept")).lower(),
+                "description_latex": bc.get("description_latex") or bc.get("description", ""),
+                "assumptions_count": len(bc.get("assumptions") or []),
+                "session": bc.get("session", "[BASE]"),
+                "unit_index": bc.get("unit_index", 0),
+                "evidence": bc.get("evidence", []),
+                "prerequisites": bc.get("prerequisites", []),
+                "distractor_names": bc.get("distractor_names", []),
+                "read_only_base": True,
+            })
+
+    for c in draft_competencies:
+        outline_competencies.append({
+            "id": c["id"],
+            "name": c.get("name", ""),
+            "type": c.get("type", ""),
+            "description_latex": c.get("description_latex") or c.get("description", ""),
+            "assumptions_count": len(c.get("assumptions") or []),
+            "session": c.get("session", ""),
+            "unit_index": c.get("unit_index", 0),
+            "evidence": c.get("evidence", []),
+            "prerequisites": c.get("prerequisites", []),
+            "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
+            "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
+        })
+
+    draft_count = len(draft_competencies)
+    recommended_min = min(12, max(1, draft_count))
+    recommended_max = 20
+    return {
+        "course_id": course_id,
+        "title": course_title,
+        "macro_competency": macro_competency,
+        "target_competency_budget": {
+            "recommended_min": recommended_min,
+            "recommended_max": recommended_max,
+            "draft_count": draft_count,
+            "consolidation_needed": draft_count > recommended_max,
+        },
+        "competencies": outline_competencies,
+    }
 
 
 def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
@@ -1101,7 +1195,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
 
             c["_part_key"] = stem
             is_pre = bool(c.get("is_prerequisite")) or str(c.get("id", "")).upper().startswith("PRE-")
-            c["_sort_key"] = (0 if is_pre else 1, sp_idx, f_idx, page_int, orig_idx)
+            c["_sort_key"] = (sp_idx, f_idx, 0 if is_pre else 1, page_int, orig_idx)
             combined_competencies.append(c)
 
     if not combined_competencies:
@@ -1374,41 +1468,13 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "competencies": combined_competencies,
     }
 
-    outline_competencies: List[Dict[str, Any]] = []
-    if existing_comps:
-        for bc in existing_comps:
-            bc_id = bc.get("id") or bc.get("competency_id", "")
-            outline_competencies.append({
-                "id": bc_id,
-                "name": bc.get("name") or bc.get("title", ""),
-                "type": (bc.get("type") or bc.get("category", "concept")).lower(),
-                "session": bc.get("session", "[BASE]"),
-                "unit_index": bc.get("unit_index", 0),
-                "evidence": bc.get("evidence", []),
-                "prerequisites": bc.get("prerequisites", []),
-                "distractor_names": bc.get("distractor_names", []),
-                "read_only_base": True,
-            })
-
-    for c in combined_competencies:
-        outline_competencies.append({
-            "id": c["id"],
-            "name": c.get("name", ""),
-            "type": c.get("type", ""),
-            "session": c.get("session", ""),
-            "unit_index": c.get("unit_index", 0),
-            "evidence": c.get("evidence", []),
-            "prerequisites": c.get("prerequisites", []),
-            "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
-            "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
-        })
-
-    outline_payload = {
-        "course_id": course_id,
-        "title": course_title,
-        "macro_competency": macro_competency,
-        "competencies": outline_competencies,
-    }
+    outline_payload = _build_outline_payload(
+        course_id=course_id,
+        course_title=course_title,
+        macro_competency=macro_competency,
+        draft_competencies=combined_competencies,
+        existing_competencies=existing_comps,
+    )
 
     order_list = [c["id"] for c in combined_competencies]
     order_hash = hashlib.sha256(json.dumps(order_list).encode("utf-8")).hexdigest()
@@ -1511,40 +1577,13 @@ def prepare_harmonize_from_single_draft(work_dir: Union[str, Path]) -> Dict[str,
     if delta_info and isinstance(delta_info, dict):
         base_comps = delta_info.get("existing_competencies") or delta_info.get("existing_competencies_outline") or []
 
-    outline_competencies: List[Dict[str, Any]] = []
-    for bc in base_comps:
-        cid = bc.get("id") or bc.get("competency_id", "")
-        outline_competencies.append({
-            "id": cid,
-            "name": bc.get("name") or bc.get("title", ""),
-            "type": (bc.get("type") or bc.get("category", "concept")).lower(),
-            "session": bc.get("session", "[BASE]"),
-            "unit_index": bc.get("unit_index", 0),
-            "evidence": bc.get("evidence", []),
-            "prerequisites": bc.get("prerequisites", []),
-            "distractor_names": bc.get("distractor_names", []),
-            "read_only_base": True,
-        })
-
-    for c in competencies:
-        outline_competencies.append({
-            "id": c["id"],
-            "name": c.get("name", ""),
-            "type": c.get("type", ""),
-            "session": c.get("session", ""),
-            "unit_index": c.get("unit_index", 0),
-            "evidence": c.get("evidence", []),
-            "prerequisites": c.get("prerequisites", []),
-            "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
-            "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
-        })
-
-    outline_payload = {
-        "course_id": draft_payload.get("course_id", "course"),
-        "title": draft_payload.get("title", ""),
-        "macro_competency": draft_payload.get("macro_competency", ""),
-        "competencies": outline_competencies,
-    }
+    outline_payload = _build_outline_payload(
+        course_id=draft_payload.get("course_id", "course"),
+        course_title=draft_payload.get("title", ""),
+        macro_competency=draft_payload.get("macro_competency", ""),
+        draft_competencies=competencies,
+        existing_competencies=base_comps,
+    )
 
     duplicate_candidates = find_duplicate_candidates(competencies, existing_competencies=base_comps)
     order_list = [c["id"] for c in competencies]
@@ -1643,6 +1682,7 @@ def apply_harmonize(
             candidate_lookup[key] = cand
 
     decisions_log: List[Dict[str, Any]] = []
+    validation_errors: List[str] = []
 
     # 1. Process renames
     renames = harmonize_data.get("rename", [])
@@ -1650,10 +1690,16 @@ def apply_harmonize(
         cid = ren.get("competency")
         new_name = ren.get("name")
         if not new_name or not isinstance(new_name, str) or not new_name.strip():
-            raise ValueError(f"Rename failed: competency '{cid}' requires a non-empty string name.")
+            validation_errors.append(
+                f"Rename failed: competency '{cid}' requires a non-empty string name."
+            )
+            continue
         target_comp = next((c for c in competencies if c["id"] == cid), None)
         if not target_comp:
-            raise ValueError(f"Rename failed: competency '{cid}' not found in curriculum.")
+            validation_errors.append(
+                f"Rename failed: competency '{cid}' not found in curriculum."
+            )
+            continue
         target_comp["name"] = new_name.strip()
         decisions_log.append({
             "operation": "rename",
@@ -1668,15 +1714,20 @@ def apply_harmonize(
         dids_to_drop = set(drop_item.get("distractor_ids", []))
         target_comp = next((c for c in competencies if c["id"] == cid), None)
         if not target_comp:
-            raise ValueError(f"drop_duplicate_distractors failed: competency '{cid}' not found.")
+            validation_errors.append(
+                f"drop_duplicate_distractors failed: competency '{cid}' not found."
+            )
+            continue
 
         current_distractors = target_comp.get("distractors", [])
         existing_dids = {d.get("id") for d in current_distractors}
         missing_dids = dids_to_drop - existing_dids
+        drop_item_valid = True
         if missing_dids:
-            raise ValueError(
+            validation_errors.append(
                 f"Cannot drop non-existent distractor IDs {missing_dids} in competency '{cid}'."
             )
+            drop_item_valid = False
 
         surviving_distractors = [d for d in current_distractors if d.get("id") not in dids_to_drop]
 
@@ -1684,22 +1735,28 @@ def apply_harmonize(
         ctype = target_comp.get("type", "").lower()
         if ctype in ("fact", "concept"):
             if len(surviving_distractors) < 3:
-                raise ValueError(
+                validation_errors.append(
                     f"Quota violation: Dropping distractors from {ctype} '{cid}' would leave "
                     f"{len(surviving_distractors)} (minimum 3 required)."
                 )
+                drop_item_valid = False
         elif ctype == "skill":
             if len(surviving_distractors) < 6:
-                raise ValueError(
+                validation_errors.append(
                     f"Quota violation: Dropping distractors from Skill '{cid}' would leave "
                     f"{len(surviving_distractors)} (minimum 6 required)."
                 )
+                drop_item_valid = False
             omitted_count = sum(1 for d in surviving_distractors if d.get("omitted_step"))
             if omitted_count < 2:
-                raise ValueError(
+                validation_errors.append(
                     f"Quota violation: Dropping distractors from Skill '{cid}' would leave "
                     f"{omitted_count} with omitted_step (minimum 2 required)."
                 )
+                drop_item_valid = False
+
+        if not drop_item_valid:
+            continue
 
         target_comp["distractors"] = surviving_distractors
         decisions_log.append({
@@ -1720,6 +1777,8 @@ def apply_harmonize(
         elif isinstance(m_val, dict):
             merges_directives.append(m_val)
 
+    absorbed_to_root: Dict[str, str] = {}
+
     if no_merge:
         decisions_log.append({
             "operation": "merge",
@@ -1727,11 +1786,36 @@ def apply_harmonize(
             "message": "Fusión desactivada por flag no_merge=True.",
         })
     else:
+        # Collect merge edges and resolve transitive chains via Union-Find before mutating competencies
+        orig_pos = {cid: idx for idx, cid in enumerate(orig_order)}
+        uf_parent: Dict[str, str] = {}
+        edge_meta: List[Dict[str, Any]] = []
+
+        def _uf_rank(cid: str) -> Tuple[int, int]:
+            if cid in existing_competency_ids:
+                return (0, 0)
+            return (1, orig_pos.get(cid, 999999))
+
+        def _uf_find(cid: str) -> str:
+            uf_parent.setdefault(cid, cid)
+            while uf_parent[cid] != cid:
+                uf_parent[cid] = uf_parent[uf_parent[cid]]
+                cid = uf_parent[cid]
+            return cid
+
+        def _uf_union(a: str, b: str) -> None:
+            ra, rb = _uf_find(a), _uf_find(b)
+            if ra == rb:
+                return
+            if _uf_rank(ra) <= _uf_rank(rb):
+                uf_parent[rb] = ra
+            else:
+                uf_parent[ra] = rb
+
         for m_entry in merges_directives:
             decision = str(m_entry.get("decision", "merge")).lower().strip()
             reason = str(m_entry.get("reason") or m_entry.get("rationale") or "").strip()
 
-            # Support multiple merge format inputs
             pair = m_entry.get("pair")
             if not pair and m_entry.get("id1") and m_entry.get("id2"):
                 pair = [m_entry["id1"], m_entry["id2"]]
@@ -1780,13 +1864,10 @@ def apply_harmonize(
                         survivor_id, absorbed_ids = id_x, [id_y]
                     elif id_y in existing_competency_ids:
                         survivor_id, absorbed_ids = id_y, [id_x]
+                    elif orig_pos.get(id_x, 999999) <= orig_pos.get(id_y, 999999):
+                        survivor_id, absorbed_ids = id_x, [id_y]
                     else:
-                        idx_x = orig_order.index(id_x) if id_x in orig_order else 999999
-                        idx_y = orig_order.index(id_y) if id_y in orig_order else 999999
-                        if idx_x <= idx_y:
-                            survivor_id, absorbed_ids = id_x, [id_y]
-                        else:
-                            survivor_id, absorbed_ids = id_y, [id_x]
+                        survivor_id, absorbed_ids = id_y, [id_x]
             else:
                 if not keep_id:
                     continue
@@ -1824,34 +1905,68 @@ def apply_harmonize(
                     })
                     continue
 
-                # Case A: Absorbed into base course competency
-                if survivor_id in existing_competency_ids:
+                _uf_union(survivor_id, absorbed_id)
+                edge_meta.append({
+                    "survivor_id": survivor_id,
+                    "absorbed_id": absorbed_id,
+                    "reason": reason,
+                    "merged_type": m_entry.get("merged_type"),
+                    "merged_name": m_entry.get("merged_name"),
+                    "merged_description_latex": m_entry.get("merged_description_latex"),
+                })
+
+        # Group members by Union-Find root
+        uf_groups: Dict[str, List[str]] = {}
+        for node in list(uf_parent.keys()):
+            root = _uf_find(node)
+            if node != root:
+                uf_groups.setdefault(root, []).append(node)
+
+        for root in uf_groups:
+            uf_groups[root].sort(key=lambda cid: orig_pos.get(cid, 999999))
+
+        for root, members in sorted(uf_groups.items(), key=lambda kv: _uf_rank(kv[0])):
+            group_edges = [e for e in edge_meta if _uf_find(e["survivor_id"]) == root]
+            group_reason = "; ".join(dict.fromkeys(e["reason"] for e in group_edges if e["reason"]))
+
+            # Case A: Absorbed into base course competency
+            if root in existing_competency_ids:
+                for absorbed_id in members:
                     comp_absorbed = next((c for c in competencies if c["id"] == absorbed_id), None)
                     if comp_absorbed:
+                        absorbed_to_root[absorbed_id] = root
                         competencies = [c for c in competencies if c["id"] != absorbed_id]
                         for c in competencies:
                             c_prereqs = c.get("prerequisites", [])
                             rewritten: List[str] = []
                             for pr in c_prereqs:
-                                target = survivor_id if pr == absorbed_id else pr
+                                target = root if pr == absorbed_id else pr
                                 if target != c["id"] and target not in rewritten:
                                     rewritten.append(target)
                             c["prerequisites"] = rewritten
                         decisions_log.append({
                             "operation": "merge",
-                            "survivor": survivor_id,
+                            "survivor": root,
                             "absorbed": absorbed_id,
                             "absorbed_into_base": True,
                             "decision": "merge",
-                            "reason": reason,
+                            "reason": group_reason,
                         })
+                continue
+
+            # Case B: Standard merge within delta competencies
+            comp_survivor = next((c for c in competencies if c["id"] == root), None)
+            if not comp_survivor:
+                continue
+
+            absorbed_concept_with_assumptions = False
+            for absorbed_id in members:
+                comp_absorbed = next((c for c in competencies if c["id"] == absorbed_id), None)
+                if not comp_absorbed:
                     continue
 
-                # Case B: Standard merge within delta competencies
-                comp_survivor = next((c for c in competencies if c["id"] == survivor_id), None)
-                comp_absorbed = next((c for c in competencies if c["id"] == absorbed_id), None)
-                if not comp_survivor or not comp_absorbed:
-                    continue
+                if comp_absorbed.get("type", "").lower() == "concept" and comp_absorbed.get("assumptions"):
+                    absorbed_concept_with_assumptions = True
 
                 # Unify distractors (eliminate exact duplicates by signature)
                 combined_distractors = list(comp_survivor.get("distractors", []))
@@ -1864,7 +1979,7 @@ def apply_harmonize(
                     for d in combined_distractors
                 }
                 seen_dids = {d.get("id") for d in combined_distractors}
-                survivor_code = survivor_id.replace("-", "")
+                survivor_code = root.replace("-", "")
 
                 for d in comp_absorbed.get("distractors", []):
                     sig = (
@@ -1922,26 +2037,53 @@ def apply_harmonize(
                 comp_survivor["assumptions"] = survivor_assumptions
 
                 # Remove absorbed competency from curriculum
+                absorbed_to_root[absorbed_id] = root
                 competencies = [c for c in competencies if c["id"] != absorbed_id]
 
                 # Rewrite prerequisites across all remaining competencies
                 for c in competencies:
                     c_prereqs = c.get("prerequisites", [])
-                    rewritten: List[str] = []
+                    rewritten = []
                     for pr in c_prereqs:
-                        target = survivor_id if pr == absorbed_id else pr
+                        target = root if pr == absorbed_id else pr
                         if target != c["id"] and target not in rewritten:
                             rewritten.append(target)
                     c["prerequisites"] = rewritten
 
                 decisions_log.append({
                     "operation": "merge",
-                    "pair": [survivor_id, absorbed_id],
-                    "survivor": survivor_id,
+                    "pair": [root, absorbed_id],
+                    "survivor": root,
                     "absorbed": absorbed_id,
                     "decision": "merge",
-                    "reason": reason,
+                    "reason": group_reason,
                 })
+
+            # Apply optional merged_type / merged_name / merged_description_latex and fact->concept promotion
+            explicit_type = next((e["merged_type"] for e in reversed(group_edges) if e.get("merged_type")), None)
+            explicit_name = next((e["merged_name"] for e in reversed(group_edges) if e.get("merged_name")), None)
+            explicit_desc = next(
+                (e["merged_description_latex"] for e in reversed(group_edges) if e.get("merged_description_latex")),
+                None,
+            )
+
+            if explicit_type:
+                comp_survivor["type"] = str(explicit_type).strip().lower()
+            elif comp_survivor.get("type", "").lower() == "fact" and absorbed_concept_with_assumptions:
+                comp_survivor["type"] = "concept"
+
+            if explicit_name and str(explicit_name).strip():
+                comp_survivor["name"] = str(explicit_name).strip()
+            if explicit_desc and str(explicit_desc).strip():
+                comp_survivor["description_latex"] = str(explicit_desc).strip()
+
+            # Safeguard: non-skill survivors must have omitted_step = None on inherited distractors
+            if comp_survivor.get("type", "").lower() != "skill":
+                for d in comp_survivor.get("distractors", []):
+                    if d.get("omitted_step") is not None:
+                        if not d.get("wrong_belief"):
+                            d["wrong_belief"] = str(d["omitted_step"])
+                        d["omitted_step"] = None
 
     # 4. Process add_prerequisites (supports dict, prerequisite_additions, prerequisite_updates)
     prereq_directives: List[Tuple[str, List[str]]] = []
@@ -1977,7 +2119,14 @@ def apply_harmonize(
 
     for cid, reqs in prereq_directives:
         if cid not in current_order_map:
-            raise ValueError(f"add_prerequisites failed: Competency '{cid}' not found.")
+            hint = (
+                f" (absorbed into '{absorbed_to_root[cid]}'; use '{absorbed_to_root[cid]}')"
+                if cid in absorbed_to_root else ""
+            )
+            validation_errors.append(
+                f"add_prerequisites failed: Competency '{cid}' not found{hint}."
+            )
+            continue
         cid_pos = current_order_map[cid]
         comp = next(c for c in competencies if c["id"] == cid)
         comp_prereqs = list(comp.get("prerequisites", []))
@@ -1993,17 +2142,23 @@ def apply_harmonize(
                     comp_prereqs.append(req)
                 continue
             if req not in current_order_map:
-                raise ValueError(
-                    f"add_prerequisites failed: Prerequisite '{req}' for '{cid}' not found."
+                hint = (
+                    f" (absorbed into '{absorbed_to_root[req]}'; use '{absorbed_to_root[req]}')"
+                    if req in absorbed_to_root else ""
                 )
+                validation_errors.append(
+                    f"add_prerequisites failed: Prerequisite '{req}' for '{cid}' not found{hint}."
+                )
+                continue
             req_pos = current_order_map[req]
 
             # Enforce backward-only constraint: req_pos < cid_pos
             if req_pos >= cid_pos:
-                raise ValueError(
+                validation_errors.append(
                     f"Backward-only violation: Competency '{cid}' (order pos {cid_pos}) "
                     f"cannot depend on '{req}' (order pos {req_pos}). Prerequisites must point only backward."
                 )
+                continue
 
             if req not in comp_prereqs:
                 comp_prereqs.append(req)
@@ -2017,14 +2172,14 @@ def apply_harmonize(
 
     # 5. Validate DAG acyclicity and connectivity
     dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_competency_ids)
-    if dag_errors:
-        raise ValueError(f"Prerequisite DAG validation failed: {dag_errors}")
+    for dag_err in dag_errors:
+        validation_errors.append(f"Prerequisite DAG validation failed: {dag_err}")
 
     # 6. Validate pedagogical order immutability
     current_ids = [c["id"] for c in competencies]
     expected_order = [cid for cid in orig_order if cid in current_ids]
     if current_ids != expected_order:
-        raise ValueError(
+        validation_errors.append(
             f"Pedagogical order violation: Competency ordering was modified. "
             f"Expected {expected_order}, got {current_ids}."
         )
@@ -2038,17 +2193,32 @@ def apply_harmonize(
 
     manifest_file = Path(manifest_path).resolve() if manifest_path else work_path / "pre_cta_manifest.json"
     if not manifest_file.is_file():
-        print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
-        raise FileNotFoundError("BLOCKER:: No existe pre_cta_manifest.json")
-    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+        if not validation_errors:
+            print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+            raise FileNotFoundError("BLOCKER:: No existe pre_cta_manifest.json")
+    else:
+        manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
 
-    valid, rule_errors = validate_cta_rules(
-        cta_draft,
-        manifest_data,
-        allowed_prereq_ids=existing_competency_ids,
-    )
-    if not valid:
-        raise ValueError(f"validate_cta_rules failed with errors: {rule_errors}")
+        valid, rule_errors = validate_cta_rules(
+            cta_draft,
+            manifest_data,
+            allowed_prereq_ids=existing_competency_ids,
+        )
+        if not valid:
+            for r_err in rule_errors:
+                validation_errors.append(f"validate_cta_rules failed: {r_err}")
+
+    # Fail-total barrier: report ALL accumulated validation errors together
+    if validation_errors:
+        unique_errors = list(dict.fromkeys(validation_errors))
+        err_lines = [
+            f"[CONSOLIDATED ERROR PACK] apply_harmonize failed ({len(unique_errors)} errors):",
+            "Emitting ALL harmonization & CTA validation errors unthrottled:",
+            "",
+        ]
+        for idx, err_msg in enumerate(unique_errors, 1):
+            err_lines.append(f"  {idx}. {err_msg}")
+        raise ValueError("\n".join(err_lines))
 
     # 8. Write final cta.json
     final_cta_json = work_path / "cta.json"

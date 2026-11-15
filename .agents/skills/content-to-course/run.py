@@ -1,4 +1,4 @@
-"""End-to-End Content-to-Course v2 Modular CLI Runner.
+﻿"""End-to-End Content-to-Course v2 Modular CLI Runner.
 
 Orchestrates multi-stage generation of interactive Top's Academy courses:
 - Stage 0 (ingest): Multiformat ingestion (PDFs, images >2500px tiled, manifest, SHA-256 cache)
@@ -812,7 +812,7 @@ class PipelineRunner:
     # STAGE 2: Shard
     # -------------------------------------------------------------------------
     def run_stage_shard(self) -> Dict[str, Any]:
-        """Stage 2: Shard CTA competencies across author batches (max 5-6 per shard)."""
+        """Stage 2: Shard CTA competencies across author batches (max 2 skills / 3 non-skills per shard)."""
         t0 = time.time()
         print("\n" + "=" * 70)
         print("[STAGE 2: SHARD] Partitioning CTA competencies for parallel authoring")
@@ -1685,7 +1685,6 @@ class PipelineRunner:
             lines.append("")
             lines.append("  📁 Reportes QA Guardados:")
             lines.append(f"    • Informe QA (Markdown): {qa_md_path}")
-            lines.append(f"    • Informe QA (JSON):     {qa_md_path.replace('.md', '.json')}")
 
         lines.append("=" * 70)
         return "\n".join(lines)
@@ -1784,7 +1783,6 @@ class PipelineRunner:
                             "run_dir": str(rdir),
                             "report_md": str(rdir / "report.md"),
                             "telemetry_json": str(telemetry_path),
-                            "dashboard_html": str(rdir / "dashboard.html"),
                             "benchmark_md": str(audits_out_dir / "historical_benchmark.md"),
                             "telemetry": telemetry_data,
                         }
@@ -1908,7 +1906,6 @@ class PipelineRunner:
                 "  📁 Reportes del Pipeline Auditor Guardados:",
                 f"    • Informe Auditor (MD):      {audit_info.get('report_md', '')}",
                 f"    • Telemetría JSON:           {audit_info.get('telemetry_json', '')}",
-                f"    • Dashboard HTML:            {audit_info.get('dashboard_html', '')}",
                 f"    • Benchmark Histórico:       {audit_info.get('benchmark_md', '')}",
             ])
         else:
@@ -3288,13 +3285,13 @@ def main() -> None:
         "--shards",
         type=int,
         default=None,
-        help="Number of author shards (defaults to dynamic max 2 competencies per shard in Case 2B).",
+        help="Number of author shards (defaults to dynamic: max 2 skill / max 3 non-skill competencies per shard).",
     )
     parser.add_argument(
         "--comps-per-shard",
         type=int,
         default=DEFAULT_COMPS_PER_SHARD,
-        help="Max competencies per shard (defaults to 2 for Case 2B; change to 3 for Case 2A).",
+        help="Max non-skill competencies per shard (default 3; skills are capped at 2 per shard).",
     )
     parser.add_argument(
         "--order",

@@ -1,9 +1,10 @@
-"""Dynamic Competency Sharding Engine for content-to-course v3.3.
+﻿"""Dynamic Competency Sharding Engine for content-to-course v3.3.
 
 Partitions CTA competencies into balanced shards with Milestone 7.4 Cognitive Sharding:
-- Hard Skill Isolation Rule: Every skill ('Hab-*') is isolated into an exclusive 1-competency shard (Anti-Straggler SLA).
-- Contiguous Concept/Fact Grouping: Consecutive non-skill competencies are packed max 2 competencies per shard
-  (allowing up to 3 competencies ONLY when all 3 are 'fact' and total competencies N >= 30).
+- Skill Grouping Rule: Skill competencies ('Hab-*') are grouped in curriculum order in blocks of up to
+  MAX_SKILLS_PER_SHARD = 2 per shard (default: 2), isolated from non-skill competencies.
+- Contiguous Concept/Fact Grouping: Consecutive non-skill competencies are packed up to
+  DEFAULT_COMPS_PER_SHARD = 3 competencies per shard (default: 3).
 - Heaviest-First Ordering: Shards are sorted descending by weight (Skill=6.0, Concept=2.5, Fact=1.5 + 0.1*distractors)
   so all Skill shards sit at the front of Wave 1 (t = 0).
 - Wave Indexing: Single-wave maximum parallelism by default (max_wave_size default: 100, Heaviest-First at t = 0).
@@ -31,13 +32,14 @@ from engine.stage_contract import competency_contract, global_contract, render_c
 
 # =============================================================================
 # SHARD & TEMPLATE SCALING CONFIGURATION
-# Caso 2B (Variedad Máxima / Deep Mastery) - ACTUAL:
-#   C = 2 (máximo 2 competencias por shard)
-#   T = 4 (4 plantillas disjuntas por competencia: Directa, Inversa, Perturbación, Frontera)
-# [REVERT TO 2A]: Cambiar DEFAULT_COMPS_PER_SHARD = 3 para volver al Caso 2A (C=3, T=3)
+# Capacidad por shard:
+#   DEFAULT_COMPS_PER_SHARD = 3 (máximo 3 competencias no-skill por shard)
+#   MAX_SKILLS_PER_SHARD = 2 (máximo 2 competencias skill por shard)
+#   T >= 4 (mínimo 4 plantillas disjuntas por competencia: Directa, Inversa, Perturbación, Frontera; +MC7 adicionales si TPL-D3 excede capacidad base)
 # =============================================================================
-DEFAULT_COMPS_PER_SHARD: int = 2
-DEFAULT_MAX_WAVE_SIZE: int = 100 
+DEFAULT_COMPS_PER_SHARD: int = 3
+MAX_SKILLS_PER_SHARD: int = 2
+DEFAULT_MAX_WAVE_SIZE: int = 100
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
@@ -107,10 +109,14 @@ DSL_REFERENCE: Dict[str, Any] = {
             "python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
         ),
         "quotas": (
-            "Para CADA competencia asignada: autorar exactamente 4 plantillas paramétricas disjuntas bajo contrato "
-            "Form-C / Form-B (min_archetypes = 4: 'direct', 'inverse', 'perturbation', 'boundary_or_edge_case', cubriendo >= 2 niveles Bloom con "
-            "práctica activa multimodal: FIB sin signos de dólar externos, MS y MC7 con 3-tuplas dinámicas) "
-            "en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json."
+            "Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de 4 plantillas paramétricas disjuntas "
+            "(1 por arquetipo bajo contrato Form-C / Form-B, min_archetypes = 4: 'direct', 'inverse', 'perturbation', "
+            "'boundary_or_edge_case', cubriendo >= 2 niveles Bloom con práctica activa multimodal: FIB sin signos de dólar "
+            "externos, MS [2-4 distractores/semilla] y MC7 [6 distractores/semilla] con 3-tuplas dinámicas). "
+            "Si una competencia declara en cta.json más distractores de los que caben en una sola semilla de las plantillas "
+            "base (MC7 = 6 distractores/semilla, MS = 2-4 distractores/semilla, FIB = 0), el autor DEBE agregar plantillas "
+            "MC7 adicionales (no intentar cubrir por rotación entre semillas si TPL-D3 evalúa una semilla, manteniendo el "
+            "contrato multimodal) en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json."
         ),
         "form_b_triband": (
             "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla "
@@ -118,9 +124,14 @@ DSL_REFERENCE: Dict[str, Any] = {
             "debe cubrir los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') con >= 2 niveles Bloom y práctica activa obligatoria (FIB / MS / MC7)."
         ),
         "distractor_coverage": (
-            "Regla TPL-D3: 100% de los distractor_ids declarados deben usarse en al menos una plantilla. "
-            "Regla TPL-D2: Plantillas MC7 requieren exactamente 6 distractores estructurados como 3-tuplas obligatorias "
-            "(did, val, rationale_con_@var@) con longitud >= 20 caracteres interpolando variables paramétricas."
+            "Regla TPL-D3: 100% de los distractor_ids declarados en cta.json deben usarse en al menos una plantilla "
+            "(evaluado por semilla). "
+            "Regla TPL-D2: Cada plantilla MC7 requiere exactamente 6 distractores por semilla estructurados como 3-tuplas "
+            "obligatorias (did, val, rationale_con_@var@) con longitud >= 20 caracteres interpolando variables paramétricas; "
+            "cada MS admite 2-4 distractores/semilla; FIB no usa distractores. "
+            "Cuando n_distractors > capacidad_base de las 4 plantillas mínimas, agrega plantillas MC7 adicionales "
+            "(mínimo ceil(n_distractors / 6) MC7 si cubres solo con MC7, o ceil(max(0, n_distractors - 4) / 6) MC7 "
+            "combinando con 1 MS de 4 distractores) para lograr 100% de cobertura TPL-D3."
         ),
         "dynamic_rationale": (
             "[TPL-DYNAMIC-RATIONALE]: En MC7, cada distractor DEBE declararse como una 3-tupla (did, val, rationale_con_@var@) "
@@ -346,9 +357,11 @@ def is_fact_competency(comp: Dict[str, Any]) -> bool:
     if is_skill_competency(comp):
         return False
     ctype = str(comp.get("type", "")).lower().strip()
-    cid = str(comp.get("id", "")).strip().upper()
     if ctype in ("fact", "facts", "h", "hecho", "hechos"):
         return True
+    if ctype in ("concept", "concepts", "c", "concepto", "conceptos"):
+        return False
+    cid = str(comp.get("id", "")).strip().upper()
     if (
         cid.startswith("H-")
         or cid.startswith("H_")
@@ -373,9 +386,11 @@ def is_concept_competency(comp: Dict[str, Any]) -> bool:
     if is_skill_competency(comp):
         return False
     ctype = str(comp.get("type", "")).lower().strip()
-    cid = str(comp.get("id", "")).strip().upper()
     if ctype in ("concept", "concepts", "c", "concepto", "conceptos"):
         return True
+    if ctype in ("fact", "facts", "h", "hecho", "hechos"):
+        return False
+    cid = str(comp.get("id", "")).strip().upper()
     if (
         cid.startswith("C-")
         or cid.startswith("C_")
@@ -416,13 +431,51 @@ def calculate_competency_weight(comp: Dict[str, Any]) -> float:
     return round(base + (0.1 * distractors_count), 2)
 
 
+def _compute_distractor_template_guidance(
+    competencies: List[Dict[str, Any]],
+) -> Dict[str, Dict[str, Any]]:
+    """Compute per-competency MC7 template requirements when distractors exceed base capacity."""
+    guidance: Dict[str, Dict[str, Any]] = {}
+    for comp in competencies:
+        if not isinstance(comp, dict):
+            continue
+        cid = str(comp.get("id", "")).strip()
+        if not cid:
+            continue
+        distractors_raw = comp.get("distractors")
+        n_distractors = len(distractors_raw) if isinstance(distractors_raw, list) else 0
+        # Base multimodal 4-template capacity: 1 MC7 (6) + 1 MS (2-4) + FIB (0) -> max 10 distractors;
+        # single MC7 capacity is 6 distractors/seed.
+        if n_distractors > 6:
+            min_mc7_only = math.ceil(n_distractors / 6)
+            min_mc7_with_ms4 = max(1, math.ceil(max(0, n_distractors - 4) / 6))
+            exceeds_base_multimodal = n_distractors > 10
+            entry: Dict[str, Any] = {
+                "n_distractors": n_distractors,
+                "mc7_capacity_per_seed": 6,
+                "ms_capacity_per_seed": "2-4",
+                "min_mc7_if_mc7_only": min_mc7_only,
+                "min_mc7_with_ms4": min_mc7_with_ms4,
+                "exceeds_base_multimodal": exceeds_base_multimodal,
+            }
+            if exceeds_base_multimodal:
+                entry["warning"] = (
+                    f"{cid} declara {n_distractors} distractores (> capacidad base multimodal 10 = 1 MC7 + 1 MS). "
+                    f"Para cumplir TPL-D3 (100% cobertura por semilla) sin romper el contrato multimodal, "
+                    f"agrega plantillas MC7 adicionales (mínimo {min_mc7_with_ms4} MC7 combinando con 1 MS de 4 distractores, "
+                    f"o {min_mc7_only} MC7 si cubres solo con MC7)."
+                )
+            guidance[cid] = entry
+    return guidance
+
+
 def determine_shard_count(
     competencies: Union[List[Dict[str, Any]], int],
     avg_distractors: Optional[Union[float, int]] = None,
     requested_k: Optional[int] = None,
     max_comps_per_shard: Optional[int] = DEFAULT_COMPS_PER_SHARD,
 ) -> int:
-    """Determine shard count K with sweet-spot amortized sharding (Case 2B: max 2 per shard; Case 2A: max 3 per shard).
+    """Determine shard count K with sweet-spot amortized sharding (non-skill: max 3 per shard; skill: max 2 per shard).
 
     Can be invoked with:
       determine_shard_count(num_competencies, avg_distractors)
@@ -449,7 +502,7 @@ def determine_shard_count(
     if max_comps_per_shard is not None and max_comps_per_shard > 0:
         target_max = float(max_comps_per_shard)
     else:
-        # Adaptive Shard Sizing: target max comps per shard clamped to DEFAULT_COMPS_PER_SHARD (Case 2B: 2, Case 2A: 3)
+        # Adaptive Shard Sizing: target max comps per shard clamped to DEFAULT_COMPS_PER_SHARD (3 non-skill; skills capped separately at 2)
         # Sized for up to 8 concurrent author subagents, never exceeding DEFAULT_COMPS_PER_SHARD.
         target_max = float(max(2, min(DEFAULT_COMPS_PER_SHARD, math.ceil(total_comps / 8.0))))
 
@@ -493,21 +546,38 @@ def partition_competencies_into_shards(
     return shards
 
 
+def _build_raw_shard(
+    chunk: List[Dict[str, Any]],
+    curriculum_indices: Dict[str, int],
+    is_skill: bool,
+) -> Dict[str, Any]:
+    """Build a raw weighted shard dict from a chunk of competencies."""
+    w = round(sum(calculate_competency_weight(x) for x in chunk), 2)
+    c_ids = [x.get("id", "") for x in chunk]
+    return {
+        "weight": w,
+        "estimated_weight": w,
+        "competency_ids": c_ids,
+        "competencies": chunk,
+        "min_curriculum_idx": min(curriculum_indices.get(x_id, 0) for x_id in c_ids),
+        "is_skill": is_skill,
+    }
+
+
 def partition_competencies_weighted(
     competencies: List[Dict[str, Any]],
     max_comps: Optional[int] = DEFAULT_COMPS_PER_SHARD,
+    max_skills: Optional[int] = MAX_SKILLS_PER_SHARD,
 ) -> List[Dict[str, Any]]:
-    """Partition competencies using Milestone 7.4 Weighted Cognitive Sharding & Anti-Straggler Rules:
-    
-    1. Hard Skill Isolation Rule:
-       Every competency with type == 'skill' (or prefix 'Hab-') is assigned to its own exclusive
-       1-competency shard (never grouped with another skill, concept, or fact).
-    
+    """Partition competencies using Milestone 7.4 Weighted Cognitive Sharding:
+
+    1. Skill Grouping Rule:
+       Skill competencies ('Hab-*' or type == 'skill') are grouped in curriculum order
+       in blocks of up to max_skills (default: MAX_SKILLS_PER_SHARD = 2) per shard.
+
     2. Contiguous Concept/Fact Grouping:
        Adjacent concept ('C-*') and fact ('H-*') competencies in curriculum order are packed
-       with max 2 competencies per shard by default (Case 2B), allowing up to 3 competencies
-       ONLY when all 3 are 'fact' and total competencies N >= 30.
-       If max_comps >= 3 (e.g. Case 2A), groups up to max_comps per shard.
+       in blocks of up to max_comps (default: DEFAULT_COMPS_PER_SHARD = 3) per shard.
     """
     if not competencies:
         return []
@@ -530,19 +600,12 @@ def partition_competencies_weighted(
 
     raw_shards: List[Dict[str, Any]] = []
 
-    # 1. Hard Skill Isolation: Every skill gets its own exclusive 1-competency shard
-    for c in competencies:
-        if is_skill_competency(c):
-            cid = c.get("id", "")
-            w = calculate_competency_weight(c)
-            raw_shards.append({
-                "weight": w,
-                "estimated_weight": w,
-                "competency_ids": [cid],
-                "competencies": [c],
-                "min_curriculum_idx": curriculum_indices.get(cid, 0),
-                "is_skill": True,
-            })
+    # 1. Skill Grouping: Pack skills in curriculum order in blocks of up to eff_max_skills
+    eff_max_skills = max(1, int(max_skills) if max_skills is not None else MAX_SKILLS_PER_SHARD)
+    skills = [c for c in competencies if is_skill_competency(c)]
+    for s_idx in range(0, len(skills), eff_max_skills):
+        chunk = skills[s_idx:s_idx + eff_max_skills]
+        raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=True))
 
     # 2. Contiguous Concept/Fact Grouping: Group non-skills in curriculum order
     target_max = max_comps if (max_comps is not None and max_comps > 0) else DEFAULT_COMPS_PER_SHARD
@@ -551,37 +614,19 @@ def partition_competencies_weighted(
     m = len(non_skills)
     while idx < m:
         remaining = m - idx
-        # Exception rule for target_max == 2 (Case 2B):
+        # Exception rule for target_max == 2 (legacy Case 2B):
         # up to 3 competencies allowed ONLY when all 3 are 'fact' and total competencies N >= 30
         if target_max == 2 and remaining >= 3 and total_n >= 30:
             if all(is_fact_competency(non_skills[idx + j]) for j in range(3)):
                 if remaining == 3 or remaining >= 5:
                     chunk = non_skills[idx:idx + 3]
-                    w = round(sum(calculate_competency_weight(x) for x in chunk), 2)
-                    c_ids = [x.get("id", "") for x in chunk]
-                    raw_shards.append({
-                        "weight": w,
-                        "estimated_weight": w,
-                        "competency_ids": c_ids,
-                        "competencies": chunk,
-                        "min_curriculum_idx": min(curriculum_indices.get(x_id, 0) for x_id in c_ids),
-                        "is_skill": False,
-                    })
+                    raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=False))
                     idx += 3
                     continue
 
         take = min(target_max, remaining)
         chunk = non_skills[idx:idx + take]
-        w = round(sum(calculate_competency_weight(x) for x in chunk), 2)
-        c_ids = [x.get("id", "") for x in chunk]
-        raw_shards.append({
-            "weight": w,
-            "estimated_weight": w,
-            "competency_ids": c_ids,
-            "competencies": chunk,
-            "min_curriculum_idx": min(curriculum_indices.get(x_id, 0) for x_id in c_ids),
-            "is_skill": False,
-        })
+        raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=False))
         idx += take
 
     return raw_shards
@@ -594,6 +639,7 @@ def plan_shards(
     max_comps: Optional[int] = DEFAULT_COMPS_PER_SHARD,
     max_wave_size: int = DEFAULT_MAX_WAVE_SIZE,
     isolate_skills: bool = True,
+    max_skills: int = MAX_SKILLS_PER_SHARD,
 ) -> Dict[str, Any]:
     """Execute sharding on cta.json and write pre_shard_manifest.json (v3.3 canonical)."""
     cta_file = Path(cta_path).resolve()
@@ -673,7 +719,11 @@ def plan_shards(
             s["estimated_weight"] = s["weight"]
     else:
         # Milestone 7.4 Weighted Cognitive Sharding & Anti-Straggler SLA
-        raw_shards = partition_competencies_weighted(competencies, max_comps=max_comps)
+        raw_shards = partition_competencies_weighted(
+            competencies,
+            max_comps=max_comps,
+            max_skills=max_skills,
+        )
         # Heaviest-First Ordering:
         # Sort descending by weight (breaking ties deterministically by curriculum index).
         # Skills sit at the front of Wave 1 (t = 0).
@@ -775,6 +825,7 @@ def plan_shards(
 
         # Write self-contained shard json for backward compatibility & author isolation
         shard_file = out_dir / f"{s_id}.json"
+        distractor_guidance = _compute_distractor_template_guidance(shard["competencies"])
         shard_payload = {
             "shard_id": s_id,
             "shard_index": idx,
@@ -795,6 +846,8 @@ def plan_shards(
             "dsl_reference": DSL_REFERENCE,
             "stage4_contract": {"global": global_contract(), "per_competency": s4_by_cid},
         }
+        if distractor_guidance:
+            shard_payload["distractor_guidance"] = distractor_guidance
         _atomic_write_json(shard_file, shard_payload)
 
     total_waves = math.ceil(len(shards) / max_wave_size) if shards else 1
@@ -839,7 +892,8 @@ def main():
     parser.add_argument("--cta", required=True, help="Path to cta.json")
     parser.add_argument("--output-dir", required=True, help="Output directory for shards (e.g. work/shards)")
     parser.add_argument("--k", type=int, default=None, help="Force specific shard count K")
-    parser.add_argument("--comps-per-shard", type=int, default=DEFAULT_COMPS_PER_SHARD, help="Target max competencies per shard (default: 2 for Case 2B, change to 3 for Case 2A)")
+    parser.add_argument("--comps-per-shard", type=int, default=DEFAULT_COMPS_PER_SHARD, help="Target max non-skill competencies per shard (default: 3; MAX_SKILLS_PER_SHARD = 2)")
+    parser.add_argument("--max-skills-per-shard", type=int, default=MAX_SKILLS_PER_SHARD, help="Max skill competencies per shard (default: 2)")
     parser.add_argument("--max-wave-size", type=int, default=DEFAULT_MAX_WAVE_SIZE, help="Maximum number of author shards dispatched per wave (default: 100)")
     parser.add_argument("--no-isolate-skills", action="store_true", default=False, help="Disable 1-Skill-per-shard isolation rule")
     args = parser.parse_args()
@@ -852,6 +906,7 @@ def main():
             max_comps=args.comps_per_shard,
             max_wave_size=args.max_wave_size,
             isolate_skills=not args.no_isolate_skills,
+            max_skills=args.max_skills_per_shard,
         )
     except FileNotFoundError as ex:
         if "BLOCKER::" in str(ex):
