@@ -279,10 +279,10 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
     # --------------------------------------------------------------------------
 
     def test_rule_c_blocks_monolithic_write_file_on_compiled_shard_over_250_lines(self) -> None:
-        """When shard exists with > 250 lines and previous compile failure exists, write_file is blocked."""
+        """When shard exists with > 450 lines on 1st compile failure (distinct_compiles == 1), write_file is blocked."""
         shard_py = self.shards_dir / "shard_01_data.py"
-        # Create existing file with 260 lines
-        lines = [f"# Line {i}\n" for i in range(260)]
+        # Create existing file with 460 lines (> 450 threshold for 1st failure)
+        lines = [f"# Line {i}\n" for i in range(460)]
         shard_py.write_text("".join(lines), encoding="utf-8")
 
         # Record a previous compile attempt in .check_attempts/compile_shard_01.json
@@ -310,7 +310,7 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
         }
         res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
         self.assertEqual(res_write.get("decision"), "deny")
-        self.assertIn("BLOCKER:: El archivo shard_01_data.py ya fue compilado y supera las 250 líneas", res_write.get("reason", ""))
+        self.assertIn("BLOCKER:: El archivo shard_01_data.py ya fue compilado y supera las 450 líneas", res_write.get("reason", ""))
         self.assertIn("usa edit_file quirúrgico", res_write.get("reason", ""))
         self.assertIn("work/shards/shard_fixes/<CID>.py", res_write.get("reason", ""))
 
@@ -1249,8 +1249,8 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
         )
         self.assertEqual(res_small_0.get("decision"), "allow", f"Expected allow for error_count=0 on 100 lines: {res_small_0}")
 
-        # Case B: error_count == 0 with large shard (300 lines > 250) -> DENY write_file (legacy fallback)
-        large_content = "".join([f"# Line {i}\n" for i in range(300)])
+        # Case B: error_count == 0 with large shard (460 lines > 450 on 1st compile) -> DENY write_file (legacy fallback)
+        large_content = "".join([f"# Line {i}\n" for i in range(460)])
         shard_py.write_text(large_content, encoding="utf-8")
         res_large_0 = evaluate_hook_payload(
             {
@@ -1263,9 +1263,9 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             custom_lock_file=str(self.lock_file),
         )
         self.assertEqual(res_large_0.get("decision"), "deny")
-        self.assertIn("supera las 250 líneas", res_large_0.get("reason", ""))
+        self.assertIn("supera las 450 líneas", res_large_0.get("reason", ""))
 
-        # Case C: error_count is None with small shard (100 lines <= 250) -> ALLOW write_file
+        # Case C: error_count is None with small shard (100 lines <= 450) -> ALLOW write_file
         shard_py.write_text(small_content, encoding="utf-8")
         compile_file.write_text(
             json.dumps({"distinct_compiles": 1, "last_err_hash": "hash_abc"}),  # error_count omitted
@@ -1283,7 +1283,7 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
         )
         self.assertEqual(res_small_none.get("decision"), "allow")
 
-        # Case D: error_count is None with large shard (300 lines > 250) -> DENY write_file (legacy fallback)
+        # Case D: error_count is None with large shard (460 lines > 450 on 1st compile) -> DENY write_file (legacy fallback)
         shard_py.write_text(large_content, encoding="utf-8")
         res_large_none = evaluate_hook_payload(
             {
@@ -1296,7 +1296,7 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             custom_lock_file=str(self.lock_file),
         )
         self.assertEqual(res_large_none.get("decision"), "deny")
-        self.assertIn("supera las 250 líneas", res_large_none.get("reason", ""))
+        self.assertIn("supera las 450 líneas", res_large_none.get("reason", ""))
 
     def test_rule_c_corrupt_json_in_check_attempts_fail_safe_without_exception(self) -> None:
         """Corrupt JSON in .check_attempts/compile_shard_01.json or compile_cta.json falls back safely without unhandled exception."""
