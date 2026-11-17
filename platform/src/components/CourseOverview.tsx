@@ -34,6 +34,13 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   const [barBox, setBarBox] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
 
   const modules = useMemo(() => resolveCourseModules(course), [course]);
+  const leftoverCompetencies = useMemo(() => {
+    const covered = new Set<string>();
+    for (const m of modules) {
+      for (const s of m.subtopics || []) for (const id of s.competency_ids || []) covered.add(id);
+    }
+    return course.competencies.filter((c) => !covered.has(c.id));
+  }, [modules, course.competencies]);
   const competencyById = useMemo(
     () => new Map(course.competencies.map((c) => [c.id, c])),
     [course.competencies]
@@ -467,6 +474,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         </div>
         {modules.length > 0 ? (
           <div className="space-y-8 my-6">
+            {/* Units not covered by any module render first-class in JSON order */}
             {modules.map((mod) => {
               const seenIds = new Set<string>();
               const modCompetencies: Competency[] = [];
@@ -533,6 +541,16 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 </section>
               );
             })}
+            {leftoverCompetencies.length > 0 && (
+              <MasteryGrid
+                course={course}
+                mastery={mastery}
+                competenciesOverride={leftoverCompetencies}
+                onStartPractice={onStartPractice}
+                onStartQuiz={onStartQuiz}
+                onStartUnitTest={onStartUnitTest}
+              />
+            )}
           </div>
         ) : (
           <MasteryGrid

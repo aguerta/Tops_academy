@@ -31,7 +31,9 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
     <div className="space-y-6 my-6">
       {competencies.map((unit, idx) => {
         const globalIdx = course.competencies.findIndex((c) => c.id === unit.id);
-        const displayIdx = unit.unit_index ?? (globalIdx >= 0 ? globalIdx : idx);
+        // Numbering follows pedagogical order (position in course.competencies).
+        // `unit_index` is a source PDF page number, so it must not be used here.
+        const displayIdx = globalIdx >= 0 ? globalIdx : idx;
         const compMastery = mastery.competencies[unit.id];
         const tier: MasteryTier = compMastery?.status || 'Not started';
         const colors = TIER_COLORS[tier];
