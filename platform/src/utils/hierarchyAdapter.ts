@@ -1,4 +1,4 @@
-import {
+﻿import {
   Competency,
   ContentCore,
   ContentGlossaryTerm,
@@ -250,37 +250,49 @@ export function resolveCourseModules(course: Course): ContentModule[] {
     );
   }
 
-  const groups = new Map<
-    string,
-    { title: string; sourceFile: string; competencies: Competency[] }
-  >();
 
+  // Blocks are CONTIGUOUS RUNS of course.competencies (JSON order is the source of truth).
+  // A new block opens each time the source document changes; units are never reordered.
+  const runs: { key: string; title: string; sourceFile: string; competencies: Competency[] }[] = [];
   for (const c of regularUnits) {
     const { key, title, sourceFile } = resolveGroupKey(c);
-    const existing = groups.get(key);
-    if (existing) {
-      existing.competencies.push(c);
+    const last = runs[runs.length - 1];
+    if (last && last.key === key) {
+      last.competencies.push(c);
     } else {
-      groups.set(key, { title, sourceFile, competencies: [c] });
+      runs.push({ key, title, sourceFile, competencies: [c] });
     }
   }
 
-  let modIdx = 1;
-  for (const [, group] of groups) {
-    const id = `module_${String(modIdx).padStart(2, '0')}`;
+  runs.forEach((run, i) => {
     modules.push(
       buildModule(
-        id,
-        group.title,
-        group.sourceFile,
-        group.competencies,
+        `module_${String(i + 1).padStart(2, '0')}`,
+        run.title,
+        run.sourceFile,
+        run.competencies,
         questions,
         allCompetencies,
         false
       )
     );
-    modIdx++;
+  });
+
+  // Guard: flattened modules must reproduce the JSON order exactly; otherwise fall back to flat list.
+  if (!modulesPreserveOrder(modules, allCompetencies)) {
+    return [];
   }
 
   return modules;
 }
+
+/** True when concatenating module units reproduces course.competencies order exactly (no loss, no dupes). */
+export function modulesPreserveOrder(modules: ContentModule[], competencies: Competency[]): boolean {
+  const flat: string[] = [];
+  for (const m of modules) {
+    for (const s of m.subtopics || []) flat.push(...(s.competency_ids || []));
+  }
+  const expected = competencies.map((c) => c.id);
+  return flat.length === expected.length && flat.every((id, i) => id === expected[i]);
+}
+

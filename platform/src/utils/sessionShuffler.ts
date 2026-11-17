@@ -204,7 +204,8 @@ export function buildInterleavedSessionQuestions(
     const precedingSlice =
       unitIdx > 0 ? competencies.slice(Math.max(0, unitIdx - 2), unitIdx) : [];
     const explicitPrereqs = competencies.filter(
-      (c) =>
+      (c, i) =>
+        i < unitIdx &&
         c.id.trim().toLowerCase() !== targetId &&
         (prereqSet.has(c.id.trim().toLowerCase()) ||
           (c.code && prereqSet.has(c.code.trim().toLowerCase())))
@@ -216,9 +217,11 @@ export function buildInterleavedSessionQuestions(
     priorComps = Array.from(mergedMap.values()).slice(-2);
   } else if (sessionType === 'test') {
     // All preceding competencies up to unitIdx + any explicit prerequisites
+    // Only competencies positioned BEFORE the target (pedagogical order); never later ones.
     const precedingAll = unitIdx > 0 ? competencies.slice(0, unitIdx) : [];
     const explicitPrereqs = competencies.filter(
-      (c) =>
+      (c, i) =>
+        i < unitIdx &&
         c.id.trim().toLowerCase() !== targetId &&
         (prereqSet.has(c.id.trim().toLowerCase()) ||
           (c.code && prereqSet.has(c.code.trim().toLowerCase())))
