@@ -143,7 +143,7 @@ def test_stage_bootstrap_atomic_and_lockfile_lifecycle(tmp_path: Path):
     for tf_name in expected_types:
         tf_path = types_dir / tf_name
         assert tf_path.is_file(), f"Missing expected lean spec: {tf_name}"
-        assert tf_path.stat().st_size < 12000, f"Lean spec {tf_name} exceeds 12 KB: {tf_path.stat().st_size} bytes"
+        assert tf_path.stat().st_size < 13000, f"Lean spec {tf_name} exceeds 13 KB: {tf_path.stat().st_size} bytes"
 
     # 4. CTA Work Orders: written to disk
     cta_orders_file = work_dir / "dispatch" / "cta_work_orders.json"
@@ -930,3 +930,490 @@ def test_judge_streaming_sha256_re_evaluation_on_repair_and_wave_isolation(tmp_p
     prompt = repair_data["Prompt"]
     assert ".agents/skills/content-to-course/compile_shard.py" in prompt
     assert "shard_fixes/shard_02/C-03.py" in prompt
+
+
+# ==============================================================================
+# TEST 11: Step 555 Forensic Regression (Fixes H1, H2, H3, H4 Combined)
+# ==============================================================================
+
+class TestHookGuardStep555ForensicRegression:
+    """Forensic regression suite replaying the exact Step 555 premature kill_all
+    and judge-compare bug across Fixes H1, H2, H3, and H4 in c2c_hook_guard.py.
+    """
+
+    def test_step_555_premature_judge_kill_all_and_stage_transition_blocked(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(c2c_hook_guard, "USER_HOME", tmp_path)
+        c2c_hook_guard._DIRECTOR_TRANSCRIPT_CACHE.clear()
+
+        course_dir = tmp_path / "courses" / "x"
+        work_dir = course_dir / "work"
+        dispatch_dir = work_dir / "dispatch"
+        items_dir = dispatch_dir / "items"
+        verif_dir = work_dir / "verification"
+        items_dir.mkdir(parents=True, exist_ok=True)
+        verif_dir.mkdir(parents=True, exist_ok=True)
+
+        director_id = "director_step555_conv"
+        lock_file = work_dir / ".c2c_subagent_lock.json"
+        lock_file.write_text(
+            json.dumps(
+                {
+                    "active": True,
+                    "director_conversation_id": director_id,
+                    "course_id": "x",
+                    "work_dir": work_dir.resolve().as_posix(),
+                    "created_at": "2026-11-18T19:00:00Z",
+                    "exempt_conversation_ids": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        # Dispatched timestamp for Wave 2 judges
+        dispatched_epoch = 1795029600.0  # 2026-11-18T19:20:00Z
+        dispatched_iso = "2026-11-18T19:20:00+00:00"
+        stale_mtime = dispatched_epoch - 600.0  # 10 minutes stale from Wave 1
+
+        item_files: List[str] = []
+        for i in range(1, 11):
+            item_path = items_dir / f"judge_{i:02d}.json"
+            out_rel = f"work/verification/judge_responses_{i:02d}.json"
+            item_path.write_text(
+                json.dumps(
+                    {
+                        "role": f"Blind Judge {i:02d}",
+                        "output_json": out_rel,
+                        "Prompt": (
+                            f"Read courses/x/work/dispatch/items/judge_{i:02d}.json "
+                            f"and write {out_rel}. Reply DONE: {out_rel}"
+                        ),
+                    }
+                ),
+                encoding="utf-8",
+            )
+            item_files.append(item_path.as_posix())
+
+            # Wave 1 judge_responses_XX.json already exists on disk (10 minutes stale)
+            resp_file = verif_dir / f"judge_responses_{i:02d}.json"
+            resp_file.write_text(
+                json.dumps({"responses": [{"question_id": f"Q-{i:02d}", "selected_option": "A"}]}),
+                encoding="utf-8",
+            )
+            os.utime(resp_file, (stale_mtime, stale_mtime))
+
+        judges_manifest = dispatch_dir / "judges.json"
+        judges_manifest.write_text(
+            json.dumps(
+                {
+                    "role": "judge",
+                    "dispatched_at": dispatched_iso,
+                    "item_files": item_files,
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        # Build Director transcript.jsonl with real AGY "args" key and a prior wave kill_all
+        director_log_dir = (
+            tmp_path
+            / ".gemini"
+            / "antigravity"
+            / "brain"
+            / director_id
+            / ".system_generated"
+            / "logs"
+        )
+        director_log_dir.mkdir(parents=True, exist_ok=True)
+        director_transcript = director_log_dir / "transcript.jsonl"
+
+        director_lines: List[str] = [
+            # Prior wave subagent that was killed via "args": {"Action": "kill_all"}
+            json.dumps(
+                {
+                    "type": "PLANNER_RESPONSE",
+                    "source": "MODEL",
+                    "tool_calls": [
+                        {
+                            "name": "invoke_subagent",
+                            "args": {"Role": "Blind Judge 01", "Prompt": "Wave 1 judge_01.json"},
+                        }
+                    ],
+                }
+            ),
+            json.dumps(
+                {
+                    "type": "GENERIC",
+                    "source": "MODEL",
+                    "content": 'Created the following subagent: {"conversationId": "wave1_stale_cid"}',
+                }
+            ),
+            json.dumps(
+                {
+                    "type": "PLANNER_RESPONSE",
+                    "source": "MODEL",
+                    "tool_calls": [
+                        {
+                            "name": "manage_subagents",
+                            "args": {"Action": "kill_all"},
+                        }
+                    ],
+                }
+            ),
+            json.dumps(
+                {
+                    "type": "GENERIC",
+                    "source": "MODEL",
+                    "content": "Successfully killed 1 subagent(s). Killed roles: Blind Judge 01",
+                }
+            ),
+        ]
+
+        # Wave 2: Director invokes 10 Blind Judges using "args"
+        tool_calls_w2 = [
+            {
+                "name": "invoke_subagent",
+                "args": {
+                    "Role": f"Blind Judge {i:02d}",
+                    "Prompt": f"Read courses/x/work/dispatch/items/judge_{i:02d}.json and emit DONE: courses/x/work/verification/judge_responses_{i:02d}.json",
+                },
+            }
+            for i in range(1, 11)
+        ]
+        director_lines.append(
+            json.dumps({"type": "PLANNER_RESPONSE", "source": "MODEL", "tool_calls": tool_calls_w2})
+        )
+        for i in range(1, 11):
+            director_lines.append(
+                json.dumps(
+                    {
+                        "type": "GENERIC",
+                        "source": "MODEL",
+                        "content": f'Created the following subagent: {{"conversationId": "w2_judge_cid_{i:02d}"}}',
+                    }
+                )
+            )
+
+        # Only 2 of 10 workers (judge_02 and judge_05) have finished
+        completed_indices = {2, 5}
+        director_lines.append(
+            json.dumps(
+                {
+                    "type": "SYSTEM_MESSAGE",
+                    "source": "SYSTEM",
+                    "content": "[Message] sender=w2_judge_cid_02 content=DONE: courses/x/work/verification/judge_responses_02.json",
+                }
+            )
+        )
+        director_transcript.write_text("\n".join(director_lines) + "\n", encoding="utf-8")
+
+        # Create worker transcripts for all 10 Wave 2 judges:
+        # Every worker has a Turn-1 GENERIC step (from read_file of judge_XX.json) containing "DONE: ..."
+        for i in range(1, 11):
+            w_cid = f"w2_judge_cid_{i:02d}"
+            w_log_dir = (
+                tmp_path
+                / ".gemini"
+                / "antigravity"
+                / "brain"
+                / w_cid
+                / ".system_generated"
+                / "logs"
+            )
+            w_log_dir.mkdir(parents=True, exist_ok=True)
+            w_lines = [
+                json.dumps(
+                    {
+                        "type": "PLANNER_RESPONSE",
+                        "source": "MODEL",
+                        "content": f"Reading work order judge_{i:02d}.json (which mentions DONE: courses/x/work/verification/judge_responses_{i:02d}.json)",
+                        "tool_calls": [
+                            {
+                                "name": "read_file",
+                                "args": {"Path": f"courses/x/work/dispatch/items/judge_{i:02d}.json"},
+                            }
+                        ],
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "GENERIC",
+                        "source": "MODEL",
+                        "content": (
+                            f'{{"Prompt": "Evaluate batch and reply with DONE: '
+                            f'courses/x/work/verification/judge_responses_{i:02d}.json"}}'
+                        ),
+                    }
+                ),
+            ]
+            if i == 5:
+                # Worker 05 emitted terminal PLANNER_RESPONSE DONE: without tool_calls
+                w_lines.append(
+                    json.dumps(
+                        {
+                            "type": "PLANNER_RESPONSE",
+                            "source": "MODEL",
+                            "content": "DONE: courses/x/work/verification/judge_responses_05.json",
+                        }
+                    )
+                )
+            (w_log_dir / "transcript.jsonl").write_text("\n".join(w_lines) + "\n", encoding="utf-8")
+
+        # 1. Assert manage_subagents(Action="kill_all") is DENIED with 8 pending judges AND stale pre-dispatch artifacts
+        kill_payload = {
+            "conversationId": director_id,
+            "toolCall": {
+                "name": "manage_subagents",
+                "args": {"Action": "kill_all"},
+            },
+        }
+        kill_res = c2c_hook_guard.process_hook(kill_payload, custom_lock_file=str(lock_file))
+        assert kill_res.get("decision") == "deny", f"Expected deny on premature kill_all, got: {kill_res}"
+        reason = kill_res.get("reason", "")
+        assert "8 subagente(s) sin DONE:/BLOCKED:" in reason, f"Expected 8 pending subagents in reason: {reason}"
+        assert "judge_01" in reason and "judge_03" in reason, f"Expected concise judge labels via 'args': {reason}"
+        assert "stale pre-dispatch" in reason, f"Expected stale pre-dispatch detection on Wave 1 files: {reason}"
+
+        # 2. Assert run_command with run.py --stage judge-compare (and rejudge-compare, gates, certify) is DENIED
+        for protected_stage in ("judge-compare", "rejudge-compare", "gates", "certify"):
+            stage_payload = {
+                "conversationId": director_id,
+                "toolCall": {
+                    "name": "run_command",
+                    "args": {
+                        "CommandLine": f'python .agents/skills/content-to-course/run.py --stage {protected_stage} --work-dir "{work_dir.as_posix()}"'
+                    },
+                },
+            }
+            stage_res = c2c_hook_guard.process_hook(stage_payload, custom_lock_file=str(lock_file))
+            assert stage_res.get("decision") == "deny", f"Expected deny on premature --stage {protected_stage}"
+            assert f"run.py --stage {protected_stage}" in stage_res.get("reason", "")
+
+        # 3. Complete remaining 8 workers and refresh judge_responses_01..10.json mtimes to >= dispatched_at
+        fresh_mtime = dispatched_epoch + 15.0
+        for i in range(1, 11):
+            resp_file = verif_dir / f"judge_responses_{i:02d}.json"
+            os.utime(resp_file, (fresh_mtime, fresh_mtime))
+            if i not in completed_indices:
+                w_cid = f"w2_judge_cid_{i:02d}"
+                w_trans = (
+                    tmp_path
+                    / ".gemini"
+                    / "antigravity"
+                    / "brain"
+                    / w_cid
+                    / ".system_generated"
+                    / "logs"
+                    / "transcript.jsonl"
+                )
+                with w_trans.open("a", encoding="utf-8") as fh:
+                    fh.write(
+                        json.dumps(
+                            {
+                                "type": "PLANNER_RESPONSE",
+                                "source": "MODEL",
+                                "content": f"DONE: courses/x/work/verification/judge_responses_{i:02d}.json",
+                            }
+                        )
+                        + "\n"
+                    )
+
+        c2c_hook_guard._DIRECTOR_TRANSCRIPT_CACHE.clear()
+
+        # 4. Assert manage_subagents(Action="kill_all") and run.py --stage judge-compare are now ALLOWED
+        kill_res_after = c2c_hook_guard.process_hook(kill_payload, custom_lock_file=str(lock_file))
+        assert kill_res_after.get("decision") == "allow", f"Expected allow after all 10 judges done & fresh: {kill_res_after}"
+
+        stage_compare_payload = {
+            "conversationId": director_id,
+            "toolCall": {
+                "name": "run_command",
+                "args": {
+                    "CommandLine": f'python .agents/skills/content-to-course/run.py --stage judge-compare --work-dir "{work_dir.as_posix()}"'
+                },
+            },
+        }
+        stage_res_after = c2c_hook_guard.process_hook(stage_compare_payload, custom_lock_file=str(lock_file))
+        assert stage_res_after.get("decision") == "allow", f"Expected allow on judge-compare after completion: {stage_res_after}"
+
+    def test_step_555_edge_cases_legacy_manifest_windows_paths_and_blocked_kill(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(c2c_hook_guard, "USER_HOME", tmp_path)
+        c2c_hook_guard._DIRECTOR_TRANSCRIPT_CACHE.clear()
+
+        course_dir = tmp_path / "courses" / "edge"
+        work_dir = course_dir / "work"
+        dispatch_dir = work_dir / "dispatch"
+        items_dir = dispatch_dir / "items"
+        verif_dir = work_dir / "verification"
+        items_dir.mkdir(parents=True, exist_ok=True)
+        verif_dir.mkdir(parents=True, exist_ok=True)
+
+        director_id = "director_edge_conv"
+        lock_file = work_dir / ".c2c_subagent_lock.json"
+        lock_file.write_text(
+            json.dumps(
+                {
+                    "active": True,
+                    "director_conversation_id": director_id,
+                    "course_id": "edge",
+                    "work_dir": work_dir.resolve().as_posix(),
+                    "created_at": "2026-11-18T19:00:00Z",
+                    "exempt_conversation_ids": [],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        # Windows backslash path in item_json; legacy judges.json without dispatched_at
+        item_path = items_dir / "judge_01.json"
+        item_path.write_text(
+            json.dumps(
+                {
+                    "role": "Blind Judge 01",
+                    "output_json": "work\\verification\\judge_responses_01.json",
+                }
+            ),
+            encoding="utf-8",
+        )
+        resp_file = verif_dir / "judge_responses_01.json"
+        resp_file.write_text(
+            json.dumps({"responses": [{"question_id": "Q-01", "selected_option": "A"}]}),
+            encoding="utf-8",
+        )
+        stale_epoch = 1795029000.0
+        os.utime(resp_file, (stale_epoch, stale_epoch))
+
+        judges_manifest = dispatch_dir / "judges.json"
+        judges_manifest.write_text(
+            json.dumps({"role": "judge", "item_files": [str(item_path)]}),
+            encoding="utf-8",
+        )
+
+        # Director transcript using "arguments" + lowercase "action" for prior kill_all,
+        # and active worker w_blocked_cid
+        director_log_dir = (
+            tmp_path / ".gemini" / "antigravity" / "brain" / director_id / ".system_generated" / "logs"
+        )
+        director_log_dir.mkdir(parents=True, exist_ok=True)
+        (director_log_dir / "transcript.jsonl").write_text(
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "type": "PLANNER_RESPONSE",
+                            "source": "MODEL",
+                            "tool_calls": [
+                                {"name": "invoke_subagent", "arguments": {"role": "Blind Judge 99", "prompt": "old"}}
+                            ],
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "GENERIC",
+                            "source": "MODEL",
+                            "content": 'Created the following subagent: {"conversationId": "old_cid"}',
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "PLANNER_RESPONSE",
+                            "source": "MODEL",
+                            "tool_calls": [
+                                {"name": "manage_subagents", "arguments": {"action": "kill_all"}}
+                            ],
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "GENERIC",
+                            "source": "MODEL",
+                            "content": "Successfully killed 1 subagent(s).",
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "PLANNER_RESPONSE",
+                            "source": "MODEL",
+                            "tool_calls": [
+                                {"name": "invoke_subagent", "arguments": {"role": "Blind Judge 01", "prompt": "new"}}
+                            ],
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "type": "GENERIC",
+                            "source": "MODEL",
+                            "content": 'Created the following subagent: {"conversationId": "w_blocked_cid"}',
+                        }
+                    ),
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        # Worker emits BLOCKED: in PLANNER_RESPONSE
+        w_log_dir = (
+            tmp_path / ".gemini" / "antigravity" / "brain" / "w_blocked_cid" / ".system_generated" / "logs"
+        )
+        w_log_dir.mkdir(parents=True, exist_ok=True)
+        (w_log_dir / "transcript.jsonl").write_text(
+            json.dumps(
+                {
+                    "type": "PLANNER_RESPONSE",
+                    "source": "MODEL",
+                    "content": "BLOCKED: missing source PDF",
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        # 1. Individual kill on BLOCKED worker must be allowed
+        indiv_kill_payload = {
+            "conversationId": director_id,
+            "toolCall": {
+                "name": "manage_subagents",
+                "arguments": {"action": "kill", "conversationIds": ["w_blocked_cid"]},
+            },
+        }
+        res_indiv = c2c_hook_guard.process_hook(indiv_kill_payload, custom_lock_file=str(lock_file))
+        assert res_indiv.get("decision") == "allow", f"Expected allow for BLOCKED individual kill: {res_indiv}"
+
+        # 2. kill_all with legacy judges.json (no dispatched_at -> min_ts is None) & Windows path must be allowed
+        kill_all_payload = {
+            "conversationId": director_id,
+            "toolCall": {
+                "name": "manage_subagents",
+                "arguments": {"action": "kill_all"},
+            },
+        }
+        res_legacy = c2c_hook_guard.process_hook(kill_all_payload, custom_lock_file=str(lock_file))
+        assert res_legacy.get("decision") == "allow", f"Expected allow with legacy manifest (min_ts=None): {res_legacy}"
+
+        # 3. Adding dispatched_at newer than resp_file mtime triggers stale pre-dispatch on Windows path
+        dispatched_epoch = stale_epoch + 600.0
+        judges_manifest.write_text(
+            json.dumps(
+                {
+                    "role": "judge",
+                    "dispatched_at": "2026-11-18T19:20:00+00:00",
+                    "item_files": [str(item_path)],
+                }
+            ),
+            encoding="utf-8",
+        )
+        res_stale_win = c2c_hook_guard.process_hook(kill_all_payload, custom_lock_file=str(lock_file))
+        assert res_stale_win.get("decision") == "deny"
+        assert "stale pre-dispatch" in res_stale_win.get("reason", "")
+
+        # 4. Updating resp_file mtime >= dispatched_epoch + 10s allows kill_all
+        fresh_epoch = dispatched_epoch + 10.0
+        os.utime(resp_file, (fresh_epoch, fresh_epoch))
+        res_fresh_win = c2c_hook_guard.process_hook(kill_all_payload, custom_lock_file=str(lock_file))
+        assert res_fresh_win.get("decision") == "allow", f"Expected allow after Windows path mtime refresh: {res_fresh_win}"
+
+

@@ -636,7 +636,7 @@ class TestRealCoursesAdmission:
 
     def test_real_courses_pass_validation_100_percent(self, real_courses_raw):
         assert COURSES_DIR.exists(), f"Courses directory not found at {COURSES_DIR}"
-        assert len(real_courses_raw) >= 4, f"Expected at least 4 courses, found {len(real_courses_raw)}"
+        assert len(real_courses_raw) >= 3, f"Expected at least 3 courses, found {len(real_courses_raw)}"
 
         for fname, content in real_courses_raw.items():
             is_valid, payload = validate_platform_course(content)

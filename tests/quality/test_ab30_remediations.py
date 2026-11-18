@@ -602,9 +602,26 @@ class TestStream1CRemediations:
         assert "read_file" in pointer
         assert "view_file" not in pointer
 
-        # 2. Judge dispatch declares 3 TURNOS LLM protocol in prompt source
+        # 2. Judge 3-turn protocol lives in lean prompt_blind_judge.md and dispatch_judges pointer prompt
+        lean_judge_prompt = (
+            Path(__file__).resolve().parents[2]
+            / ".agents"
+            / "skills"
+            / "content-to-course"
+            / "system_prompts"
+            / "lean"
+            / "prompt_blind_judge.md"
+        ).read_text(encoding="utf-8")
+        assert "Turno 1" in lean_judge_prompt and "Turno 2" in lean_judge_prompt
+        assert "read_file" in lean_judge_prompt
+        assert "DONE:" in lean_judge_prompt
+
         judge_src = inspect.getsource(dispatch_judges)
-        assert "3 TURNOS LLM (2 turnos de herramientas + 1 cierre terminal DONE:)" in judge_src
+        assert "3 TURNOS LLM" in judge_src
+        assert "DONE" in judge_src
+
+        judge_pointer = make_pointer_prompt(role="c2c_judge", work_order_rel="work/dispatch/items/judge_01.json")
+        assert "read_file" in judge_pointer
 
         # 3. Warning emitted when cta has contract_version >= 2 and assumptions=[]
         work_dir = tmp_path / "work_disp"

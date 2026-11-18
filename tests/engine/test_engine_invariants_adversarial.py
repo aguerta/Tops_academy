@@ -511,7 +511,12 @@ class TestInvariantChecksAdversarial:
             num_dry_run_seeds=20,
         )
         assert len(errs) > 0
-        assert any("invariant violation" in e or "TPL-D4 violation" in e for e in errs)
+        assert any(
+            "invariant violation" in e
+            or "TPL-D4 violation" in e
+            or "MC7 duplicate option content detected" in e
+            for e in errs
+        )
 
     def test_katex_syntax_unbalanced_inline_dollar_rejected(self):
         """Instances with unbalanced inline '$' delimiters must be rejected."""
@@ -1479,7 +1484,14 @@ class TestTplVarAndStemVariants:
                 "Verifique que la respuesta numérica sea compatible con las unidades.",
             ],
             "cross_check_py": "def verify(res):\n    return int(res['vars']['p']) >= 10",
-            "detailed_solution": "Solucion para {p}.",
+            "explanation_es": (
+                "Para resolver este ejercicio, identificamos primero el valor del parámetro escalar {p} "
+                "directamente del enunciado y verificamos que satisface la cota requerida."
+            ),
+            "detailed_solution": (
+                "Para resolver este ejercicio, identificamos primero el valor del parámetro escalar {p} "
+                "directamente del enunciado y verificamos que satisface la cota requerida."
+            ),
             "distractor_ids": [],
             "generate_py": (
                 "def generate(rng):\n"
@@ -1592,14 +1604,14 @@ class TestKaTeXASTInvariantsAndRejectionSampling:
                 "    a = rng.randint(1, 100)\n"
                 "    return {\n"
                 "        'vars': {'a': a},\n"
-                "        'correct': str(a),\n"
+                "        'correct': f'Valor {a}',\n"
                 "        'distractors': [\n"
-                "            {'value': str(a), 'distractor_id': 'D1', 'error_rationale': 'Identical'},\n"
-                "            {'value': str(a + 2), 'distractor_id': 'D2', 'error_rationale': 'E2'},\n"
-                "            {'value': str(a + 3), 'distractor_id': 'D3', 'error_rationale': 'E3'},\n"
-                "            {'value': str(a + 4), 'distractor_id': 'D4', 'error_rationale': 'E4'},\n"
-                "            {'value': str(a + 5), 'distractor_id': 'D5', 'error_rationale': 'E5'},\n"
-                "            {'value': str(a + 6), 'distractor_id': 'D6', 'error_rationale': 'E6'},\n"
+                "            {'value': f'Valor  {a}', 'distractor_id': 'D1', 'error_rationale': 'Identical'},\n"
+                "            {'value': f'Valor {a + 2}', 'distractor_id': 'D2', 'error_rationale': 'E2'},\n"
+                "            {'value': f'Valor {a + 3}', 'distractor_id': 'D3', 'error_rationale': 'E3'},\n"
+                "            {'value': f'Valor {a + 4}', 'distractor_id': 'D4', 'error_rationale': 'E4'},\n"
+                "            {'value': f'Valor {a + 5}', 'distractor_id': 'D5', 'error_rationale': 'E5'},\n"
+                "            {'value': f'Valor {a + 6}', 'distractor_id': 'D6', 'error_rationale': 'E6'},\n"
                 "        ]\n"
                 "    }\n"
             ),

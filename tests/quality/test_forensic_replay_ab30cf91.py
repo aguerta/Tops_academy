@@ -124,9 +124,15 @@ def test_v1_bootstrap_zero_raster_multi_pdf_and_stdout_cap(tmp_path: Path, capsy
     cta_orders = json.loads(cta_orders_file.read_text(encoding="utf-8"))
     for idx, subagent in enumerate(cta_orders.get("Subagents", []), start=1):
         prompt = subagent.get("Prompt", "")
-        assert len(prompt.encode("utf-8")) <= 300, f"CTA pointer prompt exceeded 300 B: {len(prompt)}"
-        assert "read_file" in prompt
-        assert f"cta_{idx:02d}.json" in prompt
+        normalized_prompt = prompt.replace(work_dir.as_posix(), "work").replace(str(work_dir), "work")
+        if "READ:" in prompt:
+            assert len(normalized_prompt.encode("utf-8")) <= 600, f"CTA direct PDF prompt exceeded 600 B: {len(normalized_prompt)}"
+            assert ".pdf" in prompt.lower()
+            assert f"cta_{idx:02d}.json" not in prompt
+        else:
+            assert len(normalized_prompt.encode("utf-8")) <= 300, f"CTA pointer prompt exceeded 300 B: {len(normalized_prompt)}"
+            assert "read_file" in prompt
+            assert f"cta_{idx:02d}.json" in prompt
 
     # 7. Active and valid .c2c_subagent_lock.json
     lock_file = work_dir / ".c2c_subagent_lock.json"
@@ -492,6 +498,11 @@ def test_v5_shard_06_katex_sandwich_and_delta_placeholder_block():
             r"Verifique la convergencia en distribución $\sqrt{n}(b_{IV} - \beta) \xrightarrow{d} \mathcal{N}(\mu, \sigma^2 V)$ en $\mathbb{R}^k$ con covarianza entre $w$ y $z$."
         ],
         "detailed_solution": (
+            r"Por el teorema del límite central multivariado, $\sqrt{n}(b_{IV} - \beta) \xrightarrow{d} \mathcal{N}(\mu, \sigma^2 V)$ "
+            r"donde la perturbación $u$ tiene varianza $\sigma^2$, las variables instrumentales $z$ y exógenas $w$ garantizan rango completo $k$, "
+            r"con $d$ restricciones de identificación y elemento de varianza $a_{11} = @a11@$ evaluado sobre $n$ observaciones."
+        ),
+        "explanation_es": (
             r"Por el teorema del límite central multivariado, $\sqrt{n}(b_{IV} - \beta) \xrightarrow{d} \mathcal{N}(\mu, \sigma^2 V)$ "
             r"donde la perturbación $u$ tiene varianza $\sigma^2$, las variables instrumentales $z$ y exógenas $w$ garantizan rango completo $k$, "
             r"con $d$ restricciones de identificación y elemento de varianza $a_{11} = @a11@$ evaluado sobre $n$ observaciones."
@@ -1037,7 +1048,8 @@ def test_v8_judge_option_shuffle_and_coherent_pointer_mode(tmp_path: Path):
     assert "NO EJECUTES view_file" not in prompt_in_item
     assert "NO EJECUTES `read_file`" not in prompt_in_item
     assert "NO EJECUTES read_file" not in prompt_in_item
-    assert "view_file" in prompt_in_item or "read_file" in prompt_in_item
+    pointer_prompt = judge_dispatch["Subagents"][0].get("Prompt", "")
+    assert "view_file" in pointer_prompt or "read_file" in pointer_prompt
 
 
 # ==============================================================================
@@ -1210,11 +1222,19 @@ def gen_mc7(rng):
     k = rng.randint(100, 999)
     ans = k * 10
     v = {"k": k, "ans": ans}
+    rationales = [
+        "Confunde el multiplicador lineal de @k@ con un desplazamiento aditivo constante, obteniendo @d1@.",
+        "Aplica una escala decimal truncada sobre el parametro @k@ y suma un sesgo residual hasta @d2@.",
+        "Invierte el orden de agrupacion entre @k@ y la constante de ajuste, produciendo @d3@.",
+        "Duplica el termino de correccion asintotica al evaluar el estimador en @k@, resultando @d4@.",
+        "Omite la normalizacion por decena en el producto con @k@ y sobreestima la cota en @d5@.",
+        "Incorpora un termino cuadratico espurio al expandir la expresion alrededor de @k@, dando @d6@.",
+    ]
     dists = []
-    for i in range(1, 7):
+    for i, rat in enumerate(rationales, 1):
         d_val = ans + i * 50
         v[f"d{i}"] = d_val
-        dists.append((f"D-Hab99-{i:02d}", f"${d_val}$", f"Desvio parametrico sistematico al evaluar el estimador con factor @k@ y desplazamiento ${d_val}$."))
+        dists.append((f"D-Hab99-{i:02d}", f"${d_val}$", rat))
     return {"vars": v, "correct": f"${ans}$", "distractors": dists}
 
 def ver_mc7(r):

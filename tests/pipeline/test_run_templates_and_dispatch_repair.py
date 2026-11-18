@@ -103,14 +103,14 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         subagents = res.get("Subagents", [])
         self.assertEqual(len(subagents), 3)
 
-        # 1. Pointers must refer to prompts/repair/repair_<cid_norm>.json without colliding on repair_01.json
+        # 1. Pointers must refer to prompts/repair/repair_<cid_norm>_data.md without colliding on repair_01.json
         p0 = subagents[0]["Prompt"]
         p1 = subagents[1]["Prompt"]
         p2 = subagents[2]["Prompt"]
 
-        self.assertIn("prompts/repair/repair_c05.json", p0)
-        self.assertIn("prompts/repair/repair_c11.json", p1)
-        self.assertIn("prompts/repair/repair_h02.json", p2)
+        self.assertIn("prompts/repair/repair_c05_data.md", p0)
+        self.assertIn("prompts/repair/repair_c11_data.md", p1)
+        self.assertIn("prompts/repair/repair_h02_data.md", p2)
 
         # 2. Files on disk in work/prompts/repair/
         prompts_repair_dir = self.work_dir / "prompts" / "repair"
@@ -127,8 +127,8 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         # 3. Test string with spaces and commas: ids='C-05, C-11'
         res2 = dispatch_repair(self.work_dir, ids="C-05, C-11", pointer=True)
         self.assertEqual(len(res2["Subagents"]), 2)
-        self.assertIn("prompts/repair/repair_c05.json", res2["Subagents"][0]["Prompt"])
-        self.assertIn("prompts/repair/repair_c11.json", res2["Subagents"][1]["Prompt"])
+        self.assertIn("prompts/repair/repair_c05_data.md", res2["Subagents"][0]["Prompt"])
+        self.assertIn("prompts/repair/repair_c11_data.md", res2["Subagents"][1]["Prompt"])
 
     # =========================================================================
     # 2. templates_report.json error injection into repair items
@@ -198,15 +198,15 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         res = dispatch_repair(self.work_dir, ids="C-05, C-11, C-05", pointer=True)
         subagents = res["Subagents"]
         self.assertEqual(len(subagents), 2)
-        self.assertIn("repair_c05.json", subagents[0]["Prompt"])
-        self.assertIn("repair_c11.json", subagents[1]["Prompt"])
+        self.assertIn("repair_c05_data.md", subagents[0]["Prompt"])
+        self.assertIn("repair_c11_data.md", subagents[1]["Prompt"])
 
         # 2. Combined list with duplicates across elements
         res2 = dispatch_repair(self.work_dir, ids=["C-11, C-05", "C-11", "C-05"], pointer=True)
         subagents2 = res2["Subagents"]
         self.assertEqual(len(subagents2), 2)
-        self.assertIn("repair_c11.json", subagents2[0]["Prompt"])
-        self.assertIn("repair_c05.json", subagents2[1]["Prompt"])
+        self.assertIn("repair_c11_data.md", subagents2[0]["Prompt"])
+        self.assertIn("repair_c05_data.md", subagents2[1]["Prompt"])
 
     def test_dispatch_repair_supports_dict_failed_competencies_and_diagnostics(self) -> None:
         """dispatch_repair parses failed_competencies as dict with errors list and populates prompt."""
@@ -538,10 +538,12 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
 
         # Invalidate by altering 1 byte in shard_01_data.py
         shard_file.write_text(shard_content + "# mutated\n", encoding="utf-8")
-        with patch("run.check_templates_file_or_dir", return_value=(True, [])):
-            with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout2:
-                runner.run_stage_templates()
-                output2 = mock_stdout2.getvalue()
+        mock_compile = unittest.mock.MagicMock(return_value=(True, []))
+        with patch.dict("sys.modules", {"compile_shard": unittest.mock.MagicMock(compile_shard=mock_compile)}):
+            with patch("run.check_templates_file_or_dir", return_value=(True, [])):
+                with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout2:
+                    runner.run_stage_templates()
+                    output2 = mock_stdout2.getvalue()
         # Fast path must be bypassed when source sha changes
         self.assertNotIn("Fast-path < 5 ms", output2)
 
@@ -616,6 +618,268 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         self.assertTrue(any("R-15" in f for f in findings))
         self.assertTrue(any("Distractor length out of bounds" in f for f in findings))
         self.assertTrue((self.work_dir / "repair_matrix.json").is_file())
+
+    # =========================================================================
+    # 4. C2C v4.1 Stream 1C Hardening Tests
+    # =========================================================================
+    def test_all_dispatch_manifests_stamp_dispatched_at_iso8601_utc(self) -> None:
+        """dispatch_cta, dispatch_cta_reduce, dispatch_authors, dispatch_judges, and dispatch_repair stamp dispatched_at (ISO-8601 UTC)."""
+        from datetime import datetime
+        from dispatch import dispatch_cta, dispatch_cta_reduce, dispatch_authors, dispatch_judges
+
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "test_c2c_v41",
+            "cta_mode": "direct",
+            "documents": [{"name": "lecture.pdf", "path": "content/lecture.pdf", "total_pages": 12}],
+        }), encoding="utf-8")
+
+        verif_dir = self.work_dir / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        (verif_dir / "judge_batch_01.json").write_text(json.dumps([
+            {"question_id": "Q-05-01", "question_type": "multiple_choice", "stem_es": "Calcule X", "options": [{"id": "A", "content": "1"}]}
+        ]), encoding="utf-8")
+
+        cta_res = dispatch_cta(self.work_dir, pointer=True)
+        reduce_res = dispatch_cta_reduce(self.work_dir, pointer=True)
+        author_res = dispatch_authors(self.work_dir, pointer=True)
+        judge_res = dispatch_judges(self.work_dir, pointer=True)
+        repair_res = dispatch_repair(self.work_dir, ids=["C-05"], pointer=True)
+
+        dispatch_dir = self.work_dir / "dispatch"
+        manifest_files = [
+            dispatch_dir / "cta.json",
+            dispatch_dir / "cta_reduce.json",
+            dispatch_dir / "authors.json",
+            dispatch_dir / "author.json",
+            dispatch_dir / "judges.json",
+            dispatch_dir / "judge.json",
+            dispatch_dir / "repair.json",
+        ]
+        for mf in manifest_files:
+            self.assertTrue(mf.is_file(), f"Missing wave manifest: {mf}")
+            data = json.loads(mf.read_text(encoding="utf-8"))
+            ts = data.get("dispatched_at")
+            self.assertIsInstance(ts, str, f"dispatched_at missing or not str in {mf.name}")
+            parsed_dt = datetime.fromisoformat(ts)
+            self.assertIsNotNone(parsed_dt.tzinfo, f"dispatched_at in {mf.name} must be timezone-aware UTC: {ts}")
+
+        for res_dict in (cta_res, reduce_res, author_res, judge_res, repair_res):
+            self.assertIn("dispatched_at", res_dict)
+            self.assertIsNotNone(datetime.fromisoformat(res_dict["dispatched_at"]).tzinfo)
+
+    def test_subagent_initial_prompt_includes_explicit_scope_lock_target_paths(self) -> None:
+        """Each Subagents[i]['Prompt'] includes [SCOPE-LOCK] with explicit allowed READ/WRITE target paths."""
+        from dispatch import dispatch_cta, dispatch_authors, dispatch_judges
+
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "test_c2c_v41",
+            "cta_mode": "direct",
+            "documents": [{"name": "lecture.pdf", "path": "content/lecture.pdf", "total_pages": 12}],
+        }), encoding="utf-8")
+
+        verif_dir = self.work_dir / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        (verif_dir / "judge_batch_01.json").write_text(json.dumps([
+            {"question_id": "Q-05-01", "question_type": "multiple_choice", "stem_es": "Calcule X", "options": [{"id": "A", "content": "1"}]}
+        ]), encoding="utf-8")
+
+        cta_sub = dispatch_cta(self.work_dir, pointer=True)["Subagents"][0]["Prompt"]
+        self.assertIn("[SCOPE-LOCK]", cta_sub)
+        self.assertIn("READ", cta_sub)
+        self.assertIn("WRITE", cta_sub)
+        self.assertIn("cta_data.py", cta_sub)
+        self.assertIn("compile_cta.py", cta_sub)
+        self.assertIn("DONE:", cta_sub)
+
+        auth_subs = dispatch_authors(self.work_dir, pointer=True)["Subagents"]
+        auth_sub_01 = next(s["Prompt"] for s in auth_subs if "shard_01" in s["Role"])
+        self.assertIn("[SCOPE-LOCK]", auth_sub_01)
+        self.assertIn("READ", auth_sub_01)
+        self.assertIn("WRITE", auth_sub_01)
+        self.assertIn("shard_01_data.py", auth_sub_01)
+        self.assertIn("compile_shard.py", auth_sub_01)
+        self.assertIn("DONE:", auth_sub_01)
+
+        judge_sub = dispatch_judges(self.work_dir, pointer=True)["Subagents"][0]["Prompt"]
+        self.assertIn("[SCOPE-LOCK]", judge_sub)
+        self.assertIn("READ", judge_sub)
+        self.assertIn("WRITE", judge_sub)
+        self.assertIn("judge_01.json", judge_sub)
+        self.assertIn("judge_responses_01.json", judge_sub)
+        self.assertIn("DONE:", judge_sub)
+
+        rep_sub = dispatch_repair(self.work_dir, ids=["C-05"], pointer=True)["Subagents"][0]["Prompt"]
+        self.assertIn("[SCOPE-LOCK]", rep_sub)
+        self.assertIn("READ", rep_sub)
+        self.assertIn("WRITE", rep_sub)
+        self.assertIn("repair_c05_data.md", rep_sub)
+        self.assertIn("shard_01_data.py", rep_sub)
+        self.assertIn("compile_shard.py", rep_sub)
+        self.assertIn("DONE:", rep_sub)
+
+    def test_author_item_prompt_section3_is_compact_and_eliminates_done_space_pollution(self) -> None:
+        """Section ## 3. in work/dispatch/items/author_01.json['Prompt'] is < 2,500 chars and does not contain literal 'DONE: '."""
+        from dispatch import dispatch_cta, dispatch_authors, dispatch_judges, load_system_prompt
+
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "test_c2c_v41",
+            "cta_mode": "direct",
+            "documents": [{"name": "lecture.pdf", "path": "content/lecture.pdf", "total_pages": 12}],
+        }), encoding="utf-8")
+        verif_dir = self.work_dir / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        (verif_dir / "judge_batch_01.json").write_text(json.dumps([
+            {"question_id": "Q-05-01", "question_type": "multiple_choice", "stem_es": "Calcule X", "options": [{"id": "A", "content": "1"}]}
+        ]), encoding="utf-8")
+
+        dispatch_cta(self.work_dir, pointer=True)
+        dispatch_authors(self.work_dir, pointer=True)
+        dispatch_judges(self.work_dir, pointer=True)
+        dispatch_repair(self.work_dir, ids=["C-05"], pointer=True)
+
+        items_dir = self.work_dir / "dispatch" / "items"
+        author_item = json.loads((items_dir / "author_01.json").read_text(encoding="utf-8"))
+        author_prompt = author_item["Prompt"]
+
+        self.assertIn("## 3. INSTRUCCIONES DE EJECUCIÓN", author_prompt)
+        sec3 = author_prompt.split("## 3. INSTRUCCIONES DE EJECUCIÓN", 1)[1]
+        self.assertLess(len(sec3), 2500, f"Section 3 of author_01.json is too bloated: {len(sec3)} chars")
+        self.assertNotIn(load_system_prompt("prompt_shard_author.md", lean=True).strip(), author_prompt)
+
+        # Disk work orders read via read_file must NOT contain literal 'DONE: ' to prevent GENERIC step pollution
+        for disk_item in [
+            items_dir / "author_01.json",
+            items_dir / "cta_01.json",
+            items_dir / "judge_01.json",
+            items_dir / "repair_01.json",
+            self.work_dir / "prompts" / "repair" / "repair_c05.json",
+        ]:
+            self.assertTrue(disk_item.is_file(), f"Missing disk item: {disk_item}")
+            disk_prompt = json.loads(disk_item.read_text(encoding="utf-8"))["Prompt"]
+            self.assertNotIn("DONE:", disk_prompt, f"Disk work order {disk_item.name} must not contain 'DONE:'")
+            self.assertIn("Cierre al aprobar:", disk_prompt)
+
+    def test_dispatch_repair_consolidates_multiple_competencies_in_same_shard(self) -> None:
+        """When multiple failing competencies belong to the same shard, Subagents consolidates them into 1 shard-level invocation while keeping per-competency work orders on disk."""
+        # Map C-05 and C-11 to shard_01, and H-02 to shard_02
+        (self.shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+            "shards": [
+                {"shard_id": "shard_01", "competency_ids": ["C-05", "C-11"]},
+                {"shard_id": "shard_02", "competency_ids": ["H-02"]},
+            ]
+        }), encoding="utf-8")
+
+        res = dispatch_repair(self.work_dir, ids=["C-05, C-11, H-02"], pointer=True)
+        subagents = res.get("Subagents", [])
+        # 2 affected shards -> 2 subagents (shard_01 consolidated for C-05 & C-11, shard_02 for H-02)
+        self.assertEqual(len(subagents), 2, f"Expected 2 shard-consolidated repair subagents, got {len(subagents)}")
+
+        s01_sub = subagents[0]
+        self.assertEqual(s01_sub.get("shard_id"), "shard_01")
+        self.assertEqual(s01_sub.get("assigned_competencies"), ["C-05", "C-11"])
+        self.assertIn("[SCOPE-LOCK]", s01_sub["Prompt"])
+        self.assertIn("repair_shard_01_data.md", s01_sub["Prompt"])
+        self.assertIn("shard_01_data.py", s01_sub["Prompt"])
+        self.assertIn("DONE: work/shards/shard_01.json", s01_sub["Prompt"])
+
+        s02_sub = subagents[1]
+        self.assertEqual(s02_sub.get("shard_id"), "shard_02")
+        self.assertEqual(s02_sub.get("assigned_competencies"), ["H-02"])
+        self.assertIn("repair_h02_data.md", s02_sub["Prompt"])
+
+        # Per-competency work orders and pure-data payloads must exist on disk
+        prompts_repair_dir = self.work_dir / "prompts" / "repair"
+        self.assertTrue((prompts_repair_dir / "repair_c05.json").is_file())
+        self.assertTrue((prompts_repair_dir / "repair_c11.json").is_file())
+        self.assertTrue((prompts_repair_dir / "repair_h02.json").is_file())
+        self.assertTrue((prompts_repair_dir / "repair_c05_data.md").is_file())
+        self.assertTrue((prompts_repair_dir / "repair_c11_data.md").is_file())
+        self.assertTrue((prompts_repair_dir / "repair_shard_01_data.md").is_file())
+        self.assertTrue((prompts_repair_dir / "repair_h02_data.md").is_file())
+
+    # =========================================================================
+    # Stream 5A: Pure-Data Worker Payloads & Direct Initial Messages
+    # =========================================================================
+    def test_stream5a_direct_messages_and_pure_data_payloads(self) -> None:
+        """All 5 roles emit compact pure-data payloads or direct initial messages without wrapper bloat."""
+        from dispatch import dispatch_cta, dispatch_cta_reduce, dispatch_authors, dispatch_judges
+
+        # 1. CTA Architect (slice mode): direct READ/Rango/WRITE/COMPILE/DONE, no cta_01.json or pre_cta_manifest.json
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "test_5a",
+            "cta_mode": "mapreduce",
+            "subparts": [
+                {
+                    "subpart_id": "part_01",
+                    "doc": "doc.pdf",
+                    "path": "work/slices/part_01/doc_p1_10.pdf",
+                    "slice_path": "work/slices/part_01/doc_p1_10.pdf",
+                    "page_range": [1, 10],
+                    "total_pages": 10,
+                }
+            ],
+        }), encoding="utf-8")
+        cta_res = dispatch_cta(self.work_dir, mode="mapreduce", pointer=True)
+        cta_prompt = cta_res["Subagents"][0]["Prompt"]
+        self.assertLessEqual(len(cta_prompt.encode("utf-8")), 600)
+        self.assertIn("READ: `work/slices/part_01/doc_p1_10.pdf`", cta_prompt)
+        self.assertIn("Rango: `1..10`", cta_prompt)
+        self.assertIn("WRITE:", cta_prompt)
+        self.assertIn("COMPILE:", cta_prompt)
+        self.assertIn("DONE:", cta_prompt)
+        self.assertNotIn("cta_01.json", cta_prompt)
+        self.assertNotIn("pre_cta_manifest.json", cta_prompt.split("COMPILE:")[0])
+        cta_disk = json.loads((self.work_dir / "dispatch" / "items" / "cta_01.json").read_text(encoding="utf-8"))
+        self.assertNotIn("pre_cta_manifest.json", cta_disk["Prompt"].split("WRITE permitido", 1)[0])
+
+        # 2. CTA Harmonizer: direct READ/WRITE/RUN/DONE, no read_file cta_reduce_01.json, trimmed disk item
+        (self.work_dir / "cta_parts").mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "cta_parts" / "part_01.json").write_text(json.dumps({"competencies": []}), encoding="utf-8")
+        red_res = dispatch_cta_reduce(self.work_dir, pointer=True)
+        red_prompt = red_res["Subagents"][0]["Prompt"]
+        self.assertLessEqual(len(red_prompt.encode("utf-8")), 600)
+        self.assertIn("cta_outline.json", red_prompt)
+        self.assertIn("duplicate_candidates.json", red_prompt)
+        self.assertIn("RUN:", red_prompt)
+        self.assertIn("DONE:", red_prompt)
+        self.assertNotIn("Work order:", red_prompt)
+        red_disk = json.loads((self.work_dir / "dispatch" / "items" / "cta_reduce_01.json").read_text(encoding="utf-8"))
+        self.assertNotIn("## 1. INSTRUCCIONES DE EJECUCIÓN", red_disk["Prompt"])
+
+        # 3. Shard Author: pure-data author_01_data.md
+        auth_res = dispatch_authors(self.work_dir, pointer=True)
+        auth_prompt = next(s["Prompt"] for s in auth_res["Subagents"] if "shard_01" in s["Role"])
+        self.assertLessEqual(len(auth_prompt.encode("utf-8")), 300)
+        self.assertIn("author_01_data.md", auth_prompt)
+        auth_data_md = (self.work_dir / "dispatch" / "items" / "author_01_data.md").read_text(encoding="utf-8")
+        self.assertIn("## 2. ESPECIFICACIÓN TURN-0 COMPLETA DE COMPETENCIAS Y DISTRACTORES", auth_data_md)
+        self.assertNotIn("TypeName", auth_data_md)
+        self.assertNotIn("## 3. INSTRUCCIONES DE EJECUCIÓN", auth_data_md)
+
+        # 4. Blind Judge: pure-data judge_01_items.json (JSON array only)
+        verif_dir = self.work_dir / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        (verif_dir / "judge_batch_01.json").write_text(json.dumps([
+            {"question_id": "Q-01", "question_type": "multiple_choice", "stem_es": "Calcule X", "options": [{"id": "A", "content": "1"}]}
+        ]), encoding="utf-8")
+        judge_res = dispatch_judges(self.work_dir, pointer=True)
+        judge_prompt = judge_res["Subagents"][0]["Prompt"]
+        self.assertLessEqual(len(judge_prompt.encode("utf-8")), 300)
+        self.assertIn("judge_01_items.json", judge_prompt)
+        judge_items_data = json.loads((self.work_dir / "dispatch" / "items" / "judge_01_items.json").read_text(encoding="utf-8"))
+        self.assertIsInstance(judge_items_data, dict)
+        self.assertEqual(list(judge_items_data.keys()), ["items"])
+        self.assertEqual(judge_items_data["items"][0]["question_id"], "Q-01")
+
+        # 5. Repair Engineer: pure-data repair_c05_data.md
+        rep_res = dispatch_repair(self.work_dir, ids=["C-05"], pointer=True)
+        rep_prompt = rep_res["Subagents"][0]["Prompt"]
+        self.assertLessEqual(len(rep_prompt.encode("utf-8")), 600)
+        self.assertIn("repair_c05_data.md", rep_prompt)
+        rep_data_md = (self.work_dir / "prompts" / "repair" / "repair_c05_data.md").read_text(encoding="utf-8")
+        self.assertIn("## 2. DIAGNÓSTICO DEL FALLO & COMPETENCE SLICE", rep_data_md)
+        self.assertNotIn("TypeName", rep_data_md)
+        self.assertNotIn("## 3. INSTRUCCIONES DE REPARACIÓN", rep_data_md)
 
 
 if __name__ == "__main__":

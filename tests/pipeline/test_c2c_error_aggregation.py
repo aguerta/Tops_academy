@@ -217,10 +217,14 @@ class TestTemplateErrorAggregation:
             num_dry_run_seeds=50,
         )
 
-        d4_errors = [e for e in errors if "DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA" in e]
-        # Exactly 1 consolidated diagnostic error block instead of 50-100
-        assert len(d4_errors) == 1, f"Expected 1 consolidated D4 error, got: {len(d4_errors)}"
-        assert "semillas 100..149 (50 semillas)" in d4_errors[0]
+        asm_errors = [
+            e for e in errors
+            if "MC7 duplicate option content detected" in e and "TPL-ASM" in e
+        ]
+        # assemble_question rejects MC7 duplicate option content at assembly time for all 50 seeds (100..149)
+        assert len(asm_errors) == 50, f"Expected 50 TPL-ASM duplicate-option errors, got: {len(asm_errors)}"
+        assert "seed=100" in asm_errors[0]
+        assert "seed=149" in asm_errors[-1]
 
     def test_undeclared_distractor_ids_consolidated_in_single_diagnostic(self):
         """When multiple distractor IDs are not declared in CTA, a single consolidated error is emitted."""
