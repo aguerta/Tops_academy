@@ -84,62 +84,36 @@ DISTRACTOR_DEDUP_JACCARD_THRESHOLD: float = 0.55
 CROSS_PDF_FORMULA_BOOST: float = 0.20
 
 FORMULA_KEY_TERMS: Tuple[str, ...] = (
-    "markov",
-    "chebyshev",
-    "varianza muestral",
-    "error estandar",
-    "slutsky",
-    "insesgado",
-    "sesgo",
-    "gauss-markov",
-    "gauss markov",
-    "bayes",
-    "bernoulli",
-    "poisson",
-    "binomial",
-    "chi-cuadrado",
-    "chi cuadrado",
-    "student",
-    "fisher",
-    "snedecor",
-    "kolmogorov",
-    "smirnov",
-    "jensen",
-    "cauchy-schwarz",
-    "cauchy schwarz",
-    "holder",
-    "minkowski",
-    "lyapunov",
-    "lindeberg",
-    "levy",
-    "borel-cantelli",
-    "borel cantelli",
-    "rao-blackwell",
-    "rao blackwell",
-    "cramer-rao",
-    "cramer rao",
-    "neyman-pearson",
-    "neyman pearson",
-    "lehmann-scheffe",
-    "lehmann scheffe",
-    "maxima verosimilitud",
-    "verosimilitud",
-    "consistencia",
-    "eficiencia",
-    "suficiencia",
-    "ley de los grandes numeros",
-    "teorema central del limite",
-    "intervalo de confianza",
-    "p-valor",
-    "p valor",
-    "error cuadratico medio",
-    "covarianza",
-    "correlacion",
-    "regresion",
-    "minimos cuadrados",
-    "heterocedasticidad",
-    "autocorrelacion",
-    "multicolinealidad",
+    "teorema",
+    "lema",
+    "corolario",
+    "axioma",
+    "definicion",
+    "proposicion",
+    "hipotesis",
+    "demostracion",
+    "identidad",
+    "desigualdad",
+    "ecuacion",
+    "sistema",
+    "funcion",
+    "matriz",
+    "vector",
+    "norma",
+    "limite",
+    "integral",
+    "serie",
+    "convergencia",
+    "equilibrio",
+    "optimizacion",
+    "restriccion",
+    "condicion necesaria",
+    "condicion suficiente",
+    "criterio",
+    "invariante",
+    "operador",
+    "transformacion",
+    "espacio",
 )
 
 
@@ -160,6 +134,46 @@ def jaccard_similarity(tokens_a: Set[str], tokens_b: Set[str]) -> float:
     intersection = len(tokens_a & tokens_b)
     union = len(tokens_a | tokens_b)
     return intersection / union if union > 0 else 0.0
+
+
+def _extract_delta_info(manifest_data: Optional[Dict[str, Any]], work_path: Path) -> Optional[Dict[str, Any]]:
+    """Extract delta / existing course metadata from manifest_data or work_path/delta_manifest.json."""
+    delta_info = None
+    if isinstance(manifest_data, dict):
+        delta_info = (
+            manifest_data.get("delta")
+            or manifest_data.get("existing_course")
+            or manifest_data.get("delta_manifest")
+        )
+    if not delta_info and (work_path / "delta_manifest.json").is_file():
+        try:
+            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
+        except Exception:
+            delta_info = None
+    return delta_info if isinstance(delta_info, dict) else None
+
+
+def _collect_existing_competency_ids(
+    manifest_data: Optional[Dict[str, Any]],
+    delta_info: Optional[Dict[str, Any]],
+) -> Set[str]:
+    """Collect all base/existing competency IDs from manifest and delta metadata."""
+    existing_comp_ids: Set[str] = set()
+    if isinstance(delta_info, dict):
+        existing_comp_ids.update(
+            str(cid) for cid in delta_info.get("existing_competency_ids", []) if cid
+        )
+        for key in ("existing_competencies_outline", "existing_competencies", "competencies"):
+            for item in delta_info.get(key, []):
+                if isinstance(item, dict):
+                    cid = item.get("id") or item.get("competency_id")
+                    if cid:
+                        existing_comp_ids.add(str(cid))
+    if isinstance(manifest_data, dict) and isinstance(manifest_data.get("existing_competency_ids"), list):
+        existing_comp_ids.update(
+            str(cid) for cid in manifest_data.get("existing_competency_ids", []) if cid
+        )
+    return existing_comp_ids
 
 
 def parse_next_ids_by_prefix(delta_info: Optional[Dict[str, Any]]) -> Dict[str, int]:
@@ -1075,11 +1089,37 @@ def find_duplicate_candidates(
     views = [_comp_view(c) for c in competencies]
     n = len(views)
 
+    # Exact-title pairs are deterministic: flag as mandatory so the Harmonizer MUST resolve them
+    # (merge or rename). apply_harmonize enforces this with a hard gate (check_duplicate_titles).
+    def _norm_title(name: Any) -> str:
+        return " ".join(str(name or "").casefold().split())
+
+    def _mark_exact(cand: Dict[str, Any], va: Dict[str, Any], vb: Dict[str, Any]) -> None:
+        ta, tb = _norm_title(va.get("name")), _norm_title(vb.get("name"))
+        if ta and ta == tb:
+            cand["exact_title"] = True
+            cand["mandatory"] = True
+            cand["strength"] = "strong"
+            cand["required_action"] = (
+                "Mismo título exacto: fusiona con 'merge' si cubren lo mismo; si difieren en rol o "
+                "nivel Bloom (Understand/Apply/Analyze…), renombra con 'rename' (ej. '… (concepto)' / "
+                "'… (aplicación)')."
+            )
+
     # 1. Intra-curriculum candidate detection
     for i in range(n):
         for j in range(i + 1, n):
             cand = _pair_candidate(views[i], views[j])
+            if not cand and _norm_title(views[i].get("name")) and \
+                    _norm_title(views[i].get("name")) == _norm_title(views[j].get("name")):
+                cand = {
+                    "pair": [views[i]["id"], views[j]["id"]],
+                    "score": 1.0,
+                    "strength": "strong",
+                    "signals": ["exact_title"],
+                }
             if cand:
+                _mark_exact(cand, views[i], views[j])
                 candidates.append(cand)
 
     # 2. Delta vs Base course candidate detection
@@ -1089,6 +1129,7 @@ def find_duplicate_candidates(
             for vb in base_views:
                 cand = _pair_candidate(v1, vb)
                 if cand:
+                    _mark_exact(cand, v1, vb)
                     cand.update({
                         "pair": [v1["id"], vb["id"]],
                         "against_base": True,
@@ -1097,8 +1138,8 @@ def find_duplicate_candidates(
                     })
                     candidates.append(cand)
 
-    # Stable ordering: strong first, then by descending score (ties keep detection order)
-    candidates.sort(key=lambda c: (c["strength"] != "strong", -c["score"]))
+    # Stable ordering: mandatory exact-title first, then strong, then by descending score
+    candidates.sort(key=lambda c: (not c.get("mandatory"), c["strength"] != "strong", -c["score"]))
     return candidates
 
 
@@ -1158,6 +1199,56 @@ def _build_outline_payload(
         },
         "competencies": outline_competencies,
     }
+
+
+def check_duplicate_titles(
+    competencies: List[Dict[str, Any]],
+    base_competencies: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Hard gate: two competencies must never share the same normalized title.
+
+    Also compares new competencies against the (read-only) base course; there the
+    base entry cannot be renamed, so the new one must be renamed or merged into it.
+    """
+    def _key(c: Dict[str, Any]) -> str:
+        return " ".join(str(c.get("name") or c.get("title") or "").casefold().split())
+
+    errors: List[str] = []
+    groups: Dict[str, List[Dict[str, Any]]] = {}
+    for c in competencies:
+        if _key(c):
+            groups.setdefault(_key(c), []).append(c)
+    base_by_title: Dict[str, Dict[str, Any]] = {}
+    for b in base_competencies or []:
+        if isinstance(b, dict) and _key(b):
+            base_by_title.setdefault(_key(b), b)
+    for c in competencies:
+        b = base_by_title.get(_key(c))
+        if b is not None and (b.get("id") or b.get("competency_id")) != c.get("id"):
+            bid = b.get("id") or b.get("competency_id")
+            errors.append(
+                f"[DUPLICATE-TITLE-BASE] La competencia nueva {c.get('id')} repite el título "
+                f"'{c.get('name')}' de la competencia base {bid} (solo lectura). Elige UNA acción: "
+                f"(1) Mismo contenido y nivel → fusiona {c.get('id')} en {bid} con 'merge' "
+                f"(conserva el id base). "
+                f"(2) Complementarias (distinto rol o nivel Bloom: Understand vs. Apply vs. Analyze) → "
+                f"renombra la NUEVA {c.get('id')} con 'rename' (ej. '… (aplicación)'); la base no se modifica."
+            )
+    for items in groups.values():
+        if len(items) < 2:
+            continue
+        ids = ", ".join(f"{c.get('id')} ({c.get('type', '?')})" for c in items)
+        errors.append(
+            f"[DUPLICATE-TITLE] Las competencias {ids} tienen el mismo título "
+            f"'{items[0].get('name')}'. Elige UNA acción: "
+            f"(1) Si cubren el mismo contenido y nivel cognitivo → fusiónalas con "
+            f"'merge' (conserva una, redirige prerrequisitos). "
+            f"(2) Si son complementarias (p. ej. concepto vs. habilidad, o distinto nivel "
+            f"Bloom: Understand vs. Apply vs. Analyze) → conserva ambas, pero renómbralas con "
+            f"'rename' para que el título refleje su rol/nivel "
+            f"(ej. '… (concepto)' y '… (aplicación)') y ordénalas con el prerrequisito correcto."
+        )
+    return errors
 
 
 def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
@@ -1416,28 +1507,8 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         sanitize_competency_math(comp)
 
     # Renumber canonical sequential IDs per category with append delta support
-    delta_info = (
-        manifest_data.get("delta")
-        or manifest_data.get("existing_course")
-        or manifest_data.get("delta_manifest")
-    )
-    if not delta_info and (work_path / "delta_manifest.json").is_file():
-        try:
-            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
-        except Exception:
-            pass
-
-    existing_comp_ids: Set[str] = set()
-    if delta_info and isinstance(delta_info, dict):
-        existing_comp_ids.update(delta_info.get("existing_competency_ids", []))
-        for item in delta_info.get("existing_competencies_outline", []):
-            if isinstance(item, dict) and "id" in item:
-                existing_comp_ids.add(item["id"])
-        for item in delta_info.get("competencies", []):
-            if isinstance(item, dict) and "id" in item:
-                existing_comp_ids.add(item["id"])
-    if isinstance(manifest_data.get("existing_competency_ids"), list):
-        existing_comp_ids.update(manifest_data.get("existing_competency_ids", []))
+    delta_info = _extract_delta_info(manifest_data, work_path)
+    existing_comp_ids = _collect_existing_competency_ids(manifest_data, delta_info)
 
     next_counts = parse_next_ids_by_prefix(delta_info)
     pre_count = max(0, next_counts.get("PRE", 1) - 1)
@@ -1566,9 +1637,10 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
                 if p not in filtered_prereqs:
                     filtered_prereqs.append(p)
             else:
-                # Prerequisites outside newly combined competencies (e.g. delta/base course)
-                if p not in filtered_prereqs:
-                    filtered_prereqs.append(p)
+                logger.warning(
+                    "Dropping dangling/unknown prerequisite %s for competency %s",
+                    p, comp["id"],
+                )
         comp["prerequisites"] = filtered_prereqs
 
     # Guarantee removal of temporary internal keys (_part_key, _sort_key) from all competencies
@@ -1777,23 +1849,18 @@ def apply_harmonize(
     harmonize_data = json.loads(harmonize_file.read_text(encoding="utf-8"))
 
     # Load delta manifest or manifest['delta'] for append mode if present
-    delta_info = None
+    m_tmp: Optional[Dict[str, Any]] = None
     man_file = Path(manifest_path).resolve() if manifest_path else work_path / "pre_cta_manifest.json"
     if man_file.is_file():
         try:
             m_tmp = json.loads(man_file.read_text(encoding="utf-8"))
-            delta_info = m_tmp.get("delta") or m_tmp.get("existing_course")
         except Exception:
-            pass
-    if not delta_info and (work_path / "delta_manifest.json").is_file():
-        try:
-            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
-        except Exception:
-            pass
+            m_tmp = None
+    delta_info = _extract_delta_info(m_tmp, work_path)
     if existing_competency_ids is not None:
         existing_competency_ids = set(existing_competency_ids)
     else:
-        existing_competency_ids = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
+        existing_competency_ids = _collect_existing_competency_ids(m_tmp, delta_info)
 
     orig_order: List[str] = cta_order_data.get("order", [])
     competencies: List[Dict[str, Any]] = cta_draft.get("competencies", [])
@@ -1983,7 +2050,12 @@ def apply_harmonize(
 
                 if keep_id:
                     survivor_id = str(keep_id)
-                    absorbed_ids = [id_y if id_x == keep_id else id_x]
+                    if survivor_id not in (id_x, id_y):
+                        validation_errors.append(
+                            f"Merge failed: keep_id '{survivor_id}' is not in pair [{id_x}, {id_y}]."
+                        )
+                        continue
+                    absorbed_ids = [id_y if id_x == survivor_id else id_x]
                 elif drop_id:
                     absorbed_ids = [str(drop_id)]
                     survivor_id = id_y if id_x == drop_id else id_x
@@ -2085,6 +2157,9 @@ def apply_harmonize(
             # Case B: Standard merge within delta competencies
             comp_survivor = next((c for c in competencies if c["id"] == root), None)
             if not comp_survivor:
+                validation_errors.append(
+                    f"Merge failed: survivor competency '{root}' not found in curriculum."
+                )
                 continue
 
             absorbed_comps = [
@@ -2124,7 +2199,7 @@ def apply_harmonize(
                     if sig in seen_signatures:
                         continue
                     sem_text = f"{str(d.get('wrong_belief') or '').strip()} {str(d.get('omitted_step') or '').strip()}".strip()
-                    if sem_text and any(
+                    if src_idx > 0 and sem_text and any(
                         _token_jaccard(sem_text, prev_text) >= DISTRACTOR_DEDUP_JACCARD_THRESHOLD
                         for prev_text in combined_sem_texts
                         if prev_text
@@ -2188,6 +2263,23 @@ def apply_harmonize(
                             a_copy["id"] = f"A-{survivor_code}-{asmp_idx:02d}"
                             survivor_assumptions.append(a_copy)
                 comp_survivor["assumptions"] = survivor_assumptions
+
+                # Inherit valid backward prerequisites from absorbed competency
+                survivor_prereqs = list(comp_survivor.get("prerequisites", []))
+                root_pos = orig_pos.get(root, 999999)
+                for pr in comp_absorbed.get("prerequisites", []):
+                    target_pr = absorbed_to_root.get(pr, pr)
+                    if target_pr == root or target_pr == absorbed_id:
+                        continue
+                    if target_pr in existing_competency_ids or orig_pos.get(target_pr, 999999) < root_pos:
+                        if target_pr not in survivor_prereqs:
+                            survivor_prereqs.append(target_pr)
+                    else:
+                        logger.warning(
+                            "Dropping non-inheritable prerequisite '%s' from absorbed '%s' into earlier survivor '%s'",
+                            target_pr, absorbed_id, root,
+                        )
+                comp_survivor["prerequisites"] = survivor_prereqs
 
                 # Remove absorbed competency from curriculum
                 absorbed_to_root[absorbed_id] = root
@@ -2336,6 +2428,18 @@ def apply_harmonize(
             f"Pedagogical order violation: Competency ordering was modified. "
             f"Expected {expected_order}, got {current_ids}."
         )
+
+    # 6b. Hard gate: exact duplicate competency titles
+    validation_errors.extend(
+        check_duplicate_titles(
+            competencies,
+            base_competencies=(
+                (delta_info or {}).get("existing_competencies")
+                or (delta_info or {}).get("existing_competencies_outline")
+                or []
+            ),
+        )
+    )
 
     # 7. Validate full CTA schema and psychometric rules
     # Sanitize and normalize orphan LaTeX math in all competencies and distractors

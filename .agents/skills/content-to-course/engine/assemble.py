@@ -153,11 +153,21 @@ def format_template_string(
         return m.group(0)
 
     result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
+    sentinel_values: Dict[str, str] = {}
+
+    def _stash_sentinel(val_s: str) -> str:
+        token = f"\x00__C2C_VAR_{len(sentinel_values)}__\x00"
+        sentinel_values[token] = val_s
+        return token
+
     for k, v in variables.items():
         if is_cta and not (len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))):
             continue
         pattern = re.compile(rf"\{{{re.escape(k)}(?::([^{{}}]+))?\}}")
-        math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", result)]
+        math_spans = [
+            m_s.span()
+            for m_s in re.finditer(r"(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|(?<!\\)\$[^\$]+?(?<!\\)\$", result)
+        ]
         def is_in_math_span(pos: int) -> bool:
             return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
 
@@ -188,7 +198,7 @@ def format_template_string(
                 macro_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", outer_prefix)
                 if macro_m and macro_m.group(1) in _LATEX_SYMBOL_MACROS and not fmt_spec and "_" not in key:
                     return m.group(0)
-                return val_str
+                return _stash_sentinel(val_str)
 
             prefix_stripped = prefix.rstrip()
 
@@ -199,10 +209,10 @@ def format_template_string(
                 if macro_name in _LATEX_VALUE_MACROS_1ARG or macro_name in _LATEX_VALUE_MACROS_2ARG:
                     if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
                         return m.group(0)
-                    return f"{{{val_str}}}"
+                    return f"{{{_stash_sentinel(val_str)}}}"
                 if not fmt_spec and "_" not in key:
                     return m.group(0)
-                return f"{{{val_str}}}"
+                return f"{{{_stash_sentinel(val_str)}}}"
 
             # Case 3: Second argument of a 2-argument value macro e.g. \frac{...}{k}
             is_second_arg, has_symbolic = _inspect_second_arg_of_value_macro(prefix_stripped, key)
@@ -211,7 +221,7 @@ def format_template_string(
                     return m.group(0)
                 if has_symbolic and not fmt_spec and "_" not in key:
                     return m.group(0)
-                return f"{{{val_str}}}"
+                return f"{{{_stash_sentinel(val_str)}}}"
 
             # Case 4: Superscript ^{k} or subscript _{k}
             if prefix_stripped.endswith("^") or prefix_stripped.endswith("_"):
@@ -220,15 +230,18 @@ def format_template_string(
                 base_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?(?:\{[^{}]*\})?\s*$", prefix_stripped[:-1].rstrip())
                 if base_m and base_m.group(1) in _LATEX_SYMBOL_MACROS and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
                     return m.group(0)
-                return f"{{{val_str}}}"
+                return f"{{{_stash_sentinel(val_str)}}}"
 
-            return val_str
+            return _stash_sentinel(val_str)
 
         result = pattern.sub(_replacer, result)
 
         # Fallback for bare code variables ending in _val, _num, _str, _res left unbraced by LLM
         if re.match(r"^[a-zA-Z0-9]+_(?:val|num|str|res)$", k):
-            result = re.sub(rf"\b{re.escape(k)}\b", lambda _, val=str(v): val, result)
+            result = re.sub(rf"\b{re.escape(k)}\b", lambda _, val=str(v): _stash_sentinel(val), result)
+
+    for token, val_s in sentinel_values.items():
+        result = result.replace(token, val_s)
 
     return result
 
@@ -266,6 +279,8 @@ def sanitize_katex_syntax(text: str, canonicalize_coefficients: bool = False) ->
         cmd = match.group(2)
         n = len(slashes)
         if n % 2 == 0:
+            if n == 2 and len(cmd) == 1:
+                return f"\\\\ {cmd}"
             return f"\\{cmd}"
         elif n >= 3:
             return f"\\\\ \\{cmd}"
@@ -690,12 +705,14 @@ def assemble_question(
     variables = gen_result.get("vars", {})
 
     # Format text strings with variables
-    stem_raw = template["stem"]
+    stem_raw = template.get("stem", "")
     stem_variants = template.get("stem_variants")
     if stem_variants and len(stem_variants) > 0:
         var_idx = (seed % len(stem_variants)) if seed is not None else 0
         stem_raw = stem_variants[var_idx]
     stem = sanitize_katex_syntax(format_template_string(stem_raw, variables))
+    if not isinstance(stem, str) or not stem.strip():
+        raise ValueError(f"Question stem cannot be empty for {competency_id} #{question_index}")
     raw_hints = template.get("hints", [])
     hints = []
     for h in raw_hints:
@@ -719,8 +736,8 @@ def assemble_question(
                     or d_entry.get("wrong_belief")
                     or d_entry.get("omitted_step")
                 )
-                if rh:
-                    remediation_hints.append(rh)
+                if isinstance(rh, str) and rh.strip():
+                    remediation_hints.append(rh.strip())
     
     if remediation_hints:
         common_misconception_warning = remediation_hints[0]
@@ -767,14 +784,18 @@ def assemble_question(
         common_misconception_warning = sanitize_katex_syntax(
             format_template_string(clean_warning, variables, is_cta=True)
         )
-        if validate_katex_syntax(common_misconception_warning, "common_misconception_warning", allow_template_vars=False):
+        if not common_misconception_warning.strip() or validate_katex_syntax(
+            common_misconception_warning, "common_misconception_warning", allow_template_vars=False
+        ):
             fallback_warning = _build_competency_misconception_fallback(
                 competency_id, template, cta_distractors_map, gen_result
             )
             fallback_sanitized = sanitize_katex_syntax(
                 format_template_string(_strip_giveaway_prefix(fallback_warning), variables, is_cta=True)
             )
-            if validate_katex_syntax(fallback_sanitized, "common_misconception_warning", allow_template_vars=False):
+            if not fallback_sanitized.strip() or validate_katex_syntax(
+                fallback_sanitized, "common_misconception_warning", allow_template_vars=False
+            ):
                 common_misconception_warning = f"Revise cuidadosamente los supuestos y pasos clave de la competencia {competency_id} antes de responder."
             else:
                 common_misconception_warning = fallback_sanitized
@@ -785,6 +806,8 @@ def assemble_question(
     if interaction_type == "multiple_choice_7_options":
         correct_raw = str(gen_result.get("correct", "")).strip()
         correct_val = sanitize_katex_syntax(format_template_string(correct_raw, variables))
+        if not correct_val.strip():
+            raise ValueError(f"MC7 correct option cannot be empty for {competency_id} #{question_index}")
         raw_distractors = gen_result.get("distractors", [])
         
         # Ensure we have 6 distractors
@@ -792,6 +815,7 @@ def assemble_question(
             raise ValueError(f"MC7 requires 6 distractors, found {len(raw_distractors)}")
         
         selected_distractors = raw_distractors[:6]
+        seen_option_contents = {correct_val.strip()}
         items_to_shuffle: List[Dict[str, Any]] = [
             {
                 "content": correct_val,
@@ -804,6 +828,11 @@ def assemble_question(
         for d in selected_distractors:
             d_raw = str(d.get("value", "")).strip()
             d_val = sanitize_katex_syntax(format_template_string(d_raw, variables))
+            if not d_val.strip():
+                raise ValueError(f"MC7 distractor content cannot be empty for {competency_id} #{question_index}")
+            if d_val.strip() in seen_option_contents:
+                raise ValueError(f"MC7 duplicate option content detected ({d_val!r}) for {competency_id} #{question_index}")
+            seen_option_contents.add(d_val.strip())
             d_id = d.get("distractor_id")
             default_fb = "Distractor derivado de error de procedimiento o misconception"
             rationale = _resolve_distractor_rationale(
@@ -857,6 +886,8 @@ def assemble_question(
 
         str_val = str(ans_val).strip()
         str_val = sanitize_katex_syntax(format_template_string(str_val, variables))
+        if not str_val.strip():
+            raise ValueError(f"FIB correct answer value cannot be empty for {competency_id} #{question_index}")
 
         if re.fullmatch(r"[+-]?\d+\.\d{3,}", str_val):
             stem_lower = stem.lower()
@@ -952,6 +983,8 @@ def assemble_question(
                 raw_opt_content = opt.get("text", "")
             raw_opt_content = str(raw_opt_content)
             opt_content = sanitize_katex_syntax(format_template_string(raw_opt_content, variables))
+            if not opt_content.strip():
+                raise ValueError(f"MS option content cannot be empty for {competency_id} #{question_index}")
 
             opt_entry = {
                 "id": f"opt_{letter.lower()}",
@@ -966,6 +999,9 @@ def assemble_question(
 
             if opt_entry["is_correct"]:
                 correct_letters.append(letter)
+
+        if not correct_letters:
+            raise ValueError(f"MS requires at least 1 correct option for {competency_id} #{question_index}")
 
         assembled["interface_config"] = {
             "allow_calculator": False,

@@ -15,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -23,6 +24,30 @@ from validator.core import validate_course_content
 from validator.models import ValidationResult
 
 logger = logging.getLogger(__name__)
+
+
+def _atomic_write_bytes(path: Path, data: bytes) -> None:
+    """Write bytes to a temporary file in the same directory and atomically replace target."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(str(tmp_path), str(path))
+    except Exception:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        raise
+
+
+def _atomic_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+    """Write text atomically via a temporary file in the target directory."""
+    _atomic_write_bytes(path, content.encode(encoding))
 
 
 def sanitize_cli_arg(arg: Any) -> Any:
@@ -240,7 +265,7 @@ def _resolve_linter_remediation(
     m_low = (message or "").lower()
     fn_ref = f"función `{gen_fn_name}` ({line_range_label})" if gen_fn_name else line_range_label
 
-    if "diagnostic_rationale" in l_low or "magic" in l_low:
+    if "diagnostic_rationale" in l_low or "magic" in l_low or "diagnostic remediation deficiency" in m_low:
         if "multiplicador" in m_low or "arbitrary" in m_low:
             return (
                 "DIAG-MAGIC-MULT / diagnostic_rationale_alignment_linter",
@@ -258,10 +283,14 @@ def _resolve_linter_remediation(
             )
         return (
             "DIAG-RATIONALE / diagnostic_rationale_alignment_linter",
-            f"Los `error_rationale` en `{file_label}` ({fn_ref}) son estáticos, genéricos (< 25 chars) o con unicidad < 30%.",
             (
-                f"En `{file_label}` ({fn_ref}), asegura que cada 3-tupla `(did, val, rationale)` en `dists` explique el desvío "
-                f"específico interpolando al menos un `@var@` del diccionario `vars` (longitud >= 25 caracteres)."
+                f"Los `error_rationale` en `{file_label}` ({fn_ref}) presentan reciclaje entre slots (`distractor_id`), "
+                f"prefijos genéricos rotativos o baja unicidad por slot (< 80%)."
+            ),
+            (
+                f"En `{file_label}` ({fn_ref}), asigna a cada slot `distractor_id` en `dists` un único `error_rationale` "
+                f"distinto y específico para su fórmula/desvío que interpole al menos un `@var@` de `vars` (>= 25 caracteres); "
+                f"no uses prefijos genéricos rotativos ('Error conceptual:', 'Fallo de cálculo:') ni tuplas de paráfrasis por semilla."
             ),
         )
 
@@ -485,7 +514,7 @@ def build_specific_error_report(
             })
 
     for hp in (audit_report.get("hard_penalties") or []):
-        if isinstance(hp, dict) and not selected_issues:
+        if isinstance(hp, dict):
             first_q = questions[0] if questions else {}
             selected_issues.append({
                 "linter": str(hp.get("rule") or "hard_penalty"),
@@ -755,11 +784,11 @@ def build_specific_error_report(
         try:
             work_dir.mkdir(parents=True, exist_ok=True)
             if report_md_path:
-                report_md_path.write_text(report_text, encoding="utf-8")
+                _atomic_write_text(report_md_path, report_text, encoding="utf-8")
             if report_json_path:
-                report_json_path.write_text(json.dumps(structured_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+                _atomic_write_text(report_json_path, json.dumps(structured_payload, indent=2, ensure_ascii=False), encoding="utf-8")
             rej_spec_path = work_dir / "publish_rejection_spec.json"
-            rej_spec.write_json(rej_spec_path)
+            _atomic_write_text(rej_spec_path, json.dumps(structured_payload, indent=2, ensure_ascii=False), encoding="utf-8")
         except Exception as e:
             logger.warning("Could not write specific_error_report / publish_rejection_spec files: %s", e)
 
@@ -927,6 +956,20 @@ class CoursePublisher:
 
                     if matching_ex_id:
                         comp_id_remap[orig_cid] = matching_ex_id
+                        if orig_cid != matching_ex_id:
+                            ex_comp = base_existing_comp_by_id.get(matching_ex_id, {})
+                            ex_dists = [
+                                ed for ed in (ex_comp.get("distractors") or [])
+                                if isinstance(ed, dict) and ed.get("id")
+                            ]
+                            ex_dist_ids = {str(ed["id"]) for ed in ex_dists}
+                            for idx_d, d in enumerate(c.get("distractors", [])):
+                                if isinstance(d, dict) and d.get("id"):
+                                    old_did = str(d["id"])
+                                    remapped_did = _remap_dist_id(old_did, orig_cid, matching_ex_id)
+                                    if remapped_did not in ex_dist_ids and idx_d < len(ex_dists):
+                                        remapped_did = str(ex_dists[idx_d]["id"])
+                                    distractor_id_remap[old_did] = remapped_did
                         logger.info("Merged duplicate/paraphrased competency '%s' into '%s'", orig_cid, matching_ex_id)
                     elif orig_cid not in existing_comp_by_id:
                         new_cid = orig_cid
@@ -1004,7 +1047,7 @@ class CoursePublisher:
                     q.get("id") or q.get("question_id") for q in existing_data.get("questions", [])
                 }
                 existing_signatures = {
-                    (q.get("stem", "").strip(), str(q.get("correct_answer", "")).strip())
+                    ((q.get("stem") or "").strip(), str(q.get("correct_answer") or "").strip())
                     for q in existing_data.get("questions", [])
                 }
 
@@ -1024,7 +1067,7 @@ class CoursePublisher:
                             if isinstance(opt, dict) and opt.get("distractor_id") in distractor_id_remap:
                                 opt["distractor_id"] = distractor_id_remap[str(opt["distractor_id"])]
 
-                    item_sig = (q.get("stem", "").strip(), str(q.get("correct_answer", "")).strip())
+                    item_sig = ((q.get("stem") or "").strip(), str(q.get("correct_answer") or "").strip())
                     if item_sig in existing_signatures:
                         continue
 
@@ -1055,7 +1098,24 @@ class CoursePublisher:
                     len(parsed.get("competencies", [])),
                 )
             except Exception as ex:
-                logger.warning("Failed to load existing course JSON for append: %s", ex)
+                logger.error("Failed to load or merge existing course JSON for append: %s", ex)
+                return PublicationResult(
+                    success=False,
+                    course_id=course_id,
+                    course_title=course_title,
+                    published_json_path="",
+                    published_cta_path=None,
+                    total_competencies=len(parsed.get("competencies", [])),
+                    total_questions=len(parsed.get("questions", [])),
+                    competency_breakdown={},
+                    interaction_type_breakdown={},
+                    validation_passed=False,
+                    launch_command="",
+                    launch_url="",
+                    error_message=f"Failed to load or merge existing course JSON during append: {ex}",
+                    audit_report=None,
+                    published_qa_report_path=None,
+                )
 
         # 1c. Standardized Pre-Publish Quality Gate
         resolved_work_dir: Optional[Path] = None
@@ -1082,7 +1142,7 @@ class CoursePublisher:
                 if resolved_work_dir:
                     resolved_work_dir.mkdir(parents=True, exist_ok=True)
                     gate_report_path = resolved_work_dir / "audit_gate_report.json"
-                    gate_report_path.write_text(json.dumps(audit_report, indent=2, ensure_ascii=False), encoding="utf-8")
+                    _atomic_write_text(gate_report_path, json.dumps(audit_report, indent=2, ensure_ascii=False), encoding="utf-8")
 
                 if strict:
                     questions = parsed.get("questions", [])
@@ -1167,7 +1227,7 @@ class CoursePublisher:
                                     except Exception:
                                         pass
                         gate_report_path = resolved_work_dir / "audit_gate_report.json"
-                        gate_report_path.write_text(json.dumps(audit_report, indent=2, ensure_ascii=False), encoding="utf-8")
+                        _atomic_write_text(gate_report_path, json.dumps(audit_report, indent=2, ensure_ascii=False), encoding="utf-8")
 
                     if gate_failures:
                         summary_hdr = "Publish Quality Gate Rejected Publication:\n" + "\n".join(f"  - {f}" for f in gate_failures)
@@ -1180,6 +1240,9 @@ class CoursePublisher:
             except PublishQualityGateError:
                 raise
             except Exception as ex:
+                if strict:
+                    logger.error("Audit gate evaluation failed in strict mode: %s", ex)
+                    raise PublishQualityGateError(f"Audit gate evaluation failed in strict mode: {ex}") from ex
                 logger.warning("Audit gate evaluation encountered unexpected error: %s", ex)
 
         # Stamp contract_version: 2 and min_archetypes: 4 from engine.stage_contract
@@ -1238,14 +1301,21 @@ class CoursePublisher:
                 published_qa_report_path=None,
             )
 
-        # 3. Write course JSON to disk
-        json_path.write_text(raw_text, encoding="utf-8")
+        # 3. Backup existing outputs for rollback and write course JSON atomically
+        had_existing_json = json_path.is_file()
+        backup_json_bytes: Optional[bytes] = json_path.read_bytes() if had_existing_json else None
+        _atomic_write_text(json_path, raw_text, encoding="utf-8")
         logger.info("Published course JSON to %s", json_path.resolve())
 
         # 4. Write or append CTA markdown if provided
         cta_path_str: Optional[str] = None
+        cta_path: Optional[Path] = None
+        had_existing_cta = False
+        backup_cta_bytes: Optional[bytes] = None
         if cta_markdown:
             cta_path = out_dir / f"competence_analysis_{course_id}.md"
+            had_existing_cta = cta_path.is_file()
+            backup_cta_bytes = cta_path.read_bytes() if had_existing_cta else None
             eff_cta_md = cta_markdown
             full_token_map = {k: v for k, v in {**comp_id_remap, **distractor_id_remap}.items() if k != v}
             if full_token_map:
@@ -1258,21 +1328,35 @@ class CoursePublisher:
                 existing_md = cta_path.read_text(encoding="utf-8")
                 if eff_cta_md.strip() not in existing_md:
                     merged_md = existing_md.rstrip() + "\n\n---\n\n## Actualización Incremental (Append)\n\n" + eff_cta_md.lstrip() + "\n"
-                    cta_path.write_text(merged_md, encoding="utf-8")
+                    _atomic_write_text(cta_path, merged_md, encoding="utf-8")
             else:
-                cta_path.write_text(eff_cta_md, encoding="utf-8")
+                _atomic_write_text(cta_path, eff_cta_md, encoding="utf-8")
             cta_path_str = str(cta_path.resolve())
             logger.info("Published CTA analysis to %s", cta_path_str)
 
         # 5. Execute external CLI validator to confirm strict compliance on disk
         cli_success = self._run_cli_validator(json_path, strict=strict)
         if not cli_success:
+            # Rollback written files to pre-publish state
+            try:
+                if backup_json_bytes is not None:
+                    _atomic_write_bytes(json_path, backup_json_bytes)
+                elif not had_existing_json and json_path.is_file():
+                    json_path.unlink(missing_ok=True)
+                if cta_path is not None:
+                    if backup_cta_bytes is not None:
+                        _atomic_write_bytes(cta_path, backup_cta_bytes)
+                    elif not had_existing_cta and cta_path.is_file():
+                        cta_path.unlink(missing_ok=True)
+            except Exception as rb_ex:
+                logger.error("Failed to rollback course files after CLI validator failure: %s", rb_ex)
+
             return PublicationResult(
                 success=False,
                 course_id=course_id,
                 course_title=course_title,
-                published_json_path=str(json_path.resolve()),
-                published_cta_path=cta_path_str,
+                published_json_path="",
+                published_cta_path=None,
                 total_competencies=len(parsed.get("competencies", [])),
                 total_questions=len(parsed.get("questions", [])),
                 competency_breakdown={},
@@ -1436,7 +1520,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Publish validated course bank to courses/ folder.")
     parser.add_argument("course_json", help="Path to input course JSON file")
     parser.add_argument("--output-dir", "-o", default="courses", help="Courses destination directory")
-    parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict mode")
+    parser.add_argument(
+        "--strict",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Enforce strict mode (use --no-strict to disable)",
+    )
     parser.add_argument("--append", action="store_true", default=False, help="Append questions to existing course JSON")
     sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
     args = parser.parse_args(sanitized_argv[1:])

@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 import textwrap
 import uuid
 import zlib
@@ -42,7 +43,11 @@ if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
 from engine.assemble import assemble_question, format_template_string
-from engine.diversity import evaluate_competency_diversity, mask_stem_numbers
+from engine.diversity import (
+    evaluate_competency_diversity,
+    evaluate_slot_rationale_diversity,
+    mask_stem_numbers,
+)
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
 from engine.stage_contract import is_skill_type, MIN_DIVERSITY_RATIO
@@ -1001,18 +1006,43 @@ def auto_heal_template_data(
                 try:
                     tree = ast.parse(gen_py)
                     assigned_locals: Set[str] = set()
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Assign):
-                            for target in node.targets:
-                                if isinstance(target, ast.Name):
-                                    assigned_locals.add(target.id)
-                                elif isinstance(target, ast.Tuple):
-                                    for elt in target.elts:
-                                        if isinstance(elt, ast.Name):
-                                            assigned_locals.add(elt.id)
-                        elif isinstance(node, ast.AnnAssign):
-                            if isinstance(node.target, ast.Name):
-                                assigned_locals.add(node.target.id)
+
+                    def _collect_target_names(tgt: ast.AST) -> None:
+                        if isinstance(tgt, ast.Name):
+                            assigned_locals.add(tgt.id)
+                        elif isinstance(tgt, (ast.Tuple, ast.List)):
+                            for elt in tgt.elts:
+                                _collect_target_names(elt)
+                        elif isinstance(tgt, ast.Starred):
+                            _collect_target_names(tgt.value)
+
+                    gen_func_node = next(
+                        (
+                            n for n in ast.walk(tree)
+                            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "generate"
+                        ),
+                        None,
+                    )
+                    if gen_func_node is not None:
+                        scope_stack: List[ast.AST] = list(gen_func_node.body)
+                        while scope_stack:
+                            node = scope_stack.pop()
+                            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                                continue
+                            if isinstance(node, ast.Assign):
+                                for target in node.targets:
+                                    _collect_target_names(target)
+                            elif isinstance(node, ast.AnnAssign):
+                                _collect_target_names(node.target)
+                            elif isinstance(node, (ast.For, ast.AsyncFor)):
+                                _collect_target_names(node.target)
+                            elif isinstance(node, (ast.With, ast.AsyncWith)):
+                                for item in node.items:
+                                    if item.optional_vars is not None:
+                                        _collect_target_names(item.optional_vars)
+                            for child in ast.iter_child_nodes(node):
+                                if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                                    scope_stack.append(child)
 
                     missing_vars = (referenced_vars & assigned_locals) - {"rng"}
                     if missing_vars:
@@ -1203,6 +1233,30 @@ def auto_heal_template_data(
     return modified, fixes
 
 
+def _atomic_write_bytes(target_path: Path, data: bytes) -> None:
+    """Atomically write bytes to target_path via tempfile + os.replace."""
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path: Optional[Path] = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb",
+            dir=str(target_path.parent),
+            prefix=f".{target_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as tmp_f:
+            tmp_path = Path(tmp_f.name)
+            tmp_f.write(data)
+        os.replace(tmp_path, target_path)
+    except Exception:
+        if tmp_path is not None and tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
+        raise
+
+
 def auto_heal_template_file(
     tpl_path: Path,
     cta_comp: Optional[Dict[str, Any]] = None,
@@ -1228,7 +1282,7 @@ def auto_heal_template_file(
     comp_context = cta_comp if cta_comp is not None else cta_distractors_map
     modified, fixes = auto_heal_template_data(content, cta_comp=comp_context)
     if modified:
-        p.write_text(json.dumps(content, indent=2, ensure_ascii=False), encoding="utf-8")
+        _atomic_write_bytes(p, json.dumps(content, indent=2, ensure_ascii=False).encode("utf-8"))
     return modified, fixes
 
 
@@ -1245,6 +1299,49 @@ def check_ast_rf_triple_braces(source_text: str) -> List[str]:
                 "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
             )
     return warnings
+
+
+_MATH_SPAN_RE = re.compile(r"\$\$(.+?)\$\$|\$(.+?)\$", re.S)
+_PY_SCI_RE = re.compile(r"(?<![A-Za-z\\])\d(?:\.\d+)?[eE][-+]?\d+")
+_TEXT_CMD_RE = re.compile(r"\\text\{([^{}]*)\}")
+_TEXT_MAX_WORDS = 2
+_TEXT_MAX_CHARS = 20
+
+
+def check_render_hygiene_in_instance(instance: Dict[str, Any]) -> List[str]:
+    """Reject raw Python scientific notation (1.2e-05) and narrative prose inside KaTeX."""
+    fields: List[Tuple[str, Any]] = [
+        ("stem", instance.get("stem")),
+        ("solution", instance.get("solution") or instance.get("explanation") or instance.get("detailed_solution")),
+    ]
+    for idx, h in enumerate(instance.get("hints", []) or []):
+        fields.append((f"hint {idx + 1}", h))
+    for idx, opt in enumerate(instance.get("options", []) or []):
+        if isinstance(opt, dict):
+            fields.append((f"option {idx + 1} content", opt.get("content")))
+            fields.append((f"option {idx + 1} error_rationale", opt.get("error_rationale")))
+    errs: List[str] = []
+    for ctx, text in fields:
+        if not isinstance(text, str) or not text:
+            continue
+        for m in _MATH_SPAN_RE.finditer(text):
+            span = m.group(1) or m.group(2) or ""
+            sci = _PY_SCI_RE.search(span)
+            if sci:
+                errs.append(
+                    f"[KATEX-PY-SCI-NOTATION] {ctx}: notación científica cruda de Python "
+                    f"'{sci.group(0)}' dentro de KaTeX. Formatea como mantisa \\times 10^{{exp}} "
+                    f"(ej. 2.63\\times 10^{{-5}}) o usa decimales fijos."
+                )
+            for tm in _TEXT_CMD_RE.finditer(span):
+                inner = tm.group(1).strip()
+                if len(inner.split()) > _TEXT_MAX_WORDS or len(inner) > _TEXT_MAX_CHARS:
+                    errs.append(
+                        f"[KATEX-TEXT-PROSE] {ctx}: prosa '\\text{{{inner[:40]}}}' dentro de KaTeX "
+                        f"(máx {_TEXT_MAX_WORDS} palabras / {_TEXT_MAX_CHARS} caracteres). "
+                        f"Saca la prosa fuera de $...$ y deja solo la fórmula en KaTeX."
+                    )
+    return list(dict.fromkeys(errs))
 
 
 def check_unrendered_placeholders_in_instance(
@@ -2591,7 +2688,11 @@ def check_distractor_refutation(
         for i, d in enumerate(distractors):
             if isinstance(d, dict):
                 did = d.get("distractor_id") or f"d{i+1}"
-                val = d.get("value") or d.get("content") or d
+                val = d.get("value")
+                if val is None:
+                    val = d.get("content")
+                if val is None:
+                    val = d
                 dist_items.append((did, val))
             else:
                 dist_items.append((f"d{i+1}", d))
@@ -2604,6 +2705,8 @@ def check_distractor_refutation(
         cand_res["correct"] = d_val
         try:
             passed = execute_verifier_code(cross_check_py, cand_res, seed=seed)
+        except TypeError:
+            passed = True
         except Exception:
             passed = False
         if passed:
@@ -2674,7 +2777,7 @@ def check_single_template(
 
     # Concise explanation check (blocking under strict=True)
     sol_text = str(template.get("solution") or template.get("sol") or template.get("explanation_es") or "").strip()
-    if 0 < len(sol_text) < 60:
+    if len(sol_text) < 60 and (strict or len(sol_text) > 0):
         if strict:
             errors.append(format_diagnostic_error(
                 "TPL-EXP-SHORT: EXPLICACIÓN INSUFICIENTE", competency_id, tpl_id, tpl_id, "explanation_es",
@@ -3014,9 +3117,10 @@ def check_single_template(
             correct_opt = next((opt for opt in assembled_q.get("options", []) if opt.get("is_correct")), None)
             c_val = re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
             rendered_correct_answers.append(c_val)
-            for opt in assembled_q.get("options", []):
+            for opt_idx, opt in enumerate(assembled_q.get("options", [])):
                 if not opt.get("is_correct"):
-                    slot_key = opt.get("distractor_id") or opt.get("content")
+                    did = str(opt.get("distractor_id") or "").strip()
+                    slot_key = did or str(opt.get("id") or opt.get("option_id") or f"slot_{opt_idx}").strip()
                     distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
                     distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
         elif interaction_type == "fill_in_the_blank":
@@ -3027,7 +3131,7 @@ def check_single_template(
         elif interaction_type == "multiple_select":
             opt_set = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in assembled_q.get("options", []))
             rendered_correct_answers.append(opt_set)
-            for opt in assembled_q.get("options", []):
+            for opt_idx, opt in enumerate(assembled_q.get("options", [])):
                 opt_txt = str(opt.get("content") or opt.get("text") or "")
                 m_tt = re.search(
                     r"\(\s*(?:confusi[oó]n|error|omisi[oó]n|sesgo|falsamente|definici[oó]n\s+err[oó]nea|desplazamiento\s+err[oó]neo|c[aá]lculo\s+err[oó]neo)[^)]*\)",
@@ -3045,12 +3149,14 @@ def check_single_template(
                             raw_inv_failures[canon_key][1].append(seed_tag)
 
                 if not opt.get("is_correct"):
-                    slot_key = opt.get("distractor_id") or opt.get("content")
+                    did = str(opt.get("distractor_id") or "").strip()
+                    slot_key = did or str(opt.get("id") or opt.get("option_id") or f"slot_{opt_idx}").strip()
                     distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
                     distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
 
         # Validate unrendered placeholders
         pl_errs = check_unrendered_placeholders_in_instance(assembled_q, gen_res.get("vars", {}))
+        pl_errs = list(pl_errs) + check_render_hygiene_in_instance(assembled_q)
         for ple in pl_errs:
             canon_key = get_canonical_invariant_key(ple)
             seed_tag = f"seed={seed_val}"
@@ -3226,10 +3332,7 @@ def check_single_template(
     # b) Verify stem contains at least one placeholder {var} or stem_variants is present
     stem = template.get("stem", "")
     stem_variants = template.get("stem_variants")
-    has_placeholder = bool(
-        re.search(r"\{[A-Za-z0-9_]+(?::[^{}]+)?\}", stem)
-        or re.search(r"@[A-Za-z_][A-Za-z0-9_]*(?::[^@\s{}]+)?@", stem)
-    )
+    has_placeholder = bool(_extract_template_placeholders(stem))
     has_variants = bool(stem_variants and len(stem_variants) > 0)
     if not (has_placeholder or has_variants):
         errors.append(format_diagnostic_error(
@@ -3340,7 +3443,10 @@ def check_competency_diversity(
 
     if questions is not None:
         target_quota = len(questions)
-        comp_res = {"questions": questions, "diversity_stats": {}}
+        comp_res = {
+            "questions": questions,
+            "diversity_stats": evaluate_competency_diversity([str(q.get("stem") or "") for q in questions]),
+        }
     else:
         if enforce_full_quota:
             target_quota = 30 if is_skill else 20
@@ -3479,24 +3585,80 @@ def check_competency_diversity(
                     r_text = opt.get("error_rationale")
                     if r_text and str(r_text).strip():
                         all_rats.append(str(r_text).strip())
-        if len(all_rats) >= 30:
-            unique_rats = set(all_rats)
-            uniqueness_pct = len(unique_rats) / len(all_rats)
-            if uniqueness_pct < 0.35:
-                errors.append(format_diagnostic_error(
-                    rule_tag="TPL-DYNAMIC-RATIONALE: DIVERSIDAD DE RATIONALES INSUFICIENTE",
-                    competency=cid,
-                    template="ALL",
-                    item_id="options",
-                    field_name="error_rationale",
-                    snippet=f"Unicidad de rationales {uniqueness_pct*100:.1f}% < 35.0% ({len(unique_rats)}/{len(all_rats)} únicos)",
-                    cause=f"[-] [TPL-DYNAMIC-RATIONALE] violation in competency '{cid}': Distractor rationale uniqueness ratio {uniqueness_pct*100:.1f}% < 35.0% ({len(unique_rats)}/{len(all_rats)} unique rationales).",
-                    actions=[
-                        "Parametrizar los error_rationale con @var@ en las plantillas para generar explicaciones personalizadas.",
-                        "Evitar repetir explicaciones idénticas entre diferentes distractores y plantillas.",
-                        "Asegurar que cada distractor explique la falacia específica asociada a los datos del reactivo.",
-                    ],
-                ))
+        rat_div = evaluate_slot_rationale_diversity(questions)
+        unique_rats = set(all_rats)
+        raw_unmasked_ratio = (len(unique_rats) / len(all_rats)) if all_rats else 1.0
+        low_slot_uniqueness = (
+            len(all_rats) >= 12
+            and rat_div["total_slots"] >= 4
+            and rat_div["slot_uniqueness_pct"] < 80.0
+        )
+        synthetic_prefix_masking = (
+            len(all_rats) >= 12
+            and rat_div["total_slots"] >= 4
+            and rat_div["synthetic_prefix_pct"] >= 25.0
+            and (
+                rat_div["slot_uniqueness_pct"] < 80.0
+                or (rat_div["raw_slot_uniqueness_pct"] - rat_div["slot_uniqueness_pct"]) >= 10.0
+            )
+        )
+        low_raw_unmasked = (
+            len(all_rats) >= 30
+            and raw_unmasked_ratio < 0.35
+            and (rat_div["total_slots"] < 4 or rat_div["slot_uniqueness_pct"] < 80.0)
+        )
+        if low_slot_uniqueness or synthetic_prefix_masking or low_raw_unmasked:
+            if synthetic_prefix_masking and not low_slot_uniqueness:
+                slot_pct = rat_div["slot_uniqueness_pct"]
+                raw_slot_pct = rat_div["raw_slot_uniqueness_pct"]
+                synth_pct = rat_div["synthetic_prefix_pct"]
+                snippet_str = (
+                    f"Prefijos rotativos sintéticos en {synth_pct:.1f}% de rationales inflan unicidad por slot "
+                    f"de {slot_pct:.1f}% (real) a {raw_slot_pct:.1f}% (nominal)"
+                )
+                cause_str = (
+                    f"[-] [TPL-DYNAMIC-RATIONALE] violation in competency '{cid}': "
+                    f"{synth_pct:.1f}% of rationales use rotating synthetic prefixes inflating slot uniqueness "
+                    f"from {slot_pct:.1f}% to {raw_slot_pct:.1f}% (delta >= 10.0%)."
+                )
+            elif low_raw_unmasked and not low_slot_uniqueness:
+                uniqueness_pct = raw_unmasked_ratio
+                snippet_str = (
+                    f"Unicidad de rationales {uniqueness_pct*100:.1f}% < 35.0% "
+                    f"({len(unique_rats)}/{len(all_rats)} únicos; slots únicos: "
+                    f"{rat_div['unique_slots']}/{rat_div['total_slots']} = {rat_div['slot_uniqueness_pct']:.1f}%)"
+                )
+                cause_str = (
+                    f"[-] [TPL-DYNAMIC-RATIONALE] violation in competency '{cid}': "
+                    f"Distractor rationale uniqueness ratio {uniqueness_pct*100:.1f}% < 35.0% "
+                    f"({len(unique_rats)}/{len(all_rats)} unique rationales; "
+                    f"slot uniqueness {rat_div['slot_uniqueness_pct']:.1f}%)."
+                )
+            else:
+                slot_pct = rat_div["slot_uniqueness_pct"]
+                snippet_str = (
+                    f"Unicidad de rationales por slot (distractor_id) {slot_pct:.1f}% < 80.0% "
+                    f"({rat_div['unique_slots']}/{rat_div['total_slots']} slots únicos tras eliminar prefijos y números)"
+                )
+                cause_str = (
+                    f"[-] [TPL-DYNAMIC-RATIONALE] violation in competency '{cid}': "
+                    f"Distractor rationale uniqueness ratio {slot_pct:.1f}% < 80.0% "
+                    f"({rat_div['unique_slots']}/{rat_div['total_slots']} unique distractor slots after stripping rotating prefixes and numeric literals)."
+                )
+            errors.append(format_diagnostic_error(
+                rule_tag="TPL-DYNAMIC-RATIONALE: DIVERSIDAD DE RATIONALES INSUFICIENTE",
+                competency=cid,
+                template="ALL",
+                item_id="options",
+                field_name="error_rationale",
+                snippet=snippet_str,
+                cause=cause_str,
+                actions=[
+                    "Asignar a cada slot (distractor_id) un error_rationale específico para su fórmula o concepción errónea que interpole al menos un @var@.",
+                    "Evitar clonar la misma explicación genérica o usar prefijos rotativos ('Error conceptual:', 'Fallo de cálculo:') entre distintos distractores.",
+                    "Asegurar que cada distractor explique la falacia específica asociada a los datos del reactivo (>= 80% de unicidad por slot).",
+                ],
+            ))
 
     if div_ratio < MIN_DIVERSITY_RATIO:
         pattern_counts = []
@@ -3621,6 +3783,28 @@ def _validate_single_template_file(
                     )
 
     return file_errors, comp_id, referenced_dids, templates_list
+
+
+def _validate_single_template_file_worker(
+    tf: Path,
+    cta_distractors_by_comp: Dict[str, Set[str]],
+    cta_distractors_map: Dict[str, Dict[str, Any]],
+    num_dry_run_seeds: int,
+    shard_py: Optional[Union[str, Path]] = None,
+    strict: bool = True,
+) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]], List[str]]:
+    """Pool worker wrapper that captures warnings_out alongside validation results."""
+    local_warnings: List[str] = []
+    file_errs, comp_id, ref_dids, tpls = _validate_single_template_file(
+        tf,
+        cta_distractors_by_comp,
+        cta_distractors_map,
+        num_dry_run_seeds,
+        shard_py,
+        strict,
+        warnings_out=local_warnings,
+    )
+    return file_errs, comp_id, ref_dids, tpls, local_warnings
 
 
 def _eval_comp_diversity_and_parity_worker(
@@ -3806,7 +3990,7 @@ def check_templates_file_or_dir(
             with pool_cls(max_workers=workers) as executor:
                 futs = [
                     executor.submit(
-                        _validate_single_template_file,
+                        _validate_single_template_file_worker,
                         tf,
                         cta_distractors_by_comp,
                         cta_distractors_map,
@@ -3830,7 +4014,11 @@ def check_templates_file_or_dir(
                 h.update(cta_p.read_bytes())
                 h.update(f"{num_dry_run_seeds}|{strict}".encode())
                 skill_root = Path(__file__).resolve().parent
-                for src in sorted(list((skill_root / "engine").glob("*.py")) + list((skill_root / "validator").glob("*.py")) + [Path(__file__).resolve()]):
+                schema_path = skill_root / "schemas" / "template.schema.json"
+                extra_files = [Path(__file__).resolve()]
+                if schema_path.is_file():
+                    extra_files.append(schema_path)
+                for src in sorted(list((skill_root / "engine").glob("*.py")) + list((skill_root / "validator").glob("*.py")) + extra_files):
                     h.update(src.read_bytes())
                 key_prefix = h.hexdigest()
             except Exception:
@@ -3889,8 +4077,7 @@ def check_templates_file_or_dir(
                         if not res[0]:
                             cp = _cache_path(tf)
                             if cp is not None:
-                                cache_dir.mkdir(parents=True, exist_ok=True)
-                                cp.write_bytes(pickle.dumps(res))
+                                _atomic_write_bytes(cp, pickle.dumps(res))
                     except Exception:
                         pass
 
@@ -3898,8 +4085,15 @@ def check_templates_file_or_dir(
         if cached_results:
             print(f"  [i] Template validation cache: {len(cached_results)} reused, {len(pending)} re-validated.")
 
-        for file_errs, comp_id, ref_dids, tpls in results:
+        for res in results:
+            if len(res) == 5:
+                file_errs, comp_id, ref_dids, tpls, file_warns = res
+            else:
+                file_errs, comp_id, ref_dids, tpls = res
+                file_warns = []
             errors.extend(file_errs)
+            if warnings_out is not None and file_warns:
+                warnings_out.extend(file_warns)
             if comp_id:
                 processed_comp_ids.add(comp_id)
                 if file_errs:
@@ -3916,6 +4110,7 @@ def check_templates_file_or_dir(
                 num_dry_run_seeds,
                 shard_py,
                 strict,
+                warnings_out=warnings_out,
             )
             errors.extend(file_errs)
             if comp_id:
@@ -4077,8 +4272,7 @@ def check_templates_file_or_dir(
                 dp = _div_cache_path(cid)
                 if dp is not None:
                     try:
-                        cache_dir.mkdir(parents=True, exist_ok=True)
-                        dp.write_bytes(b"ok")
+                        _atomic_write_bytes(dp, b"ok")
                     except Exception:
                         pass
 
@@ -4282,7 +4476,7 @@ def check_templates_file_or_dir(
                             except Exception:
                                 pass
                 else:
-                    if was_halted and not hash_changed and not err_changed:
+                    if was_halted and not hash_changed and not (from_compile_shard and err_changed):
                         terminal_msg = (
                             f"[!] BUDGET HALT on competency '{cid}': Repeat failure with unchanged SHA-256 source hash ({comp_hash[:10]}). "
                             f"STOP, send_message the Director."

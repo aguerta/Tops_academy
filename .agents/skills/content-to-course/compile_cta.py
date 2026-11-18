@@ -27,13 +27,15 @@ import io
 import json
 import logging
 import hashlib
+import os
 import tokenize
 import re
 import sys
 import time
+import uuid
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # Ensure skill directory is in sys.path whether running from skill or work/
 _current_dir = Path(__file__).parent.resolve()
@@ -78,6 +80,28 @@ except ImportError:
             return []
 
 logger = logging.getLogger("compile_cta")
+
+
+def _atomic_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+    """Atomically writes text to path via a unique temp file in the same directory."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
+    try:
+        tmp_path.write_text(content, encoding=encoding, newline="\n")
+        for attempt in range(5):
+            try:
+                tmp_path.replace(path)
+                return
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.02 * (attempt + 1))
+    finally:
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
 
 
 class CtaDataLineLocator:
@@ -298,12 +322,24 @@ class CtaDataLineLocator:
                                 if isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
                                     d_elts = c_node.elts[8].elts
                             elif len(c_node.elts) == 8:
-                                field_names_map = {
-                                    0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
-                                    4: ["bloom"], 5: ["doc", "evidence"], 6: ["page", "evidence"], 7: ["distractors"],
-                                }
-                                if isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
-                                    d_elts = c_node.elts[7].elts
+                                if (
+                                    isinstance(c_node.elts[5], (ast.List, ast.Tuple, ast.Set))
+                                    and isinstance(c_node.elts[6], (ast.List, ast.Tuple, ast.Set))
+                                    and isinstance(c_node.elts[7], (ast.List, ast.Tuple, ast.Set))
+                                ):
+                                    field_names_map = {
+                                        0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                        4: ["bloom"], 5: ["prerequisites"], 6: ["distractors"], 7: ["assumptions"],
+                                    }
+                                    d_elts = c_node.elts[6].elts
+                                    a_elts = c_node.elts[7].elts
+                                else:
+                                    field_names_map = {
+                                        0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                        4: ["bloom"], 5: ["doc", "evidence"], 6: ["page", "evidence"], 7: ["distractors"],
+                                    }
+                                    if isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
+                                        d_elts = c_node.elts[7].elts
                             elif len(c_node.elts) == 7:
                                 field_names_map = {
                                     0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
@@ -777,11 +813,17 @@ def heal_string_token(token_str: str) -> str:
         or re.search(r"(?<!\\)\\[a-zA-Z]", new_body)
     )
 
-    # L1: Convert non-raw strings containing LaTeX macros to raw strings r"..."
+    # L1: Convert non-raw strings containing LaTeX macros to raw strings r"..." only when safe
     new_prefix = prefix
     if not is_raw and has_latex:
-        new_prefix = "r" + prefix
-        is_raw = True
+        has_python_escapes = bool(
+            re.search(r'(?<!\\)\\(?:n|r|t|x|u|U|N|[0-7]|\'|")', new_body)
+            or re.search(r"(?<!\\)(?:\\\\)*\\$", new_body)
+            or (q_open[0] in new_body and len(q_open) == 1)
+        )
+        if not has_python_escapes:
+            new_prefix = "r" + prefix
+            is_raw = True
 
     if not is_raw:
         new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
@@ -802,6 +844,31 @@ def heal_string_token(token_str: str) -> str:
     return token_str
 
 
+def _heal_source_text(source_text: str) -> Tuple[str, bool, List[Tuple[int, str, str]]]:
+    """Token-level in-memory pre-healing of non-raw LaTeX strings and control characters.
+
+    Returns (rebuilt_text, modified, patch_records) where each patch record is (lineno, before, after).
+    """
+    source_norm = source_text.replace("\r\n", "\n")
+    clean_source = heal_control_chars_in_str(source_text)
+    modified = (clean_source != source_norm)
+    patch_records: List[Tuple[int, str, str]] = []
+    tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
+    new_tokens = []
+    for t in tokens:
+        if t.type == tokenize.STRING:
+            healed_str = heal_string_token(t.string)
+            if healed_str != t.string:
+                modified = True
+                patch_records.append((t.start[0], t.string[:60], healed_str[:60]))
+            new_tokens.append(tokenize.TokenInfo(t.type, healed_str, t.start, t.end, t.line))
+        else:
+            new_tokens.append(t)
+
+    rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8").replace("\r\n", "\n")
+    return rebuilt_text, modified, patch_records
+
+
 def heal_cta_source_file(py_path: Path) -> bool:
     """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
 
@@ -818,31 +885,20 @@ def heal_cta_source_file(py_path: Path) -> bool:
         source_bytes = py_path.read_bytes()
         source_text = source_bytes.decode("utf-8")
         source_norm = source_text.replace("\r\n", "\n")
-        clean_source = heal_control_chars_in_str(source_text)
-        modified = (clean_source != source_norm)
-        tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
-        new_tokens = []
-        for t in tokens:
-            if t.type == tokenize.STRING:
-                healed_str = heal_string_token(t.string)
-                if healed_str != t.string:
-                    modified = True
-                    record_patch(
-                        stage="cta",
-                        layer="L1",
-                        rule_id="PRE_IMPORT_TOKEN_HEAL",
-                        scope=f"{py_path.name}:L{t.start[0]}",
-                        before=t.string[:60],
-                        after=healed_str[:60],
-                        severity="healed",
-                        reason="Pre-import LaTeX tokenization, raw-string conversion & control char healing",
-                    )
-                new_tokens.append(tokenize.TokenInfo(t.type, healed_str, t.start, t.end, t.line))
-            else:
-                new_tokens.append(t)
+        rebuilt_text, modified, patch_records = _heal_source_text(source_text)
+        for lineno, before_str, after_str in patch_records:
+            record_patch(
+                stage="cta",
+                layer="L1",
+                rule_id="PRE_IMPORT_TOKEN_HEAL",
+                scope=f"{py_path.name}:L{lineno}",
+                before=before_str,
+                after=after_str,
+                severity="healed",
+                reason="Pre-import LaTeX tokenization, raw-string conversion & control char healing",
+            )
 
-        rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8")
-        if not modified or rebuilt_text.replace("\r\n", "\n") == source_norm:
+        if not modified or rebuilt_text == source_norm:
             return False
 
         # Atomic backup write
@@ -852,9 +908,7 @@ def heal_cta_source_file(py_path: Path) -> bool:
         except Exception:
             pass
 
-        tmp_file = py_path.with_name(f".{py_path.name}.tmp")
-        tmp_file.write_text(rebuilt_text.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
-        tmp_file.replace(py_path)
+        _atomic_write_text(py_path, rebuilt_text, encoding="utf-8")
         return True
     except Exception as e:
         logger.warning("heal_cta_source_file fallback for %s due to: %s", py_path.name, e)
@@ -862,15 +916,15 @@ def heal_cta_source_file(py_path: Path) -> bool:
             source_bytes = py_path.read_bytes()
             source_text = source_bytes.decode("utf-8")
             source_norm = source_text.replace("\r\n", "\n")
+            # Only heal raw ASCII control characters in fallback; never regex-rewrite whole source
             healed = heal_control_chars_in_str(source_text)
-            healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
             if healed != source_norm:
                 bak_file = py_path.with_name(f".{py_path.name}.bak")
                 try:
                     bak_file.write_bytes(source_bytes)
                 except Exception:
                     pass
-                py_path.write_text(healed.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
+                _atomic_write_text(py_path, healed, encoding="utf-8")
                 return True
         except Exception:
             pass
@@ -1144,6 +1198,42 @@ def compile_cta_module(
         "Hab": max(0, initial_counts.get("Hab", 0)) if initial_counts else 0,
         "PRE": max(0, initial_counts.get("PRE", 0)) if initial_counts else 0,
     }
+    ext_ids: Set[str] = set(existing_competency_ids) if existing_competency_ids else set()
+    seen_ids: Set[str] = set()
+    id_remap: Dict[str, str] = {}
+
+    def _infer_prefix_and_num(cid: str, fallback_pfx: str) -> Tuple[str, Optional[int]]:
+        m_pfx = re.match(r"^(PRE|Hab|H|C)-?(\d+)$", cid, re.IGNORECASE)
+        if m_pfx:
+            raw_p = m_pfx.group(1).upper()
+            norm_p = "PRE" if raw_p == "PRE" else ("Hab" if raw_p == "HAB" else ("H" if raw_p == "H" else "C"))
+            return norm_p, int(m_pfx.group(2))
+        m_num = re.search(r"\d+", cid)
+        return fallback_pfx, (int(m_num.group(0)) if m_num else None)
+
+    def _allocate_id(cand_id: Optional[str], fallback_pfx: str) -> str:
+        if cand_id:
+            pfx, num = _infer_prefix_and_num(cand_id, fallback_pfx)
+            if cand_id not in ext_ids and cand_id not in seen_ids:
+                if num is not None:
+                    counts_by_prefix[pfx] = max(counts_by_prefix.get(pfx, 0), num)
+                seen_ids.add(cand_id)
+                return cand_id
+            # Collision with existing or intra-batch ID: allocate next free ID
+            while True:
+                counts_by_prefix[pfx] = counts_by_prefix.get(pfx, 0) + 1
+                new_id = f"{pfx}-{counts_by_prefix[pfx]:02d}"
+                if new_id not in ext_ids and new_id not in seen_ids:
+                    seen_ids.add(new_id)
+                    if cand_id not in ext_ids:
+                        id_remap[cand_id] = new_id
+                    return new_id
+        while True:
+            counts_by_prefix[fallback_pfx] = counts_by_prefix.get(fallback_pfx, 0) + 1
+            new_id = f"{fallback_pfx}-{counts_by_prefix[fallback_pfx]:02d}"
+            if new_id not in ext_ids and new_id not in seen_ids:
+                seen_ids.add(new_id)
+                return new_id
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
         raw_assumptions = []
@@ -1152,18 +1242,7 @@ def compile_cta_module(
                 raw_type = str(item.get("type", "concept")).strip().lower()
                 norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
                 user_id = str(item.get("id", "")).strip() or None
-                if user_id:
-                    if existing_competency_ids and user_id in existing_competency_ids:
-                        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                        raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-                    else:
-                        raw_id = user_id
-                        m_num = re.search(r"\d+", user_id)
-                        if m_num:
-                            counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_num.group(0)))
-                else:
-                    counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                raw_id = _allocate_id(user_id, default_prefix)
 
                 name = str(item.get("name", f"Competencia {raw_id}")).strip()
                 desc_latex = str(item.get("description_latex") or item.get("description") or f"Definición formal de {name}.").strip()
@@ -1216,7 +1295,6 @@ def compile_cta_module(
 
             if is_7_format:
                 norm_type, default_prefix = type_map.get(raw_t, ("concept", "C"))
-                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
                 name = str(item[1]).strip()
                 desc_latex = str(item[2]).strip()
                 raw_bloom = str(item[3]).strip()
@@ -1232,13 +1310,12 @@ def compile_cta_module(
                 if m_id:
                     pfx = m_id.group(1).upper()
                     pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
-                    raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                    raw_id = _allocate_id(f"{pfx}-{int(m_id.group(2)):02d}", pfx)
                 else:
-                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                    raw_id = _allocate_id(None, default_prefix)
 
             elif is_6_tuple_typed:
                 norm_type, default_prefix = type_map.get(raw_t, ("concept", "C"))
-                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
                 name = str(item[1]).strip()
                 desc_latex = str(item[2]).strip()
                 raw_bloom = str(item[3]).strip()
@@ -1254,9 +1331,9 @@ def compile_cta_module(
                 if m_id:
                     pfx = m_id.group(1).upper()
                     pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
-                    raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                    raw_id = _allocate_id(f"{pfx}-{int(m_id.group(2)):02d}", pfx)
                 else:
-                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                    raw_id = _allocate_id(None, default_prefix)
 
             elif is_6_format:
                 name = str(item[0]).strip()
@@ -1307,13 +1384,7 @@ def compile_cta_module(
                     pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                     norm_type = "skill" if pfx == "Hab" else ("fact" if pfx == "H" else "concept")
                     default_prefix = pfx
-                    cand_id = f"{pfx}-{int(m_id.group(2)):02d}"
-                    if existing_competency_ids and cand_id in existing_competency_ids:
-                        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                        raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-                    else:
-                        raw_id = cand_id
-                        counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_id.group(2)))
+                    raw_id = _allocate_id(f"{pfx}-{int(m_id.group(2)):02d}", pfx)
                 else:
                     name_l = name.lower()
                     if any(kw in name_l for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar", "derivación", "ejecutar"]):
@@ -1322,8 +1393,7 @@ def compile_cta_module(
                         norm_type, default_prefix = "fact", "H"
                     else:
                         norm_type, default_prefix = "concept", "C"
-                    counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                    raw_id = _allocate_id(None, default_prefix)
 
                 bloom = "Apply" if norm_type == "skill" else ("Remember" if norm_type == "fact" else "Understand")
 
@@ -1347,18 +1417,7 @@ def compile_cta_module(
                 norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
 
                 user_id = str(item[1]).strip() if len(item) > 1 and item[1] else None
-                if user_id:
-                    if existing_competency_ids and user_id in existing_competency_ids:
-                        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                        raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-                    else:
-                        raw_id = user_id
-                        m_num = re.search(r"\d+", user_id)
-                        if m_num:
-                            counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_num.group(0)))
-                else:
-                    counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                raw_id = _allocate_id(user_id, default_prefix)
                 name = str(item[2]).strip() if len(item) > 2 else f"Competencia {raw_id}"
                 desc_latex = str(item[3]).strip() if len(item) > 3 else f"Definición formal de {name}."
                 raw_bloom = str(item[4]).strip() if len(item) > 4 and item[4] else ("Apply" if norm_type == "skill" else "Understand")
@@ -1369,13 +1428,13 @@ def compile_cta_module(
                 if len(item) >= 10:
                     doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
                     page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
-                    prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
+                    prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple, set)) else []
                     raw_distractors = item[8] if len(item) > 8 else []
                     raw_assumptions = item[9] if len(item) > 9 else []
                 elif len(item) == 9:
                     doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
                     page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
-                    prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
+                    prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple, set)) else []
                     raw_distractors = item[8] if len(item) > 8 else []
                 elif len(item) == 8:
                     if isinstance(item[5], (list, tuple, set)) and isinstance(item[6], (list, tuple, set)) and isinstance(item[7], (list, tuple, set)):
@@ -1437,6 +1496,13 @@ def compile_cta_module(
             comp_dict["is_prerequisite"] = True
         sanitize_competency_math(comp_dict)
         compiled_comps.append(comp_dict)
+
+    if id_remap:
+        for comp_dict in compiled_comps:
+            if comp_dict.get("prerequisites"):
+                comp_dict["prerequisites"] = [
+                    id_remap.get(p, p) for p in comp_dict["prerequisites"]
+                ]
 
     if not macro_competency and compiled_comps:
         macro_competency = f"Dominio y aplicación analítica integral de {title}"
@@ -1710,6 +1776,48 @@ def compute_error_metrics(
     return len(affected_lines), error_sha256
 
 
+def _compute_compile_attempt_state(
+    prev_state: Optional[Dict[str, Any]],
+    source_sha256: str,
+    errors: List[str],
+    has_syntax_error: bool,
+    affected_line_count: int,
+    error_sha256: str,
+) -> Dict[str, Any]:
+    """Pure state transition for .check_attempts tracking (no I/O)."""
+    state: Dict[str, Any] = {
+        "distinct_compiles": 0,
+        "same_error_streak": 0,
+        "last_source_sha256": "",
+        "last_err_hash": "",
+        "last_errors": [],
+        "error_count": 0,
+        "has_syntax_error": False,
+        "affected_line_count": 0,
+        "error_sha256": "",
+    }
+    if isinstance(prev_state, dict):
+        state.update(prev_state)
+
+    unique_errs = list(dict.fromkeys(errors))
+    err_hash = hashlib.sha256("\n".join(sorted(unique_errs)).encode("utf-8")).hexdigest()
+    if state.get("last_err_hash") == err_hash:
+        same_streak = state.get("same_error_streak", 0) + 1
+    else:
+        same_streak = 1
+
+    state["distinct_compiles"] = state.get("distinct_compiles", 0) + 1
+    state["last_source_sha256"] = source_sha256
+    state["error_count"] = len(unique_errs)
+    state["has_syntax_error"] = has_syntax_error
+    state["affected_line_count"] = affected_line_count
+    state["error_sha256"] = error_sha256
+    state["same_error_streak"] = same_streak
+    state["last_err_hash"] = err_hash
+    state["last_errors"] = unique_errs[:20]
+    return state
+
+
 def compile_cta(
     cta_data_path: Union[str, Path],
     output_dir: Optional[Union[str, Path]] = None,
@@ -1721,13 +1829,14 @@ def compile_cta(
 ) -> Tuple[bool, Dict[str, Any], List[str], float]:
     """Compiles cta_data.py into cta.json and cta.md, validating all constraints in < 5ms."""
     t0 = time.perf_counter()
+    reset_ledger()
     data_file = Path(cta_data_path).resolve()
     if not data_file.is_file():
         return False, {}, [f"Data file not found: {data_file}"], 0.0
 
     work_dir = Path(output_dir).resolve() if output_dir else data_file.parent
     work_dir.mkdir(parents=True, exist_ok=True)
-    bak_file = work_dir / ".cta_data.py.bak"
+    bak_file = data_file.with_name(f".{data_file.name}.bak")
 
     # Source-Level Pre-Healer: heal unescaped LaTeX prefixes and control characters before loading
     heal_cta_source_file(data_file)
@@ -1802,42 +1911,27 @@ def compile_cta(
                     pass
 
         err_sha256 = hashlib.sha256(f"CTA-SYNTAX:{line_num or 1}".encode("utf-8")).hexdigest()
-        state = {
-            "distinct_compiles": 0,
-            "same_error_streak": 0,
-            "last_source_sha256": "",
-            "last_err_hash": "",
-            "last_errors": [],
-            "error_count": 1,
-            "has_syntax_error": True,
-            "affected_line_count": 1,
-            "error_sha256": err_sha256,
-        }
+        loaded_state = None
         for cf in (compile_att_file, alt_compile_att_file):
             if cf.is_file():
                 try:
-                    loaded_state = json.loads(cf.read_text(encoding="utf-8"))
-                    if isinstance(loaded_state, dict):
-                        state.update(loaded_state)
+                    cand_state = json.loads(cf.read_text(encoding="utf-8"))
+                    if isinstance(cand_state, dict):
+                        loaded_state = cand_state
                         break
                 except Exception:
                     pass
-        state["distinct_compiles"] = state.get("distinct_compiles", 0) + 1
-        state["last_source_sha256"] = source_sha256
-        state["error_count"] = 1
-        state["has_syntax_error"] = True
-        state["affected_line_count"] = 1
-        state["error_sha256"] = err_sha256
-        err_hash = hashlib.sha256(err_msg.encode("utf-8")).hexdigest()
-        if state.get("last_err_hash") == err_hash:
-            state["same_error_streak"] = state.get("same_error_streak", 0) + 1
-        else:
-            state["same_error_streak"] = 1
-        state["last_err_hash"] = err_hash
-        state["last_errors"] = [err_msg]
+        state = _compute_compile_attempt_state(
+            prev_state=loaded_state,
+            source_sha256=source_sha256,
+            errors=[err_msg],
+            has_syntax_error=True,
+            affected_line_count=1,
+            error_sha256=err_sha256,
+        )
         state_json = json.dumps(state, indent=2, ensure_ascii=False)
-        compile_att_file.write_text(state_json, encoding="utf-8")
-        alt_compile_att_file.write_text(state_json, encoding="utf-8")
+        _atomic_write_text(compile_att_file, state_json)
+        _atomic_write_text(alt_compile_att_file, state_json)
 
         return False, {}, [err_msg], elapsed
 
@@ -1929,18 +2023,28 @@ def compile_cta(
     # Anti-Overwrite Guard: protect against accidental write_to_file(Overwrite=True) shrinking >=10 comps to <6
     if len(competencies) >= 10:
         try:
-            bak_file.write_text(source_text, encoding="utf-8")
+            _atomic_write_text(bak_file, source_text)
         except Exception:
             pass
     elif bak_file.is_file() and 0 < len(competencies) < 6:
         try:
-            bak_mod = load_cta_data_module(bak_file)
-            bak_comps = getattr(bak_mod, "COMPETENCIES", [])
-            if len(bak_comps) >= 10:
-                logger.warning(
-                    "Detected destructive shrink of %s (%d -> %d competencies). Restoring prefix from .cta_data.py.bak.",
-                    data_file.name, len(bak_comps), len(competencies),
+            healed_bak_text, _, _ = _heal_source_text(bak_file.read_text(encoding="utf-8"))
+            bak_tree = ast.parse(healed_bak_text)
+            bak_comp_count = 0
+            for stmt in bak_tree.body:
+                if isinstance(stmt, ast.Assign) and any(getattr(t, "id", None) == "COMPETENCIES" for t in stmt.targets):
+                    if isinstance(stmt.value, (ast.List, ast.Tuple)):
+                        bak_comp_count = len(stmt.value.elts)
+                        break
+            if bak_comp_count >= 10:
+                elapsed = (time.perf_counter() - t0) * 1000.0
+                shrink_err = (
+                    f"[CTA-SHRINK-GUARD] Destructive shrink detected in {data_file.name} "
+                    f"({bak_comp_count} -> {len(competencies)} competencies). "
+                    f"Restore from {bak_file.name} or remove backup if intentional."
                 )
+                logger.warning("%s", shrink_err)
+                return False, {}, [shrink_err], elapsed
         except Exception:
             pass
 
@@ -2263,23 +2367,21 @@ def compile_cta(
                 "evaluated_fields": total_eval_fields,
                 "patches_applied": get_ledger().total_patches,
             }
-            part_sanitizer_file.write_text(
+            _atomic_write_text(
+                part_sanitizer_file,
                 json.dumps(part_entry, indent=2, ensure_ascii=False),
-                encoding="utf-8",
             )
 
-            existing_log = {}
-            if sanitizer_log_file.is_file():
+            parts_index: Dict[str, Any] = {}
+            for pf in sorted(t_dir.glob("cta_sanitizer_*.json")):
+                if pf.name == "cta_sanitizer_log.json":
+                    continue
                 try:
-                    existing_log = json.loads(sanitizer_log_file.read_text(encoding="utf-8"))
-                    if not isinstance(existing_log, dict):
-                        existing_log = {}
+                    p_data = json.loads(pf.read_text(encoding="utf-8"))
+                    if isinstance(p_data, dict) and p_data.get("part_id"):
+                        parts_index[str(p_data["part_id"])] = p_data
                 except Exception:
-                    existing_log = {}
-
-            parts_index = existing_log.get("parts")
-            if not isinstance(parts_index, dict):
-                parts_index = {}
+                    pass
             parts_index[detected_part_id] = part_entry
 
             tot_comps = sum(p.get("sanitized_competencies", 0) for p in parts_index.values())
@@ -2294,12 +2396,13 @@ def compile_cta(
                 "patches_applied": tot_patches,
                 "parts": parts_index,
             }
-            sanitizer_log_file.write_text(
+            _atomic_write_text(
+                sanitizer_log_file,
                 json.dumps(consolidated_log, indent=2, ensure_ascii=False),
-                encoding="utf-8",
             )
         else:
-            sanitizer_log_file.write_text(
+            _atomic_write_text(
+                sanitizer_log_file,
                 json.dumps(
                     {
                         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -2311,7 +2414,6 @@ def compile_cta(
                     indent=2,
                     ensure_ascii=False,
                 ),
-                encoding="utf-8",
             )
 
     # Check 3% degraded alert
@@ -2343,56 +2445,41 @@ def compile_cta(
                     pf.unlink()
                 except Exception:
                     pass
-        state = {
-            "distinct_compiles": 0,
-            "same_error_streak": 0,
-            "last_source_sha256": "",
-            "last_err_hash": "",
-            "last_errors": [],
-            "error_count": 0,
-            "has_syntax_error": False,
-            "affected_line_count": 0,
-            "error_sha256": "",
-        }
+        loaded_state = None
         for cf in (compile_att_file, alt_compile_att_file):
             if cf.is_file():
                 try:
-                    loaded_state = json.loads(cf.read_text(encoding="utf-8"))
-                    if isinstance(loaded_state, dict):
-                        state.update(loaded_state)
+                    cand_state = json.loads(cf.read_text(encoding="utf-8"))
+                    if isinstance(cand_state, dict):
+                        loaded_state = cand_state
                         break
                 except Exception:
                     pass
-        state["distinct_compiles"] = state.get("distinct_compiles", 0) + 1
-        state["last_source_sha256"] = source_sha256
         unique_errs = list(dict.fromkeys(mapped_errors or validation_errors))
         affected_count, err_sha = compute_error_metrics(unique_errs, locator=locator)
         has_syn = any(
             "syntax" in e.lower() or "indentation" in e.lower() for e in unique_errs
         )
-        state["error_count"] = len(unique_errs)
-        state["has_syntax_error"] = has_syn
-        state["affected_line_count"] = affected_count
-        state["error_sha256"] = err_sha
-        err_hash = hashlib.sha256("\n".join(sorted(unique_errs)).encode("utf-8")).hexdigest()
-        if state.get("last_err_hash") == err_hash:
-            state["same_error_streak"] = state.get("same_error_streak", 0) + 1
-        else:
-            state["same_error_streak"] = 1
-        state["last_err_hash"] = err_hash
-        state["last_errors"] = unique_errs[:20]
+        state = _compute_compile_attempt_state(
+            prev_state=loaded_state,
+            source_sha256=source_sha256,
+            errors=unique_errs,
+            has_syntax_error=has_syn,
+            affected_line_count=affected_count,
+            error_sha256=err_sha,
+        )
         state_json = json.dumps(state, indent=2, ensure_ascii=False)
-        compile_att_file.write_text(state_json, encoding="utf-8")
-        alt_compile_att_file.write_text(state_json, encoding="utf-8")
+        _atomic_write_text(compile_att_file, state_json)
+        _atomic_write_text(alt_compile_att_file, state_json)
 
         return False, cta_dict, mapped_errors, elapsed_ms
 
     # 6. Write target JSON and MD
-    target_json_path.write_text(json.dumps(cta_dict, indent=2, ensure_ascii=False), encoding="utf-8")
+    _atomic_write_text(target_json_path, json.dumps(cta_dict, indent=2, ensure_ascii=False))
     target_md_name = (Path(target_json_name).stem + ".md") if output_json_name else "cta.md"
     target_md_path = work_dir / target_md_name
     rendered_md = render_cta_md(cta_dict)
-    target_md_path.write_text(rendered_md, encoding="utf-8")
+    _atomic_write_text(target_md_path, rendered_md)
 
     for cf in (compile_att_file, alt_compile_att_file):
         if cf.is_file():
@@ -2410,27 +2497,28 @@ def compile_cta(
         "error_sha256": "",
     }
     pass_json = json.dumps(pass_data, indent=2, ensure_ascii=False)
-    pass_file.write_text(pass_json, encoding="utf-8")
-    alt_pass_file.write_text(pass_json, encoding="utf-8")
+    _atomic_write_text(pass_file, pass_json)
+    _atomic_write_text(alt_pass_file, pass_json)
 
-    # Formal certificate cta.cert.json emission
-    compiler_path = Path(__file__).resolve()
-    compiler_sha256 = hashlib.sha256(compiler_path.read_bytes()).hexdigest()
-    cta_bytes = target_json_path.read_bytes()
-    cta_sha256 = hashlib.sha256(cta_bytes).hexdigest()
-    cert_data = {
-        "schema_version": 1,
-        "stage": "cta",
-        "artifact_id": "cta",
-        "source_sha256": source_sha256,
-        "cta_sha256": cta_sha256,
-        "compiler_sha256": compiler_sha256,
-        "contract_version": 2,
-        "passed_50_seeds": True,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
-    cert_path = work_dir / "cta.cert.json"
-    cert_path.write_text(json.dumps(cert_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    # Formal certificate cta.cert.json emission (only for full course CTA, never partial parts)
+    if not is_part:
+        compiler_path = Path(__file__).resolve()
+        compiler_sha256 = hashlib.sha256(compiler_path.read_bytes()).hexdigest()
+        cta_bytes = target_json_path.read_bytes()
+        cta_sha256 = hashlib.sha256(cta_bytes).hexdigest()
+        cert_data = {
+            "schema_version": 1,
+            "stage": "cta",
+            "artifact_id": "cta",
+            "source_sha256": source_sha256,
+            "cta_sha256": cta_sha256,
+            "compiler_sha256": compiler_sha256,
+            "contract_version": cta_contract_ver,
+            "passed_50_seeds": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        cert_path = work_dir / "cta.cert.json"
+        _atomic_write_text(cert_path, json.dumps(cert_data, indent=2, ensure_ascii=False))
 
     return True, cta_dict, [], elapsed_ms
 
@@ -3103,7 +3191,7 @@ def main() -> None:
         output_dir=output_dir,
         manifest_path=manifest_p,
         output_json_name=target_json_name,
-        is_part=bool(args.part),
+        is_part=True if args.part else None,
         require_assumptions=args.require_assumptions,
     )
 
