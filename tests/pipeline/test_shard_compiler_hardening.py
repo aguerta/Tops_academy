@@ -802,6 +802,7 @@ class TestInfiniteLoopManifestAndAutoHealHardening:
             "        'b': f'{b:.1f}',\n"
             "        'g': f'{g:.2f}',\n"
             "        'ans': ans,\n"
+            "        'extra': extra,\n"
             "    }\n"
             "    return {'vars': v, 'correct': ans, 'distractors': []}\n"
             "def ver_hab08(res): return bool(res and 'vars' in res)\n"

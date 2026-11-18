@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Strict Mode Test Course Pass (`test_strict_pass`)
 
-- **Fecha de Evaluación:** 2026-11-14
+- **Fecha de Evaluación:** 2026-11-18
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
@@ -59,7 +59,7 @@
 
 ### 4. Veredicto y Certificación
 
-El curso **Strict Mode Test Course Pass** ha sido **certificado y aprobado** con calificación sobresaliente de **20.0 / 20.0** y MPRI de **100.00 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.
+El curso **Strict Mode Test Course Pass** ha sido **certificado y aprobado** con calificación de **20.0 / 20.0** y MPRI de **100.00 / 100.0**, acreditando el cumplimiento de los estándares Quality Matters, OSCQR y Mastery Learning.
 
 ---
 
@@ -79,7 +79,7 @@ El curso **Strict Mode Test Course Pass** ha sido **certificado y aprobado** con
     },
     "platform_status": "ACTIVO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-14"
+    "evaluation_date": "2026-11-18"
   },
   "dimension_scores": {},
   "penalties_applied": [],

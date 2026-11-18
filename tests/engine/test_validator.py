@@ -1267,5 +1267,432 @@ class TestStream1FQualityRulesAndRemediation:
         assert "shard_fixes/shard_2/C-01.py" in comp_ord_2["matrix_recommendation"]["recommendation"]
 
 
+# =============================================================================
+# 9. Stream 1A: Slot-Based Rationale Uniqueness & Stage 3 <-> Stage 6 Parity
+# =============================================================================
+
+class TestSlotBasedRationaleDiversityAndGateParity:
+    """Verifies slot-level rationale uniqueness across engine.diversity, check_templates.py,
+    and standardized_audit_engine.py (Pillar 4 / run_full_audit).
+    """
+
+    @staticmethod
+    def _load_audit_engine():
+        import importlib.util
+        audit_script = REPO_ROOT / ".agents" / "skills" / "course-qa-evaluator" / "scripts" / "standardized_audit_engine.py"
+        spec = importlib.util.spec_from_file_location("standardized_audit_engine", audit_script)
+        assert spec and spec.loader
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["standardized_audit_engine"] = mod
+        spec.loader.exec_module(mod)
+        return mod
+
+    @staticmethod
+    def _build_parametric_course(mode: str = "clean_static_per_slot") -> dict:
+        """Builds a 30-question (3 templates x 10 seeds, 180 distractor rationales) course
+        for competency Hab-01 with 6 distinct distractor_ids per template (18 slots total).
+        """
+        slot_rationales = {
+            "D-Hab01-01": "Dividió la suma cuadrática {ss} entre n={n} en lugar de los grados de libertad n-1={df}.",
+            "D-Hab01-02": "Omitió elevar al cuadrado la desviación estándar muestral s={s} al calcular la varianza.",
+            "D-Hab01-03": "Sumó la media muestral m={m} al estadístico en vez de restar el valor hipotético mu0={mu0}.",
+            "D-Hab01-04": "Multiplicó por la raíz del tamaño muestral n={n} en el denominador del error estándar.",
+            "D-Hab01-05": "Utilizó el cuantil bilateral alpha={alpha} sin dividir entre dos para la región crítica.",
+            "D-Hab01-06": "Invirtió el cociente entre la varianza explicada {ss} y la varianza residual {s}.",
+            "D-Hab01-07": "Aplicó el factor de corrección finita sumando n={n} al tamaño poblacional N={N_pop}.",
+            "D-Hab01-08": "Reemplazó la proporción muestral p={p} por su complemento sin actualizar la varianza.",
+            "D-Hab01-09": "Restó el término de covarianza {cov} sin multiplicar por dos en la combinación lineal.",
+            "D-Hab01-10": "Evaluó el logaritmo natural sobre la tasa porcentual nominal {alpha} sin convertir a decimal.",
+            "D-Hab01-11": "Asumió independencia condicional al multiplicar directamente las marginales con n={n}.",
+            "D-Hab01-12": "Despejó el límite inferior sumando el margen de error {me} a la media muestral m={m}.",
+            "D-Hab01-13": "Ponderó los estratos usando las varianzas {s} en lugar de los pesos poblacionales {p}.",
+            "D-Hab01-14": "Calculó el estadístico F dividiendo entre el número total de parámetros k={df} sin ajustar.",
+            "D-Hab01-15": "Ignoró el sesgo asintótico al escalar el estimador puntual por {n} sobre {N_pop}.",
+            "D-Hab01-16": "Sustituyó el error estándar del predicando por el error de la media con s={s}.",
+            "D-Hab01-17": "Acumuló la probabilidad en la cola izquierda para el umbral crítico {mu0} con df={df}.",
+            "D-Hab01-18": "Confundió el coeficiente de determinación con la correlación lineal simple para r={p}.",
+        }
+        rotating_prefixes = [
+            "Error conceptual: ",
+            "Error de cálculo: ",
+            "Fallo algebraico: ",
+            "Confusión teórica: ",
+            "Confusión metodológica: ",
+            "Desvío analítico: ",
+            "Aplicación incorrecta: ",
+            "Sustitución inválida: ",
+            "Desliz analítico: ",
+            "Interpretación errónea: ",
+        ]
+        cloned_body = "Calculó erróneamente la expresión algebraica del modelo con el parámetro {n} en la muestra."
+
+        stem_archetypes = [
+            "En un estudio con $n = {n}$ observaciones y suma cuadrática ${ss}$, determine el estimador ajustado para $\\mu_0 = {mu0}$.",
+            "¿Cuál es el valor del estadístico de contraste si la media es ${m}$, la desviación es ${s}$ y los grados de libertad son ${df}$?",
+            "Calcule el límite superior de estimación considerando una población $N = {N_pop}$, proporción ${p}$ y margen ${me}$.",
+            "Dada una covarianza muestral de ${cov}$ con nivel $\\alpha = {alpha}$ y muestra $n = {n}$, evalúe la varianza combinada.",
+            "Determine el parámetro crítico de decisión cuando $s = {s}$, $\\mu_0 = {mu0}$ y el tamaño de muestra asciende a $n = {n}$.",
+            "A partir de los registros experimentales ($n = {n}$, $m = {m}$, $SS = {ss}$), obtenga la métrica insesgada del proceso.",
+        ]
+
+        questions = []
+        all_slot_ids = list(slot_rationales.keys())
+        for tpl_idx in range(3):
+            diff = ["easy", "medium", "hard"][tpl_idx]
+            tpl_id = f"T-Hab01-0{tpl_idx + 1}"
+            tpl_slots = all_slot_ids[tpl_idx * 6 : (tpl_idx + 1) * 6]
+            for seed_idx in range(10):
+                q_num = tpl_idx * 10 + seed_idx + 1
+                v = {
+                    "n": 20 + q_num * 3,
+                    "df": 19 + q_num * 3,
+                    "ss": round(145.2 + q_num * 11.7, 2),
+                    "s": round(2.35 + q_num * 0.41, 2),
+                    "m": round(51.4 + q_num * 1.8, 2),
+                    "mu0": round(48.0 + q_num * 1.5, 2),
+                    "alpha": round(0.01 + (q_num % 5) * 0.01, 2),
+                    "N_pop": 500 + q_num * 25,
+                    "p": round(0.15 + (q_num % 7) * 0.09, 2),
+                    "cov": round(1.12 + q_num * 0.23, 2),
+                    "me": round(0.85 + q_num * 0.17, 2),
+                }
+                stem_tpl = stem_archetypes[(tpl_idx * 2 + (seed_idx % 2)) % len(stem_archetypes)]
+                stem = stem_tpl.format(**v) + f" (Caso {q_num})"
+
+                correct_val = round(v["ss"] / v["df"] + v["m"] * 0.1, 3)
+                options = [
+                    {
+                        "id": "opt_c",
+                        "content": f"${correct_val}$",
+                        "is_correct": True,
+                    }
+                ]
+                for d_idx, did in enumerate(tpl_slots):
+                    global_slot_idx = tpl_idx * 6 + d_idx
+                    d_val = round(correct_val + (d_idx + 1) * 3.17 + seed_idx * 0.13, 3)
+                    if mode == "clean_static_per_slot":
+                        rat_str = slot_rationales[did].format(**v)
+                    elif mode == "cloned_50pct_generic":
+                        if global_slot_idx >= 9:  # 50% of slots cloned
+                            rat_str = cloned_body.format(**v)
+                        else:
+                            rat_str = slot_rationales[did].format(**v)
+                    elif mode == "cloned_50pct_rotating_prefixes":
+                        pref = rotating_prefixes[(global_slot_idx + seed_idx) % len(rotating_prefixes)]
+                        if global_slot_idx >= 9:  # 50% of slots cloned with rotating prefixes
+                            rat_str = pref + cloned_body.format(**v)
+                        else:
+                            rat_str = pref + slot_rationales[did].format(**v)
+                    else:
+                        raise ValueError(f"Unknown mode: {mode}")
+
+                    options.append({
+                        "id": f"opt_{d_idx + 1}",
+                        "content": f"${d_val}$",
+                        "is_correct": False,
+                        "distractor_id": did,
+                        "error_rationale": rat_str,
+                    })
+
+                questions.append({
+                    "id": f"Q-Hab01-{q_num:03d}",
+                    "competency_id": "Hab-01",
+                    "template_id": tpl_id,
+                    "difficulty": diff,
+                    "bloom_taxonomy_level": "apply",
+                    "interaction_type": "multiple_choice_7_options",
+                    "stem": stem,
+                    "options": options,
+                    "hints": [
+                        f"Identifique primero los grados de libertad exactos para la muestra de tamaño $n = {v['n']}$.",
+                        f"Plantee la relación entre la suma cuadrática ${v['ss']}$ y el divisor insesgado $n - 1 = {v['df']}$.",
+                        f"Verifique el ajuste aditivo con la media muestral ${v['m']}$ antes de concluir.",
+                    ],
+                    "solution": f"Dividiendo ${v['ss']} / {v['df']}$ y sumando $0.1 \\times {v['m']}$ se obtiene ${correct_val}$.",
+                })
+
+        return {
+            "course_id": "test_slot_rationale_parity",
+            "course_title": "Test Slot Rationale Parity",
+            "competencies": [
+                {
+                    "id": "Hab-01",
+                    "name": "Estimación de Varianza y Contrastes Muestrales",
+                    "category": "Skill",
+                    "type": "skill",
+                    "description": "Calcular estimadores insesgados y estadísticos de prueba.",
+                    "prerequisites": [],
+                }
+            ],
+            "questions": questions,
+        }
+
+    def test_clean_static_template_rationale_per_slot_passes_stage3_and_stage6(self) -> None:
+        from engine.diversity import evaluate_slot_rationale_diversity
+        from check_templates import check_competency_diversity
+
+        course = self._build_parametric_course("clean_static_per_slot")
+        questions = course["questions"]
+        comp = course["competencies"][0]
+
+        div = evaluate_slot_rationale_diversity(questions)
+        assert div["total_slots"] == 18
+        assert div["unique_slots"] == 18
+        assert div["slot_uniqueness_pct"] == 100.0
+        assert div["duplicated_slots_by_competency"] == {}
+
+        # Stage 3 check_templates parity
+        errs = check_competency_diversity(
+            templates=[],
+            competency=comp,
+            questions=questions,
+            strict=True,
+        )
+        dyn_errs = [e for e in errs if "TPL-DYNAMIC-RATIONALE" in e]
+        assert len(dyn_errs) == 0, f"Unexpected TPL-DYNAMIC-RATIONALE error on clean per-slot templates: {dyn_errs}"
+
+        # Stage 6 run_full_audit parity
+        audit_mod = self._load_audit_engine()
+        report = audit_mod.run_full_audit(course)
+        diag_summary = report["dimension_summaries"]["diagnostic_rationale_alignment_linter"]
+        p4_score = report["mastery_path_readiness"]["pillars"]["diagnostic_remediation_alignment"]["score"]
+
+        assert diag_summary["rationale_uniqueness_pct"] == 100.0
+        assert p4_score >= 13.0
+
+    def test_adversarial_50pct_cloned_generic_rationales_rejected_by_both_gates(self) -> None:
+        from engine.diversity import evaluate_slot_rationale_diversity
+        from check_templates import check_competency_diversity
+
+        course = self._build_parametric_course("cloned_50pct_generic")
+        questions = course["questions"]
+        comp = course["competencies"][0]
+
+        div = evaluate_slot_rationale_diversity(questions)
+        assert div["total_slots"] == 18
+        assert div["unique_slots"] == 10  # 9 unique + 1 shared across 9 cloned slots
+        assert div["slot_uniqueness_pct"] < 80.0
+        assert "Hab-01" in div["duplicated_slots_by_competency"]
+
+        # Stage 3 check_templates rejects
+        errs = check_competency_diversity(
+            templates=[],
+            competency=comp,
+            questions=questions,
+            strict=True,
+        )
+        dyn_errs = [e for e in errs if "TPL-DYNAMIC-RATIONALE" in e]
+        assert len(dyn_errs) == 1
+
+        # Stage 6 run_full_audit rejects (P4 < 13.0)
+        audit_mod = self._load_audit_engine()
+        report = audit_mod.run_full_audit(course)
+        diag_summary = report["dimension_summaries"]["diagnostic_rationale_alignment_linter"]
+        p4_score = report["mastery_path_readiness"]["pillars"]["diagnostic_remediation_alignment"]["score"]
+
+        assert diag_summary["rationale_uniqueness_pct"] < 80.0
+        assert p4_score < 13.0
+
+    def test_adversarial_rotating_generic_prefixes_stripped_and_rejected_by_both_gates(self) -> None:
+        from engine.diversity import evaluate_slot_rationale_diversity
+        from check_templates import check_competency_diversity
+
+        course = self._build_parametric_course("cloned_50pct_rotating_prefixes")
+        questions = course["questions"]
+        comp = course["competencies"][0]
+
+        div = evaluate_slot_rationale_diversity(questions)
+        assert div["total_slots"] == 18
+        assert div["unique_slots"] == 10
+        assert div["slot_uniqueness_pct"] < 80.0
+        assert div["synthetic_prefix_pct"] >= 25.0
+
+        # Stage 3 check_templates rejects despite rotating prefixes
+        errs = check_competency_diversity(
+            templates=[],
+            competency=comp,
+            questions=questions,
+            strict=True,
+        )
+        dyn_errs = [e for e in errs if "TPL-DYNAMIC-RATIONALE" in e]
+        assert len(dyn_errs) == 1
+
+        # Stage 6 run_full_audit strips prefixes, emits warning, and scores P4 < 13.0
+        audit_mod = self._load_audit_engine()
+        report = audit_mod.run_full_audit(course)
+        diag_summary = report["dimension_summaries"]["diagnostic_rationale_alignment_linter"]
+        p4_score = report["mastery_path_readiness"]["pillars"]["diagnostic_remediation_alignment"]["score"]
+
+        assert diag_summary["rationale_uniqueness_pct"] < 80.0
+        assert diag_summary["synthetic_prefix_rationales_pct"] >= 25.0
+        assert p4_score < 13.0
+        assert any(
+            "Enmascaramiento de reciclaje diagnóstico mediante prefijos rotativos" in i.get("message", "")
+            for i in report.get("all_issues", [])
+        )
+
+    def test_empirical_estadistica_3_pre_pc2_passes_slot_uniqueness_and_pillar4(self) -> None:
+        course_path = REPO_ROOT / "courses" / "estadistica_3_pre_pc2.json"
+        if not course_path.is_file():
+            pytest.skip("courses/estadistica_3_pre_pc2.json not present in workspace")
+
+        course_data = json.loads(course_path.read_text(encoding="utf-8"))
+        audit_mod = self._load_audit_engine()
+        report = audit_mod.run_full_audit(course_data)
+        diag_summary = report["dimension_summaries"]["diagnostic_rationale_alignment_linter"]
+        p4_score = report["mastery_path_readiness"]["pillars"]["diagnostic_remediation_alignment"]["score"]
+
+        assert diag_summary["rationale_uniqueness_pct"] >= 80.0
+        assert p4_score >= 13.0
+
+    def test_empty_and_malformed_questions_and_options(self) -> None:
+        from engine.diversity import evaluate_slot_rationale_diversity
+
+        for payload in (
+            [],
+            [
+                None,
+                "invalid",
+                {"id": "Q1", "options": []},
+                {"id": "Q2", "options": None},
+                {
+                    "id": "Q3",
+                    "options": [
+                        {"is_correct": True, "error_rationale": "Should be ignored"},
+                        {"is_correct": False, "error_rationale": "   "},
+                        "bad_opt",
+                    ],
+                },
+            ],
+        ):
+            div = evaluate_slot_rationale_diversity(payload)  # type: ignore[arg-type]
+            assert div["total_rationales"] == 0
+            assert div["total_slots"] == 0
+            assert div["slot_uniqueness_pct"] == 100.0
+            assert div["synthetic_prefix_pct"] == 0.0
+            assert div["duplicated_slots_by_competency"] == {}
+
+    def test_missing_distractor_id_fallback_key_stability(self) -> None:
+        from engine.diversity import evaluate_slot_rationale_diversity
+
+        templates = ["T-01", "T-02"]
+        slot_bodies = {
+            ("T-01", "opt_1"): "Dividió entre n={n} en vez de n-1.",
+            ("T-01", "opt_2"): "Omitió elevar al cuadrado s={s}.",
+            ("T-01", "opt_3"): "Multiplicó por la raíz de n={n}.",
+            ("T-01", "opt_4"): "Restó la media con s={s} sin ponderar.",
+            ("T-02", "opt_1"): "Sumó el cuantil z para n={n}.",
+            ("T-02", "opt_2"): "Invirtió el cociente con s={s}.",
+            ("T-02", "opt_3"): "Aplicó factor finito con n={n}.",
+            ("T-02", "opt_4"): "Usó varianza poblacional para s={s}.",
+        }
+        questions = []
+        for tid in templates:
+            for seed in range(5):
+                n_val = 10 + seed
+                s_val = round(1.5 + seed * 0.3, 2)
+                opts = [{"id": "opt_c", "is_correct": True}]
+                for oid in ["opt_1", "opt_2", "opt_3", "opt_4"]:
+                    opts.append({
+                        "id": oid,
+                        "is_correct": False,
+                        "error_rationale": slot_bodies[(tid, oid)].format(n=n_val, s=s_val),
+                    })
+                questions.append({
+                    "id": f"Q-{tid}-{seed}",
+                    "competency_id": "Hab-01",
+                    "template_id": tid,
+                    "options": opts,
+                })
+
+        div = evaluate_slot_rationale_diversity(questions)
+        assert div["total_rationales"] == 40
+        assert div["total_slots"] == 8
+        assert div["unique_slots"] == 8
+        assert div["slot_uniqueness_pct"] == 100.0
+
+        # Now clone T-02 slots to match T-01's opt_1 body
+        for q in questions:
+            if q["template_id"] == "T-02":
+                for o in q["options"]:
+                    if not o["is_correct"]:
+                        o["error_rationale"] = "Dividió entre n=99 en vez de n-1."
+
+        div_cloned = evaluate_slot_rationale_diversity(questions)
+        assert div_cloned["total_slots"] == 8
+        assert div_cloned["unique_slots"] == 4
+        assert div_cloned["slot_uniqueness_pct"] == 50.0
+
+    def test_case_insensitivity_floats_negatives_and_latex_numbers(self) -> None:
+        from engine.diversity import evaluate_slot_rationale_diversity
+
+        variants = [
+            "Dividió $-0.25$ entre $\\frac{3}{4}$ para obtener $12.5$.",
+            "dividió $-1.75$ entre $\\frac{7}{8}$ para obtener $99.1$.",
+            "DIVIDIÓ $-4.00$ entre $\\frac{5}{9}$ para obtener $10.0$.",
+            "Dividió $-9.12$ entre $\\frac{2}{3}$ para obtener $44.8$.",
+        ]
+        questions = [
+            {
+                "id": f"Q-{i}",
+                "competency_id": "Hab-01",
+                "template_id": "T-01",
+                "options": [
+                    {"id": "opt_c", "is_correct": True},
+                    {
+                        "id": "opt_1",
+                        "is_correct": False,
+                        "distractor_id": "D-01",
+                        "error_rationale": rat,
+                    },
+                ],
+            }
+            for i, rat in enumerate(variants)
+        ]
+        div = evaluate_slot_rationale_diversity(questions)
+        assert div["total_rationales"] == 4
+        assert div["total_slots"] == 1
+        assert div["unique_slots"] == 1
+        assert div["slot_uniqueness_pct"] == 100.0
+        assert div["instance_uniqueness_pct"] == 25.0
+
+    def test_clean_distinct_slots_with_rotating_prefixes_not_penalized(self) -> None:
+        from check_templates import check_competency_diversity
+
+        course = self._build_parametric_course("clean_static_per_slot")
+        prefixes = [
+            "Error conceptual: ",
+            "Error de cálculo: ",
+            "Fallo algebraico: ",
+            "Confusión teórica: ",
+        ]
+        for q_idx, q in enumerate(course["questions"]):
+            for o_idx, o in enumerate(q["options"]):
+                if not o.get("is_correct"):
+                    o["error_rationale"] = prefixes[(q_idx + o_idx) % len(prefixes)] + o["error_rationale"]
+
+        errs = check_competency_diversity(
+            templates=[],
+            competency=course["competencies"][0],
+            questions=course["questions"],
+            strict=True,
+        )
+        assert not [e for e in errs if "TPL-DYNAMIC-RATIONALE" in e]
+
+        audit_mod = self._load_audit_engine()
+        report = audit_mod.run_full_audit(course)
+        diag_summary = report["dimension_summaries"]["diagnostic_rationale_alignment_linter"]
+        p4_score = report["mastery_path_readiness"]["pillars"]["diagnostic_remediation_alignment"]["score"]
+
+        assert diag_summary["rationale_uniqueness_pct"] == 100.0
+        assert p4_score >= 13.0
+        assert not any(
+            "Enmascaramiento de reciclaje diagnóstico mediante prefijos rotativos" in i.get("message", "")
+            for i in report.get("all_issues", [])
+        )
+
+
+
+
 
 

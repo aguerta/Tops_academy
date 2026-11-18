@@ -378,15 +378,16 @@ def heal_shard_source_text(source_text: str) -> Tuple[bool, str]:
     try:
         import io, tokenize
         from check_templates import heal_control_chars_in_str, COMBINED_LATEX
-        clean_source = heal_control_chars_in_str(source_text)
+        clean_source = source_text.replace("\r\n", "\n")
         modified = (clean_source != source_text)
         tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
         new_tokens = []
         for t in tokens:
             if t.type == tokenize.STRING:
-                m = re.match(r"^([a-zA-Z]*)(['\"]{1,3})(.*)(['\"]{1,3})$", t.string, flags=re.DOTALL)
+                m = re.match(r"^([a-zA-Z]*)('''|\"\"\"|'|\")(.*)\2$", t.string, flags=re.DOTALL)
                 if m:
-                    prefix, q_open, body, q_close = m.groups()
+                    prefix, q_delim, body = m.groups()
+                    q_open = q_close = q_delim
                     is_raw = "r" in prefix.lower()
                     new_body = heal_control_chars_in_str(body)
                     if not is_raw:
@@ -1176,32 +1177,35 @@ def prune_ast_dependencies(source_text: str, target_fn_name: str) -> str:
     needed_consts: Set[str] = set()
     needed_names: Set[str] = set()
 
-    queue = [target_fn_name]
-    visited = set()
+    queue: List[Tuple[str, str]] = [("fn", target_fn_name)]
+    visited_fns: Set[str] = set()
+    visited_consts: Set[str] = set()
 
     while queue:
-        curr = queue.pop(0)
-        if curr in visited:
+        kind, curr = queue.pop(0)
+        if kind == "fn":
+            if curr in visited_fns:
+                continue
+            visited_fns.add(curr)
+            if curr != target_fn_name:
+                needed_funcs.add(curr)
+            node_entry = functions.get(curr)
+        else:
+            if curr in visited_consts:
+                continue
+            visited_consts.add(curr)
+            needed_consts.add(curr)
+            node_entry = constants.get(curr)
+        if not node_entry:
             continue
-        visited.add(curr)
-        if curr != target_fn_name:
-            needed_funcs.add(curr)
-        fnode = functions.get(curr)
-        if not fnode:
-            continue
-        for sub in ast.walk(fnode[0]):
+        for sub in ast.walk(node_entry[0]):
             if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load):
                 nid = sub.id
                 needed_names.add(nid)
-                if nid in functions and nid not in visited:
-                    queue.append(nid)
-                elif nid in constants and nid not in needed_consts:
-                    needed_consts.add(nid)
-                    for csub in ast.walk(constants[nid][0]):
-                        if isinstance(csub, ast.Name) and isinstance(csub.ctx, ast.Load):
-                            needed_names.add(csub.id)
-                            if csub.id in functions and csub.id not in visited:
-                                queue.append(csub.id)
+                if nid in functions and nid not in visited_fns:
+                    queue.append(("fn", nid))
+                elif nid in constants and nid not in visited_consts:
+                    queue.append(("const", nid))
             elif isinstance(sub, ast.Attribute) and isinstance(sub.value, ast.Name):
                 needed_names.add(sub.value.id)
 
@@ -1254,7 +1258,21 @@ def prune_ast_preamble(source_text: str, target_fn_name: str) -> str:
     full_pruned = prune_ast_dependencies(source_text, target_fn_name)
     if not full_pruned:
         return ""
-    m = re.search(rf"\b(?:def\s+{re.escape(target_fn_name)}\s*\(|{re.escape(target_fn_name)}\s*=)", full_pruned)
+    try:
+        ptree = ast.parse(full_pruned)
+        if ptree.body:
+            last = ptree.body[-1]
+            is_target = (
+                (isinstance(last, (ast.FunctionDef, ast.AsyncFunctionDef)) and last.name == target_fn_name)
+                or (isinstance(last, ast.Assign) and len(last.targets) == 1 and isinstance(last.targets[0], ast.Name) and last.targets[0].id == target_fn_name)
+                or (isinstance(last, ast.AnnAssign) and isinstance(last.target, ast.Name) and last.target.id == target_fn_name)
+            )
+            if is_target:
+                lines = full_pruned.splitlines()
+                return "\n".join(lines[: max(0, last.lineno - 1)]).strip()
+    except Exception:
+        pass
+    m = re.search(rf"^(?:def\s+{re.escape(target_fn_name)}\s*\(|{re.escape(target_fn_name)}\s*=)", full_pruned, flags=re.MULTILINE)
     if m:
         return full_pruned[:m.start()].strip()
     return ""
@@ -1345,75 +1363,66 @@ def inject_ast_auto_vars(code_or_fn: Any) -> Any:
 
         def _transform_fn(self, fn_node):
             parent = self
-            local_var_names: List[str] = []
-            seen = set()
 
-            def _collect_assignments(stmts):
-                for stmt in stmts:
+            def _inject_return(ret_node: ast.Return, vars_list: List[str]) -> ast.Return:
+                if not isinstance(ret_node.value, ast.Dict):
+                    return ret_node
+                dict_node = ret_node.value
+                str_keys = [
+                    k.value if (isinstance(k, ast.Constant) and isinstance(k.value, str)) else None
+                    for k in dict_node.keys
+                ]
+                output_keys = {"ans", "correct", "ds", "distractors", "options"}
+                has_output = any(k in output_keys for k in str_keys if k)
+                has_vars = "vars" in str_keys
+                if has_output and not has_vars:
+                    v_keys = [ast.Constant(value=v) for v in vars_list]
+                    v_vals = [ast.Name(id=v, ctx=ast.Load()) for v in vars_list]
+                    if "ans" not in vars_list:
+                        if "ans" in str_keys:
+                            idx_ans = str_keys.index("ans")
+                            v_keys.append(ast.Constant(value="ans"))
+                            v_vals.append(dict_node.values[idx_ans])
+                        elif "correct" in str_keys:
+                            idx_corr = str_keys.index("correct")
+                            v_keys.append(ast.Constant(value="ans"))
+                            v_vals.append(dict_node.values[idx_corr])
+                    if v_keys:
+                        vars_dict_node = ast.Dict(keys=v_keys, values=v_vals)
+                        dict_node.keys.insert(0, ast.Constant(value="vars"))
+                        dict_node.values.insert(0, vars_dict_node)
+                        parent.modified = True
+                return ret_node
+
+            def _walk_stmts(stmts: List[ast.stmt], inherited_vars: List[str], inherited_seen: Set[str]) -> None:
+                local_vars = list(inherited_vars)
+                seen = set(inherited_seen)
+                for idx, stmt in enumerate(stmts):
                     if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        continue
+                    if isinstance(stmt, ast.Return):
+                        stmts[idx] = _inject_return(stmt, local_vars)
                         continue
                     if isinstance(stmt, ast.Assign):
                         for tgt in stmt.targets:
-                            self._extract_names(tgt, local_var_names, seen)
+                            self._extract_names(tgt, local_vars, seen)
                     elif isinstance(stmt, ast.AnnAssign):
-                        self._extract_names(stmt.target, local_var_names, seen)
-                    for _, child_val in ast.iter_fields(stmt):
-                        if isinstance(child_val, list):
-                            _collect_assignments(child_val)
-                        elif isinstance(child_val, ast.AST) and not isinstance(child_val, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                            _collect_assignments([child_val])
+                        self._extract_names(stmt.target, local_vars, seen)
+                    elif isinstance(stmt, ast.If):
+                        _walk_stmts(stmt.body, local_vars, seen)
+                        _walk_stmts(stmt.orelse, local_vars, seen)
+                    elif isinstance(stmt, (ast.For, ast.AsyncFor, ast.While, ast.With, ast.AsyncWith)):
+                        _walk_stmts(stmt.body, local_vars, seen)
+                        if hasattr(stmt, "orelse") and stmt.orelse:
+                            _walk_stmts(stmt.orelse, local_vars, seen)
+                    elif isinstance(stmt, ast.Try):
+                        _walk_stmts(stmt.body, local_vars, seen)
+                        for h in stmt.handlers:
+                            _walk_stmts(h.body, local_vars, seen)
+                        _walk_stmts(stmt.orelse, local_vars, seen)
+                        _walk_stmts(stmt.finalbody, local_vars, seen)
 
-            _collect_assignments(fn_node.body)
-
-            class _ReturnTransformer(ast.NodeTransformer):
-                def __init__(self, vars_list: List[str]):
-                    self.vars_list = vars_list
-
-                def visit_FunctionDef(self, n):
-                    return n
-
-                def visit_AsyncFunctionDef(self, n):
-                    return n
-
-                def visit_Return(self, ret_node: ast.Return) -> ast.Return:
-                    if not isinstance(ret_node.value, ast.Dict):
-                        return ret_node
-                    dict_node = ret_node.value
-                    str_keys = []
-                    for k in dict_node.keys:
-                        if isinstance(k, ast.Constant) and isinstance(k.value, str):
-                            str_keys.append(k.value)
-                        else:
-                            str_keys.append(None)
-
-                    output_keys = {"ans", "correct", "ds", "distractors", "options"}
-                    has_output = any(k in output_keys for k in str_keys if k)
-                    has_vars = "vars" in str_keys
-
-                    if has_output and not has_vars:
-                        v_keys = [ast.Constant(value=v) for v in self.vars_list]
-                        v_vals = [ast.Name(id=v, ctx=ast.Load()) for v in self.vars_list]
-
-                        if "ans" not in self.vars_list:
-                            if "ans" in str_keys:
-                                idx_ans = str_keys.index("ans")
-                                v_keys.append(ast.Constant(value="ans"))
-                                v_vals.append(dict_node.values[idx_ans])
-                            elif "correct" in str_keys:
-                                idx_corr = str_keys.index("correct")
-                                v_keys.append(ast.Constant(value="ans"))
-                                v_vals.append(dict_node.values[idx_corr])
-
-                        if v_keys:
-                            vars_dict_node = ast.Dict(keys=v_keys, values=v_vals)
-                            dict_node.keys.insert(0, ast.Constant(value="vars"))
-                            dict_node.values.insert(0, vars_dict_node)
-                            parent.modified = True
-
-                    return ret_node
-
-            ret_trans = _ReturnTransformer(local_var_names)
-            fn_node.body = [ret_trans.visit(stmt) for stmt in fn_node.body]
+            _walk_stmts(fn_node.body, [], set())
             self.generic_visit(fn_node)
             return fn_node
 
@@ -1559,7 +1568,7 @@ def extract_function_code(
 
     if not converted_lambda:
         # Rename first function definition to target_name
-        code_str = re.sub(r"^def\s+[A-Za-z0-9_]+\s*\(", f"def {target_name}(", raw_src, count=1)
+        code_str = re.sub(r"^def\s+[A-Za-z0-9_]+\s*\(", f"def {target_name}(", raw_src, count=1, flags=re.MULTILINE)
 
     if target_name == "generate_params":
         code_str = inject_ast_auto_vars(code_str)
@@ -1591,6 +1600,35 @@ def extract_function_code(
     return code_str
 
 
+def _format_with_fmt(val_str: str, fmt_str: Optional[str]) -> str:
+    """Applies @X@ template format string once without duplicating prefix or suffix."""
+    if not val_str or not fmt_str or "@X@" not in fmt_str:
+        return val_str
+    pfx, sfx = fmt_str.split("@X@", 1)
+    if pfx and sfx:
+        if val_str.startswith(pfx) and val_str.endswith(sfx):
+            return val_str
+    elif pfx:
+        if val_str.startswith(pfx):
+            return val_str
+    elif sfx:
+        if val_str.endswith(sfx):
+            return val_str
+    return fmt_str.replace("@X@", val_str)
+
+
+def _make_sandbox_rng(seed: int):
+    """Creates a random.Random instance with _LazyNPRNG attached, matching engine.sandbox."""
+    import random
+    rng = random.Random(seed)
+    try:
+        from engine.sandbox import _LazyNPRNG
+        rng.np = _LazyNPRNG(seed)
+    except Exception:
+        pass
+    return rng
+
+
 def build_adapted_mc7_generator(
     base_gen_code: str,
     cid: str,
@@ -1616,36 +1654,53 @@ def build_adapted_mc7_generator(
         base = base[:-len("generate = generate_params")].rstrip()
 
     if fmt and "@X@" in fmt:
-        pfx = fmt.split("@X@")[0]
-        fmt_helper = f'lambda s: ({repr(fmt)}.replace("@X@", s) if (s and not s.startswith({repr(pfx)})) else s)'
+        pfx, sfx = fmt.split("@X@", 1)
+        if pfx and sfx:
+            cond = f"(not s or (s.startswith({repr(pfx)}) and s.endswith({repr(sfx)})))"
+        elif pfx:
+            cond = f"(not s or s.startswith({repr(pfx)}))"
+        elif sfx:
+            cond = f"(not s or s.endswith({repr(sfx)}))"
+        else:
+            cond = "False"
+        fmt_helper = f'lambda s: (s if {cond} else {repr(fmt)}.replace("@X@", s))'
     else:
         fmt_helper = "lambda s: s"
 
     if not relevant_rats:
         if fmt and "@X@" in fmt:
-            pfx = fmt.split("@X@")[0]
-            fmt_def = f'f=lambda s:({repr(fmt)}.replace("@X@",s) if (s and not s.startswith({repr(pfx)})) else s)'
-            f_c = 'f(str(r.get("correct") or r.get("ans","")).strip())'
-            f_w = 'f(str(d[1]))'
+            fmt_def = f"f={fmt_helper}"
+            f_c = 'f(str(r.get("correct") if r.get("correct") is not None else r.get("ans","")).strip())'
+            f_w = "f(str(d[1]).strip())"
         else:
-            fmt_def = ''
-            f_c = 'str(r.get("correct") or r.get("ans","")).strip()'
-            f_w = 'str(d[1])'
+            fmt_def = ""
+            f_c = 'str(r.get("correct") if r.get("correct") is not None else r.get("ans","")).strip()'
+            f_w = "str(d[1]).strip()"
         wrapper = f"""{base}
 _c2c_gen_inner=generate_params
 def generate_params(rng):
  r=_c2c_gen_inner(rng)
- if isinstance(r,(tuple,list)):r={{"vars":r[0] if isinstance(r[0],dict) else {{"val":r[0]}},"correct":str(r[1]),"distractors":r[2] if len(r)>2 else []}}
+ if isinstance(r,(tuple,list)):r={{"vars":r[0] if isinstance(r[0],dict) else {{"val":r[0]}},"correct":str(r[1]) if len(r)>1 else "","distractors":r[2] if len(r)>2 else []}}
  elif not isinstance(r,dict):return r
  {fmt_def}
  ids,st={declared_ids_repr},{strict_repr}
  ds=[]
  for d in (r.get("distractors") or r.get("ds") or []):
   if isinstance(d,(tuple,list)) and len(d)>=3:
-   did=str(d[0]).replace("_","-")
+   did=str(d[0]).strip().replace("_","-")
    if ids and did not in ids and st:raise ValueError(f"Distractor ID '{{did}}' no esta declarado en cta.json ({cid}).")
    w={f_w};ds.append({{"value":w,"content":w,"distractor_id":did,"error_rationale":str(d[2]),"is_correct":False}})
-  elif isinstance(d,dict):ds.append(d)
+  elif isinstance(d,(tuple,list)) and len(d)==2 and not st:
+   did=str(d[0]).strip().replace("_","-");w={f_w}
+   ds.append({{"value":w,"content":w,"distractor_id":did,"error_rationale":"","is_correct":False}})
+  elif isinstance(d,dict):
+   did=d.get("distractor_id") or d.get("id")
+   if did:did=str(did).strip().replace("_","-")
+   if did and ids and did not in ids and st:raise ValueError(f"Distractor ID '{{did}}' no esta declarado en cta.json ({cid}).")
+   raw_w=str(d.get("value") if d.get("value") is not None else (d.get("content") or d.get("ans",""))).strip()
+   w=f(raw_w) if {bool(fmt and "@X@" in fmt)} else raw_w
+   rat=str(d.get("error_rationale") or d.get("rationale") or "")
+   ds.append({{"value":w,"content":w,"distractor_id":did,"error_rationale":rat,"is_correct":False}})
   elif st:raise ValueError(f"[TPL-MC7-STRICT] 3-tupla requerida: {{d!r}}")
  c={f_c}
  r["correct"],r["distractors"],r["options"]=c,ds,[{{"value":c,"content":c,"is_correct":True}}]+ds
@@ -1659,14 +1714,14 @@ generate=generate_params
 _c2c_gen_inner=generate_params
 def generate_params(rng):
  r=_c2c_gen_inner(rng)
- if isinstance(r,(tuple,list)):r={{"vars":r[0] if isinstance(r[0],dict) else {{"val":r[0]}},"correct":str(r[1]),"distractors":r[2] if len(r)>2 else []}}
+ if isinstance(r,(tuple,list)):r={{"vars":r[0] if isinstance(r[0],dict) else {{"val":r[0]}},"correct":str(r[1]) if len(r)>1 else "","distractors":r[2] if len(r)>2 else []}}
  elif not isinstance(r,dict):return r
  rats,st,f={rats_map_repr},{strict_repr},{fmt_helper}
  ids={ids_code}
- c=f(str(r.get("correct") or r.get("ans","")).strip())
+ c=f(str(r.get("correct") if r.get("correct") is not None else r.get("ans","")).strip())
  r["correct"],ds=c,[]
  for d in (r.get("distractors") or r.get("ds") or []):
-  if isinstance(d,dict):v,i,t=str(d.get("value") or d.get("content") or d.get("ans","")).strip(),d.get("distractor_id") or d.get("id"),d.get("error_rationale") or d.get("rationale")
+  if isinstance(d,dict):v,i,t=str(d.get("value") if d.get("value") is not None else (d.get("content") or d.get("ans",""))).strip(),d.get("distractor_id") or d.get("id"),d.get("error_rationale") or d.get("rationale")
   elif isinstance(d,(tuple,list)) and len(d)>=2:
    d0=str(d[0]).strip().replace("_","-")
    i,v=(d0,str(d[1]).strip()) if (d0.startswith("D-") or d0 in ids) else (str(d[1]).strip().replace("_","-"),str(d[0]).strip())
@@ -1937,12 +1992,15 @@ def _compile_shard_body(
     **kwargs,
 ) -> Tuple[bool, List[str]]:
 
+    cert_path = shards_dir / f"{norm_shard_id}.cert.json"
+
     def _cleanup_stale_pass_marker():
-        if pass_marker.is_file():
-            try:
-                pass_marker.unlink()
-            except Exception:
-                pass
+        for stale_p in (pass_marker, cert_path):
+            if stale_p.is_file():
+                try:
+                    stale_p.unlink()
+                except Exception:
+                    pass
 
     # 1. Verify pre_shard_manifest.json (resolving --manifest pre_cta_manifest.json fallback cleanly)
     def _find_pre_shard_manifest() -> Optional[Path]:
@@ -2008,6 +2066,25 @@ def _compile_shard_body(
     if not expected_cids and "competencies" in shard_entry:
         expected_cids = [c["id"] for c in shard_entry["competencies"] if isinstance(c, dict) and "id" in c]
 
+    # Backup gate: duplicate competency titles (primary gate lives in cta_merge.apply_harmonize)
+    if isinstance(shard_entry, dict):
+        _seen_titles: Dict[str, str] = {}
+        for _c in shard_entry.get("competencies", []):
+            if not isinstance(_c, dict):
+                continue
+            _k = " ".join(str(_c.get("name", "")).casefold().split())
+            if _k and _k in _seen_titles:
+                _msg = (
+                    f"FAIL: [DUPLICATE-TITLE] '{_seen_titles[_k]}' y '{_c.get('id')}' comparten el "
+                    f"título '{_c.get('name')}'. Si son el mismo contenido, fusiónalas; si difieren "
+                    f"en rol o nivel Bloom (Understand/Apply/Analyze…), renómbralas para reflejarlo "
+                    f"(ej. '… (concepto)' / '… (aplicación)') en cta_merge y recompila."
+                )
+                print(_msg, file=sys.stderr)
+                return False, [_msg]
+            if _k:
+                _seen_titles[_k] = str(_c.get("id"))
+
     eff_min_arch = _S4_MIN_ARCHETYPES
     if min_archetypes is not None:
         eff_min_arch = int(min_archetypes)
@@ -2049,13 +2126,25 @@ def _compile_shard_body(
                     return False, [err_msg]
                 shard_data_path = candidate
 
-    # Compute source_sha256 over shard_data_path (if exists) + relevant fix files
+    if cta_path and Path(cta_path).is_file():
+        cta_p = Path(cta_path).resolve()
+    else:
+        cta_file_candidate = work_p / "cta.json"
+        cta_p = cta_file_candidate if cta_file_candidate.is_file() else None
+
+    # Compute source_sha256 over shard_data_path, relevant fix files, cta/manifest inputs, and compile mode
     hasher = hashlib.sha256()
     if shard_data_path and shard_data_path.is_file():
         hasher.update(shard_data_path.read_bytes())
     for rf in sorted(relevant_fix_files, key=lambda p: p.name):
         hasher.update(f"\n--FIX:{rf.name}--\n".encode("utf-8"))
         hasher.update(rf.read_bytes())
+    if cta_p and cta_p.is_file():
+        hasher.update(b"\n--CTA--\n")
+        hasher.update(cta_p.read_bytes())
+    hasher.update(b"\n--MANIFEST_ENTRY--\n")
+    hasher.update(json.dumps(shard_entry, sort_keys=True, ensure_ascii=False).encode("utf-8"))
+    hasher.update(f"\n--FLAGS:{bool(strict)}:{int(seeds)}:{int(eff_min_arch)}:{bool(fail_total)}--\n".encode("utf-8"))
     source_sha256 = hasher.hexdigest()
 
     # Bounded compilation counter & unified stateful circuit breaker (.check_attempts/compile_{norm_shard_id}.json)
@@ -2087,6 +2176,7 @@ def _compile_shard_body(
         state.get("last_source_sha256") == source_sha256
         and state.get("last_errors")
     ):
+        _cleanup_stale_pass_marker()
         cached_errors = state["last_errors"]
         no_change_prefix = "[NO-CHANGE: código idéntico al intento previo; edita el archivo antes de recompilar]"
         prefixed_errors = []
@@ -2120,6 +2210,7 @@ def _compile_shard_body(
         state["has_syntax_error"] = bool(has_syntax_error)
         state["affected_line_count"] = error_count
         state["error_sha256"] = err_hash
+        state["updated_at"] = time.time()
 
         res_msg = msg
         if _EDIT_FILE_REMINDER not in res_msg:
@@ -2167,7 +2258,6 @@ def _compile_shard_body(
 
         if receipt_p:
             try:
-                import time
                 r_data = {}
                 if receipt_p.is_file():
                     try:
@@ -2311,6 +2401,10 @@ def _compile_shard_body(
             fix_code_obj = compile(healed_fix_text, str(fix_path), "exec")
             sys.modules[fix_mod_name] = fix_mod
             exec(fix_code_obj, fix_mod.__dict__)
+
+            fix_rats = getattr(fix_mod, "RATS", None)
+            if isinstance(fix_rats, dict):
+                module_rats.update(fix_rats)
 
             fix_templates = getattr(fix_mod, "TEMPLATES", None)
             if fix_templates and isinstance(fix_templates, (list, tuple)):
@@ -2466,12 +2560,6 @@ def _compile_shard_body(
     tuple_records = valid_tuple_records
 
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
-
-    if cta_path and Path(cta_path).is_file():
-        cta_p = Path(cta_path).resolve()
-    else:
-        cta_file_candidate = work_p / "cta.json"
-        cta_p = cta_file_candidate if cta_file_candidate.is_file() else None
 
     cta_comp_map = {c["id"]: c for c in shard_entry.get("competencies", []) if isinstance(c, dict) and "id" in c}
     if cta_p and cta_p.is_file():
@@ -2672,8 +2760,10 @@ def _compile_shard_body(
             ver_code = f"""{base_v}
 _v=verify
 def verify(inst):
- try:return _v(inst.get("correct") or inst.get("ans"),inst.get("vars",{{}})) if isinstance(inst,dict) else False
- except Exception:return _v(inst) if isinstance(inst,dict) else False
+ if not isinstance(inst,dict):return False
+ c=inst["correct"] if ("correct" in inst and inst["correct"] is not None) else inst.get("ans")
+ try:return _v(c,inst.get("vars",{{}}))
+ except Exception:return False
 cross_check=verify
 """
 
@@ -2999,14 +3089,14 @@ cross_check=verify
 
         # Determine declared vars from generator callable (with timeout guard) or sandbox or AST
         sample_res = None
+        sample_dict: Dict[str, Any] = {}
         declared_vars: Set[str] = set()
         if callable(gen_raw):
             try:
-                import random
                 from engine.sandbox import call_with_timeout
                 sample_res = call_with_timeout(
                     gen_raw,
-                    args=(random.Random(42),),
+                    args=(_make_sandbox_rng(42),),
                     timeout=0.4,
                     seed=42,
                 )
@@ -3078,9 +3168,7 @@ cross_check=verify
             # Apply fmt_str to sample_dict if defined
             if fmt_str and "@X@" in fmt_str and sample_dict.get("correct"):
                 c_val_s = str(sample_dict["correct"]).strip()
-                prefix_fmt = fmt_str.split("@X@")[0]
-                if not c_val_s.startswith(prefix_fmt):
-                    sample_dict["correct"] = fmt_str.replace("@X@", c_val_s)
+                sample_dict["correct"] = _format_with_fmt(c_val_s, fmt_str)
 
             # Parametric indicators for dynamic rationale check
             has_var_in_correct = bool(re.search(r"@([a-zA-Z0-9_]+)@", str(sample_dict.get("correct", ""))))
@@ -3212,9 +3300,7 @@ cross_check=verify
                                     val = str(d_item[1]).strip()
 
                         if fmt_str and "@X@" in fmt_str and val:
-                            pfx = fmt_str.split("@X@")[0]
-                            if not val.startswith(pfx):
-                                val = fmt_str.replace("@X@", val)
+                            val = _format_with_fmt(val, fmt_str)
 
                         if val:
                             val_katex_errs = validate_katex_syntax(val, f"distractor '{did}' value in '{tpl_id}'", allow_template_vars=True)
@@ -3374,7 +3460,7 @@ cross_check=verify
             tautology_recorded = False
             for test_seed in (42, 43, 44):
                 try:
-                    rng_test = random.Random(test_seed)
+                    rng_test = _make_sandbox_rng(test_seed)
                     EvaluationContext.set(template_id=tpl_id, gen_fn=gen_fn_name, archetype=orig_idx, seed=test_seed)
                     from engine.sandbox import call_with_timeout
                     res_test = call_with_timeout(gen_raw, args=(rng_test,), timeout=0.8, seed=test_seed)
@@ -3392,10 +3478,8 @@ cross_check=verify
                 c_test = str(res_test.get("correct", "")).strip()
                 v_test = res_test.get("vars", {}) if isinstance(res_test.get("vars"), dict) else {}
                 if fmt_str and "@X@" in fmt_str and c_test:
-                    pfx = fmt_str.split("@X@")[0]
-                    if not c_test.startswith(pfx):
-                        c_test = fmt_str.replace("@X@", c_test)
-                        res_test["correct"] = c_test
+                    c_test = _format_with_fmt(c_test, fmt_str)
+                    res_test["correct"] = c_test
 
                 # Soundness check
                 if callable(ver_raw) and not c_test and isinstance(res_test.get("options"), list):
@@ -3433,9 +3517,7 @@ cross_check=verify
                         elif isinstance(d_t, (str, int, float)):
                             d_val = str(d_t).strip()
                         if fmt_str and "@X@" in fmt_str and d_val:
-                            pfx = fmt_str.split("@X@")[0]
-                            if not d_val.startswith(pfx):
-                                d_val = fmt_str.replace("@X@", d_val)
+                            d_val = _format_with_fmt(d_val, fmt_str)
                         if d_val and d_val != c_test:
                             mutated = {**res_test, "correct": d_val}
                             refute_res = run_ver(d_val, v_test, mutated)
@@ -3646,8 +3728,11 @@ cross_check=verify
         gen_callables_by_cid.setdefault(cid, []).append(gen_raw)
 
 
-    # 6. Write templates atomically grouped by competency
-    compiled_paths: List[Path] = []
+    # 6. Stage templates atomically grouped by competency (promote to templates_dir only on PASS)
+    staged_tpl_dir = att_dir / "_staged_templates" / norm_shard_id / "templates"
+    staged_tpl_dir.mkdir(parents=True, exist_ok=True)
+    staged_paths: List[Path] = []
+    final_paths_by_cid: Dict[str, Path] = {}
     for cid, tpls in templates_by_cid.items():
         base_id = f"T-{cid}" if not cid.startswith("T-") else cid
         for idx, tpl in enumerate(tpls, start=1):
@@ -3662,7 +3747,8 @@ cross_check=verify
                 tpl["id"] = unique_id
                 tpl["template_id"] = unique_id
 
-        out_json_path = templates_dir / f"{cid}.json"
+        staged_json_path = staged_tpl_dir / f"{cid}.json"
+        final_paths_by_cid[cid] = templates_dir / f"{cid}.json"
         if len(tpls) == 1:
             payload = tpls[0]
         else:
@@ -3670,13 +3756,13 @@ cross_check=verify
                 "competency_id": cid,
                 "templates": tpls,
             }
-        _atomic_write_json(out_json_path, payload)
-        compiled_paths.append(out_json_path)
+        _atomic_write_json(staged_json_path, payload)
+        staged_paths.append(staged_json_path)
 
     # 7. Execute Strict Validation with check_templates (isolated by shard_id)
-    if compiled_paths:
+    if staged_paths:
         is_clean, raw_errors = check_templates_file_or_dir(
-            target_path=compiled_paths,
+            target_path=staged_paths,
             cta_path=cta_p,
             num_dry_run_seeds=seeds,
             strict=strict,
@@ -3687,6 +3773,7 @@ cross_check=verify
         )
     else:
         is_clean, raw_errors = False, []
+    compiled_paths = list(staged_paths)
 
     # Milestone 3 Tri-Band Multimodal Enforcement Gate [M3-ARCHETYPES]
     m3_errors: List[str] = []
@@ -3837,6 +3924,20 @@ cross_check=verify
                 cta_c = cta_comp_map.get(cid, {})
                 c_type = str(cta_c.get("type", "")).lower()
                 is_skill = cid.startswith("Hab-") or c_type in ("skill", "habilidad")
+                if is_skill:
+                    low_tpls = [
+                        f"{t.get('id') or t.get('tpl_id') or '?'}={t.get('bloom')}"
+                        for t in tpls
+                        if t.get("bloom") in ("Remember", "Understand")
+                    ]
+                    if low_tpls:
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [M3-SKILL-BLOOM] Habilidad '{cid}' tiene plantillas "
+                            f"con Bloom bajo ({', '.join(low_tpls)}). Toda plantilla de una Skill debe ser "
+                            f"Apply/Analyze/Evaluate/Create: reetiqueta el Bloom si el ítem ya exige "
+                            f"calcular/aplicar, o reescribe el ítem; si es puramente conceptual, muévelo a una "
+                            f"competencia Concept."
+                        )
                 req_active = 2 if is_skill else 1
                 active_tpls = [
                     t for t in tpls
@@ -3902,7 +4003,12 @@ cross_check=verify
 
                 for fname, fnode in cid_ast_funcs.items():
                     if _fn_declares_arch(fnode):
-                        if cid_clean in fname.lower() or cid_compact in fname.lower():
+                        fname_low = fname.lower()
+                        has_cid_match = bool(
+                            re.search(rf"(?<![a-z0-9]){re.escape(cid_clean)}(?![a-z0-9])", fname_low)
+                            or re.search(rf"(?<![a-z0-9]){re.escape(cid_compact)}(?![a-z0-9])", fname_low)
+                        )
+                        if has_cid_match:
                             cid_candidate_funcs.add(fname)
                         elif is_modular_fix or len(target_cids) == 1:
                             cid_candidate_funcs.add(fname)
@@ -4079,38 +4185,6 @@ cross_check=verify
                 tpl_id_m = tpl_m.get("id") or tpl_m.get("template_id") or f"T-{cid}-{t_idx_m+1:02d}"
                 gen_fn_m = tpl_m.get("gen_fn_name") or getattr(c_call_m, "__name__", "gen_fn")
 
-                # Walk generator AST and any helper functions reached via call graph in cid_ast_funcs
-                queue_funcs = [gen_fn_m]
-                visited_fn_names: Set[str] = set()
-                while queue_funcs:
-                    curr_fn = queue_funcs.pop(0)
-                    if curr_fn in visited_fn_names:
-                        continue
-                    visited_fn_names.add(curr_fn)
-                    c_node = cid_ast_funcs.get(curr_fn)
-                    if c_node:
-                        for sub_call in ast.walk(c_node):
-                            if isinstance(sub_call, ast.Call) and isinstance(sub_call.func, ast.Name):
-                                if sub_call.func.id in cid_ast_funcs and sub_call.func.id not in visited_fn_names:
-                                    queue_funcs.append(sub_call.func.id)
-
-                if not visited_fn_names or not any(fn_n in cid_ast_funcs for fn_n in visited_fn_names):
-                    gen_c_src = str(tpl_m.get("generator_code") or tpl_m.get("generate_py") or "")
-                    if gen_c_src.strip():
-                        try:
-                            tree_m = ast.parse(textwrap.dedent(gen_c_src.strip()))
-                            has_mult_ast = _check_func_has_magic_mult(tree_m)
-                        except Exception:
-                            has_mult_ast = True
-                    else:
-                        has_mult_ast = True
-                else:
-                    has_mult_ast = any(
-                        _check_func_has_magic_mult(cid_ast_funcs[fn_n])
-                        for fn_n in visited_fn_names
-                        if fn_n in cid_ast_funcs
-                    )
-
                 tpl_seed_off = _seed_base + (t_idx_m * 500)
                 eval_seeds = [tpl_seed_off + s_i for s_i in range(300)]
                 hit_seeds: List[int] = []
@@ -4125,10 +4199,9 @@ cross_check=verify
                 telltale_sample: Optional[Tuple[str, str]] = None
                 for s_val in eval_seeds:
                     try:
-                        import random
                         EvaluationContext.set(template_id=tpl_id_m, gen_fn=gen_fn_m, archetype=t_idx_m + 1, seed=s_val)
                         from engine.sandbox import call_with_timeout
-                        rng_m = random.Random(s_val)
+                        rng_m = _make_sandbox_rng(s_val)
                         res_m = call_with_timeout(c_call_m, args=(rng_m,), timeout=0.8, seed=s_val)
                         if not isinstance(res_m, dict):
                             continue
@@ -4389,8 +4462,9 @@ cross_check=verify
                     dist_samples_ms: Dict[str, List[str]] = defaultdict(list)
                     for s_val in eval_seeds:
                         try:
-                            import random
-                            res_m = c_call_m(random.Random(s_val))
+                            EvaluationContext.set(template_id=tpl_id_m, gen_fn=gen_fn_m, archetype=t_idx_m + 1, seed=s_val)
+                            from engine.sandbox import call_with_timeout
+                            res_m = call_with_timeout(c_call_m, args=(_make_sandbox_rng(s_val),), timeout=0.8, seed=s_val)
                             if not isinstance(res_m, dict):
                                 continue
                             vars_m = res_m.get("vars", {}) if isinstance(res_m.get("vars"), dict) else {}
@@ -4459,10 +4533,10 @@ cross_check=verify
                     # (written by plan_shards from engine.stage_contract), never hardcoded here.
                     _s4c = (shard_entry.get("stage4_contract") or {}).get(cid) if isinstance(shard_entry, dict) else None
                     if not isinstance(_s4c, dict):
-                        # Legacy manifest without stage4_contract: preserve id-prefix heuristic.
-                        _legacy_skill = cid.startswith("Hab-") or (
-                            not cid.startswith(("C-", "H-")) and bool(locals().get("is_skill", False))
-                        )
+                        # Legacy manifest without stage4_contract: compute from cta_comp_map / cid prefix (never leak prior loop state).
+                        _cta_c_legacy = cta_comp_map.get(cid, {})
+                        _legacy_type = str(_cta_c_legacy.get("type", "")).lower()
+                        _legacy_skill = cid.startswith("Hab-") or _legacy_type in ("skill", "habilidad")
                         _s4c = _s4_competency_contract("skill" if _legacy_skill else "concept")
                     is_true_skill = _s4_is_skill_type(_s4c.get("type", ""))
                     quota_build = int(_s4c["quota"])
@@ -4480,12 +4554,14 @@ cross_check=verify
                         if callable(c_call_s):
                             for s_try in (100, 101, 102):
                                 try:
-                                    import random
-                                    r_try = c_call_s(random.Random(s_try))
+                                    EvaluationContext.set(template_id=tpl_id_s, gen_fn=tpl_s.get("gen_fn_name") or "gen_fn", archetype=t_idx_s + 1, seed=s_try)
+                                    from engine.sandbox import call_with_timeout
+                                    r_try = call_with_timeout(c_call_s, args=(_make_sandbox_rng(s_try),), timeout=0.8, seed=s_try)
                                     if isinstance(r_try, dict) and isinstance(r_try.get("vars"), dict):
                                         sample_vars_list.append(r_try["vars"])
                                 except Exception:
                                     pass
+                            EvaluationContext.reset(norm_shard_id)
                         for sv_raw in sv_list:
                             sv_str = str(sv_raw).strip()
                             if not sv_str:
@@ -4543,6 +4619,7 @@ cross_check=verify
         state["has_syntax_error"] = False
         state["affected_line_count"] = error_count
         state["error_sha256"] = err_hash
+        state["updated_at"] = time.time()
 
         _cleanup_stale_pass_marker()
 
@@ -4618,7 +4695,6 @@ cross_check=verify
 
         if receipt_p:
             try:
-                import time
                 r_data = {}
                 if receipt_p.is_file():
                     try:
@@ -4648,6 +4724,7 @@ cross_check=verify
         print(f"\n{fail_summary}", file=sys.stderr)
         full_err_out = (top_banner + "\n" + fail_summary) if will_truncate else fail_summary
         state["last_errors"] = [full_err_out]
+        state["updated_at"] = time.time()
         _atomic_write_json(compile_att_file, state)
         return False, [full_err_out]
 
@@ -4664,7 +4741,18 @@ cross_check=verify
         except Exception:
             pass
 
-    import time
+    # Promote validated staged templates atomically to final templates_dir only on PASS
+    final_compiled_paths: List[Path] = []
+    for cid_p, staged_cp in zip(templates_by_cid.keys(), staged_paths):
+        final_cp = final_paths_by_cid[cid_p]
+        if staged_cp.is_file():
+            try:
+                _atomic_write_json(final_cp, json.loads(staged_cp.read_text(encoding="utf-8")))
+            except Exception:
+                pass
+        final_compiled_paths.append(final_cp)
+    compiled_paths = final_compiled_paths
+
     pass_marker = att_dir / f"pass_{norm_shard_id}.json"
     pass_payload = {
         "shard_id": shard_id,
@@ -4675,14 +4763,6 @@ cross_check=verify
     }
     _atomic_write_json(pass_marker, pass_payload)
 
-    for cp in compiled_paths:
-        if cp.is_file():
-            try:
-                _atomic_write_json(cp, json.loads(cp.read_text(encoding="utf-8")))
-            except Exception:
-                pass
-
-    cert_path = shards_dir / f"{norm_shard_id}.cert.json"
     cert_payload = {
         "schema_version": 1,
         "stage": "shard",
@@ -4691,8 +4771,8 @@ cross_check=verify
         "cta_sha256": hashlib.sha256(cta_p.read_bytes()).hexdigest() if (cta_p and cta_p.is_file()) else "",
         "compiler_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "contract_version": 2,
-        "template_shas": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in compiled_paths},
-        "passed_50_seeds": True,
+        "template_shas": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in compiled_paths if p.is_file()},
+        "passed_50_seeds": bool(seeds >= 50 and strict),
         "created_at": time.time(),
     }
     _atomic_write_json(cert_path, cert_payload)

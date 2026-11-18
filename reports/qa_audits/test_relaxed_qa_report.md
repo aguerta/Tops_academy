@@ -1,9 +1,9 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Relaxed Mode Test Course (`test_relaxed`)
 
-- **Fecha de Evaluación:** 2026-11-14
+- **Fecha de Evaluación:** 2026-11-18
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
-- **Estado en Plataforma:** ACTIVO
+- **Estado en Plataforma:** OBSERVADO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
 - **Quality Tier:** **EXCELENTE (PLATINUM MASTERY)**
 - **Mastery Path Readiness Index (MPRI):** **100.00 / 100.0** (GOLD MASTERY PATH)
@@ -59,7 +59,7 @@
 
 ### 4. Veredicto y Certificación
 
-El curso **Relaxed Mode Test Course** ha sido **certificado y aprobado** con calificación sobresaliente de **20.0 / 20.0** y MPRI de **100.00 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.
+El curso **Relaxed Mode Test Course** queda en estado **OBSERVADO** (requiere correcciones antes de despliegue pleno) con calificación de **20.0 / 20.0** y MPRI de **100.00 / 100.0**.
 
 ---
 
@@ -77,9 +77,9 @@ El curso **Relaxed Mode Test Course** ha sido **certificado y aprobado** con cal
     "question_types_distribution": {
       "unknown": 1
     },
-    "platform_status": "ACTIVO",
+    "platform_status": "OBSERVADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-14"
+    "evaluation_date": "2026-11-18"
   },
   "dimension_scores": {},
   "penalties_applied": [
@@ -93,11 +93,10 @@ El curso **Relaxed Mode Test Course** ha sido **certificado y aprobado** con cal
   "quality_tier": "EXCELENTE (PLATINUM MASTERY)",
   "mastery_path_readiness": {},
   "remediation_actions": [
-    "Certificación plena para despliegue en plataforma Top's Academy con Nivel EXCELENTE (PLATINUM MASTERY).",
-    "El banco de 1 reactivos y 1 competencias cumple con los estándares Quality Matters, OSCQR y Mastery Learning."
+    "Resolver penalización dura [P_FAIL]: Failed metric"
   ],
   "discovered_lint_rules": [],
-  "platform_status": "ACTIVO"
+  "platform_status": "OBSERVADO"
 }
 ```
 

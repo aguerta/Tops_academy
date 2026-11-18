@@ -1464,7 +1464,8 @@ TEMPLATES = [
             self.assertIn("SCOPE-LOCK", prompt)
             self.assertIn("1..N", prompt)
             self.assertIn("compile_cta.py", prompt)
-            self.assertIn("DONE:", prompt)
+            self.assertIn("DONE", prompt)
+            self.assertIn("DONE:", map_res["Subagents"][idx - 1]["Prompt"])
 
 
 if __name__ == "__main__":

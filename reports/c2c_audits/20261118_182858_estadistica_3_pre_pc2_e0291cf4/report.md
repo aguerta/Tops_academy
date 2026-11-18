@@ -1,7 +1,7 @@
 # Informe de Auditoría Arquitectónica Forense: Rendimiento, Shards y Telemetría Multi-Agente
 ## Curso: Estadistica 3 Pre Pc2 (`estadistica_3_pre_pc2`)
 
-**Fecha de Auditoría:** `2026-11-15 07:34:06 UTC`  
+**Fecha de Auditoría:** `2026-11-18 23:28:58 UTC`  
 **Conversación Orquestadora:** [`e0291cf4-7aae-45dc-be49-f0f5ecad26b4`](conversation://e0291cf4-7aae-45dc-be49-f0f5ecad26b4)  
 **Directorio de Trabajo Validado (Zero-Collision):** `D:\Augusto\personal_portfolio\Tops_academy\courses\estadistica_3_pre_pc2\work` (`match=True`)  
 **Enfoque:** Telemetría Determinista de API, Subagentes, Shards, Latencias y Operaciones del Orquestador.
@@ -21,9 +21,9 @@
 | **Reactivos Finales Validados** | **`1390 preguntas`** | Evaluadas en sandbox |
 | **Tokens Entrada (Subagentes)** | **`9,031,361` tokens** | Contexto acumulativo enviado a subagentes |
 | **Tokens Salida (Subagentes)** | **`2,080,550` tokens** | Código de plantillas y JSON generado |
-| **Tokens Caché (Leídos)** | **`74,738,796` tokens** | Caché de contexto reutilizado por la API |
-| **Gran Total Tokens Activos** | **`12,959,805` tokens** | Entrada + Salida neto (sin contar caché) |
-| **Gran Total Tokens (con Caché)** | **`87,698,601` tokens** | Consumo total de cuota facturable |
+| **Tokens Caché (Leídos)** | **`75,427,901` tokens** | Caché de contexto reutilizado por la API |
+| **Gran Total Tokens Activos** | **`12,977,604` tokens** | Entrada + Salida neto (sin contar caché) |
+| **Gran Total Tokens (con Caché)** | **`88,405,505` tokens** | Consumo total de cuota facturable |
 
 ---
 
@@ -33,14 +33,14 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 
 | Métrica Unitaria | Valor Obtenido | Interpretación de Eficiencia |
 | :--- | :--- | :--- |
-| **Tokens Totales por Pregunta** | **`63,092.5 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
-| **Tokens Activos por Pregunta** | **`9,323.6 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
-| **Tokens por Competencia (Global)** | **`1,538,571.9 tokens/comp`** | Densidad de diseño instruccional del curso |
+| **Tokens Totales por Pregunta** | **`63,601.1 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
+| **Tokens Activos por Pregunta** | **`9,336.4 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
+| **Tokens por Competencia (Global)** | **`1,550,973.8 tokens/comp`** | Densidad de diseño instruccional del curso |
 | **Tokens de Autor por Competencia** | **`91,658.8 tokens/comp`** | Costo puro de la etapa de autoría por competencia |
-| **Tokens Totales por Página / Slide** | **`679,834.1 tokens/pág`** | Esfuerzo cognitivo por diapositiva original |
-| **Segundos de Pared por Pregunta** | **`5.38 s/preg`** | Ritmo de entrega percibido |
-| **Rendimiento de Generación (QPM)** | **`11.16 preg/min`** | Velocidad de producción del pipeline |
-| **Factor de Aceleración Paralela** | **`9.31x`** | Relación tiempo cómputo vs tiempo de pared |
+| **Tokens Totales por Página / Slide** | **`685,314.0 tokens/pág`** | Esfuerzo cognitivo por diapositiva original |
+| **Segundos de Pared por Pregunta** | **`5.43 s/preg`** | Ritmo de entrega percibido |
+| **Rendimiento de Generación (QPM)** | **`11.05 preg/min`** | Velocidad de producción del pipeline |
+| **Factor de Aceleración Paralela** | **`9.23x`** | Relación tiempo cómputo vs tiempo de pared |
 
 ---
 
@@ -205,11 +205,11 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 ## 4. Auditoría Forense del Orquestador y Catálogo de Intervenciones Manuales
 
 ### 4.1. Descomposición del Tiempo Total del Orquestador
-- ⏱️ **Tiempo Total de Pared del Orquestador:** `124.53 min` (`7472.0s`)
-- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `8.7 min` (`522.0s`)
+- ⏱️ **Tiempo Total de Pared del Orquestador:** `125.75 min` (`7545.0s`)
+- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `8.9 min` (`532.0s`)
 - 🛠️ **Tiempo Gastado en Intervenciones Manuales (Supervisor Repair):** **`0.0 min`** (`0.0s`)
 - ⏳ **Tiempo Ocioso en Barreras de Sincronización (Esperando Subagentes):** `1.9 min` (`113.0s`)
-- 🧠 **Tiempo de Inferencia y Razonamiento del Modelo:** `10.1 min` (`608.0s`)
+- 🧠 **Tiempo de Inferencia y Razonamiento del Modelo:** `10.2 min` (`615.0s`)
 
 ### 4.2. Catálogo Cronológico de Reparaciones Manuales del Orquestador
 Operaciones directas de edición de código ejecutadas por el orquestador: **`0`**

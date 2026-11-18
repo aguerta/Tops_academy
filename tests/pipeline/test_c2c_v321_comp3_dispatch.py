@@ -627,20 +627,20 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         }), encoding="utf-8")
 
         res = dispatch_repair(self.work_dir)
-        self.assertEqual(len(res["Subagents"]), 2, "Expected 2 repair subagents, one per failing competency")
-        sub_c02 = next(s for s in res["Subagents"] if "C-02" in s.get("assigned_competency", "") or "C-02" in s.get("Role", ""))
-        sub_hab03 = next(s for s in res["Subagents"] if "Hab-03" in s.get("assigned_competency", "") or "Hab-03" in s.get("Role", ""))
+        self.assertEqual(len(res["Subagents"]), 1, "Expected 1 consolidated shard_01 repair subagent for C-02 and Hab-03")
+        sub_s01 = res["Subagents"][0]
+        self.assertEqual(sub_s01.get("shard_id"), "shard_01")
+        self.assertEqual(sorted(sub_s01.get("assigned_competencies", [])), ["C-02", "Hab-03"])
+        self.assertIn("--min-archetypes 4", sub_s01.get("compile_command", ""))
+        self.assertIn("--strict", sub_s01.get("compile_command", ""))
 
-        prompt_c02 = sub_c02["Prompt"]
-        prompt_hab03 = sub_hab03["Prompt"]
+        prompts_repair_dir = self.work_dir / "prompts" / "repair"
+        c02_item = json.loads((prompts_repair_dir / "repair_c02.json").read_text(encoding="utf-8"))
+        hab03_item = json.loads((prompts_repair_dir / "repair_hab03.json").read_text(encoding="utf-8"))
 
-        self.assertIn("R-16 length parity failure", prompt_c02)
-        self.assertIn("Option C distractor collision", prompt_c02)
-        self.assertIn("FIB dollar wrap violation", prompt_hab03)
-        self.assertIn("--min-archetypes 4", sub_c02.get("compile_command", ""))
-        self.assertIn("--strict", sub_c02.get("compile_command", ""))
-        self.assertIn("--min-archetypes 4", sub_hab03.get("compile_command", ""))
-        self.assertIn("--strict", sub_hab03.get("compile_command", ""))
+        self.assertIn("R-16 length parity failure", c02_item["Prompt"])
+        self.assertIn("Option C distractor collision", c02_item["Prompt"])
+        self.assertIn("FIB dollar wrap violation", hab03_item["Prompt"])
 
 
 

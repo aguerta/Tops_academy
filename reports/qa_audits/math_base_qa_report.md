@@ -1,12 +1,12 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Base Course (`math_base`)
 
-- **Fecha de Evaluación:** 2026-11-14
+- **Fecha de Evaluación:** 2026-11-18
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
-- **Estado en Plataforma:** ACTIVO
-- **Calificación Final Certificada:** **13.2 / 20.0 pts**
+- **Estado en Plataforma:** RECHAZADO
+- **Calificación Final Certificada:** **13.1 / 20.0 pts**
 - **Quality Tier:** **DEFICIENTE (11.0 - 13.9 pts)**
-- **Mastery Path Readiness Index (MPRI):** **75.00 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Mastery Path Readiness Index (MPRI):** **74.65 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
 
 ---
 
@@ -14,32 +14,32 @@
 
 | Dimensión | Puntuación | Máximo | Calificación | Estado |
 | :--- | :---: | :---: | :---: | :---: |
-| **D1: Arquitectura Curricular y Granularidad** | **3.2** | 4.0 | 80% | ⚠️ Observación menor |
+| **D1: Arquitectura Curricular y Granularidad** | **3.1** | 4.0 | 78% | ⚠️ Observación menor |
 | **D2: Calidad Psicométrica y Reactivos** | **5.0** | 5.0 | 100% | ✅ Impecable |
 | **D3: Andamiaje y Pistas Socráticas** | **4.0** | 5.0 | 80% | ⚠️ Observación menor |
 | **D4: Alineación Instruccional y ZPD** | **4.0** | 4.0 | 100% | ✅ Impecable |
 | **D5: Ergonomía Técnica y KaTeX** | **2.0** | 2.0 | 100% | ✅ Impecable |
 | **Penalizaciones Duras** | **-5.0** | - | - | ⚠️ Penalizaciones aplicadas |
-| **TOTAL** | **13.2** | **20.0** | **66.0%** | 🏆 **DEFICIENTE (11.0 - 13.9 pts)** |
+| **TOTAL** | **13.1** | **20.0** | **65.6%** | 🏆 **DEFICIENTE (11.0 - 13.9 pts)** |
 
 ---
 
 ### 2. Desglose Detallado por Dimensión
 
-#### D1. Arquitectura Curricular y Granularidad (3.2 / 4.0 pts)
-- Estructura curricular con 3 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard').
+#### D1. Arquitectura Curricular y Granularidad (3.1 / 4.0 pts)
+- Estructura curricular con 3 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1, pares solapados=1). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard').
 
 #### D2. Calidad Psicométrica y Reactivos (5.0 / 5.0 pts)
-- Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos.
+- Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale (imposibles por dominio=0, claves corruptas=0, sesgo MS=0.0%).
 
 #### D3. Andamiaje y Pistas Socráticas (4.0 / 5.0 pts)
-- Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/3 ítems. Unicidad diagnóstica de rationales: 100.0%.
+- Andamiaje formativo: 0.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 100.0% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0).
 
 #### D4. Alineación Instruccional y ZPD (4.0 / 4.0 pts)
 - Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente.
 
 #### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
-- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...} y 0 identificadores crudos.
+- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos.
 
 ---
 
@@ -51,15 +51,15 @@
 | **2. Modalidad de Evocación y Anti-Gaming** | **20.00** | 20.0 | 100.0% |
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **0.00** | 25.0 | 0.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **15.00** | 15.0 | 100.0% |
-| **5. Topología DAG e Interleaving** | **10.00** | 10.0 | 100.0% |
+| **5. Topología DAG e Interleaving** | **9.65** | 10.0 | 96.5% |
 | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
-| **TOTAL MPRI** | **75.00** | **100.0** | **75.0% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
+| **TOTAL MPRI** | **74.65** | **100.0** | **74.7% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
 
 ---
 
 ### 4. Veredicto y Certificación
 
-El curso **Base Course** ha sido **certificado y aprobado** con calificación sobresaliente de **13.2 / 20.0** y MPRI de **75.00 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.
+El curso **Base Course** ha sido **RECHAZADO** para despliegue en plataforma con calificación de **13.1 / 20.0** y MPRI de **74.65 / 100.0**. Debe corregir las brechas críticas y penalizaciones bloqueantes antes de reevaluar.
 
 ---
 
@@ -77,25 +77,25 @@ El curso **Base Course** ha sido **certificado y aprobado** con calificación so
     "question_types_distribution": {
       "unknown": 3
     },
-    "platform_status": "ACTIVO",
+    "platform_status": "RECHAZADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-14"
+    "evaluation_date": "2026-11-18"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 3.2,
+      "score": 3.12,
       "max": 4.0,
-      "feedback": "Estructura curricular con 3 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      "feedback": "Estructura curricular con 3 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1, pares solapados=1). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
     },
     "assessment_quality": {
       "score": 5.0,
       "max": 5.0,
-      "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale (imposibles por dominio=0, claves corruptas=0, sesgo MS=0.0%)."
     },
     "scaffolding_hints": {
       "score": 4.0,
       "max": 5.0,
-      "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/3 ítems. Unicidad diagnóstica de rationales: 100.0%."
+      "feedback": "Andamiaje formativo: 0.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 100.0% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0)."
     },
     "instructional_alignment": {
       "score": 4.0,
@@ -105,7 +105,7 @@ El curso **Base Course** ha sido **certificado y aprobado** con calificación so
     "technical_ergonomics": {
       "score": 2.0,
       "max": 2.0,
-      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos."
     }
   },
   "penalties_applied": [
@@ -120,11 +120,11 @@ El curso **Base Course** ha sido **certificado y aprobado** con calificación so
       "reason": "3 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
     }
   ],
-  "raw_subtotal": 18.2,
-  "final_score": 13.2,
+  "raw_subtotal": 18.12,
+  "final_score": 13.12,
   "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
   "mastery_path_readiness": {
-    "mpri_score": 75.0,
+    "mpri_score": 74.65,
     "mpri_max": 100.0,
     "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
     "pillars": {
@@ -145,7 +145,7 @@ El curso **Base Course** ha sido **certificado y aprobado** con calificación so
         "max": 15.0
       },
       "dag_and_interleaving_topology": {
-        "score": 10.0,
+        "score": 9.65,
         "max": 10.0
       },
       "cognitive_ergonomics_and_framing": {
@@ -155,11 +155,12 @@ El curso **Base Course** ha sido **certificado y aprobado** con calificación so
     }
   },
   "remediation_actions": [
-    "Certificación plena para despliegue en plataforma Top's Academy con Nivel DEFICIENTE (11.0 - 13.9 pts).",
-    "El banco de 3 reactivos y 3 competencias cumple con los estándares Quality Matters, OSCQR y Mastery Learning."
+    "Resolver penalización dura [bank_lt_3_exercises]: 3 competencia(s) tienen menos de 3 ejercicios prácticos.",
+    "Resolver penalización dura [hints_zero]: 3 reactivo(s) carecen por completo de pistas progresivas (hints = 0).",
+    "Elevar calificación global (13.1/20.0 < 14.0 mínimo requerido) atendiendo dimensiones deficitarias."
   ],
   "discovered_lint_rules": [],
-  "platform_status": "ACTIVO"
+  "platform_status": "RECHAZADO"
 }
 ```
 

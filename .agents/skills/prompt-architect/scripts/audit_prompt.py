@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-audit_prompt.py - Pre-scan determinista basado estrictamente en fuentes oficiales.
+audit_prompt.py - Pre-scan determinista basado estrictamente en fuentes oficiales (actualizado Nov 2026).
 
 Cada regla implementada aquí DEBE contar con una cita directa y verificable de:
-  - prompting-strategies.md / prompting-strategies (1).md (Google DeepMind)
+  - prompting-strategies.md (Google DeepMind / AI Studio)
+  - whats-new-gemini-4-hydrogen.md / whats-new-gemini-3.6.md / thinking.md / caching.md / function-calling.md
   - prompt_masterprompter.md (Ultimate Prompt Architect)
 
 Cualquier regla que no provenga de estas fuentes queda prohibida en el análisis de calidad.
@@ -20,23 +21,27 @@ from typing import Dict, List, Any, Optional
 
 # Catálogo canónico de reglas con citas directas de las fuentes originales
 CITATIONS = {
-    "R_ANTI_PATTERN": "prompting-strategies.md § 'Patterns vs anti patterns' (l. 96-109) & masterprompter Principle 6",
-    "R_DEPRECATED_SAMPLING": "prompting-strategies (1).md § 'Model parameters note' (l. 511-524) & masterprompter Principle 4",
-    "R_CONTEXT_ORDER": "prompting-strategies.md § 'Structure for long contexts' (l. 231-233) & masterprompter Principle 3",
-    "R_SHOUTING": "prompting-strategies.md § 'Core prompting principles' (l. 225) & masterprompter Principle 1",
-    "R_INPUT_ISOLATION": "prompt_masterprompter.md Stage 3 & Principle 2 (l. 45, 68-70, 133)",
-    "R_AGENTIC_RISK": "prompting-strategies (1).md § 'Agentic workflows - Risk assessment' (l. 882-883, 915-917) & masterprompter lines 106-107",
-    "R_FEW_SHOT_MISSING": "prompting-strategies.md § 'Zero-shot vs few-shot prompts' (l. 78-79) & masterprompter Principle 6",
-    "R_FEW_SHOT_COUNT": "prompt_masterprompter.md Principle 6 (l. 84) & prompting-strategies.md § 'Optimal number of examples'",
-    "R_STRUCTURE_DELIMITERS": "prompting-strategies.md § 'Use consistent structure' (l. 226) & masterprompter Principle 2",
-    "R_SEMANTIC_VERBOSITY": "prompting-strategies.md § 'Control output verbosity' (l. 228) & masterprompter Principle 4",
-    "R_TEMPORAL_ANCHOR": "prompting-strategies (1).md § 'Gemini 3 Flash strategies' (l. 721-729) & masterprompter Principle 7",
-    "R_STRICT_GROUNDING": "prompting-strategies (1).md § 'Grounding performance' (l. 738-754) & masterprompter Principle 7",
-    "R_NATIVE_THINKING": "prompting-strategies (1).md § 'Enhancing reasoning and planning' (l. 757-767) & masterprompter Principle 5"
+    "R_ANTI_PATTERN": "prompting-strategies.md § 'Patterns vs anti patterns' & masterprompter Principle 6",
+    "R_DEPRECATED_SAMPLING": "prompting-strategies.md § 'Experiment with model parameters' (l. 513-520), whats-new-gemini-4-hydrogen.md l. 385 & masterprompter Principle 4",
+    "R_PREFILLED_TURN_OR_INVALID_API": "whats-new-gemini-3.6.md § 'Prefilled model turn validation' (l. 171, 193), thinking.md l. 704 & caching.md l. 13-16",
+    "R_PRE_TOOL_STRUCTURED_TEXT": "function-calling.md § 'Workarounds for pre-tool text requirements' (l. 3740-3800) & whats-new-gemini-4-hydrogen.md l. 386",
+    "R_CONTEXT_ORDER": "prompting-strategies.md § 'Core prompting principles - Structure for long contexts' (l. 707-714) & masterprompter Principle 3",
+    "R_SHOUTING": "prompting-strategies.md § 'Core prompting principles - Be precise and direct' (l. 685-686) & masterprompter Principle 1",
+    "R_INPUT_ISOLATION": "prompting-strategies.md § 'Structured prompting examples' (l. 783-785) & prompt_masterprompter.md Stage 3 / Principle 2",
+    "R_AGENTIC_RISK": "prompting-strategies.md § 'Agentic workflows - Risk Assessment' (l. 879, 912-913) & masterprompter lines 106-107",
+    "R_FEW_SHOT_MISSING": "prompting-strategies.md § 'Zero-shot vs few-shot prompts' (l. 296-299) & masterprompter Principle 6",
+    "R_FEW_SHOT_COUNT": "prompting-strategies.md § 'Optimal number of examples' (l. 371-377) & prompt_masterprompter.md Principle 6",
+    "R_STRUCTURE_DELIMITERS": "prompting-strategies.md § 'Core prompting principles - Use consistent structure' (l. 688-691) & masterprompter Principle 2",
+    "R_SEMANTIC_VERBOSITY": "prompting-strategies.md § 'Core prompting principles - Control output verbosity' (l. 695-697, 827) & masterprompter Principle 4",
+    "R_TEMPORAL_ANCHOR": "prompting-strategies.md § 'Gemini 3 Flash strategies - Current day accuracy' (l. 718-726) & masterprompter Principle 7",
+    "R_STRICT_GROUNDING": "prompting-strategies.md § 'Gemini 3 Flash strategies - Grounding performance' (l. 735-751) & AI Engineering (Chip Huyen) Ch. 4 § 'Factual consistency - Textual entailment'",
+    "R_RAG_NEGATIVE_EXAMPLE": "AI Engineering (Chip Huyen) Ch. 4 § 'Factual consistency' & Ch. 5 § 'How to Restrict a Model's Knowledge to Only Its Context'",
+    "R_JUDGE_BIAS_AND_SCALE": "AI Engineering (Chip Huyen) Ch. 3 § 'How to Use AI as a Judge' & 'Biases of AI as a judge' (Verbosity bias, discrete scoring)",
+    "R_NATIVE_THINKING": "prompting-strategies.md § 'Enhancing reasoning and planning' (l. 754-764) & masterprompter Principle 5"
 }
 
 # Líneas prohibitivas para evitar falsos positivos
-NEGATION_LINE = re.compile(r"(🚫|\bnever\b|\bnunca\b|\bprohibid|\bprohibited\b|\bno\s+uses?\b|\bdo\s+not\b|\bdon't\b)", re.I)
+NEGATION_LINE = re.compile(r"(🚫|\bnever\b|\bnunca\b|\bprohibid|\bprohibited\b|\bno\s+uses?\b|\bdo\s+not\b|\bdon't\b|\bevitar?\b|\bavoid\b)", re.I)
 
 
 def _positive_lines(text: str) -> str:
@@ -89,17 +94,40 @@ class PromptAuditor:
             )
 
         # 2. Parámetros de sampling deprecados
-        deprecated_matches = re.findall(r"(\b(?:temperature|top_p|top_k|topP|topK)\s*[:=]\s*[0-9.]+\b)", text, re.I)
+        deprecated_matches = re.findall(r"(\b(?:temperature|top_p|top_k|topP|topK|candidate_count|thinking_budget)\s*[:=]\s*[0-9.]+\b)", text, re.I)
         # Excluir menciones en advertencias documentales
-        if deprecated_matches and not re.search(r"(deprecated|deprecad|ignore|no\s+usar|do\s+not\s+set)", text, re.I):
+        if deprecated_matches and not re.search(r"(deprecated|deprecad|ignore|no\s+usar|do\s+not\s+set|remove)", text, re.I):
             self.flaw(
                 "R_DEPRECATED_SAMPLING", "Alta", "Parámetros de Inferencia",
-                f"Configuración explícita de parámetros de sampling deprecados ({', '.join(deprecated_matches)}). Gemini 3.6+, 3.8 Flash y 4 ignoran estos valores y emitirán error 400.",
+                f"Configuración explícita de parámetros deprecados ({', '.join(deprecated_matches)}). Gemini 3.6+, 3.8 Flash y Gemini 4 ignoran estos valores o emiten error 400.",
                 deprecated_matches[0],
-                "Eliminar temperature, top_p y top_k de la configuración. Controlar determinismo y extensión de forma semántica en <constraints>."
+                "Eliminar temperature, top_p, top_k, candidate_count y thinking_budget. Controlar determinismo y extensión en <constraints> y usar thinking_level."
             )
         else:
             self.strength("R_DEPRECATED_SAMPLING", "Parámetros de Inferencia", "Libre de parámetros de sampling obsoletos.", "Sin asignaciones de temperature/top_p/top_k.")
+
+        # 2b. Prefilled model turns, thinking_level: minimal en Gemini 4/3.8 o cached_content / cache_control en Gemini 4
+        prefill_match = re.findall(r"(\"role\"\s*:\s*\"model\"[^\n}]*\}\s*\]|prefill(?:ed)?\s+model\s+turn|thinking_level\s*[:=]\s*[\"']?minimal[\"']?|cached_content\s*[:=]\s*[\"'][^\"']+[\"']|caches\.create|cache_control\s*[:=]\s*\{)", pos_lines, re.I)
+        if prefill_match:
+            self.flaw(
+                "R_PREFILLED_TURN_OR_INVALID_API", "Alta", "Parámetros y API Frontier",
+                "Uso de configuración inválida en Gemini 3.6+/3.8/4 (turno 'model' pre-llenado, thinking_level='minimal' en Gemini 4/3.8, o cached_content/cache_control explícito en Gemini 4). Provoca error HTTP 400.",
+                prefill_match[0][:100],
+                "Eliminar turnos 'model' pre-llenados (usar system_instruction o response_format), usar thinking_level válido (low/medium/high/xhigh) y emplear Implicit Caching (con prefijo libre de variables volátiles) en lugar de cached_content o cache_control."
+            )
+
+        # 2c. Pre-tool structured XML/JSON text (Malformed_Function_Call)
+        pre_tool_match = re.findall(
+            r"((?:before\s+calling\s+(?:a|any)\s+tool|antes\s+de\s+llamar\s+a\s+(?:una|cualquier)\s+herramienta)[^\n.]{0,120}(?:output|emitir|imprimir|escribe)[^\n.]{0,80}<(?:UPDATE|PLAN|STATUS)[> ])",
+            pos_lines, re.I
+        )
+        if pre_tool_match:
+            self.flaw(
+                "R_PRE_TOOL_STRUCTURED_TEXT", "Alta", "Control Agentico / Tools",
+                "Exige emitir un bloque XML/estructurado (<UPDATE>) en texto plano inmediatamente antes de llamar a una herramienta, lo que ocasiona errores Malformed_Function_Call.",
+                pre_tool_match[0][:100],
+                "Encapsular las notas previas en una función dedicada update(previous_step, plan, next_step, external) o usar encabezados Markdown (# UPDATE) en lugar de XML antes de tool calls."
+            )
 
         # 3. Delimitadores estructurales consistentes
         xml_tags = set(re.findall(r"<([a-z_]{3,30})>", text))
@@ -131,19 +159,19 @@ class PromptAuditor:
             self.strength("R_SHOUTING", "Claridad y Tono", "Tono técnico, directo y sin súplicas emocionales ni mayúsculas invasivas.", "Limpio de lenguaje persuasivo.")
 
         # 5. Control semántico de verbosidad
-        if re.search(r"\bverbosity\s*[:=]\s*(?:low|medium|high)\b", text, re.I):
+        if re.search(r"\bverbosity\s*[:=]\s*\[?\s*(?:low|medium|high)\b", text, re.I):
             self.strength("R_SEMANTIC_VERBOSITY", "Claridad y Tono", "Nivel de verbosidad semántica explícitamente parametrizado.", "Verbosity: Low/Medium/High")
         else:
             self.flaw(
                 "R_SEMANTIC_VERBOSITY", "Media", "Claridad y Tono",
-                "No se especifica el nivel de verbosidad semántica. Gemini 3+ asume respuestas directas por defecto; si se requiere otra extensión, debe parametrizarse.",
+                "No se especifica el nivel de verbosidad semántica. Gemini 3+ y Gemini 4 asumen respuestas directas por defecto; si se requiere otra extensión, debe parametrizarse.",
                 "Sin declaración de Verbosity en restricciones.",
                 "Declarar explícitamente el nivel en <constraints> (ej. 'Verbosity: Low' para respuestas telegráficas o 'Medium' para balanceadas)."
             )
 
         # 6. Aislamiento de entradas (Prompt Injection Defense)
         has_input_tag = bool(re.search(r"<(context|input_data|user_input|payload)>", text, re.I))
-        data_defense_rule = bool(re.search(r"(strictly as data|estrictamente como datos|never as (new )?instructions|nunca como (nuevas )?instrucciones)", text, re.I))
+        data_defense_rule = bool(re.search(r"(strictly as data|estrictamente como datos|como datos[,; ]|never as (new )?instructions|nunca como (nuevas )?instrucciones)", text, re.I))
         if has_input_tag and data_defense_rule:
             self.strength("R_INPUT_ISOLATION", "Seguridad e Inyección", "Entradas del usuario aisladas en etiquetas de datos y blindadas contra inyección.", "Etiquetas de datos + regla de datos inertes.")
         elif not has_input_tag and re.search(r"\{[a-z_]+\}|\[insert|\[insertar|input del usuario", text, re.I):
@@ -161,23 +189,51 @@ class PromptAuditor:
             if m_task.start() < m_ctx.start():
                 self.flaw(
                     "R_CONTEXT_ORDER", "Alta", "Arquitectura de Contexto",
-                    "Inversión de Contexto: la tarea (<task>) se colocó ANTES del bloque de contexto (<context>). Disminuye la atención del modelo.",
+                    "Inversión de Contexto: la tarea (<task>) se colocó ANTES del bloque de contexto (<context>). Disminuye la atención del modelo y rompe el prefijo de Implicit Caching.",
                     "<task> precede a <context>",
                     "Colocar todo el contexto de referencia primero y la tarea al final absoluto, precedida por una frase de anclaje."
                 )
             else:
                 self.strength("R_CONTEXT_ORDER", "Arquitectura de Contexto", "Estructura Long-Context óptima: contexto suministrado primero, tarea al final.", "<context> precede a <task>")
 
-        # 8. Cláusula de Grounding Estricto (para prompts con contexto)
+        # 8. Cláusula de Grounding Estricto (para prompts con contexto) y Negative Knowledge en Few-Shot
         if m_ctx:
-            if re.search(r"(strict(ly)?\s+grounded|l[ií]mite absoluto de la verdad|untruthful|cero alucinaciones|información no se encuentra disponible)", text, re.I):
-                self.strength("R_STRICT_GROUNDING", "Grounding y Veracidad", "Cláusula de Grounding Estricto (Zero-Hallucination) implementada.", "Contrato de veracidad estricta presente.")
+            has_strict_grounding = bool(re.search(r"(strict(ly)?\s+grounded|l[ií]mite absoluto de la verdad|untruthful|cero alucinaciones|informaci[oó]n (?:solicitada )?no se encuentra disponible)", text, re.I))
+            if has_strict_grounding:
+                self.strength("R_STRICT_GROUNDING", "Grounding y Veracidad", "Cláusula de Grounding Estricto (Zero-Hallucination / NLI) implementada.", "Contrato de veracidad estricta presente.")
+                examples_section = "".join(re.findall(r"<examples>(.*?)</examples>", text, re.S | re.I))
+                if examples_section:
+                    if re.search(r"(no se encuentra disponible|not available|no disponible|insufficient|sin evidencia|ninguno)", examples_section, re.I):
+                        self.strength("R_RAG_NEGATIVE_EXAMPLE", "Grounding y Veracidad", "Ejemplos few-shot incluyen caso de rechazo / Negative Knowledge (estado Neutral).", "Ejemplo de dato ausente en <examples>.")
+                    else:
+                        self.flaw(
+                            "R_RAG_NEGATIVE_EXAMPLE", "Media", "Grounding y Veracidad",
+                            "Prompt RAG con grounding estricto cuyos ejemplos few-shot no incluyen ningún caso de rechazo (Negative Knowledge / estado Neutral cuando el dato no figura en el contexto).",
+                            "Ejemplos solo muestran casos con respuesta presente.",
+                            "Añadir al menos 1 ejemplo few-shot donde la información consultada no exista en el <context> y la salida declare su indisponibilidad."
+                        )
             else:
                 self.flaw(
                     "R_STRICT_GROUNDING", "Media", "Grounding y Veracidad",
                     "Prompt con contexto de referencia sin cláusula de grounding estricto. Riesgo de extrapolaciones y alucinaciones fuera de las fuentes.",
                     "Bloque de contexto sin grounding_contract.",
                     "Añadir cláusula declarando que el contexto es el límite absoluto de la verdad y exigir declarar indisponibilidad si el dato no aparece."
+                )
+
+        # 8b. Jueces LLM (AI as a Judge): Escala discreta y mitigación de Verbosity Bias
+        role_section = "".join(re.findall(r"<role>(.*?)</role>", text, re.S | re.I))
+        is_judge = bool(re.search(r"<scoring_rubric>", text, re.I)) or bool(re.search(r"\b(juez|judge|[aá]rbitro|evaluador de respuestas)\b", role_section, re.I))
+        if is_judge:
+            has_anti_verbosity_bias = bool(re.search(r"(verbosity\s+bias|sesgo\s+de\s+verbosidad|no\s+premies?\s+la\s+longitud|do\s+not\s+reward\s+length|concisa\s+y\s+exacta)", text, re.I))
+            has_discrete_rubric = bool(re.search(r"(<scoring_rubric>|escala\s+discreta|PASS\s*\|\s*NEEDS_REPAIR|1\s+to\s+5|1\s+a\s+5)", text, re.I))
+            if has_anti_verbosity_bias and has_discrete_rubric:
+                self.strength("R_JUDGE_BIAS_AND_SCALE", "Evaluación / AI as a Judge", "Prompt de Juez calibrado con rúbrica discreta y cláusula explícita contra sesgo de verbosidad.", "Rúbrica discreta + anti-verbosity bias.")
+            else:
+                self.flaw(
+                    "R_JUDGE_BIAS_AND_SCALE", "Media", "Evaluación / AI as a Judge",
+                    "Prompt de Juez LLM (AI as a Judge) sin mitigación explícita contra el sesgo de verbosidad (Verbosity Bias) o sin escala discreta definida.",
+                    "Juez sin cláusula anti-verbosity bias o escala discreta.",
+                    "Definir una rúbrica discreta corta (<scoring_rubric>) e instruir explícitamente no premiar longitud ni extensión superficial sobre exactitud factual."
                 )
 
         # 9. Anclaje temporal para herramientas de búsqueda
@@ -226,7 +282,7 @@ class PromptAuditor:
         is_agent = bool(re.search(r"\b(agent|subagent|agente|subagente|tool|herramienta)\b", text, re.I))
         writes_tools = bool(re.search(r"\b(write_file|edit_file|delete|borrar|eliminar|modificar|mutaci[oó]n)\b", pos_lines, re.I))
         if is_agent and writes_tools:
-            has_risk_matrix = bool(re.search(r"(read\s*(?:vs\.?|/|y)\s*write|bajo\s*riesgo|alto\s*riesgo|low[- ]risk|high[- ]risk|confirmaci[oó]n\s*previa)", text, re.I))
+            has_risk_matrix = bool(re.search(r"(read\s*(?:vs\.?|/|y)\s*write|bajo\s*riesgo|alto\s*riesgo|low[- ]risk|high[- ]risk|confirmaci[oó]n\s*previa|lecturas\s+dentro\s+del\s+scope)", text, re.I))
             if has_risk_matrix:
                 self.strength("R_AGENTIC_RISK", "Control Agentico", "Matriz de evaluación de riesgo implementada (diferenciación explícita entre lectura y escritura).", "Distingue lectura de mutaciones.")
             else:
@@ -243,7 +299,7 @@ class PromptAuditor:
                 "R_NATIVE_THINKING", "Baja", "Eficiencia y Razonamiento",
                 "Fuerza bloques de razonamiento visible innecesarios en la salida del usuario. Gemini 2.5/3+/4 generan tokens de pensamiento nativos internamente.",
                 "CoT visible exigido.",
-                "Eliminar exigencia de imprimir el razonamiento visible; utilizar <final_instruction> para elevar la profundidad de pensamiento nativo."
+                "Eliminar exigencia de imprimir el razonamiento visible; utilizar <final_instruction> o thinking_level para elevar la profundidad de pensamiento nativo."
             )
 
         high_flaws = sum(1 for f in self.flaws if f["severity"] == "Alta")
@@ -273,6 +329,7 @@ class PromptAuditor:
 
 
 def _strip_markdown_and_code(t: str) -> str:
+    t = re.sub(r"<!--.*?-->", "", t, flags=re.S)
     t = re.sub(r"```.*?```", "", t, flags=re.S)
     t = re.sub(r"`[^`]*`", "", t)
     return "\n".join(l for l in t.splitlines() if not l.lstrip().startswith("#"))
@@ -328,7 +385,7 @@ def format_markdown_report(res: Dict[str, Any], pipeline_info: Optional[Dict[str
 
     md.append("\n## 3. Recomendaciones de Optimización de Alto Impacto\n")
     if res["recommendations"]:
-        for i, r in enumerate(res["recommendations"], 1):
+        for i, r in enumerate(dict.fromkeys(res["recommendations"]), 1):
             md.append(f"{i}. 🎯 {r}")
     else:
         md.append("- *El prompt cumple con las directrices de los documentos oficiales.*")

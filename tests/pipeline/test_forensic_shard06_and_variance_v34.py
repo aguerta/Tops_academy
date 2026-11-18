@@ -370,7 +370,7 @@ TEMPLATES = [
         "multiple_choice_7_options",
         gen_hab06_1,
         ver_hab06_1,
-        ("easy", "Remember"),
+        ("easy", "Apply"),
         [
             r"En un modelo salarial con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@, y ratio de fiabilidad q = @q@, calcule el estadistico de Hausman H:",
             r"A partir de estimaciones con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
@@ -391,7 +391,7 @@ TEMPLATES = [
         "fill_in_the_blank",
         gen_hab06_2,
         ver_hab06_2,
-        ("medium", "Understand"),
+        ("medium", "Analyze"),
         [
             r"Con varianzas asintoticas estimadas V_IV = @v_iv@ y V_LS = @v_ls@, calcule el denominador de Hausman:",
             r"A partir de las precisiones V_IV = @v_iv@ y V_LS = @v_ls@, halle la resta de varianzas del contraste:",
@@ -608,7 +608,7 @@ TEMPLATES = [
         "multiple_choice_7_options",
         gen_directo,
         ver_directo,
-        ("easy", "Remember"),
+        ("easy", "Apply"),
         [
             r"Enfoque Directo: Dados $@base@$ y $@step@$, halle el producto:",
             r"Cálculo frontal estándar de $@base@$ multiplicado por $@step@$:",
@@ -628,7 +628,7 @@ TEMPLATES = [
         "multiple_choice_7_options",
         gen_inverso,
         ver_inverso,
-        ("medium", "Understand"),
+        ("medium", "Analyze"),
         [
             r"Enfoque Inverso: Dado el total $@total@$ y divisor $@div@$, determine el cociente:",
             r"Resolución inversa para recuperar la cantidad base de $@total@$ dividido $@div@$:",
@@ -904,8 +904,8 @@ def ver_dr_3(r):
     return r["vars"]["ans"] == r["vars"]["k"] + 100
 
 TEMPLATES = [
-    ("T-HabDR-01", "Hab-DR", "multiple_choice_7_options", gen_dr_1, ver_dr_1, ("easy", "Remember"), [r"Stem 1 con @k@:", r"Stem 2 con @k@:", r"Stem 3 con @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
-    ("T-HabDR-02", "Hab-DR", "fill_in_the_blank", gen_dr_2, ver_dr_2, ("medium", "Understand"), [r"FIB Stem 1 @k@:", r"FIB Stem 2 @k@:", r"FIB Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-HabDR-01", "Hab-DR", "multiple_choice_7_options", gen_dr_1, ver_dr_1, ("easy", "Apply"), [r"Stem 1 con @k@:", r"Stem 2 con @k@:", r"Stem 3 con @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-HabDR-02", "Hab-DR", "fill_in_the_blank", gen_dr_2, ver_dr_2, ("medium", "Apply"), [r"FIB Stem 1 @k@:", r"FIB Stem 2 @k@:", r"FIB Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
     ("T-HabDR-03", "Hab-DR", "fill_in_the_blank", gen_dr_3, ver_dr_3, ("hard", "Apply"), [r"FIB Hard Stem 1 @k@:", r"FIB Hard Stem 2 @k@:", r"FIB Hard Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
 ]
 '''
@@ -1241,10 +1241,10 @@ class TestF06HookGuardRulesABC(unittest.TestCase):
         # Create a large file (> 250 lines)
         shard_file.write_text("\n".join([f"# line {i}" for i in range(300)]), encoding="utf-8")
 
-        # Record a prior compile failure in .check_attempts with distinct_compiles >= 1
+        # Record a prior compile failure in .check_attempts with distinct_compiles >= 2 (line_limit = 250)
         (self.check_dir / "compile_shard_02.json").write_text(
             json.dumps({
-                "distinct_compiles": 1,
+                "distinct_compiles": 2,
                 "same_error_streak": 1,
                 "last_err_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 "last_errors": ["Error syntax"],

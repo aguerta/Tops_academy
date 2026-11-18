@@ -225,9 +225,11 @@ def _unwrap_text_in_math(text: Optional[str]) -> str:
             pieces.append(f"{delim}{after}{delim}")
         return "".join(pieces)
 
-    res = re.sub(r"\$\$[\s\S]*?\$\$", _unwrap_math_block, text)
+    _sentinel = "\x00ESC_DOLLAR\x00"
+    masked = re.sub(r"(?<!\\)(?:\\\\)*\\\$", lambda m: m.group(0)[:-2] + _sentinel, text)
+    res = re.sub(r"\$\$[\s\S]*?\$\$", _unwrap_math_block, masked)
     res = re.sub(r"\$[^\$]*\$", _unwrap_math_block, res)
-    return res
+    return res.replace(_sentinel, r"\$")
 
 
 def check_synthetic_boilerplate_distractors(
@@ -366,7 +368,11 @@ def check_item_level_options_integrity(
     for opt_idx, opt in enumerate(options):
         if not isinstance(opt, dict):
             continue
-        text = str(opt.get("content") if "content" in opt else (opt.get("text") or opt.get("value") or "")).strip()
+        text = str(
+            opt.get("content")
+            if opt.get("content") is not None
+            else (opt.get("text") if opt.get("text") is not None else (opt.get("value") if opt.get("value") is not None else ""))
+        ).strip()
         is_correct = bool(opt.get("is_correct", False))
 
         if is_correct:
@@ -523,7 +529,9 @@ def check_unrendered_placeholders(
         errors.append(f"Unresolved PrairieLearn template token '@{token}@' detected in {context}.")
 
     # 2. Detect uninterpolated template variables: {var} or {var:fmt}
-    math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", text)]
+    # Preserve character offsets while masking escaped '\$' so math_spans stay aligned.
+    _esc_masked_text = re.sub(r"(?<!\\)(?:\\\\)*\\\$", lambda m: m.group(0)[:-2] + "  ", text)
+    math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _esc_masked_text)]
     def is_in_math_span(pos: int) -> bool:
         return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
 
@@ -635,7 +643,7 @@ def validate_katex_syntax(
             errors.append(f"Unbalanced inline math delimiter '$' in {context}.")
 
     # 4. Balanced curly braces and pykatex rendering check inside LaTeX math blocks
-    math_matches = re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", text, flags=re.DOTALL)
+    math_matches = re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL)
     for mb in math_matches:
         raw_match = mb.group(0)
         is_disp = raw_match.startswith("$$")
@@ -647,7 +655,7 @@ def validate_katex_syntax(
             errors.append(f"Unbalanced curly braces in LaTeX math expression in {context}: '{clean_block[:60]}...'")
 
         # PyKaTeX rendering verification with LRU cache
-        has_tmpl_token = bool(re.search(r"@[A-Za-z0-9_]+@|\{[a-zA-Z0-9_]+\}", block))
+        has_tmpl_token = bool(re.search(r"@[A-Za-z0-9_]+@|(?<![\\_^}])\{[a-zA-Z_][a-zA-Z0-9_]*\}", block))
         if not (allow_template_vars and has_tmpl_token):
             success, render_err = _render_katex_safe(block.strip(), is_disp)
             if not success and render_err:
@@ -853,17 +861,12 @@ def validate_katex_syntax(
                 f"Forbidden linebreak '\\\\' inside inline math '$...$' outside matrix/cases environment in {context} (R-23)."
             )
 
-    # 13. Unsupported macros (\centernot) and unescaped underscores in \text{...} (R-23)
+    # 13. Unsupported macros (\centernot) (R-23; unescaped underscores in \text/\textrm/\mathrm checked in rule 14)
     if re.search(r"\\centernot\b", text):
         errors.append(
             f"Unsupported LaTeX macro '\\centernot' detected in {context} (R-23); "
             f"use '\\nRightarrow', '\\nrightarrow', or '\\not'."
         )
-    for m_txt in re.finditer(r"\\text\s*\{([^{}$]*)\}", text):
-        if re.search(r"(?<!\\)_", m_txt.group(1)):
-            errors.append(
-                f"Unescaped underscore '_' inside '\\text{{{m_txt.group(1)}}}' in {context} causes KaTeX ParseError."
-            )
 
     # 14. KaTeX prose overflow in text macros (\text{...}, \textrm{...}, \mathrm{...})
     # Blocks exceeding 45 characters must be rejected with [KATEX-PROSE-OVERFLOW]
@@ -990,7 +993,11 @@ def check_instance_invariants(
                 r = opt.get("error_rationale")
                 if isinstance(r, str) and r:
                     errors.extend(validate_katex_syntax(r, f"option {idx + 1} error_rationale", variables=effective_vars))
-                val_txt = str(opt.get("content") if "content" in opt else (opt.get("text") or opt.get("value") or "")).strip()
+                val_txt = str(
+                    opt.get("content")
+                    if opt.get("content") is not None
+                    else (opt.get("text") if opt.get("text") is not None else (opt.get("value") if opt.get("value") is not None else ""))
+                ).strip()
                 if opt.get("is_correct"):
                     corr_texts_extracted.append(val_txt)
                 else:
@@ -1078,9 +1085,9 @@ def check_instance_invariants(
                 clean_cc = correct_content.strip().strip("$").strip()
                 if len(clean_cc) >= 5 and not clean_cc.isdigit():
                     # Avoid trivial matches like single numbers
-                    if isinstance(stem, str) and correct_content in stem:
+                    if isinstance(stem, str) and (correct_content in stem or clean_cc in stem):
                         errors.append(f"Correct answer '{correct_content}' leaked verbatim in stem text.")
-                    if hints and len(hints) >= 1 and isinstance(hints[0], str) and correct_content in hints[0]:
+                    if hints and len(hints) >= 1 and isinstance(hints[0], str) and (correct_content in hints[0] or clean_cc in hints[0]):
                         errors.append(f"Correct answer '{correct_content}' leaked verbatim in first hint.")
                 # Token leak X=@X@ or direct assignment leak (var = val) for non-trivial values
                 if isinstance(stem, str):
@@ -1115,7 +1122,10 @@ def check_instance_invariants(
             errors.append("FIB instance must provide a correct answer.")
         else:
             if isinstance(ans, dict):
-                val = ans.get("value") or ans.get("expression") or ans.get("canonical_algebraic")
+                val = next(
+                    (ans[k] for k in ("value", "expression", "canonical_algebraic") if k in ans and ans[k] is not None),
+                    None,
+                )
                 if val is None or str(val).strip() == "":
                     errors.append("FIB answer dict missing value/expression/canonical_algebraic.")
                 for field in ("value", "expression", "canonical_algebraic"):
@@ -1176,7 +1186,7 @@ def check_instance_invariants(
                 )
 
             ms_distractors = [
-                str(opt.get("content", "")) for opt in options if opt.get("is_correct") is False
+                str(opt.get("content", "")) for opt in options if isinstance(opt, dict) and not bool(opt.get("is_correct"))
             ]
             bp_errors = check_synthetic_boilerplate_distractors(None, ms_distractors)
             errors.extend(bp_errors)
@@ -1190,9 +1200,9 @@ def check_instance_invariants(
                 if not clean_cc:
                     continue
                 if len(clean_cc) >= 5 and not clean_cc.isdigit():
-                    if isinstance(stem, str) and c_content in stem:
+                    if isinstance(stem, str) and (c_content in stem or clean_cc in stem):
                         errors.append(f"MS correct answer '{c_content}' leaked verbatim in stem text.")
-                    if hints and len(hints) >= 1 and isinstance(hints[0], str) and c_content in hints[0]:
+                    if hints and len(hints) >= 1 and isinstance(hints[0], str) and (c_content in hints[0] or clean_cc in hints[0]):
                         errors.append(f"MS correct answer '{c_content}' leaked verbatim in first hint.")
                 # Token leak X=@X@ or direct assignment leak (var = val) for non-trivial values
                 if isinstance(stem, str):

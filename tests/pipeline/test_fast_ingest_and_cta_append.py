@@ -355,7 +355,7 @@ COMPETENCIES = [
         "fact",
         "",  # Auto-assign next fact ID -> H-03
         "Regla de Taylor Delta",
-        "Fórmula de la tasa de interés óptima $i_t = r^* + \\pi_t$.",
+        r"Fórmula de la tasa de interés óptima $i_t = r^* + \\pi_t$.",
         "Remember",
         "delta_lecture.pdf",
         1,

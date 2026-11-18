@@ -653,4 +653,253 @@ def test_archetype_entropy_linter_historical_courses_backward_compatibility():
             assert summary["low_archetype_variety_competencies_count"] == 0
 
 
+def test_forensic_v3_linter_upgrades():
+    """Verify all forensic linter upgrades discovered during Estadística 3 Pre PC2 vs S9 V6 audit:
+    1. Zero false positives on LaTeX commands/subscripts in UninterpolatedMathVariableLinter + string-concat collision detection.
+    2. Rotating taxonomic prefix stripping + disconnected numeric rationales in DiagnosticRationaleAlignmentLinter.
+    3. Bare-formula & cross-competency cloned misconception_warning + static example numbers in ScaffoldingHintsLinter.
+    4. Corrupted probability key (>1.0), % probability bounds, degenerate 1.0000 collapse, and P(X=x) variance false-positive fix in DomainImpossibleDistractorLinter.
+    5. Duplicate competencies & ID-category mismatch in ArchitectureDAGLinter.
+    6. Raw scientific floats, raw asterisk multiplication, partial dummy-var substitution, and decorative parameter stuffing.
+    """
+    from standardized_audit_engine import (
+        ArchitectureDAGLinter,
+        BlindStringReplacementLinter,
+        DomainImpossibleDistractorLinter,
+        ScaffoldingHintsLinter,
+    )
+
+    # 1. UninterpolatedMathVariableLinter: LaTeX macros/subscripts clean vs string-concat collisions caught
+    math_issues = []
+    math_sum = UninterpolatedMathVariableLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-CLEAN-LATEX",
+                    "competency_id": "C-01",
+                    "stem": "Sea $\\bar{Y}_{n_1} \\xrightarrow{p} \\mu$ con $\\text{Var}(Y) = \\sigma^2$ en $\\mathcal{F}$.",
+                    "options": [{"content": "$\\hat{p} \\xrightarrow{d} N(0,1)$", "is_correct": True}],
+                },
+                {
+                    "id": "Q-CONCAT-DERIV",
+                    "competency_id": "C-29",
+                    "stem": "Aplique método delta para $g(x)=7x^2+10x$.",
+                    "hints": ["Derive primero $g(x)=7x^2+10x$ respecto a $x$ para obtener $g'(x)=27x+10$."],
+                    "options": [{"content": "$1.25$", "is_correct": True}],
+                },
+                {
+                    "id": "Q-CONCAT-EXP",
+                    "competency_id": "C-39",
+                    "stem": "Con $g(X)=4X^2+10X+3$ y media $12$, evalúe:",
+                    "options": [
+                        {"content": "$100$", "is_correct": True},
+                        {"content": "$0.5$", "is_correct": False, "error_rationale": "Calcula $(412+10)^2$ o $146^{20.5}$ o $(12+63)/(263)$."},
+                    ],
+                },
+            ]
+        },
+        math_issues,
+    )
+    assert "Q-CLEAN-LATEX" not in math_sum["uninterpolated_math_sample_items"]
+    assert math_sum["string_concat_collision_items_count"] == 2
+    assert set(math_sum["string_concat_collision_sample_items"]) == {"Q-CONCAT-DERIV", "Q-CONCAT-EXP"}
+
+    # 2. DiagnosticRationaleAlignmentLinter: rotating prefixes stripped + disconnected numeric rationales
+    prefixes = [
+        "Error conceptual", "Confusión teórica", "Fallo de cálculo", "Desvío algebraico",
+        "Aplicación incorrecta", "Sustitución inválida", "Desvío de operador", "Desliz analítico",
+    ]
+    diag_qs = []
+    for i in range(16):
+        p = prefixes[i % len(prefixes)]
+        diag_qs.append({
+            "id": f"Q-DIAG-{i}",
+            "competency_id": "C-12",
+            "options": [
+                {"content": f"${100 + i}$", "is_correct": True},
+                {"content": f"${200 + i}$", "is_correct": False, "error_rationale": f"{p}: Exige normalidad poblacional previa para la validez asintótica del estimador."},
+                {"content": f"${300 + i}$", "is_correct": False, "error_rationale": f"{p}: Afirma que la convergencia en distribución implica convergencia casi segura."},
+                {"content": f"${400 + i}$", "is_correct": False, "error_rationale": f"{p}: Sostiene que el parámetro poblacional es una variable aleatoria muestral."},
+                {"content": f"${500 + i}$", "is_correct": False, "error_rationale": f"{p}: Confunde la cota de Chebyshev con la desigualdad de Markov en espacios métricos."},
+            ],
+        })
+    diag_issues = []
+    diag_sum = DiagnosticRationaleAlignmentLinter().run({"questions": diag_qs}, diag_issues)
+    assert diag_sum["synthetic_prefix_rationales_pct"] == 100.0
+    assert diag_sum["raw_normalized_uniqueness_pct"] > diag_sum["rationale_uniqueness_pct"] + 20.0
+    assert diag_sum["rationale_uniqueness_pct"] < 15.0
+    assert diag_sum["disconnected_numeric_rationale_items_count"] == 16
+
+    # 3. ScaffoldingHintsLinter: bare-formula & cross-competency cloned misconception_warning + static example numbers
+    scaf_qs = []
+    for i in range(6):
+        scaf_qs.append({
+            "id": f"Q-SCAF-{i}",
+            "competency_id": f"C-0{(i % 3) + 1}",
+            "stem": f"Calcule la varianza combinada con varianzas muestrales ${14 + i}$ y ${62 + i}$.",
+            "hints": ["P1", "P2", "P3"],
+            "detailed_solution": "Paso 1.",
+            "common_misconception_warning": "$\\mathrm{Sesgo}(\\hat{\\theta}_n)=\\theta-\\mathbb{E}[\\hat{\\theta}_n]$",
+        })
+    for i in range(3):
+        scaf_qs.append({
+            "id": f"Q-STATIC-EX-{i}",
+            "competency_id": "Hab-12",
+            "stem": f"Con varianzas ${20 + i}$ y ${40 + i}$, halle la varianza ponderada.",
+            "hints": ["P1", "P2", "P3"],
+            "detailed_solution": "Paso 1.",
+            "misconception_warning": "promediar varianzas sin ponderar (1^2+3^2)/2=5 en lugar de usar pesos",
+        })
+    scaf_issues = []
+    scaf_sum = ScaffoldingHintsLinter().run({"questions": scaf_qs}, scaf_issues)
+    assert scaf_sum["bare_formula_misconception_count"] == 6
+    assert scaf_sum["cloned_misconception_warning_count"] == 6
+    assert scaf_sum["disconnected_warning_numbers_count"] == 3
+
+    # 4. DomainImpossibleDistractorLinter: P(X=x) variance clean, Chebyshev key > 1.0 caught, % bounds caught, 1.0000 degenerate caught
+    dom_issues = []
+    dom_sum = DomainImpossibleDistractorLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-VAR-CLEAN",
+                    "competency_id": "C-11",
+                    "stem": "Con cuantías $P(X=x)$ dadas en la tabla, calcule la varianza $\\text{Var}(X)$.",
+                    "options": [
+                        {"content": "$38.00$", "is_correct": True},
+                        {"content": "$12.50$", "is_correct": False},
+                    ],
+                },
+                {
+                    "id": "Q-CHEB-CORRUPT",
+                    "competency_id": "C-02",
+                    "stem": "Determine la cota de Chebyshev en probabilidad para $\\mathbb{P}(|X-\\mu|\\ge k)$.",
+                    "options": [
+                        {"content": "$1.6056$", "is_correct": True},
+                        {"content": "$-0.6056$", "is_correct": False},
+                    ],
+                },
+                {
+                    "id": "Q-PCT-BOUNDS",
+                    "competency_id": "H-01",
+                    "stem": "Calcule la probabilidad del evento en porcentaje.",
+                    "options": [
+                        {"content": "$75\\%$", "is_correct": True},
+                        {"content": "$-5\\%$", "is_correct": False},
+                        {"content": "$131\\%$", "is_correct": False},
+                    ],
+                },
+                {
+                    "id": "Q-DEGEN-CDF",
+                    "competency_id": "Hab-03",
+                    "stem": "Evalúe la función de distribución $F_{X_{(1)}}(t)$ para los parámetros dados.",
+                    "options": [
+                        {"content": "$1.0000$", "is_correct": True},
+                        {"content": "$0.2500$", "is_correct": False},
+                    ],
+                },
+            ]
+        },
+        dom_issues,
+    )
+    assert "Q-VAR-CLEAN" not in dom_sum["domain_impossible_sample_items"]
+    assert dom_sum["corrupted_prob_key_items_count"] == 1
+    assert dom_sum["degenerate_prob_key_items_count"] == 1
+    assert "Q-CHEB-CORRUPT" in dom_sum["domain_impossible_sample_items"]
+    assert "Q-PCT-BOUNDS" in dom_sum["domain_impossible_sample_items"]
+
+    # 5. ArchitectureDAGLinter: duplicate competencies & ID-category mismatch
+    arch_issues = []
+    arch_sum = ArchitectureDAGLinter().run(
+        {
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "name": "Definición de sesgo y estimador insesgado",
+                    "description": "Cálculo del sesgo puntual $\\mathrm{Sesgo}(\\hat{\\theta})=\\mathbb{E}[\\hat{\\theta}]-\\theta$.",
+                    "category": "Concept",
+                    "prerequisites": [],
+                },
+                {
+                    "id": "Hab-08",
+                    "name": "Sesgo de un estimador puntual e insesgadez",
+                    "description": "Determinación del sesgo $\\mathrm{Sesgo}(\\hat{\\theta})=\\mathbb{E}[\\hat{\\theta}]-\\theta$ de estimadores.",
+                    "category": "Skill",
+                    "prerequisites": ["C-01"],
+                },
+                {
+                    "id": "Hab-04",
+                    "name": "Convergencia en distribución",
+                    "description": "Teorema central del límite.",
+                    "category": "Concept",
+                    "prerequisites": ["C-01"],
+                },
+            ],
+            "questions": [
+                {"id": f"Q-1-{i}", "competency_id": "C-01"} for i in range(4)
+            ] + [
+                {"id": f"Q-2-{i}", "competency_id": "Hab-08"} for i in range(4)
+            ] + [
+                {"id": f"Q-3-{i}", "competency_id": "Hab-04"} for i in range(4)
+            ],
+        },
+        arch_issues,
+    )
+    assert arch_sum["duplicate_competency_pairs_count"] == 1
+    assert arch_sum["id_category_mismatch_count"] == 1
+
+    # 6. KaTeXFrontendErgonomicsLinter, BlindStringReplacementLinter & AntiGamingPsychometricLinter
+    erg_issues = []
+    erg_sum = KaTeXFrontendErgonomicsLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-SCI-AST",
+                    "competency_id": "Hab-25",
+                    "stem": "Con sesgo $-7.2e-05$ y varianza $500*0.73*0.27\\approx 98.55$.",
+                    "options": [{"content": "$1.1e-04$", "is_correct": True}],
+                }
+            ]
+        },
+        erg_issues,
+    )
+    assert erg_sum["raw_scientific_float_items_count"] == 1
+    assert erg_sum["raw_asterisk_math_items_count"] == 1
+
+    blind_issues = []
+    blind_sum = BlindStringReplacementLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-DUMMY-N",
+                    "competency_id": "Hab-04",
+                    "stem": "Sabemos que $a^{11} \\to 0$ cuando $n \\to \\infty$ y $\\frac{n-1}{3}\\sigma^2$.",
+                    "options": [{"content": "$0$", "is_correct": True}],
+                }
+            ]
+        },
+        blind_issues,
+    )
+    assert blind_sum["partial_dummy_var_substitution_count"] == 1
+
+    ag_issues = []
+    ag_sum = AntiGamingPsychometricLinter().run(
+        {
+            "title": "Estadística 3",
+            "competencies": [{"id": "C-08"}],
+            "questions": [
+                {
+                    "id": "Q-STUFF-1",
+                    "competency_id": "C-08",
+                    "stem": "Sea una muestra (prueba 30, $n=28$) (no r=1/9) de variables i.i.d. con media 5, varianza 12 y covarianza 3.",
+                    "options": [{"content": "$12$", "is_correct": True}],
+                }
+            ],
+        },
+        ag_issues,
+    )
+    assert ag_sum["decorative_param_stuffing_items_count"] == 1
+
+
+
 

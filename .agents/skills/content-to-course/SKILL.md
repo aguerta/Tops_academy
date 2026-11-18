@@ -1,4 +1,4 @@
-﻿---
+---
 name: content-to-course
 description: End-to-end Antigravity skill that converts any academic course materials (PDFs, handwritten ink, large images) into interactive Top's Academy courses using strict JSON stage contracts, parametric templates in a sandboxed Python engine, blind LLM arbitration, and automated validation without domain-specific code.
 triggers:
@@ -77,7 +77,7 @@ outputs:
     description: Absolute path to the Cognitive Task Analysis document
 ---
 
-# Content-to-Course Antigravity Skill (C2C v4.0 Formal Mas con Menos Architecture)
+# Content-to-Course Antigravity Skill (C2C v4.1 Formal Mas con Menos Architecture)
 
 A universal, subject-agnostic educational engineering pipeline that converts raw academic materials (Beamer presentations, handwritten OneNote notes, statistical software exports, and high-resolution chalkboard images) into fully playable, interactive Top's Academy courses in **≤ 12 minutes** for a standard 20-competency curriculum under the "Más con Menos" (-65% tokens) formal paradigm.
 
@@ -107,11 +107,17 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >   ```
 >   *(Si el usuario no especifica modo o granularidad, usa `--cta-mode mapreduce --granularity standard` (default). Si el usuario pide explícitamente `cta_direct`/`direct`, pasa `--cta-mode direct`: la instrucción del usuario SIEMPRE prevalece y NUNCA se promueve a mapreduce por número de páginas o archivos. Si es extensión incremental de un curso existente, añade `--append --base-course courses/<id>.json`).*
 > - **Turno 2**: Lee en paralelo (en 1 solo turno, solo lecturas = costo de generación casi nulo) todos los archivos devueltos en `type_spec_files` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json` y, si existe, `c2c_cta_harmonizer.json`).
-> - **Turno 3 (arranque mínimo, solo el CTA Architect)**: En **un único turno paralelo**, realiza únicamente:
->   1. **UNA** llamada a `define_subagent` para `c2c_cta_architect` (usando exactamente `Name`, `Description`, `SystemPrompt`, `EnableWriteTools=true`, `EnableMCPTools=false`, `EnableSubagentTools=false` de su JSON). **NO registres aún los demás tipos**: copiar sus system prompts (~14 KB) cuesta ~20 s de generación.
->   2. Todas las llamadas a `invoke_subagent` (`Model="inherit"`, `Workspace="inherit"`) para cada elemento del arreglo `Subagents` que ya te devolvió `bootstrap` en el Turno 1 (**NO ejecutes `dispatch.py dispatch-cta` de nuevo**).
->   3. Una llamada a `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
-> - **Turno 4 (registro diferido mientras los CTA Architects trabajan, ~5-10 min)**: Inmediatamente después, en **un único turno paralelo**, registra con `define_subagent` los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair` y `c2c_cta_harmonizer` si su JSON existe) usando los JSON ya leídos en el Turno 2 (**sin volver a leerlos**). Luego detén tu turno y entra en **Barrera Reactiva Silenciosa** (cero herramientas hasta recibir `DONE:` de los architects). Los tipos ya estarán listos antes de `cta-reduce` / `dispatch-authors`.
+> - **Turno 3 (arranque mínimo, solo `c2c_cta_architect`)**: Registra **únicamente** `c2c_cta_architect` vía `define_subagent` (NO registres aún los demás tipos para no retrasar el arranque).
+> - **Turno 4 (lanzamiento inmediato CTA vía `run_workflow`, `< 2s`)**: Llama **ÚNICAMENTE** a `run_workflow` (sin combinarlo con `define_subagent` en el mismo turno, porque el runtime espera a terminar de generar todos los argumentos del turno antes de ejecutar la primera herramienta):
+>   ```python
+>   run_workflow(
+>       ScriptPath=".agents/skills/content-to-course/workflows/c2c_wave_workflow.py",
+>       Description="Ejecutar ola CTA MapReduce con barrera N/N determinista",
+>       Args={"work_dir": "<work_dir>", "mode": "cta"},
+>   )
+>   ```
+> - **Turno 5 (registro diferido mientras `run_workflow` ya corre en segundo plano)**: Con la ola CTA ya en ejecución en segundo plano, registra en un único turno paralelo los 4 tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair` y `c2c_cta_harmonizer` si existe) usando los JSON ya leídos en el Turno 2. Luego detén tu turno hasta que `run_workflow` notifique el cierre `N/N`.
+>   *(Solo usa `invoke_subagent` manual + `schedule` como fallback si `run_workflow` no está disponible en el entorno).*
 
 ---
 
@@ -131,13 +137,15 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >   * *Nivel 2 (20–40 s)*: `errores >= 6` O `lineasInfractoras > 5` $\implies$ `ModularSplicing` obligatorio (`shards/shard_fixes/<CID>.py`). Bloquea edición in-place repetitiva.
 >   * *Nivel 3 (60–120 s)*: `SyntaxError` global $\implies$ `write_file(Overwrite=True)` atómico.
 > - **Recibos Criptográficos `*.cert.json` (< 5 ms)**: `compile_shard.py` emite certificados sellados por SHA-256. En `--stage templates` y `--stage certify`, la verificación criptográfica salta por completo re-ejecutar el sandbox sobre shards inalterados.
-> - **`--lean` por Defecto en Despacho**: System prompts ultra-compactos ($\le 5\text{ KB}$), ahorrando ~65% de tokens de salida y tiempo de generación en todos los roles (`cta`, `author`, `judge`, `repair`, `cta-map`, `cta-reduce`).
+> - **Arquitectura de 1 Único `SystemPrompt` por Rol + `[SCOPE-LOCK]` en Mensaje Inicial**: Las reglas estáticas residen exclusivamente en `system_prompts/lean/prompt_*.md` ($\le 5\text{ KB}$ en `cta`, `judge`, `repair`; bloque canónico Form-C en `author`). El mensaje inicial (`Prompt`) de cada subagente define su contrato estricto `[SCOPE-LOCK]` con las rutas exactas permitidas (`READ`/`WRITE`/`COMPILE`/`DONE`), mientras que `dispatch/items/*.json` y `prompts/repair/*.json` contienen únicamente datos puros de la partición sin repetir el `SystemPrompt` ni incluir el literal `"DONE:"` en disco.
+> - **Unicidad Diagnóstica por Slot de Distractor ($\ge 80.0\%$ por `(competency_id, distractor_id)`)**: Métrica unificada por slot de distractor entre Stage 3 (`check_templates.py`) y Stage 6 (`standardized_audit_engine.py`). Cada distractor dentro de una competencia debe tener un `error_rationale` causal específico y disjunto ($\ge 80.0\%$ de slots únicos); queda estrictamente prohibido el uso de prefijos taxonómicos rotativos (`"Error conceptual:"`, `"Trampa algebraica:"`, etc.) o tuplas de múltiples paráfrasis por semilla.
+> - **Orquestación de Olas en Código con `run_workflow` (`workflows/c2c_wave_workflow.py`)**: Además de la barrera reactiva protegida por hooks (`invoke_subagent`), el Director puede ejecutar las olas de Stage 3–5 de forma determinista en código mediante `run_workflow(ScriptPath=".agents/skills/content-to-course/workflows/c2c_wave_workflow.py", Args={"work_dir": "<work_dir>", "mode": "authors|judges|repair|post_cta_pipeline"})`, eliminando sondeos manuales de `manage_subagents` y errores por `kill_all` prematuro.
 > - **Fail-Total en Compilador (`--fail-total`)**: `compile_shard.py` opera con `--fail-total` tanto en autoría como en reparación para abortar ante errores fatales sin tolerar compilaciones inconsistentes.
 > - **Herramientas Nativas Estándar**: Subagentes y runner operan con herramientas nativas de plataforma (`read_file`, `write_file`, `edit_file`, `run_command`, `send_message`) con soporte retrocompatible.
 > - **Juez Epistémico 1-Seed con Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$)**: 1 única semilla pre-verificada por plantilla enfocada en suficiencia epistémica y no-giveaway semántico; ninguna objeción heurística revoca una prueba matemática formal.
 > - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: Al iniciar una ola, el Director emite 1 línea mínima (`Iniciando etapa: <nombre> (<N> unidades).`). En despertares reactivos parciales (`k < N` sin `BLOCKED:` ni timer), no ejecuta herramientas ni emite texto visible (`tools=[]`, respuesta vacía) y finaliza en `< 2s`. Solo vuelve a hablar al completar `N/N` (`Listo, se completó la etapa de <nombre> (<N>/<N>).`), cuando vence el timer del watchdog, o si un subagente reporta `BLOCKED:`.
-> - **Weighted Waves (`1 Hab/shard`, olas ≤ 100)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$ (soporte continuo de hasta 100 shards concurrentes en una sola ola paralela).
-> - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada ante objeciones de jueces no resueltas o incumplimiento psicométrico (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad de racionalizaciones $\ge 30\%$, 0 hard penalties).
+> - **Weighted Waves (`1 Hab/shard`, olas ≤ 100)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$ (soporte continuo de hasta 100 shards concurrentes en una sola ola paralela). Para filtrar una ola concreta usa `dispatch.py dispatch-authors --work-dir <work> --wave <N>`.
+> - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada ante objeciones de jueces no resueltas o incumplimiento psicométrico (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad diagnóstica por slot de distractor `(competency_id, distractor_id)` $\ge 80.0\%$, 0 hard penalties).
 > - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`.
 
 ---
@@ -219,21 +227,22 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 El Director de Proyecto debe mantener una interacción conversacional ultra-eficiente (~12–16 turnos en toda la corrida).
 
 > [!CAUTION]
-> **BARRERA REACTIVA SILENCIOSA EN DESPERTARES PARCIALES (`k < N`):**
-> - **Al iniciar la ola:** Emite únicamente **1 línea mínima** (ej. `Iniciando etapa: Autores (9 shards).`), sin párrafos ni frases como `"Esperando notificaciones..."`.
+> **BARRERA REACTIVA EN DESPERTARES PARCIALES (`k < N`) — CERO ALUCINACIÓN DE CIERRE:**
+> - **Al iniciar la ola:** Emite únicamente **1 línea mínima** (ej. `Iniciando etapa: Autores (17 shards).`) y **detén el turno**.
 > - **Cuando un subagente finaliza (`DONE:`) y aún restan trabajadores activos (`k < N`):**
 >   1. **`tools=[]` obligatorio:** 🚫 **PROHIBIDO** llamar a `manage_subagents(Action='kill', ...)`, `manage_subagents(Action='kill_all')`, `Get-ChildItem`, `dir`, `run.py`, `view_file` o cualquier herramienta en despertares parciales (salvo excepción explícita de un subagente que reporte `BLOCKED:`).
->   2. **Cero texto visible (silencio total):** **NO** imprimas `Progreso de ola: k/N`, listas de `Completados`/`Pendientes`, UUIDs ni mensajes de espera. Lleva la contabilidad `k/N` únicamente en tu contexto interno y termina el turno con respuesta vacía (`< 2s`).
-> - **Al completar `N/N`:** Emite **1 línea** de cierre (ej. `Listo, se completó la etapa de Autores (9/9).`) y ejecuta el Batch-Kill para pasar a la siguiente etapa.
+>   2. **Respuesta mínima de 1 sola línea (NO respuesta vacía):** Antigravity exige texto no vacío cuando `tools=[]`. Emite **exactamente 1 línea** (`Esperando: k/N.`) y **detén inmediatamente tu generación**.
+>   3. **🚫 PROHIBIDO SIMULAR O NARRAR ETAPAS FUTURAS:** JAMÁS escribas `"Listo, se completó..."`, `"Iniciando etapa: Jueces Ciegos"`, `"Iniciando etapa: Publicación"` ni `"# 🎓 Curso Creado y Publicado con Éxito"` en un turno de espera. Solo puedes emitir el mensaje final de curso publicado en el turno inmediatamente posterior a recibir **`Command exited with code 0`** real de `run.py --stage publish` con las métricas reales del QA Evaluator en `stdout`.
+> - **Al completar `N/N` (verificado por haber recibido `N` mensajes `SYSTEM_MESSAGE` con `DONE:` distintos):** Emite **1 línea** de cierre (ej. `Listo, se completó la etapa de Autores (17/17).`) y ejecuta el Batch-Kill para pasar a la siguiente etapa.
 > - **Si un subagente reporta `BLOCKED:` / `CIRCUIT BREAKER`:** Avisa en **1 línea** qué unidad se bloqueó y gestiona su reparación.
 
 > [!IMPORTANT]
 > **BATCH-KILL EN BARRERA N/N (CERTIFICACIÓN + FRESCURA EN DISCO):**
-> Solo cuando **todos** los `N/N` subagentes de la ola (`Pendientes: []`) hayan reportado `DONE:` (o `BLOCKED:`/`CIRCUIT BREAKER`) **y** los artefactos de la ola estén certificados en disco (para `authors`/`shards`/`repair`: `<shard_id>.cert.json` con `passed_50_seeds: true` y `<shard_id>.json` con `compiled_status: "PASS"`, nunca `"FAIL"`, y en `repair.json` con timestamp posterior a `dispatched_at`; para `cta_parts`: `pass_cta_<part_id>.json` = `PASS`), el Director debe ejecutar un **único** apagado en lote:
+> Solo cuando **todos** los `N/N` subagentes de la ola (`Pendientes: []`) hayan reportado `DONE:` en su turno terminal `PLANNER_RESPONSE` (o `BLOCKED:`/`CIRCUIT BREAKER`) **y** los artefactos de la ola estén certificados y frescos en disco respecto a `dispatched_at` (para `authors`/`shards`/`repair`: `<shard_id>.cert.json` con `passed_50_seeds: true` y `<shard_id>.json` con `compiled_status: "PASS"`, nunca `"FAIL"`; para `judges.json`: `judge_responses_XX.json` con `mtime >= dispatched_at`; para `cta_parts`/`cta.json`: `pass_cta_<part_id>.json` = `PASS` con `mtime >= dispatched_at`), el Director debe ejecutar un **único** apagado en lote:
 > ```python
 > manage_subagents(Action='kill_all')
 > ```
-> El hook `PreToolUse` (`c2c_hook_guard.py`, configurado con `manage_subagents` y `run_command` en `.agents/hooks.json` / `.agents/hooks.template.json`) bloqueará cualquier `kill`, `kill_all` o `run.py --stage ...` prematuro mientras queden subagentes sin `DONE:`/`BLOCKED:` o artefactos sin certificar (salvo `kill` individual sobre UUIDs cuyo `transcript.jsonl` contenga `BLOCKED:` explícito). Nota operativa: Antigravity carga cambios de `.agents/hooks.json` al iniciar nuevas invocaciones/subagentes, no a mitad de turno.
+> El hook `PreToolUse` (`c2c_hook_guard.py`, configurado con `manage_subagents` y `run_command` en `.agents/hooks.json` / `.agents/hooks.template.json`) ignora salidas `GENERIC` de `read_file` para evitar falsos positivos y bloqueará cualquier `kill`, `kill_all`, transición `run.py --stage` prematura (`cta`, `cta-reduce`, `cta-apply`, `cta-merge`, `shard`, `templates`, `build`, `verify`, `publish`, `repair-matrix`, `judge-compare`, `rejudge-compare`, `gates`, `certify`, `unlock`) o `dispatch.py` (`dispatch-cta-reduce`, `dispatch-authors`, `dispatch-judges`) mientras queden subagentes sin `DONE:`/`BLOCKED:` o artefactos sin certificar/frescos (salvo `kill` individual sobre UUIDs cuyo `transcript.jsonl` contenga `BLOCKED:` explícito). Nota operativa: Antigravity carga cambios de `.agents/hooks.json` al iniciar nuevas invocaciones/subagentes, no a mitad de turno.
 
 > [!NOTE]
 > **GESTIÓN DE STRAGGLERS A LOS 10 MINUTOS (WATCHDOG ACTIVO):**
@@ -258,13 +267,19 @@ Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores d
 
 Para evitar saturar el contexto del chat y consumir tokens en inspecciones redundantes:
 1. **Bloqueo Pre-Tool (`c2c_hook_guard.py`)**: Mientras exista `.c2c_subagent_lock.json`, el hook previene activamente que el Director lea o modifique archivos de código de shards (`*_data.py`, `shard_fixes/*.py`), respuestas masivas de jueces (`judge_responses_*.json`) o scripts internos del skill (`run.py`, `prepare.py`, `ingest.py`, `dispatch.py`).
-2. **Delegación de Reparaciones (`c2c_repair`)**:
-   - Si un shard no compila tras los intentos de su autor o activa el Circuit Breaker:
-     ```bash
-     python .agents/skills/content-to-course/dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>
+2. **Delegación de Reparaciones (`c2c_repair` vía `run_workflow`)**:
+   - Si `gates`, `certify`, `publish` o un Circuit Breaker requieren reparaciones adicionales fuera del pase automático de `post_cta_pipeline`, genera el manifiesto consolidado por shard y ejecútalo en paralelo con `run_workflow` (`mode="repair"`):
+     ```powershell
+     & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID1> <CID2>
      ```
-   - `dispatch-repair` detecta automáticamente fallos de compilación, plantillas faltantes (`work/templates/<CID>.json`) o *circuit breakers* activos, **limpia automáticamente los archivos de bloqueo en `.check_attempts/`** del shard afectado y genera la orden para `c2c_repair` (`Model="inherit"`).
-   - El subagente `c2c_repair` analiza el diagnóstico inyectado y emite la corrección quirúrgica en `work/shards/<shard_id>_data.py` o `work/shards/shard_fixes/<CID>.py`, la cual es incorporada de inmediato por `compile_shard.py`. El Director NUNCA edita código a mano.
+     ```python
+     run_workflow(
+         ScriptPath=".agents/skills/content-to-course/workflows/c2c_wave_workflow.py",
+         Description="Ejecutar ola de reparaciones C2C consolidada por shard",
+         Args={"work_dir": "<work_dir>", "mode": "repair"},
+     )
+     ```
+   - `dispatch-repair` detecta automáticamente fallos de compilación, plantillas faltantes (`work/templates/<CID>.json`) o *circuit breakers* activos, **limpia automáticamente los archivos de bloqueo en `.check_attempts/`** del shard afectado y **consolida las reparaciones por `shard_id`** (1 subagente `c2c_repair` por shard afectado leyendo `repair_*_data.md`). El Director NUNCA edita código a mano. Si la reparación modifica plantillas, ejecuta `--stage rejudge --ids ...` seguido de `run_workflow(..., Args={"work_dir": "<work_dir>", "mode": "judges"})` y `--stage rejudge-compare`.
 3. **Liberación de Bloqueo**: Al concluir la publicación exitosa con `run.py --stage publish`, el archivo `.c2c_subagent_lock.json` se elimina automáticamente. En caso de aborto anticipado, ejecutar `python .agents/skills/content-to-course/run.py --stage unlock --work-dir <work_dir>`.
 
 ---
@@ -300,37 +315,22 @@ Este comando ejecuta en `< 1s`:
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
    ```
 
-### Paso 3: Despacho de Autores en 1 Sola Ola (Contrato Form-C Quad-Band con `--lean`)
-1. Despacha todos los shards en **1 sola ola paralela a $t=0$** (con prompts `--lean`, ordenados *Heaviest-First*, admitiendo segmentación por olas con `--wave`, requiriendo `MIN_ARCHETYPES = 4` y supuestos explícitos):
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir> [--wave 1]
+### Paso 3 y 4: Ejecución Determinista Post-CTA con `run_workflow` (VÍA POR DEFECTO)
+1. **Orquestación Determinista en Código (`workflows/c2c_wave_workflow.py` — OBLIGATORIA POR DEFECTO):**
+   Una vez certificado `cta.json` (tras `cta-apply`), ejecuta **toda la secuencia post-CTA** (`shard -> dispatch-authors -> parallel(authors) -> templates -> build -> dispatch-judges -> parallel(judges) -> judge-compare -> gates`, con hasta 1 pase consolidado de reparación por shard y re-arbitraje quirúrgico) en una sola llamada a `run_workflow`, sin despertares parciales del Director:
+   ```python
+   run_workflow(
+       ScriptPath=".agents/skills/content-to-course/workflows/c2c_wave_workflow.py",
+       Description="Ejecutar pipeline post-CTA C2C (Autores -> Templates -> Build -> Jueces -> Gates)",
+       Args={"work_dir": "<work_dir>", "mode": "post_cta_pipeline"},
+   )
    ```
-2. Invoca todos los subagentes en paralelo (`Model="inherit"`) y agenda watchdog a 7 minutos (`DurationSeconds=420`).
-3. Aplica Barrera Silenciosa: cero herramientas en mensajes parciales (`k < N`).
-4. Al completar la ola (o si un shard activa Circuit Breaker, delegando con `dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>`), valida los templates aprovechando el fast-path `< 5 ms` de recibos criptográficos `shard_XX.cert.json`:
+   *(También admite olas individuales con `mode="authors"`, `"judges"` o `"repair"`. Las reglas estáticas viven solo en `system_prompts/lean/prompt_*.md`, cada `Prompt` inicial inyecta `[SCOPE-LOCK]` con rutas exactas, y los payloads en disco son datos puros: `author_XX_data.md`, `judge_XX_items.json`, `repair_*_data.md`.)*
+2. Al concluir `run_workflow`, ejecuta la certificación y publicación final (Paso 5):
    ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage templates --work-dir <work_dir>
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
    ```
-
-### Paso 4: Instanciación Masiva y Arbitraje Ciego
-1. Instancia el banco completo en el sandbox de Top's Academy:
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage build --work-dir <work_dir>
-   ```
-2. Despacha los lotes ciegos a jueces con 1 semilla canónica pre-verificada por plantilla bajo Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$):
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-judges --work-dir <work_dir>
-   ```
-3. Espera en silencio la conclusión del arbitraje y evalúa concordancia:
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
-   ```
-4. **Gates concurrentes y ola única de reparación**: usa `--stage gates` (secuencia determinista `build` + `verify` + QA dry-run + `repair-matrix` consolidada) y `dispatch-judges`. Al recibir veredictos, `--stage repair-matrix` fusiona linters + objeciones de jueces y emite UN solo comando `dispatch-repair --ids ...`:
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage gates --work-dir <work_dir>
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage repair-matrix --work-dir <work_dir>
-   ```
-   Si una reparación altera plantillas, usa re-arbitraje quirúrgico con `--stage rejudge` y `--stage rejudge-compare`:
+3. *(Fallback únicamente si `run_workflow` no está disponible):* ejecuta `dispatch.py dispatch-authors`, invoca subagentes con `invoke_subagent` respetando la Barrera Reactiva (`Esperando: k/N.`), luego `--stage templates`, `--stage build`, `dispatch-judges`, `--stage judge-compare`, `--stage gates` y `--stage repair-matrix`.
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge --ids <CID1> <CID2> --work-dir <work_dir>
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge-compare --work-dir <work_dir>

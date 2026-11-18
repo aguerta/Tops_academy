@@ -114,6 +114,21 @@ Cuando el usuario solicita una auditoría estándar sin pedir intervención agé
 
 ---
 
+## 2b. Corridas Orquestadas por `c2c_wave_workflow.py` (`run_workflow`) — Modo Actual
+
+Desde la migración, el Director ya **no** lanza autores/jueces/CTA/reparaciones con `invoke_subagent` + `manage_subagents`. Usa `run_workflow` con `.agents/skills/content-to-course/workflows/c2c_wave_workflow.py` (modos `cta`, `authors`, `judges`, `repair`, `post_cta_pipeline`), que ejecuta cada ola con `parallel(...)` leyendo `work/dispatch/{cta,authors,judges,repair}.json`.
+
+Implicaciones para la auditoría:
+1. **Descubrimiento de subagentes:** los `conversationId` ya no aparecen en `invoke_subagent`; llegan en mensajes `SYSTEM_MESSAGE` de fin de tarea con líneas `- [agent:<type_name>] <Role>: done (<uuid>): "DONE: ..."`. `audit_engine.py` (`_WF_AGENT_RE` en `discover_all_subagents`) las parsea y usa `type_name`/`Role` para clasificar (cta / author / judge / repair). Sigue soportando el modo legado `invoke_subagent`.
+2. **Fases (`[phase]`):** `C2C Wave: CTA|AUTHORS|JUDGES|REPAIR` y, en `post_cta_pipeline`, `Stage 2: Sharding`, `Stage 3: Shard Authors Wave`, `Stage 4: Templates & Build`, `Stage 5: Blind Judges Wave`, `Stage 6: Quality Gates`, `Stage 6B: Consolidated Repair / Surgical Rejudge Wave` (máx. 1 pasada). Son los límites naturales de etapa para el camino crítico.
+3. **Barrera N/N determinista:** el workflow no termina hasta `Completed N/N workers`; ya no existen `kill_all` prematuros ni polling manual del Director. Un conteo `Launching X` ≠ `Completed X` o una tarea `failed` es hallazgo crítico.
+4. **Fallos de infraestructura del workflow:** buscar en los `SYSTEM_MESSAGE` `failed with result` (p. ej. `NameError: call_tool`, `ScriptPath must be an absolute path`) y reportarlos como reintentos del Director; cada log está en `brain/<conv>/.system_generated/tasks/task-N.log`.
+5. **Fallos de CLI:** `run_cli` aborta con `CLI command failed (<summary>) with exit code N`; contabilizar por etapa (`C2C stage shard|templates|build|judge-compare|gates|repair-matrix|rejudge`).
+6. **Intervenciones manuales:** el Director solo debe invocar `run_workflow`; cualquier `edit_file`/reparación manual del Director sigue contando como *Supervisor Fix*.
+7. **Overhead de conversaciones:** cada wave genera nuevos tasks (`task-N`); las olas `repair`/`judges` de re-arbitraje pueden repetir `judges` (Judge 01..K) — se listan como corridas separadas por `conversation_id`.
+
+---
+
 ## 3. Garantías de Aislamiento Zero-Collision y Telemetría C2C v3.2
 
 1. **Aislamiento Estricto por `conversation_id` (Zero Telemetry Collision):**

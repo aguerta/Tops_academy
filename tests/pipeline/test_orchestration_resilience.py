@@ -205,10 +205,10 @@ class TestPointerPromptProtocol(unittest.TestCase):
         self.assertIn("part_03", subagents[1]["Role"].lower())
         self.assertIn("part_01", subagents[2]["Role"].lower())
 
-        # Check pointer prompt size
+        # Check pointer/direct prompt size
         for sub in subagents:
             prompt_bytes = len(sub["Prompt"].encode("utf-8"))
-            self.assertLessEqual(prompt_bytes, 300)
+            self.assertLessEqual(prompt_bytes, 600)
             self.assertIn("cta_", sub["Prompt"])
 
 

@@ -577,7 +577,15 @@ def ver_c01_3(res):
 
 def gen_c01_4(rng):
     w = rng.randint(15, 55)
-    return {"vars": {"w": w}, "correct": f"Opt {w}", "distractors": [(f"D-01-{i:02d}", f"Opt {w + i}", f"Diagnostic rationale {i}: misapplied algebraic step on parameter @w@.") for i in range(1, 7)]}
+    rationales = [
+        "Misapplied sign inversion on linear coefficient with parameter @w@.",
+        "Omitted constant boundary term when evaluating parameter @w@.",
+        "Doubled the scaling factor instead of halving parameter @w@.",
+        "Swapped numerator and denominator ratios for parameter @w@.",
+        "Ignored residual offset after simplifying parameter @w@.",
+        "Applied quadratic exponent mistakenly to linear parameter @w@.",
+    ]
+    return {"vars": {"w": w}, "correct": f"Opt {w}", "distractors": [(f"D-01-{i:02d}", f"Opt {w + i}", rationales[i - 1]) for i in range(1, 7)]}
 
 def ver_c01_4(res):
     if not isinstance(res, dict):

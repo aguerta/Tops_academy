@@ -79,3 +79,6 @@ audit_screenshots/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 9. Graphify knowledge graph output
+graphify-out/

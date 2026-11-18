@@ -275,8 +275,12 @@ def _gen_h01(rng, arch=1):
         "vars": v,
         "correct": r"$\eta = @ans@$",
         "distractors": [
-            (f"D-H-01-{i:02d}", rf"$\eta = @d{i}@$", f"Error al computar la eficiencia de Carnot con foco frío @tc@ en el paso {i}.")
-            for i in range(1, 7)
+            ("D-H-01-01", r"$\eta = @d1@$", "Calcula el cociente directo @tc@/@th@ sin restarlo de la unidad al evaluar @d1@."),
+            ("D-H-01-02", r"$\eta = @d2@$", "Suma un termino de perdidas espurio al denominador caliente @th@ antes de dividir @tc@, dando @d2@."),
+            ("D-H-01-03", r"$\eta = @d3@$", "Invierte la razon termica entre @th@ y @tc@ y trunca el resultado en @d3@."),
+            ("D-H-01-04", r"$\eta = @d4@$", "Aplica escala relativa en lugar de Kelvin absoluta a @tc@ frente a @th@, obteniendo @d4@."),
+            ("D-H-01-05", r"$\eta = @d5@$", "Duplica la correccion de entropia en el reservorio @th@ respecto a @tc@, resultando @d5@."),
+            ("D-H-01-06", r"$\eta = @d6@$", "Confunde la diferencia termica con el promedio de @th@ y @tc@ al estimar @d6@."),
         ],
     }
 
@@ -507,8 +511,12 @@ def _gen_h01_modular(rng, arch=1):
         "vars": v,
         "correct": r"$\eta = @ans@$",
         "distractors": [
-            (f"D-H-01-{i:02d}", rf"$\eta = @d{i}@$", f"Error al computar la eficiencia de Carnot con foco frío @tc@ en el paso {i}.")
-            for i in range(1, 7)
+            ("D-H-01-01", r"$\eta = @d1@$", "Calcula el cociente directo @tc@/@th@ sin restarlo de la unidad al evaluar @d1@."),
+            ("D-H-01-02", r"$\eta = @d2@$", "Suma un termino de perdidas espurio al denominador caliente @th@ antes de dividir @tc@, dando @d2@."),
+            ("D-H-01-03", r"$\eta = @d3@$", "Invierte la razon termica entre @th@ y @tc@ y trunca el resultado en @d3@."),
+            ("D-H-01-04", r"$\eta = @d4@$", "Aplica escala relativa en lugar de Kelvin absoluta a @tc@ frente a @th@, obteniendo @d4@."),
+            ("D-H-01-05", r"$\eta = @d5@$", "Duplica la correccion de entropia en el reservorio @th@ respecto a @tc@, resultando @d5@."),
+            ("D-H-01-06", r"$\eta = @d6@$", "Confunde la diferencia termica con el promedio de @th@ y @tc@ al estimar @d6@."),
         ],
     }
 

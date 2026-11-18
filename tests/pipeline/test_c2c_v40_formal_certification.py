@@ -190,7 +190,7 @@ def ver_1(r):
     return v.get("ans", 0) > 0
 
 TEMPLATES = [
-    ("T-Hab01-01", "Hab-01", "multiple_choice_7_options", gen_1, ver_1, ("easy", "Remember"), [r"S1 @k@:", r"S2 @k@:", r"S3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab01-01", "Hab-01", "multiple_choice_7_options", gen_1, ver_1, ("easy", "Apply"), [r"S1 @k@:", r"S2 @k@:", r"S3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
 ]
 '''
         (shards_dir / "shard_tautology_data.py").write_text(code, encoding="utf-8")
@@ -216,7 +216,7 @@ def ver_1(r):
         return True
 
 TEMPLATES = [
-    ("T-Hab01-01", "Hab-01", "multiple_choice_7_options", gen_1, ver_1, ("easy", "Remember"), [r"S1 @k@:", r"S2 @k@:", r"S3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab01-01", "Hab-01", "multiple_choice_7_options", gen_1, ver_1, ("easy", "Apply"), [r"S1 @k@:", r"S2 @k@:", r"S3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
 ]
 '''
         (shards_dir / "shard_swallow_data.py").write_text(code, encoding="utf-8")
@@ -235,7 +235,7 @@ def ver_1(cand, v):
     return str(cand) == "1"
 
 TEMPLATES = [
-    ("T-Hab01-01", "Hab-01", "fill_in_the_blank", gen_1, ver_1, ("easy", "Remember"), [r"S1 @k@:", r"S2 @k@:", r"S3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol."),
+    ("T-Hab01-01", "Hab-01", "fill_in_the_blank", gen_1, ver_1, ("easy", "Apply"), [r"S1 @k@:", r"S2 @k@:", r"S3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol."),
 ]
 '''
         (shards_dir / "shard_debug_raise_data.py").write_text(code, encoding="utf-8")
@@ -257,7 +257,7 @@ def ver_1(cand, v):
     return float(cand) == float(v.get("cand", 0))
 
 TEMPLATES = [
-    ("T-Hab01-01", "Hab-01", "fill_in_the_blank", gen_1, ver_1, ("easy", "Remember"), [r"S1 @cand@:", r"S2 @cand@:", r"S3 @cand@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol."),
+    ("T-Hab01-01", "Hab-01", "fill_in_the_blank", gen_1, ver_1, ("easy", "Apply"), [r"S1 @cand@:", r"S2 @cand@:", r"S3 @cand@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol."),
 ]
 '''
         (shards_dir / "shard_while_pert_data.py").write_text(code, encoding="utf-8")
@@ -330,8 +330,8 @@ HINTS = ["Identifica el estimador @k@.", "Aplica el calculo analitico.", "Compru
 C = ["Con la muestra @k@:", "Para el diseno @k@:"]
 
 TEMPLATES = [
-    {"cid": "Hab-01", "archetype": "direct", "qtype": "mc7", "gen": g1, "ver": ver, "fmt": "$@X@$", "band": ("easy", "Remember"), "hints": HINTS, "sol": "Solucion frontal paso a paso aplicando el estimador directo con resultado @ans@.", "stems": (C, ["halla el valor frontal.", "evalua el estimador directo."])},
-    {"cid": "Hab-01", "archetype": "inverse", "qtype": "fib", "gen": g2, "ver": ver, "band": ("medium", "Understand"), "hints": [h + " (enfoque inverso)" for h in HINTS], "sol": "Solucion inversa paso a paso despejando la ecuacion del estimador hacia @ans@.", "stems": (C, ["halla el valor inverso.", "evalua el reciproco."])},
+    {"cid": "Hab-01", "archetype": "direct", "qtype": "mc7", "gen": g1, "ver": ver, "fmt": "$@X@$", "band": ("easy", "Apply"), "hints": HINTS, "sol": "Solucion frontal paso a paso aplicando el estimador directo con resultado @ans@.", "stems": (C, ["halla el valor frontal.", "evalua el estimador directo."])},
+    {"cid": "Hab-01", "archetype": "inverse", "qtype": "fib", "gen": g2, "ver": ver, "band": ("medium", "Apply"), "hints": [h + " (enfoque inverso)" for h in HINTS], "sol": "Solucion inversa paso a paso despejando la ecuacion del estimador hacia @ans@.", "stems": (C, ["halla el valor inverso.", "evalua el reciproco."])},
     {"cid": "Hab-01", "archetype": "perturbation", "qtype": "fib", "gen": g3, "ver": ver, "band": ("hard", "Apply"), "hints": [h + " (perturbacion)" for h in HINTS], "sol": "Solucion perturbacion paso a paso evaluando la estatica comparativa hacia @ans@.", "stems": (C, ["calcula la perturbacion.", "estima el impacto sensible."])},
     {"cid": "Hab-01", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab01-01", "qtype": "fib", "gen": g4, "ver": ver, "band": ("medium", "Evaluate"), "hints": [h + " (caso frontera)" for h in HINTS], "sol": "Solucion frontera paso a paso comprobando la condicion limite asintotica @ans@.", "stems": (C, ["calcula el caso extremo.", "analiza la cota limite."])},
 ]

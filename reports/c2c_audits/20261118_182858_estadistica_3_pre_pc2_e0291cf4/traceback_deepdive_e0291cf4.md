@@ -1,7 +1,7 @@
 # Auditoría Forense Ultra-Detallada del Traceback de Ejecución
 ## Pipeline Content-to-Course (C2C) — Conversación [`e0291cf4-7aae-45dc-be49-f0f5ecad26b4`](conversation://e0291cf4-7aae-45dc-be49-f0f5ecad26b4)
 
-**Fecha de Auditoría:** `2026-11-15 07:34:06 UTC`  
+**Fecha de Auditoría:** `2026-11-18 23:28:59 UTC`  
 **Conversación Orquestadora:** [`e0291cf4-7aae-45dc-be49-f0f5ecad26b4`](conversation://e0291cf4-7aae-45dc-be49-f0f5ecad26b4)  
 **Directorio de Telemetría Validado (Zero-Collision):** `D:\Augusto\personal_portfolio\Tops_academy\courses\estadistica_3_pre_pc2\work` (`9` snapshots C2C v3.2)  
 **Motor Forense:** C2C Traceback Deep-Dive Analyzer (Antigravity SDK)  
@@ -12,9 +12,9 @@
 
 | Métrica Forense | Valor Registrado | Observación Técnica |
 | :--- | :--- | :--- |
-| **Tiempo de Pared Total** | **`124.53 min`** (7472.0 s) | Tiempo transcurrido de extremo a extremo |
-| **Total de Turnos Analizados** | **`1137 turnos`** | Suma de orquestador y subagentes |
-| **Total de Errores Catalogados** | **`223 errores`** | Clasificados en 12 categorías técnicas (0% caja negra) |
+| **Tiempo de Pared Total** | **`125.75 min`** (7545.0 s) | Tiempo transcurrido de extremo a extremo |
+| **Total de Turnos Analizados** | **`1209 turnos`** | Suma de orquestador y subagentes |
+| **Total de Errores Catalogados** | **`225 errores`** | Clasificados en 12 categorías técnicas (0% caja negra) |
 | **Inferencia LLM Promedio** | **`95.8%`** | Porcentaje de tiempo dedicado a generación/thinking |
 | **Ejecución Local de Tools** | **`4.2%`** | Porcentaje de tiempo consumido en I/O y terminal |
 
@@ -24,7 +24,9 @@
 DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 ========================================================================================
 CTA Architect (part_01):     58s (87.9%) LLM |    8s Tools
-CTA Architect (part_02):     10s (35.7%) LLM |   10s Tools
+CTA Architect (part_02):     75s (89.3%) LLM |    9s Tools
+CTA Architect (part_02) (6a388b):     10s (35.7%) LLM |   10s Tools
+CTA Architect (part_02) (8d7caf):     13s (56.5%) LLM |    2s Tools
 CTA Architect (part_03):     58s (89.2%) LLM |    7s Tools
 CTA Architect (part_04):     81s (88.0%) LLM |   10s Tools
 CTA Architect (part_05):     67s (89.3%) LLM |    8s Tools
@@ -93,16 +95,37 @@ Repair Engineer shard_22 (1ae100):     19s (67.9%) LLM |    0s Tools
 Repair Engineer shard_23 (2f1c86):     32s (97.0%) LLM |    0s Tools
 Repair Engineer shard_24 (196bc5):     24s (64.9%) LLM |   13s Tools
 Repair Engineer shard_24 (e46ad8):     20s (64.5%) LLM |   11s Tools
-Judge 01               :     16s (84.2%) LLM |    3s Tools
-Judge 02               :     26s (89.7%) LLM |    3s Tools
-Judge 03               :     22s (81.5%) LLM |    4s Tools
-Judge 04               :     20s (87.0%) LLM |    3s Tools
-Judge 05               :     30s (90.9%) LLM |    3s Tools
-Judge 06               :     26s (89.7%) LLM |    3s Tools
-Judge 07               :     22s (84.6%) LLM |    3s Tools
-Judge 08               :     27s (93.1%) LLM |    2s Tools
-Judge 09               :     33s (89.2%) LLM |    4s Tools
-Judge 10               :     32s (91.4%) LLM |    3s Tools
+Judge 01               :     26s (89.7%) LLM |    3s Tools
+Judge 02               :     25s (89.3%) LLM |    3s Tools
+Judge 03               :     25s (92.6%) LLM |    2s Tools
+Judge 04               :     25s (89.3%) LLM |    3s Tools
+Judge 05               :     36s (92.3%) LLM |    3s Tools
+Judge 06               :     35s (89.7%) LLM |    4s Tools
+Judge 07               :     42s (93.3%) LLM |    3s Tools
+Judge 08               :     26s (89.7%) LLM |    3s Tools
+Judge 09               :     38s (92.7%) LLM |    3s Tools
+Judge 10               :     28s (87.5%) LLM |    4s Tools
+Judge 01 (071543)      :     31s (100.0%) LLM |    0s Tools
+Judge 02 (7ddcc5)      :     21s (87.5%) LLM |    3s Tools
+Judge 03 (6100bb)      :     29s (100.0%) LLM |    0s Tools
+Judge 04 (7c1a68)      :     22s (88.0%) LLM |    3s Tools
+Judge 05 (577be3)      :      1s (100.0%) LLM |    0s Tools
+Judge 06 (656e60)      :      2s (100.0%) LLM |    0s Tools
+Judge 07 (015252)      :      1s (50.0%) LLM |    1s Tools
+Judge 08 (5efcda)      :     20s (100.0%) LLM |    0s Tools
+Judge 09 (6f95ed)      :      2s (100.0%) LLM |    0s Tools
+Judge 10 (1642a1)      :      1s (100.0%) LLM |    0s Tools
+Judge 01 (3858f7)      :     39s (92.9%) LLM |    3s Tools
+Judge 02 (dbd4d6)      :     26s (89.7%) LLM |    3s Tools
+Judge 03 (fcffcb)      :     22s (81.5%) LLM |    4s Tools
+Judge 04 (c424f1)      :     20s (87.0%) LLM |    3s Tools
+Judge 05 (06137b)      :     30s (90.9%) LLM |    3s Tools
+Judge 06 (41f339)      :     26s (89.7%) LLM |    3s Tools
+Judge 07 (b5483b)      :     22s (84.6%) LLM |    3s Tools
+Judge 08 (fd45d8)      :     27s (93.1%) LLM |    2s Tools
+Judge 09 (8fab51)      :     33s (89.2%) LLM |    4s Tools
+Judge 10 (c1f8da)      :     32s (91.4%) LLM |    3s Tools
+Judge 01 (e9e74f)      :     16s (84.2%) LLM |    3s Tools
 ========================================================================================
 ```
 
@@ -127,27 +150,33 @@ Judge 10               :     32s (91.4%) LLM |    3s Tools
 - **Duración Total:** **`1.1 min`** (66.0 s) en **`6 turnos`**.
 - **Tokens:** 64,863 In | 11,896 Out | 186,341 Cache.
 ### 2.2. CTA Architect (part_02)
+- **Duración Total:** **`1.4 min`** (84.0 s) en **`6 turnos`**.
+- **Tokens:** 105,673 In | 14,153 Out | 131,922 Cache.
+### 2.3. CTA Architect (part_02) (6a388b)
 - **Duración Total:** **`0.47 min`** (28.0 s) en **`8 turnos`**.
 - **Tokens:** 25,750 In | 936 Out | 55,397 Cache.
-### 2.3. CTA Architect (part_03)
+### 2.4. CTA Architect (part_02) (8d7caf)
+- **Duración Total:** **`0.38 min`** (23.0 s) en **`6 turnos`**.
+- **Tokens:** 21,103 In | 1,654 Out | 39,324 Cache.
+### 2.5. CTA Architect (part_03)
 - **Duración Total:** **`1.08 min`** (65.0 s) en **`6 turnos`**.
 - **Tokens:** 44,369 In | 11,157 Out | 125,385 Cache.
-### 2.4. CTA Architect (part_04)
+### 2.6. CTA Architect (part_04)
 - **Duración Total:** **`1.53 min`** (92.0 s) en **`6 turnos`**.
 - **Tokens:** 61,535 In | 15,725 Out | 172,631 Cache.
-### 2.5. CTA Architect (part_05)
+### 2.7. CTA Architect (part_05)
 - **Duración Total:** **`1.25 min`** (75.0 s) en **`6 turnos`**.
 - **Tokens:** 54,605 In | 12,654 Out | 154,995 Cache.
-### 2.6. CTA Architect (part_06)
+### 2.8. CTA Architect (part_06)
 - **Duración Total:** **`1.27 min`** (76.0 s) en **`6 turnos`**.
 - **Tokens:** 50,010 In | 13,298 Out | 140,337 Cache.
-### 2.7. CTA Architect (part_07)
+### 2.9. CTA Architect (part_07)
 - **Duración Total:** **`1.08 min`** (65.0 s) en **`6 turnos`**.
 - **Tokens:** 57,666 In | 9,187 Out | 167,531 Cache.
-### 2.8. CTA Architect (part_08)
+### 2.10. CTA Architect (part_08)
 - **Duración Total:** **`1.63 min`** (98.0 s) en **`9 turnos`**.
 - **Tokens:** 70,080 In | 10,708 Out | 352,010 Cache.
-### 2.9. CTA Harmonizer
+### 2.11. CTA Harmonizer
 - **Duración Total:** **`3.8 min`** (228.0 s) en **`9 turnos`**.
 - **Tokens:** 90,573 In | 16,347 Out | 496,158 Cache.
 
@@ -225,26 +254,47 @@ Judge 10               :     32s (91.4%) LLM |    3s Tools
 
 | Blind Judge | Duración (min) | Turnos | Consultas `search_web` | Peticiones HTTP | Estado de Aislamiento |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Judge 01** | 0.32 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 02** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 01** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 02** | 0.47 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
 | **Judge 03** | 0.45 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 04** | 0.38 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 05** | 0.55 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 06** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 07** | 0.43 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 04** | 0.47 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 05** | 0.65 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 06** | 0.65 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 07** | 0.75 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
 | **Judge 08** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 09** | 0.62 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Judge 10** | 0.58 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 09** | 0.68 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 10** | 0.53 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 01 (071543)** | 0.52 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 02 (7ddcc5)** | 0.4 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 03 (6100bb)** | 0.48 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 04 (7c1a68)** | 0.42 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 05 (577be3)** | 0.02 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 06 (656e60)** | 0.03 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 07 (015252)** | 0.03 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 08 (5efcda)** | 0.33 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 09 (6f95ed)** | 0.03 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 10 (1642a1)** | 0.02 | 2 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 01 (3858f7)** | 0.7 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 02 (dbd4d6)** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 03 (fcffcb)** | 0.45 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 04 (c424f1)** | 0.38 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 05 (06137b)** | 0.55 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 06 (41f339)** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 07 (b5483b)** | 0.43 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 08 (fd45d8)** | 0.48 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 09 (8fab51)** | 0.62 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 10 (c1f8da)** | 0.58 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Judge 01 (e9e74f)** | 0.32 | 3 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
 
 ---
 
-## 5. Taxonomía Consolidada de Errores (223 Registrados)
+## 5. Taxonomía Consolidada de Errores (225 Registrados)
 
 | Categoría de Error | Ocurrencias | Ejemplo de Incidencia | Razonamiento Previo (Thinking) |
 | :--- | :---: | :--- | :--- |
 | **Shard Compilation & Template Validator Failure (compile_shard / check_templates)** | **105** | `Orchestrator` (Paso 256): Command exited with code 1. | Command output: | [COMPILE 1/10] Compila... | `The "Waiting" messages likely resulted from a loop in the text generation. Exami...` |
+| **Non-Zero CLI Exit / Subprocess Probe (Exit Code 1)** | **36** | `Orchestrator` (Paso 47): Encountered error in step execution: cannot kill task "e0291cf4-7aae-4... | *Sin thinking capturado* |
 | **Anti-Giveaway & Psychometric Parity Violations (R-14..R-19)** | **35** | `Orchestrator` (Paso 64): The tool's output was truncated due to being too long. You can find th... | *Sin thinking capturado* |
-| **Non-Zero CLI Exit / Subprocess Probe (Exit Code 1)** | **34** | `Orchestrator` (Paso 47): Encountered error in step execution: cannot kill task "e0291cf4-7aae-4... | *Sin thinking capturado* |
 | **Cross-check Verification False (TPL-CROSS)** | **15** | `Author Shard 01` (Paso 43): Command exited with code 1. | Command output: | [NO-CHANGE: código idé... | *Sin thinking capturado* |
 | **Missing File / Relative Path / Directory Error (FileNotFoundError)** | **14** | `Orchestrator` (Paso 782): Encountered error in step execution: file does not exist... | *Sin thinking capturado* |
 | **File Edit / Write Tool Target Mismatch (replace_file_content / Overwrite)** | **5** | `Author Shard 03` (Paso 38): Encountered error in step execution: target content not found in the f... | *Sin thinking capturado* |
@@ -258,8 +308,8 @@ Judge 10               :     32s (91.4%) LLM |    3s Tools
 ---
 
 ## 6. Telemetría de Razonamiento Cognitivo (Thinking Traces)
-- **Total de Turnos con Razonamiento:** `386 turnos`
-- **Volumen Total de Razonamiento:** `1,062,612 caracteres`
+- **Total de Turnos con Razonamiento:** `412 turnos`
+- **Volumen Total de Razonamiento:** `1,203,053 caracteres`
 
 | Agente | Turnos con Thinking | Volumen (Caracteres) | Muestra de Razonamiento Previo |
 | :--- | :---: | :---: | :--- |
@@ -304,7 +354,9 @@ Each competency requires a specific...` |
 
 
 The initial sections discuss the ne...` |
-| **CTA Architect (part_02)** | 1 | 229 | `The pre-tool hook indicates that a critical component has passed validation. Thi...` |
+| **CTA Architect (part_02)** | 3 | 6,638 | `Reading the specified PDF to extract the relevant content. Identifying the slice...` |
+| **CTA Architect (part_02) (6a388b)** | 1 | 229 | `The pre-tool hook indicates that a critical component has passed validation. Thi...` |
+| **CTA Architect (part_02) (8d7caf)** | 2 | 552 | `The pre-tool hook indicates that the specified module has passed all strict vali...` |
 | **CTA Architect (part_03)** | 2 | 2,646 | `Analyzing the document `02_EST3_LEC07_26.2_V2.pdf`, focusing on pages 1-20 for c...` |
 | **CTA Architect (part_04)** | 2 | 5,334 | ``part_04`'s context page is incorrectly mapped. The manifest indicates page 20 f...` |
 | **CTA Architect (part_05)** | 2 | 4,177 | `Reading the PDF slice to extract content. Expecting to find relevant statistical...` |
@@ -312,37 +364,103 @@ The initial sections discuss the ne...` |
 | **CTA Architect (part_07)** | 2 | 2,129 | `I'm thinking through how to approach this....` |
 | **CTA Architect (part_08)** | 1 | 2,613 | `The document slice details indicate a core page range. The first page is a conte...` |
 | **CTA Harmonizer** | 3 | 12,021 | `Analyzing the specified files to understand their content and structure. Aiming ...` |
-| **Judge 01** | 1 | 2,908 | `The problem involves a fill-in-the-blank item requiring the calculation of a par...` |
-| **Judge 02** | 1 | 6,299 | `I'm thinking through how to approach this.
+| **Judge 01** | 1 | 5,984 | `I'm thinking through how to approach this.
+
+
+Analyzing the first item, the Centr...` |
+| **Judge 01 (071543)** | 1 | 6,649 | `I'm thinking through how to approach this.
+
+
+The task involves generating parall...` |
+| **Judge 01 (3858f7)** | 1 | 7,586 | `I'm thinking through how to approach this.
+
+
+The Hausman test p-value of 0.34 do...` |
+| **Judge 01 (e9e74f)** | 1 | 2,908 | `The problem involves a fill-in-the-blank item requiring the calculation of a par...` |
+| **Judge 02** | 1 | 5,814 | `Calculating 'n' using the given standard error and standard deviation. The formu...` |
+| **Judge 02 (7ddcc5)** | 1 | 4,185 | `Initial hypothesis: Analyze the expression $g(\theta) = 107/\theta$. The problem...` |
+| **Judge 02 (dbd4d6)** | 1 | 6,299 | `I'm thinking through how to approach this.
 
 
 Considering inclusion of specific f...` |
-| **Judge 03** | 1 | 4,396 | `I'm thinking through how to approach this.
+| **Judge 03** | 1 | 4,788 | `I'm thinking through how to approach this.
+
+
+Analyzing each statement about OLS ...` |
+| **Judge 03 (6100bb)** | 1 | 6,292 | `I'm thinking through how to approach this.
+
+
+The problem requires applying the g...` |
+| **Judge 03 (fcffcb)** | 1 | 4,396 | `I'm thinking through how to approach this.
 
 
 The Markov/L^2 inequality provides ...` |
-| **Judge 04** | 1 | 4,556 | `Initial assessment: need to analytically resolve all twelve items. Approach: fir...` |
-| **Judge 05** | 1 | 5,959 | `I'm thinking through how to approach this.
+| **Judge 04** | 1 | 5,336 | `I'm thinking through how to approach this.
+
+
+Assuming the standard rate paramete...` |
+| **Judge 04 (7c1a68)** | 1 | 4,389 | `I'm thinking through how to approach this.
+
+
+For the first problem, the variance...` |
+| **Judge 04 (c424f1)** | 1 | 4,556 | `Initial assessment: need to analytically resolve all twelve items. Approach: fir...` |
+| **Judge 05** | 1 | 8,454 | `I'm thinking through how to approach this.
+
+
+The problem involves evaluating tra...` |
+| **Judge 05 (06137b)** | 1 | 5,959 | `I'm thinking through how to approach this.
 
 
 Calculating the required sample siz...` |
-| **Judge 06** | 1 | 5,808 | `I'm thinking through how to approach this.
+| **Judge 05 (577be3)** | 1 | 6,461 | `I'm thinking through how to approach this.
+
+
+Calculating the required sample siz...` |
+| **Judge 06** | 1 | 7,530 | `I'm thinking through how to approach this.
+
+
+The problem presents undefined vari...` |
+| **Judge 06 (41f339)** | 1 | 5,808 | `I'm thinking through how to approach this.
 
 
 The White (HC0) heteroskedasticity-...` |
-| **Judge 07** | 1 | 3,984 | `I'm thinking through how to approach this.
+| **Judge 06 (656e60)** | 1 | 5,295 | `The task involves analyzing twelve items from a JSON file and writing the result...` |
+| **Judge 07** | 1 | 14,061 | `I'm thinking through how to approach this.
+
+
+Evaluating responses, considering `...` |
+| **Judge 07 (015252)** | 1 | 6,451 | `The task requires addressing 12 items, ensuring the `answer_contract` for MC7 qu...` |
+| **Judge 07 (b5483b)** | 1 | 3,984 | `I'm thinking through how to approach this.
 
 
 Applying the formula for the union ...` |
-| **Judge 08** | 1 | 5,390 | `I'm thinking through how to approach this.
+| **Judge 08** | 1 | 5,856 | `I'm thinking through how to approach this.
+
+
+The initial F-statistic is derived ...` |
+| **Judge 08 (5efcda)** | 1 | 3,374 | `I'm thinking through how to approach this.
+
+
+Applying the Delta Method to estima...` |
+| **Judge 08 (fd45d8)** | 1 | 5,390 | `I'm thinking through how to approach this.
 
 
 Calculating the estimated variance ...` |
-| **Judge 09** | 1 | 7,947 | `I'm thinking through how to approach this.
+| **Judge 09** | 1 | 7,820 | `Analyzing item T-C10-0 to ensure compliance with the defined output schema and c...` |
+| **Judge 09 (6f95ed)** | 1 | 5,475 | `Initial hypothesis: Calculate $\hat{\beta}_1$ given the provided equation and va...` |
+| **Judge 09 (8fab51)** | 1 | 7,947 | `I'm thinking through how to approach this.
 
 
 Initial calculation yielded a coeff...` |
-| **Judge 10** | 1 | 6,296 | `Initial assessment: All items require analytical solutions following a specific ...` |
+| **Judge 10** | 1 | 5,458 | `I'm thinking through how to approach this.
+
+
+The problem involves finding a valu...` |
+| **Judge 10 (1642a1)** | 1 | 5,993 | `I'm thinking through how to approach this.
+
+
+The rank of $\mathbf{R}$ being less...` |
+| **Judge 10 (c1f8da)** | 1 | 6,296 | `Initial assessment: All items require analytical solutions following a specific ...` |
 | **Orchestrator** | 75 | 27,984 | `The initial stage will be bootstrapping. The course ID will be passed directly, ...` |
 | **Repair Engineer C-08 (be99ca)** | 12 | 51,436 | `The diagnostic indicates a potential issue: the correct answer appears within th...` |
 | **Repair Engineer C-33 (fffd2e)** | 2 | 1,773 | `The diagnosis indicates an epistemic flaw: the statement omits a crucial functio...` |

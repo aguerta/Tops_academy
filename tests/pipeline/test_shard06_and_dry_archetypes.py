@@ -240,7 +240,7 @@ hints_frontera = [
 TEMPLATES = [
     (
         "T-Hab06-01", "Hab-06", "multiple_choice_7_options",
-        gen_directo, ver_directo, ("easy", "Remember"),
+        gen_directo, ver_directo, ("easy", "Apply"),
         [
             "Calcule el valor del estimador lineal directo bajo base {base} y paso {step}.",
             "A partir de las condiciones observadas con base {base}, determine el estimador lineal.",
@@ -709,7 +709,7 @@ hints_h06_4 = [
 ]
 
 TEMPLATES = [
-    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("easy", "Remember"), [
+    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("easy", "Apply"), [
         r"Enfoque Directo: En un modelo salarial con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@, y ratio de fiabilidad q = @q@, calcule el estadistico de Hausman H:",
         r"A partir de estimaciones directas con datos de gemelos con b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
         r"Para contrastar frontalmente la presencia de endogeneidad en gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico H:",
@@ -1163,7 +1163,7 @@ stems_cloned = [
 ]
 
 TEMPLATES = [
-    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("easy", "Remember"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
+    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("easy", "Apply"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
     ("T-Hab06-02", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("medium", "Apply"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
     ("T-Hab06-03", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("medium", "Analyze"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
     ("T-Hab06-04", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("hard", "Evaluate"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
@@ -1352,7 +1352,7 @@ hints_4 = [
 TEMPLATES = [
     (
         "T-C01-01", "C-01", "multiple_choice_7_options",
-        gen_c01_1, ver_c01_1, ("easy", "Remember"),
+        gen_c01_1, ver_c01_1, ("easy", "Apply"),
         stem_c01_1, hints_1,
         "Resolucion directa formal: el estimador es ans = n + 10 = @ans@."
     ),

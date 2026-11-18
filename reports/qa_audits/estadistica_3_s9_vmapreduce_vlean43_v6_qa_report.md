@@ -1,5 +1,10 @@
 # Reporte de Auditoría de Calidad Técnica, Psicométrica y Pedagógica (QM / OSCQR / Path-to-Mastery v2.0)
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-18 18:51:17**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-18 18:51:17  
 - **Curso ID:** `estadistica_3_s9_vmapreduce_vlean43_v6`
 - **Título:** Estadística 3 — Propiedades en Muestras Finitas y Teoría Asintótica (`vmapreduce_vlean43_v6`)
 - **Total de Competencias:** 29 (1 Hecho, 18 Conceptos, 10 Habilidades)

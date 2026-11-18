@@ -135,10 +135,10 @@ class TestC2CV321PreHealerAndCompiler:
             # File with unclosed string (tokenize fails)
             broken_file.write_text('val = "unclosed string with \\rho and \\frac{a}{b}\n', encoding="utf-8")
             res = heal_cta_source_file(broken_file)
-            assert res is True
+            assert res is False
             content = broken_file.read_text(encoding="utf-8")
-            # Should have converted \rho and \frac via regex fallback
-            assert "\\\\rho" in content or "\\rho" in content
+            # Hardened fallback preserves syntax-broken source without regex-rewriting when no control chars exist
+            assert "\\rho" in content and "\\frac{a}{b}" in content
 
 
 class TestC2CV321KaTeXSyntaxAndControlChars:
@@ -625,7 +625,8 @@ class TestFormalAssumptionsAndCertification:
 
         cta_code = (
             'COURSE_ID = "test_certification"\n'
-            'TITLE = "Certification Test"\n\n'
+            'TITLE = "Certification Test"\n'
+            'CTA_CONTRACT_VERSION = 2\n\n'
             'COMPETENCIES = [\n'
             '    (\n'
             '        "concept",\n'
@@ -640,6 +641,9 @@ class TestFormalAssumptionsAndCertification:
             '            ("D-01-01", "Wrong belief 1", "Correct truth 1", "$0$", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica 1.", None),\n'
             '            ("D-01-02", "Wrong belief 2", "Correct truth 2", "$0$", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica 2.", None),\n'
             '            ("D-01-03", "Wrong belief 3", "Correct truth 3", "$0$", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica 3.", None),\n'
+            '        ],\n'
+            '        [\n'
+            '            ("A-C01-01", "$x > 0$ strictly positive", "Breakdown of convergence", "Positivity", "Premise"),\n'
             '        ],\n'
             '    ),\n'
             ']\n'

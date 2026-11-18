@@ -1249,7 +1249,7 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
         )
         self.assertEqual(res_small_0.get("decision"), "allow", f"Expected allow for error_count=0 on 100 lines: {res_small_0}")
 
-        # Case B: error_count == 0 with large shard (460 lines > 450 on 1st compile) -> DENY write_file (legacy fallback)
+        # Case B: error_count == 0 with large shard (460 lines) -> ALLOW write_file (0 errors bypasses legacy line limit)
         large_content = "".join([f"# Line {i}\n" for i in range(460)])
         shard_py.write_text(large_content, encoding="utf-8")
         res_large_0 = evaluate_hook_payload(
@@ -1262,8 +1262,7 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             },
             custom_lock_file=str(self.lock_file),
         )
-        self.assertEqual(res_large_0.get("decision"), "deny")
-        self.assertIn("supera las 450 líneas", res_large_0.get("reason", ""))
+        self.assertEqual(res_large_0.get("decision"), "allow", f"Expected allow for error_count=0: {res_large_0}")
 
         # Case C: error_count is None with small shard (100 lines <= 450) -> ALLOW write_file
         shard_py.write_text(small_content, encoding="utf-8")

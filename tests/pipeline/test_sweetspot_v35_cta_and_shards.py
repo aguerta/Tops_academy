@@ -63,7 +63,7 @@ COMPETENCIES = [
                 r"Asume erróneamente que \\lim_{n\\to\\infty} \\frac{\\sigma^2}{n} = \\sigma^2 constante.",
                 r"El límite converge a cero: $\\lim_{n\\to\\infty} \\frac{\\sigma^2}{n} = 0$.",
                 "Varianza residual constante",
-                "Revisar detalladamente el comportamiento asintotico formal de la varianza muestral cuando $n \\to \\infty$.",
+                r"Revisar detalladamente el comportamiento asintotico formal de la varianza muestral cuando $n \\to \\infty$.",
                 None,
             ),
             (
@@ -123,7 +123,7 @@ COMPETENCIES = [
                 r"Escalar por $n$ en lugar de $\\sqrt{n}$ en la normalización.",
                 r"El factor correcto de escalamiento asintótico es $\\sqrt{n}(\\hat{\\theta}_n - \\theta)$.",
                 "Factor de escala lineal",
-                "El teorema central del limite exige multiplicar necesariamente por la raiz cuadrada del tamano muestral $\\sqrt{n}$.",
+                r"El teorema central del limite exige multiplicar necesariamente por la raiz cuadrada del tamano muestral $\\sqrt{n}$.",
                 "Omitir aplicar la raíz cuadrada al factor de normalización $n$",
             ),
             (
@@ -855,7 +855,7 @@ TEMPLATES = [
         "multiple_choice_7_options",
         gen_c06,
         ver_c06,
-        ("easy", "Remember"),
+        ("easy", "Apply"),
         [
             r"Para una muestra de tamaño $n = @n@$, determine la varianza asintótica del estimador MLE:",
             r"Considere el estimador de máxima verosimilitud con $n = @n@$. Calcule $\\text{Avar}(\\hat{\\theta})$:",
@@ -961,8 +961,16 @@ def _gen_c06(rng, arch):
         v = {"n": n, "ans": ans}
         for i in range(1, 7):
             v[f"d{i}"] = ans + i * 2
+        _rat1 = [
+            "Omisión del desplazamiento aditivo respecto a @n@ al estimar @d1@.",
+            "Duplicación del término independiente sobre @ans@ obteniendo @d2@.",
+            "Aplicación de pendiente errónea en la muestra @n@ que produce @d3@.",
+            "Desajuste de escala en el estimador @ans@ que desvía el resultado a @d4@.",
+            "Sustitución incompleta del tamaño muestral @n@ resultando en @d5@.",
+            "Sesgo de truncamiento asintótico alrededor de @ans@ evaluado en @d6@.",
+        ]
         dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo uno con parámetro @d{i}@.")
+            (f"D-C06-0{i}", f"$@d{i}@$", _rat1[i - 1])
             for i in range(1, 7)
         ]
         return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
@@ -971,8 +979,16 @@ def _gen_c06(rng, arch):
         v = {"n": n, "ans": ans}
         for i in range(1, 7):
             v[f"d{i}"] = ans + i * 5
+        _rat2 = [
+            "Cálculo lineal simple sobre @n@ en lugar del factor doble, dando @d1@.",
+            "Exceso de ponderación en el coeficiente de @ans@ que arroja @d2@.",
+            "Error de signo en la corrección de segundo orden para @n@ hacia @d3@.",
+            "Confusión entre varianza asintótica y media muestral @ans@ en @d4@.",
+            "Aproximación por defecto del multiplicador de @n@ produciendo @d5@.",
+            "Desviación acumulada por redondeo prematuro de @ans@ hasta @d6@.",
+        ]
         dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo dos con parámetro @d{i}@.")
+            (f"D-C06-0{i}", f"$@d{i}@$", _rat2[i - 1])
             for i in range(1, 7)
         ]
         return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
@@ -1013,7 +1029,7 @@ def ver_c06_4(res):
 TEMPLATES = [
     (
         "T-C06-01", "C-06", "multiple_choice_7_options",
-        gen_c06_1, ver_c06_1, ("easy", "Remember"),
+        gen_c06_1, ver_c06_1, ("easy", "Apply"),
         [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
             r"Arquetipo 1 Variante B: Determine el valor asintótico frontal con $n = @n@$:",
@@ -1030,7 +1046,7 @@ TEMPLATES = [
     ),
     (
         "T-C06-02", "C-06", "multiple_choice_7_options",
-        gen_c06_2, ver_c06_2, ("medium", "Understand"),
+        gen_c06_2, ver_c06_2, ("medium", "Apply"),
         [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
             r"Arquetipo 2 Variante B: Diagnóstico inverso de varianza asintótica con $n = @n@$:",
@@ -1197,8 +1213,16 @@ def _gen_c06(rng, arch):
         v = {"n": n, "ans": ans}
         for i in range(1, 7):
             v[f"d{i}"] = ans + i * 2
+        _rat1 = [
+            "Omisión del desplazamiento aditivo respecto a @n@ al estimar @d1@.",
+            "Duplicación del término independiente sobre @ans@ obteniendo @d2@.",
+            "Aplicación de pendiente errónea en la muestra @n@ que produce @d3@.",
+            "Desajuste de escala en el estimador @ans@ que desvía el resultado a @d4@.",
+            "Sustitución incompleta del tamaño muestral @n@ resultando en @d5@.",
+            "Sesgo de truncamiento asintótico alrededor de @ans@ evaluado en @d6@.",
+        ]
         dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo uno con parámetro @d{i}@.")
+            (f"D-C06-0{i}", f"$@d{i}@$", _rat1[i - 1])
             for i in range(1, 7)
         ]
         return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
@@ -1207,8 +1231,16 @@ def _gen_c06(rng, arch):
         v = {"n": n, "ans": ans}
         for i in range(1, 7):
             v[f"d{i}"] = ans + i * 5
+        _rat2 = [
+            "Cálculo lineal simple sobre @n@ en lugar del factor doble, dando @d1@.",
+            "Exceso de ponderación en el coeficiente de @ans@ que arroja @d2@.",
+            "Error de signo en la corrección de segundo orden para @n@ hacia @d3@.",
+            "Confusión entre varianza asintótica y media muestral @ans@ en @d4@.",
+            "Aproximación por defecto del multiplicador de @n@ produciendo @d5@.",
+            "Desviación acumulada por redondeo prematuro de @ans@ hasta @d6@.",
+        ]
         dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo dos con parámetro @d{i}@.")
+            (f"D-C06-0{i}", f"$@d{i}@$", _rat2[i - 1])
             for i in range(1, 7)
         ]
         return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
@@ -1247,7 +1279,7 @@ def ver_c06_4(res):
 TEMPLATES = [
     (
         "T-C06-01", "C-06", "multiple_choice_7_options",
-        gen_c06_1, ver_c06_1, ("easy", "Remember"),
+        gen_c06_1, ver_c06_1, ("easy", "Apply"),
         [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
             r"Arquetipo 1 Variante B: Determine el valor asintótico frontal con $n = @n@$:",
@@ -1264,7 +1296,7 @@ TEMPLATES = [
     ),
     (
         "T-C06-02", "C-06", "multiple_choice_7_options",
-        gen_c06_2, ver_c06_2, ("medium", "Understand"),
+        gen_c06_2, ver_c06_2, ("medium", "Apply"),
         [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
             r"Arquetipo 2 Variante B: Diagnóstico inverso de varianza asintótica con $n = @n@$:",
