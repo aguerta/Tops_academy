@@ -132,6 +132,11 @@ def list_recent_c2c_runs(limit: int = 10) -> List[Dict[str, Any]]:
 # Transcript & Subagent Parsing
 # ---------------------------------------------------------------------------
 
+WORKFLOW_AGENT_RE = re.compile(
+    r"-\s*\[agent:(?P<type_name>[^\]]+)\]\s*(?P<role>[^\r\n]+?):\s*(?P<status>\w+)\s*\((?P<cid>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)"
+)
+
+
 class TranscriptParser:
     """Parses transcript.jsonl files into structured steps, tokens, tools, and subagents."""
 
@@ -276,11 +281,19 @@ class TranscriptParser:
 
         for rec in records:
             content = rec.get("content", "")
-            if "Created the following subagent" in content or "conversationId" in content:
+            if "Created the following subagent" in content or "conversationId" in content or "[agent:" in content:
                 # Find all UUIDs in content
                 cids = re.findall(r'"conversationId":\s*"([^"]+)"', content)
                 if not cids:
                     cids = re.findall(r'conversationId["\':\s]+([a-f0-9\-]{36})', content)
+                # Workflow-spawned (run_workflow / c2c_wave_workflow.py) agents:
+                # "- [agent:<type>] <role>: done (<uuid>): ..."
+                for wf_type, wf_role, wf_cid in _WF_AGENT_RE.findall(content):
+                    cid_meta.setdefault(wf_cid, {
+                        "role": wf_role.strip(' "\''),
+                        "type_name": wf_type.strip(),
+                    })
+                    cids.append(wf_cid)
 
                 for cid in cids:
                     if cid in seen_cids:
@@ -399,6 +412,12 @@ class TranscriptParser:
 # ---------------------------------------------------------------------------
 # Workload & Content Footprint Extraction
 # ---------------------------------------------------------------------------
+
+_WF_AGENT_RE = re.compile(
+    r"\[agent:([^\]\r\n]+)\]\s*([^\r\n]*?):\s*(?:done|failed|error)\s*\(([0-9a-f]{8}-[0-9a-f\-]{27})\)",
+    re.IGNORECASE,
+)
+
 
 class WorkloadExtractor:
     """Extracts raw content metrics: files, sizes, pages/slides, corpus, competencies.

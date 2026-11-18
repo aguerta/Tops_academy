@@ -333,6 +333,21 @@ class SubagentTreeResolver:
                 except Exception:
                     pass
 
+            # 3b. From run_workflow / c2c_wave_workflow.py completion messages:
+            # "- [agent:<type_name>] <Role>: done (<uuid>): ..."
+            if "[agent:" in content:
+                for wf_type, wf_role, wf_cid in re.findall(
+                    r"\[agent:([^\]\r\n]+)\]\s*([^\r\n]*?):\s*(?:done|failed|error)\s*\(([0-9a-f]{8}-[0-9a-f\-]{27})\)",
+                    content,
+                    re.IGNORECASE,
+                ):
+                    if wf_cid not in subagents:
+                        subagents[wf_cid] = {
+                            "conversation_id": wf_cid,
+                            "role": wf_role.strip(' "\'') or "unknown",
+                            "type": wf_type.strip() or "workflow_agent",
+                        }
+
         # 4. Infer roles from individual subagent transcripts if role is still generic/unknown
         brain_dir = get_brain_dir()
         for cid, info in list(subagents.items()):
@@ -1121,6 +1136,8 @@ def run_traceback_audit(
         s_steps = TranscriptReader.read_steps(sub_p)
         s_turns = TranscriptReader.extract_turns(s_steps)
         role = info.get("role", "subagent")
+        if role in all_agent_steps:
+            role = f"{role} ({cid[:6]})"
         all_agent_steps[role] = s_steps
         all_agent_turns[role] = s_turns
 

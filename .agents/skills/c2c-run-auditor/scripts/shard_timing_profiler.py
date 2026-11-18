@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 shard_timing_profiler.py - Forensic Multi-Shard & Repair Timing & Bottleneck Profiler for C2C.
 
@@ -15,6 +15,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+
+def _md_cell(value: Any, limit: int = 160) -> str:
+    """Sanitize text for a single-line Markdown table cell (no newlines, pipes, backticks)."""
+    s = re.sub(r"\s+", " ", str(value if value is not None else "")).strip()
+    s = s.replace("|", "\\|").replace("`", "'")
+    return s if len(s) <= limit else s[: limit - 1] + "…"
 
 
 ERROR_CODE_RE = re.compile(
@@ -63,6 +70,8 @@ def _profile_agent_record(
     t_path = brain_dir / cid / ".system_generated" / "logs" / "transcript.jsonl" if cid else None
 
     first_compile_time = None
+    first_step_time = None
+    last_step_time = None
     compile_runs = 0
     compile_fails = 0
     error_snippets: List[str] = []
@@ -79,6 +88,10 @@ def _profile_agent_record(
                         continue
                     rec = json.loads(line)
                     created_at = parse_iso(rec.get("created_at"))
+                    if created_at:
+                        if first_step_time is None:
+                            first_step_time = created_at
+                        last_step_time = created_at
 
                     # Inspect thinking in turn 0/1
                     if line_idx <= 2 and not first_thinking_snippet:
@@ -143,14 +156,16 @@ def _profile_agent_record(
         except Exception:
             pass
 
-    # Compute Pre and Post compile durations
-    if first_compile_time and spawn_time:
-        pre_compile_s = max(0.0, round((first_compile_time - spawn_time).total_seconds(), 1))
+    # Compute Pre and Post compile durations using actual subagent transcript timestamps
+    eff_start = first_step_time or spawn_time
+    eff_end = last_step_time or end_time
+    if first_compile_time and eff_start:
+        pre_compile_s = max(0.0, round((first_compile_time - eff_start).total_seconds(), 1))
     else:
         pre_compile_s = round(wall_time * 0.7, 1) if compile_runs == 0 else 0.0
 
-    if first_compile_time and end_time:
-        post_compile_s = max(0.0, round((end_time - first_compile_time).total_seconds(), 1))
+    if first_compile_time and eff_end:
+        post_compile_s = max(0.0, round((eff_end - first_compile_time).total_seconds(), 1))
     else:
         post_compile_s = max(0.0, round(wall_time - pre_compile_s, 1))
 
@@ -317,7 +332,7 @@ def generate_markdown_table(profile: Dict[str, Any]) -> str:
     )
 
     for s in shards:
-        errs = ", ".join(s["error_codes"][:3]) if s["error_codes"] else "0 errores"
+        errs = _md_cell(", ".join(s["error_codes"][:3]) if s["error_codes"] else "0 errores", 240)
         diag = []
         if s["pre_1st_compile_s"] > 240.0:
             diag.append("Overthinking / Exploración lenta Pre-Compile")
@@ -330,7 +345,7 @@ def generate_markdown_table(profile: Dict[str, Any]) -> str:
         if not diag:
             diag.append("Ejecución fluida (Pase limpio)")
 
-        diag_str = "; ".join(diag)
+        diag_str = _md_cell("; ".join(diag), 400)
         lines.append(
             f"| **{s['label']}** | `{s['wall_time_s']}s` | `{s['pre_1st_compile_s']}s` | `{s['post_1st_compile_s']}s` | `{s['compile_runs']} ({s['compile_fails']})` | `{s['edits_count']}` | `{errs}` | {diag_str} |"
         )
@@ -351,7 +366,7 @@ def generate_markdown_table(profile: Dict[str, Any]) -> str:
             "| :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |"
         )
         for r in repairs:
-            errs = ", ".join(r["error_codes"][:3]) if r["error_codes"] else "0 errores"
+            errs = _md_cell(", ".join(r["error_codes"][:3]) if r["error_codes"] else "0 errores", 240)
             diag = []
             if r["pre_1st_compile_s"] > 240.0:
                 diag.append("Diagnóstico profundo previo al primer compile")
@@ -361,7 +376,7 @@ def generate_markdown_table(profile: Dict[str, Any]) -> str:
                 diag.append(f"Micro-bucle: {r['micro_loop_reason']}")
             if not diag:
                 diag.append("Parche aplicado exitosamente")
-            diag_str = "; ".join(diag)
+            diag_str = _md_cell("; ".join(diag), 400)
             lines.append(
                 f"| **{r['label']}** | `{r['wall_time_s']}s` | `{r['pre_1st_compile_s']}s` | `{r['post_1st_compile_s']}s` | `{r['compile_runs']} ({r['compile_fails']})` | `{r['edits_count']}` | `{errs}` | {diag_str} |"
             )
@@ -406,3 +421,4 @@ if __name__ == "__main__":
     with open(run_dir / "shard_timing_decomposition.md", "w", encoding="utf-8") as f:
         f.write(md_table)
     print(f"[+] Markdown table saved to {run_dir / 'shard_timing_decomposition.md'}")
+
