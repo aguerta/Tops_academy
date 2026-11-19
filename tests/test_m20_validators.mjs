@@ -17,6 +17,8 @@ export * from '${repoPlatformSrc}/services/symbolicValidator.ts';
 export * from '${repoPlatformSrc}/components/canvas/TopologyValidator.ts';
 export * from '${repoPlatformSrc}/utils/questionUtils.ts';
 export * from '${repoPlatformSrc}/utils/socraticPrompt.ts';
+export * from '${repoPlatformSrc}/utils/ironExamGrading.ts';
+export * from '${repoPlatformSrc}/utils/latexOptionLabel.ts';
 `,
   'utf8'
 );
@@ -265,6 +267,200 @@ try {
   const mustSkip = ['fill_in_the_blank', 'open_symbolic', 'adversarial_break', 'unstructured_model', 'invariant_canvas'];
   for (const t of mustHave) assert.equal(m.requiresBlankFirstCurtain({ type: t }), true, t);
   for (const t of mustSkip) assert.equal(m.requiresBlankFirstCurtain({ type: t }), false, t);
+
+  // 9. P1-1: trap_predicates, evaluateAdversarialReadouts, slider_eq aliases, and toPlainOptionLabel
+  const trapAdv = {
+    mode: 'counterexample',
+    inputs: [{ id: 'x', label: 'x', type: 'number', min: 0, max: 100 }],
+    trap_predicates: [
+      {
+        expr: 'abs(x - 4) < 0.05',
+        distractor_id: 'D-TRAP-01',
+        error_rationale: 'Evaluaste el punto estacionario local x=4.',
+      },
+    ],
+    predicates: [{ id: 'P1', expr: 'x > 10', failure_rationale: 'Debe superar 10.' }],
+    computed_readouts: [{ id: 'R1', label: '$2x + 1$', expr: '2*x + 1', unit: 'usd' }],
+  };
+  const trapPredHit = m.validateAdversarialSubmission(
+    { selectedStepId: null, selectedReasonId: null, witnessValues: { x: '4' } },
+    trapAdv
+  );
+  assert.equal(trapPredHit.isCorrect, false);
+  assert.equal(trapPredHit.matchedDistractorId, 'D-TRAP-01');
+
+  const roList = m.evaluateAdversarialReadouts(trapAdv.computed_readouts, { x: '12' });
+  assert.equal(roList[0].value, 25);
+  assert.equal(roList[0].formatted, '25');
+  assert.equal(roList[0].unit, 'usd');
+
+  const sliderAliasSpec = {
+    mode: 'cartesian',
+    sliders: [{ id: 's1', label: 'Pendiente', min: 0, max: 10, initial: 1 }],
+    invariants: [
+      { id: 'S_TV', kind: 'slider_eq', slider_id: 's1', target_value: 4, tolerance: 0.1 },
+      { id: 'S_EX', kind: 'slider_eq', slider_id: 's1', expected: '2*2', tolerance: 0.1 },
+    ],
+  };
+  assert.equal(
+    m.validateCartesianInvariants({ sliderValues: { s1: 4 }, pointPositions: {} }, sliderAliasSpec).isCorrect,
+    true
+  );
+  assert.equal(
+    m.validateCartesianInvariants({ sliderValues: { s1: 2 }, pointPositions: {} }, sliderAliasSpec).isCorrect,
+    false
+  );
+
+  const strippedLabel = m.toPlainOptionLabel('$x^2 + \\frac{1}{2} - \\alpha \\le 0$');
+  assert.equal(strippedLabel.includes('$'), false);
+  assert.equal(strippedLabel.includes('\\'), false);
+
+  // 10. M20 Iron Exam Grading across all 9 modalities + Metacognitive Audit
+  const ironQuestions = [
+    {
+      id: 'q1_mc7',
+      competency_id: 'C-01',
+      type: 'multiple_choice_7_options',
+      stem: 'MC7',
+      options: [
+        { id: 'opt_a', content: '10', is_correct: true },
+        { id: 'opt_b', content: '20', is_correct: false, error_rationale: 'Wrong' },
+      ],
+      correct_answer: 'opt_a',
+      hints: [],
+      solution: '10',
+    },
+    {
+      id: 'q2_ms',
+      competency_id: 'C-01',
+      type: 'multiple_select',
+      stem: 'MS',
+      options: [
+        { id: 'opt_a', content: 'A', is_correct: true },
+        { id: 'opt_b', content: 'B', is_correct: true },
+        { id: 'opt_c', content: 'C', is_correct: false, error_rationale: 'Not C' },
+      ],
+      correct_answer: ['opt_a', 'opt_b'],
+      hints: [],
+      solution: 'A, B',
+    },
+    {
+      id: 'q3_fib',
+      competency_id: 'Hab-01',
+      type: 'fill_in_the_blank',
+      stem: '2+2',
+      options: [],
+      correct_answer: '4',
+      hints: [],
+      solution: '4',
+    },
+    {
+      id: 'q4_os',
+      competency_id: 'Hab-01',
+      type: 'open_symbolic',
+      stem: 'd/dx(x^2)',
+      options: [],
+      correct_answer: { expression: '2*x', canonical_algebraic: '2*x', variables: ['x'] },
+      hints: [],
+      solution: '2x',
+    },
+    {
+      id: 'q5_dag',
+      competency_id: 'C-01',
+      type: 'proof_dag',
+      stem: 'DAG',
+      options: [],
+      proof_dag: {
+        steps: [
+          { id: 'S1', content: '1', is_distractor: false },
+          { id: 'S2', content: '2', is_distractor: false },
+          { id: 'S3', content: '3', is_distractor: false },
+        ],
+        edges: [['S1', 'S2'], ['S2', 'S3']],
+        require_justification: false,
+      },
+      correct_answer: {},
+      hints: [],
+      solution: 'S1->S2->S3',
+    },
+    {
+      id: 'q6_adv',
+      competency_id: 'Hab-01',
+      type: 'adversarial_break',
+      stem: 'Adv',
+      options: [],
+      adversarial_break: trapAdv,
+      correct_answer: {},
+      hints: [],
+      solution: 'x=20',
+    },
+    {
+      id: 'q7_um',
+      competency_id: 'Hab-01',
+      type: 'unstructured_model',
+      stem: 'UM',
+      options: [],
+      unstructured_model: umSpec,
+      correct_answer: {},
+      hints: [],
+      solution: 'S0',
+    },
+    {
+      id: 'q8_ic',
+      competency_id: 'Hab-02',
+      type: 'invariant_canvas',
+      stem: 'IC',
+      options: [],
+      invariant_canvas: cartSpec,
+      correct_answer: {},
+      hints: [],
+      solution: 'kink',
+    },
+    {
+      id: 'q9_cm',
+      competency_id: 'C-01',
+      type: 'concept_matching',
+      stem: 'CM',
+      options: [],
+      concept_matching: cmSpec,
+      correct_answer: {},
+      hints: [],
+      solution: 'P1->T1',
+    },
+  ];
+
+  // Un-interacted canvas must be graded unanswered + incorrect
+  const canvasDraftNotInteracted = m.createInitialIronDraft(ironQuestions[7]);
+  assert.equal(m.gradeIronExamQuestion(ironQuestions[7], canvasDraftNotInteracted).answered, false);
+  assert.equal(m.gradeIronExamQuestion(ironQuestions[7], canvasDraftNotInteracted).isCorrect, false);
+
+  const drafts = {
+    q1_mc7: { ...m.createInitialIronDraft(ironQuestions[0]), selectedOption: 'opt_a' }, // high + right => calibrated_mastery
+    q2_ms: { ...m.createInitialIronDraft(ironQuestions[1]), selectedMultiOptions: ['opt_c'] }, // high + wrong => illusion_of_competence
+    q3_fib: { ...m.createInitialIronDraft(ironQuestions[2]), fillBlankValue: '4' }, // low + right => lucky_guess
+    q4_os: { ...m.createInitialIronDraft(ironQuestions[3]), structuredAnswer: { kind: 'open_symbolic', expression: 'x' } }, // low + wrong => known_gap
+    q5_dag: { ...m.createInitialIronDraft(ironQuestions[4]), structuredAnswer: { kind: 'proof_dag', orderedStepIds: ['S1', 'S2', 'S3'], justifications: {} } },
+    q6_adv: { ...m.createInitialIronDraft(ironQuestions[5]), structuredAnswer: { kind: 'adversarial_break', selectedStepId: null, selectedReasonId: null, witnessValues: { x: '20' } } },
+    q7_um: { ...m.createInitialIronDraft(ironQuestions[6]), structuredAnswer: { kind: 'unstructured_model', ...s0Good } },
+    q8_ic: {
+      ...m.createInitialIronDraft(ironQuestions[7]),
+      structuredAnswer: { kind: 'invariant_canvas', sliderValues: { cutoff: 50 }, pointPositions: { opt: { x: 50, y: 100 } }, selectedEdgeIds: [], infoSets: [] },
+      canvasInteracted: true,
+    },
+    q9_cm: { ...m.createInitialIronDraft(ironQuestions[8]), structuredAnswer: { kind: 'concept_matching', pairs: { P1: 'T1', P2: 'T2' } } },
+  };
+  const { audit } = m.computeMetacognitiveAudit(
+    ironQuestions,
+    drafts,
+    { q1_mc7: 'high', q2_ms: 'high', q3_fib: 'low', q4_os: 'low' },
+    'high',
+    { q2_ms: true }
+  );
+  assert.equal(audit.correct_count, 7);
+  assert.equal(audit.calibrated_mastery_count, 6);
+  assert.equal(audit.illusions_of_competence_count, 1);
+  assert.equal(audit.lucky_guesses_count, 1);
+  assert.equal(audit.known_gaps_count, 1);
 
   console.log('ALL M20 VALIDATOR UNIT TESTS PASSED!');
 } finally {

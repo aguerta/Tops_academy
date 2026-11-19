@@ -1,9 +1,12 @@
-"""Reproducible C2C canonical course builder for Milestone 20 Core.
+"""Reproducible C2C canonical course builder for Milestone 20.
 
 Compiles the 4 canonical San Marcos / Eloy Ávalos Microeconomics cases from
 FUTURE_MILESTONES.md + concept_matching + FIB ds + invariant_canvas (cartesian & tree)
-through the real Content-to-Course pipeline:
-  compile_cta -> compile_shard(strict=True) -> check_templates_file_or_dir(strict=True)
+through the real Content-to-Course pipeline under the strict v2 contract
+(K=2 per active modality, >= 80% active, 0 MC7 in Skills, <= 1 MC7 in Concepts,
+4 anti-clone gates, >= 3 steps and >= 1 edge in ProofDAG/find_fallacy):
+  compile_cta -> compile_shard(strict=True, templates_per_modality=2)
+  -> check_templates_file_or_dir(strict=True)
   -> instantiate_competency -> validate_course_content(strict=True) -> run_full_audit
 
 Writes output strictly inside tests/fixtures/m20_canonical_cases/ (NEVER into courses/).
@@ -12,12 +15,11 @@ Writes output strictly inside tests/fixtures/m20_canonical_cases/ (NEVER into co
 from __future__ import annotations
 
 import json
-import os
 import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 C2C_DIR = ROOT_DIR / ".agents" / "skills" / "content-to-course"
@@ -63,7 +65,7 @@ COMPETENCIES = [
             ("No negatividad productiva", r"$x > 0$ para que $c'(x)$ esté bien definido.", "Exige dominio abierto positivo en el cálculo marginal.", r"División por cero o indeterminación en $x = 0$."),
             ("Precio competitivo dado", r"$p > 0$ exógeno para la empresa precio-aceptante.", "Fija ingreso marginal constante igual a $p$.", r"Si $p$ dependiera de $x$ cambiaría la CPO."),
         ],
-        ["unstructured_model", "open_symbolic", "fill_in_the_blank", "adversarial_break"],
+        ["open_symbolic", "fill_in_the_blank", "adversarial_break"],
     ),
     (
         "skill",
@@ -76,7 +78,7 @@ COMPETENCIES = [
         ["Hab-01"],
         [
             ("Descuento En Tramo Inicial", "Aplicar el descuento porcentual directamente sobre el precio del tramo inicial o confundir $r$ con $(1-r)$.", r"El precio efectivo tras superar $\bar{x}_1$ es $p_1(1-r)$ exclusivamente sobre unidades marginales.", r"$p_1 \cdot r$", "Distingue cuidadosamente la fracción descontada $r$ frente al factor de precio efectivamente pagado $(1-r)$."),
-            ("Omision Gasto Bloque Previo", r"Evaluar el gasto total del Tramo B como $p_1(1-r)x_1$ omitiendo el pago completo $p_1\bar{x}_1$ del primer bloque.", r"Para $x_1 > \bar{x}_1$ el gasto es $p_1\bar{x}_1 + p_1(1-r)(x_1 - \bar{x}_1)$.", r"$p_1 x_1$", r"Suma siempre el costo exacto de las primeras $\bar{x}_1$ unidades antes de agregar el costo del exceso.", "Omitir el pago íntegro p1 * x_bar del primer tramo al expresar el gasto del segundo segmento."),
+            ("Omision Gasto Bloque Previo", r"Evaluar el gasto total del Tramo B como $p_1(1-r)x_1$ omitiendo el pago completo $p_1\bar{x}_1$ del primer bloque.", r"Para $x_1 > \bar{x}_1$ el gasto es $p_1\bar{x}_1 + p_1(1-r)(x_1 - \bar{x}_1)$.", r"$p_1 x_1$", "Suma siempre el costo exacto de las primeras $\bar{x}_1$ unidades antes de agregar el costo del exceso.", "Omitir el pago íntegro p1 * x_bar del primer tramo al expresar el gasto del segundo segmento."),
             ("Lagrangiano Global Unico", "Aplicar condiciones KKT o Lagrangiano clásico asumiendo unicidad de tangencia en un conjunto no convexo.", "Con un quiebre no convexo pueden existir dos tangencias locales y un candidato de vértice que deben compararse.", r"$\text{Óptimo único}$", r"Compara explícitamente las utilidades en $u(x^A)$, el vértice $u(x^{\text{kink}})$ y el segundo tramo $u(x^B)$.", "Omitir la comparación global entre tangencias locales y la condición de esquina en conjuntos no convexos."),
             ("Condicion Esquina Quiebre", r"Ignorar el rango de pendientes $p_1(1-r) \le TMS(x^{\text{kink}}) \le p_1$ o ubicar el óptimo fuera del vértice.", r"En el punto de quiebre $\bar{x}_1$ el vértice no diferenciable es óptimo si la $TMS$ yace entre ambas pendientes.", r"$TMS \neq p_1$", "Verifica la inclusión de la $TMS$ dentro del cono normal delimitado por las pendientes derecha e izquierda."),
             ("Inversion Rol Presupuesto", "Confundir el parámetro exógeno de descuento o renta con la variable de elección endógena.", "Solo las cantidades de consumo $(x_1, x_2)$ son variables de decisión endógenas del hogar.", r"$r = \text{endógena}$", "Diferencia con precisión las variables de elección del consumidor frente a los precios e ingreso exógenos."),
@@ -86,7 +88,7 @@ COMPETENCIES = [
             ("Descuento marginal por bloque", r"El descuento $r \in (0,1)$ aplica solo a las unidades $x_1 > \bar{x}_1$.", r"Genera un ángulo entrante no convexo en $(\bar{x}_1, m - p_1\bar{x}_1)$.", r"Si aplicara a todas las unidades habría salto vertical."),
             ("Preferencias estrictamente convexas", r"Curvas de indiferencia suaves y estrictamente convexas.", "Garantiza comparación finita entre dos tangencias locales y el vértice.", r"Sin convexidad de preferencias habría soluciones de esquina triviales."),
         ],
-        ["invariant_canvas", "open_symbolic", "proof_dag", "unstructured_model"],
+        ["invariant_canvas", "open_symbolic", "unstructured_model"],
     ),
     (
         "concept",
@@ -108,7 +110,7 @@ COMPETENCIES = [
         [
             ("Discontinuidad de escalera", r"$u(x_1,x_2)=\lfloor x_1\rfloor+\lfloor x_2\rfloor$ es discontinua en enteros.", "Invalida criterios diferenciales basados en hessiano orlado.", r"El análisis debe operar directo sobre conjuntos de contorno superior."),
         ],
-        ["adversarial_break", "invariant_canvas", "concept_matching", "fill_in_the_blank"],
+        ["adversarial_break", "invariant_canvas", "fill_in_the_blank"],
     ),
     (
         "concept",
@@ -136,100 +138,22 @@ COMPETENCIES = [
 '''
 
 
-SHARD_01_DATA_PY = r'''# Shard 01 Data — 4 Casos Canónicos de Milestone 20 Core (16 plantillas, 4 arquetipos c/u)
+SHARD_01_DATA_PY = r'''# Shard 01 Data — 4 Casos Canónicos de Milestone 20 (25 plantillas bajo K=2, >=80% activo, 4 candados anti-clon)
 import math
 
 
+def _ok_sep(vals):
+    return len(set(vals)) == len(vals) and all(
+        b - a >= 0.02 * max(abs(a), abs(b), 1.0)
+        for a, b in zip(sorted(vals), sorted(vals)[1:])
+    )
+
+
 # ==============================================================================
-# COMPETENCIA Hab-01 (Skill — Caso 1: Rendimientos Crecientes c(x) = a*sqrt(x) + F)
+# COMPETENCIA Hab-01 (Skill — 0 MC7, M=3, K=2 => 6 plantillas, 100% activo)
 # ==============================================================================
 
-def gen_hab01_stage0(rng):
-    k = rng.randint(2, 10)
-    a = 2 * k
-    F = rng.randint(15, 75)
-    p = rng.randint(2, 12)
-    um = {
-        "phase1_variables": {
-            "prompt": "Clasifica cada símbolo de la firma competitiva con tecnología $c(x) = @a@\\sqrt{x} + @F@$ antes de derivar:",
-            "roles": ["Variable de decisión endógena", "Parámetro exógeno de mercado", "Costo fijo exógeno"],
-            "items": [
-                {
-                    "id": "V_x",
-                    "label": "Cantidad producida $x$",
-                    "correct_role": "Variable de decisión endógena",
-                    "distractor_id": "D-Hab01-01",
-                    "error_rationale": "Confusión estructural: la firma elige libremente el nivel productivo $x$ con parámetro de costo @a@ y fijo @F@.",
-                },
-                {
-                    "id": "V_p",
-                    "label": "Precio competitivo $p = @p@$",
-                    "correct_role": "Parámetro exógeno de mercado",
-                    "error_rationale": "Una empresa precio-aceptante toma el precio de mercado $p = @p@$ como dato exógeno independiente de $x$.",
-                },
-                {
-                    "id": "V_F",
-                    "label": "Costo fijo $F = @F@$",
-                    "correct_role": "Costo fijo exógeno",
-                    "error_rationale": "El monto constante $F = @F@$ representa un costo fijo invariante frente al volumen producido $x$.",
-                },
-            ],
-        },
-        "phase2_assumptions": {
-            "prompt": "Audita la tecnología $c(x) = @a@\\sqrt{x} + @F@$ y marca los supuestos activos:",
-            "options": [
-                {
-                    "id": "A_ir",
-                    "content": "Rendimientos crecientes: costo marginal decreciente $c''(x) < 0$ para todo $x > 0$.",
-                    "is_required": True,
-                },
-                {
-                    "id": "A_conv",
-                    "content": r"La segunda derivada del beneficio satisface $\pi''(x) = -c''(x) > 0$ (convexidad).",
-                    "is_required": True,
-                },
-                {
-                    "id": "A_conc",
-                    "content": r"Concavidad estándar garantizada: $\pi''(x) < 0$ en todo el dominio productivo.",
-                    "is_required": False,
-                    "distractor_id": "D-Hab01-02",
-                    "error_rationale": "Suponer $\\pi''(x) < 0$ cuando $c(x) = @a@\\sqrt{x} + @F@$ invierte el signo de curvatura de segundo orden.",
-                },
-            ],
-        },
-        "phase3_formulation": {
-            "prompt": "Dictamina la naturaleza del punto estacionario $p = CMg(x)$ antes de despejar:",
-            "input_mode": "select",
-            "options": [
-                {
-                    "id": "F_min",
-                    "content": r"El punto crítico $p = CMg(x)$ constituye un mínimo local de beneficios ($\pi''(x) > 0$).",
-                    "is_correct": True,
-                },
-                {
-                    "id": "F_max",
-                    "content": r"El punto crítico $p = CMg(x)$ determina el óptimo competitivo máximo con beneficio positivo.",
-                    "is_correct": False,
-                    "distractor_id": "D-Hab01-02",
-                    "error_rationale": "Aplicar el criterio de primer orden con $c(x) = @a@\\sqrt{x} + @F@$ sin chequear $\\pi''(x) > 0$ maximiza las pérdidas.",
-                },
-            ],
-        },
-    }
-    return {"vars": {"a": a, "F": F, "p": p}, "unstructured_model": um}
-
-
-def ver_hab01_stage0(res):
-    um = res.get("unstructured_model") if isinstance(res, dict) else None
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
-    if not isinstance(um, dict) or not v.get("a"):
-        return False
-    req = [o["id"] for o in um["phase2_assumptions"]["options"] if o.get("is_required")]
-    corr_p3 = [o["id"] for o in um["phase3_formulation"]["options"] if o.get("is_correct")]
-    return req == ["A_ir", "A_conv"] and corr_p3 == ["F_min"]
-
-
-def gen_hab01_open_sym(rng):
+def gen_hab01_os1(rng):
     k = rng.randint(2, 26)
     a = 2 * k
     F = rng.randint(10, 65)
@@ -251,14 +175,45 @@ def gen_hab01_open_sym(rng):
     }
 
 
-def ver_hab01_open_sym(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
+def ver_hab01_os1(c, v):
     k = v.get("k")
-    return bool(k) and c.strip() == f"{k}/sqrt(x)"
+    a = v.get("a")
+    s = str(c).replace(" ", "")
+    return bool(k) and s in (f"{k}/sqrt(x)", f"{k}*x^(-1/2)", f"{a}/(2*sqrt(x))")
 
 
-def gen_hab01_fib_profit(rng):
+def gen_hab01_os2(rng):
+    a = 2 * rng.randint(2, 24)
+    F = rng.randint(12, 80)
+    ans = f"{a}/sqrt(x) + {F}/x"
+    return {
+        "vars": {"a": a, "F": F},
+        "correct": ans,
+        "accepted_equivalents": [ans, f"({a}*sqrt(x) + {F})/x", f"{a}*x^(-1/2) + {F}*x^(-1)"],
+        "variables": ["x"],
+        "symbolic_config": {
+            "variables": ["x"],
+            "palette": ["sqrt()", "^", "/", "+", "-"],
+            "placeholder": "Ej: 6/sqrt(x) + 20/x",
+        },
+        "ds": [
+            ("D-Hab01-04", f"{a}*sqrt(x) + {F}", r"Reportaste el costo total $c(x) = @a@\sqrt{x} + @F@$ sin dividir entre la producción $x$ para hallar el costo medio."),
+            ("D-Hab01-06", f"{a}/sqrt(x)", r"Omitiste prorratear el costo fijo medio $@F@/x$ al dividir $@a@\sqrt{x} + @F@$ entre la cantidad $x$."),
+        ],
+    }
+
+
+def ver_hab01_os2(c, v):
+    import sympy
+    x = sympy.Symbol("x")
+    try:
+        target = v["a"] / sympy.sqrt(x) + v["F"] / x
+        return sympy.simplify(sympy.sympify(str(c)) - target) == 0
+    except Exception:
+        return False
+
+
+def gen_hab01_fib1(rng):
     k = rng.randint(1, 6)
     a = 2 * k
     p = rng.randint(2, 5)
@@ -280,9 +235,7 @@ def gen_hab01_fib_profit(rng):
     }
 
 
-def ver_hab01_fib_profit(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
+def ver_hab01_fib1(c, v):
     try:
         expected = int(v["p"] * v["x_hi"] - v["a"] * v["m_hi"] - v["F"])
         return abs(float(c) - expected) < 1e-6
@@ -290,7 +243,36 @@ def ver_hab01_fib_profit(res):
         return False
 
 
-def gen_hab01_adv(rng):
+def gen_hab01_fib2(rng):
+    for _ in range(40):
+        m = rng.randint(3, 18)
+        p = rng.randint(2, 9)
+        k = m * p
+        a = 2 * k
+        ans = m * m
+        d_nosq = m
+        d_inv = k * p
+        if _ok_sep([ans, d_nosq, d_inv]):
+            break
+    return {
+        "vars": {"a": a, "k": k, "p": p, "m": m, "ans": ans, "d_nosq": d_nosq, "d_inv": d_inv},
+        "correct": str(ans),
+        "ds": [
+            ("D-Hab01-02", str(d_nosq), r"Reportaste $\sqrt{x} = @k@/@p@ = @d_nosq@$ sin elevar al cuadrado para despejar el punto crítico $x_{\text{stat}}$."),
+            ("D-Hab01-01", str(d_inv), r"Multiplicaste $@k@$ por $@p@$ dando $@d_inv@$ en vez de despejar $(@k@/@p@)^2$ desde $p = CMg(x)$ con $a=@a@$."),
+        ],
+    }
+
+
+def ver_hab01_fib2(c, v):
+    try:
+        expected = int((v["k"] // v["p"]) ** 2)
+        return abs(float(c) - expected) < 1e-6
+    except Exception:
+        return False
+
+
+def gen_hab01_adv_ff(rng):
     b = rng.randint(2, 12)
     b_dbl = 2 * b
     F = rng.randint(10, 50)
@@ -353,20 +335,79 @@ def gen_hab01_adv(rng):
     return {"vars": {"b": b, "b_dbl": b_dbl, "F": F, "p_val": p_val}, "adversarial_break": adv}
 
 
-def ver_hab01_adv(res):
+def ver_hab01_adv_ff(res):
     adv = res.get("adversarial_break") if isinstance(res, dict) else None
     if not isinstance(adv, dict):
         return False
-    f_steps = [s["id"] for s in adv.get("steps", []) if s.get("is_fallacy")]
+    steps = adv.get("steps", [])
+    f_steps = [s["id"] for s in steps if s.get("is_fallacy")]
     r_corr = [r["id"] for r in adv.get("reason_options", []) if r.get("is_correct")]
-    return f_steps == ["A3"] and r_corr == ["R_cs"]
+    return len(steps) >= 3 and f_steps == ["A3"] and r_corr == ["R_cs"]
+
+
+def gen_hab01_adv_ce(rng):
+    k = rng.randint(2, 8)
+    a = 2 * k
+    p = rng.randint(2, 6)
+    F = rng.randint(10, 40)
+    m_stat = k // p + 1
+    k = m_stat * p
+    a = 2 * k
+    x_stat = m_stat * m_stat
+    pi_stat = int(p * x_stat - a * m_stat - F)
+    m_w = m_stat + 6
+    x_w = m_w * m_w
+    adv = {
+        "mode": "counterexample",
+        "prompt": r"Un analista afirma que $x_{\text{stat}} = @x_stat@$ maximiza $\pi(x) = @p@x - @a@\sqrt{x} - @F@$ (donde $\pi_{\text{stat}} = @pi_stat@$). Exhibe un nivel $x > 0$ con mayor beneficio:",
+        "inputs": [
+            {"id": "x", "label": "x", "type": "number", "min": 0.5, "max": 900, "step": 1, "placeholder": f"Ej: {x_w}"},
+        ],
+        "predicates": [
+            {
+                "id": "P_DOM",
+                "expr": "x > 0",
+                "distractor_id": "D-Hab01-01",
+                "failure_rationale": r"En competencia con tecnología $c(x)=@a@\sqrt{x}+@F@$, el nivel productivo $x$ debe ser estrictamente positivo.",
+            },
+            {
+                "id": "P_SUP",
+                "expr": f"{p}*x - {a}*sqrt(x) - {F} > {pi_stat}",
+                "distractor_id": "D-Hab01-05",
+                "failure_rationale": r"El volumen $x$ propuesto no supera el beneficio estacionario $\pi_{\text{stat}} = @pi_stat@$ bajo $p=@p@$ y $F=@F@$.",
+            },
+        ],
+        "trap_predicates": [
+            {
+                "expr": f"abs(x - {x_stat}) < 0.05",
+                "distractor_id": "D-Hab01-02",
+                "error_rationale": r"Evaluaste el propio mínimo local $x_{\text{stat}} = @x_stat@$ donde $\pi''(x) > 0$ minimiza beneficios.",
+            },
+        ],
+        "computed_readouts": [
+            {"label": r"$\pi(x)$", "expr": f"{p}*x - {a}*sqrt(x) - {F}"},
+            {"label": r"$\pi(x) - \pi_{\text{stat}}$", "expr": f"{p}*x - {a}*sqrt(x) - {F} - ({pi_stat})"},
+        ],
+        "sample_witness": {"x": float(x_w)},
+    }
+    return {"vars": {"a": a, "p": p, "F": F, "x_stat": x_stat, "pi_stat": pi_stat}, "adversarial_break": adv}
+
+
+def ver_hab01_adv_ce(res):
+    adv = res.get("adversarial_break") if isinstance(res, dict) else None
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    if not isinstance(adv, dict) or adv.get("mode") != "counterexample":
+        return False
+    x = (adv.get("sample_witness") or {}).get("x", 0)
+    pi_x = v["p"] * x - v["a"] * math.sqrt(x) - v["F"]
+    return x > 0 and pi_x > v["pi_stat"]
 
 
 # ==============================================================================
-# COMPETENCIA Hab-02 (Skill — Caso 2: Restricción Presupuestaria No Convexa)
+# COMPETENCIA Hab-02 (Skill — 0 MC7, M=3, K=2 => 6 plantillas, 100% activo)
 # ==============================================================================
 
-def gen_hab02_canvas_cart(rng):
+def gen_hab02_ic1(rng):
     p1 = rng.choice([2, 4])
     r_pct = 50 if p1 == 2 else rng.choice([25, 50])
     p1_disc = int(p1 * (100 - r_pct) // 100)
@@ -391,13 +432,7 @@ def gen_hab02_canvas_cart(rng):
             }
         ],
         "interactive_points": [
-            {
-                "id": "pt_kink",
-                "label": "Vértice no convexo",
-                "x": 1,
-                "y": 1,
-                "color": "#dc2626",
-            }
+            {"id": "pt_kink", "label": "Vértice no convexo", "x": 1, "y": 1, "color": "#dc2626"}
         ],
         "invariants": [
             {
@@ -429,12 +464,12 @@ def gen_hab02_canvas_cart(rng):
                 "error_rationale": "La restricción debe exhibir cambio estricto de pendiente en $\\bar{x}_1 = @x_bar@$ quebrando la convexidad clásica.",
             },
         ],
-        "target_state": {"pt_kink": {"x": x_bar, "y": x2_kink}},
+        "target_state": {"points": {"pt_kink": {"x": x_bar, "y": x2_kink}}},
     }
     return {"vars": {"p1": p1, "r_pct": r_pct, "x_bar": x_bar, "m": m}, "invariant_canvas": ic}
 
 
-def ver_hab02_canvas_cart(res):
+def ver_hab02_ic1(res):
     ic = res.get("invariant_canvas") if isinstance(res, dict) else None
     v = res.get("vars", {}) if isinstance(res, dict) else {}
     if not isinstance(ic, dict) or ic.get("mode") != "cartesian":
@@ -442,10 +477,82 @@ def ver_hab02_canvas_cart(res):
     invs = ic.get("invariants", [])
     kpos = next((i for i in invs if i.get("kind") == "point_coords"), None)
     expected_y = v.get("m", 0) - v.get("p1", 0) * v.get("x_bar", 0)
-    return kpos is not None and kpos.get("target_x") == v.get("x_bar") and kpos.get("target_y") == expected_y
+    pt_ts = ((ic.get("target_state") or {}).get("points") or {}).get("pt_kink") or {}
+    return (
+        kpos is not None
+        and kpos.get("target_x") == v.get("x_bar")
+        and kpos.get("target_y") == expected_y
+        and pt_ts.get("x") == v.get("x_bar")
+        and pt_ts.get("y") == expected_y
+    )
 
 
-def gen_hab02_open_sym(rng):
+def gen_hab02_ic2(rng):
+    p1 = rng.choice([4, 6, 8])
+    r_pct = rng.choice([25, 50])
+    p1_disc = round(p1 * (100 - r_pct) / 100.0, 2)
+    x_bar = rng.randint(2, 6)
+    x2_kink = rng.randint(10, 22)
+    m = p1 * x_bar + x2_kink
+    ic = {
+        "mode": "cartesian",
+        "x_range": [0, 14],
+        "y_range": [0, 36],
+        "step": 0.5,
+        "x_label": "x_1",
+        "y_label": "x_2",
+        "sliders": [
+            {"id": "s_p1p", "label": "Precio marginal p_1'", "min": 1, "max": 8, "step": 0.5, "initial": 1}
+        ],
+        "fixed_curves": [
+            {
+                "id": "seg_b",
+                "label": r"Frontera Tramo B ($x_1 \ge @x_bar@$)",
+                "color": "#16a34a",
+                "expression": f"{x2_kink} - s_p1p * max(0, x - {x_bar})",
+                "domain": [x_bar, 14],
+                "style": "solid",
+            }
+        ],
+        "inequality": {"curve_id": "seg_b", "initial_style": "dashed", "initial_shade": "above"},
+        "invariants": [
+            {
+                "id": "INV_INEQ",
+                "kind": "inequality_state",
+                "expected_style": "solid",
+                "expected_shade": "below",
+                "distractor_id": "D-Hab02-01",
+                "error_rationale": r"La restricción presupuestaria débil $\le$ con descuento $@r_pct@\%$ exige borde sólido y sombreado inferior.",
+            },
+            {
+                "id": "INV_SL_P",
+                "kind": "slider_eq",
+                "slider_id": "s_p1p",
+                "target": p1_disc,
+                "tolerance": 0.25,
+                "distractor_id": "D-Hab02-02",
+                "error_rationale": r"Ajusta el deslizador al precio efectivo $p_1(1-r)$ tras descontar $@r_pct@\%$ sobre $p_1=@p1@$ (con $m=@m@$).",
+            },
+        ],
+        "target_state": {"inequalityStyle": "solid", "inequalityShade": "below", "sliders": {"s_p1p": p1_disc}},
+    }
+    return {"vars": {"p1": p1, "r_pct": r_pct, "x_bar": x_bar, "m": m, "p1_disc": p1_disc}, "invariant_canvas": ic}
+
+
+def ver_hab02_ic2(res):
+    ic = res.get("invariant_canvas") if isinstance(res, dict) else None
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    if not isinstance(ic, dict) or ic.get("mode") != "cartesian":
+        return False
+    ts = ic.get("target_state") or {}
+    return (
+        ts.get("inequalityStyle") == "solid"
+        and ts.get("inequalityShade") == "below"
+        and abs(float((ts.get("sliders") or {}).get("s_p1p", -1)) - v.get("p1_disc", -2)) < 1e-6
+    )
+
+
+def gen_hab02_os1(rng):
     p1 = rng.randint(2, 42)
     x_bar = rng.randint(3, 18)
     ans = f"{p1}*(1 - r)"
@@ -466,64 +573,136 @@ def gen_hab02_open_sym(rng):
     }
 
 
-def ver_hab02_open_sym(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
+def ver_hab02_os1(c, v):
     p1 = v.get("p1")
-    return bool(p1) and c.replace(" ", "") == f"{p1}*(1-r)"
+    return bool(p1) and str(c).replace(" ", "") in (f"{p1}*(1-r)", f"{p1}-{p1}*r")
 
 
-def gen_hab02_dag(rng):
-    x_bar = rng.randint(4, 28)
-    p1 = rng.randint(3, 12)
-    r_dec = round(rng.choice([0.15, 0.2, 0.25, 0.3, 0.4, 0.5]), 2)
-    dag = {
-        "goal": "Establecer el óptimo global bajo restricción presupuestaria no convexa:",
-        "steps": [
-            {
-                "id": "K1",
-                "content": r"Evaluar el óptimo interior del Tramo A ($x_1 < @x_bar@$) imponiendo $TMS(x^A) = @p1@$.",
-                "is_fallacy": False,
-            },
-            {
-                "id": "K2",
-                "content": r"Evaluar el óptimo interior del Tramo B ($x_1 > @x_bar@$) imponiendo $TMS(x^B) = @p1@(1 - @r_dec@)$.",
-                "is_fallacy": False,
-            },
-            {
-                "id": "K3",
-                "content": r"Verificar el candidato de quiebre en $(\bar{x}_1, m - @p1@\cdot @x_bar@)$ vía $@p1@(1-@r_dec@) \le TMS \le @p1@$.",
-                "is_fallacy": False,
-            },
-            {
-                "id": "K4",
-                "content": r"Elegir globalmente $x^* = \arg\max \{u(x^A), u(x^{\text{kink}}), u(x^B)\}$.",
-                "is_fallacy": False,
-            },
-            {
-                "id": "K_BAD",
-                "content": r"Plantear un Lagrangiano clásico único asumiendo tangencia interior única en todo el dominio.",
-                "is_fallacy": True,
-                "distractor_id": "D-Hab02-03",
-                "error_rationale": "Falla crítica: ante el ángulo entrante en $\\bar{x}_1 = @x_bar@$ pueden coexistir dos tangencias locales no globales.",
-            },
+def gen_hab02_os2(rng):
+    p1 = rng.randint(3, 15)
+    x_bar = rng.randint(2, 12)
+    m = p1 * x_bar + rng.randint(8, 30)
+    ans = f"{m} - {p1}*{x_bar} - {p1}*(1 - r)*(x1 - {x_bar})"
+    return {
+        "vars": {"p1": p1, "x_bar": x_bar, "m": m},
+        "correct": ans,
+        "accepted_equivalents": [ans, f"({m} - {p1}*{x_bar}) - {p1}*(1-r)*(x1 - {x_bar})"],
+        "variables": ["x1", "r"],
+        "symbolic_config": {
+            "variables": ["x1", "r"],
+            "palette": ["(", ")", "*", "-", "+"],
+            "placeholder": "Ej: 24 - 4*3 - 4*(1-r)*(x1-3)",
+        },
+        "ds": [
+            ("D-Hab02-02", f"{m} - {p1}*(1 - r)*x1", r"Omitiste el gasto pleno $@p1@ \cdot @x_bar@$ del primer tramo sobre la renta $m = @m@$ al formular el Tramo B."),
+            ("D-Hab02-01", f"{m} - {p1}*{x_bar} - {p1}*r*(x1 - {x_bar})", r"Empleaste $r$ en lugar de $(1-r)$ para el precio efectivo tras superar $\bar{x}_1 = @x_bar@$ con $m=@m@$."),
         ],
-        "edges": [["K1", "K4"], ["K2", "K4"], ["K3", "K4"]],
-        "require_justification": False,
     }
-    return {"vars": {"x_bar": x_bar, "p1": p1, "r_dec": r_dec}, "proof_dag": dag}
 
 
-def ver_hab02_dag(res):
-    dag = res.get("proof_dag") if isinstance(res, dict) else None
-    if not isinstance(dag, dict):
+def ver_hab02_os2(c, v):
+    import sympy
+    x1, r = sympy.symbols("x1 r")
+    try:
+        target = v["m"] - v["p1"] * v["x_bar"] - v["p1"] * (1 - r) * (x1 - v["x_bar"])
+        return sympy.simplify(sympy.sympify(str(c)) - target) == 0
+    except Exception:
         return False
-    valid_ids = {s["id"] for s in dag.get("steps", []) if not s.get("is_fallacy")}
-    fallacy_ids = {s["id"] for s in dag.get("steps", []) if s.get("is_fallacy")}
-    return valid_ids == {"K1", "K2", "K3", "K4"} and fallacy_ids == {"K_BAD"}
 
 
-def gen_hab02_stage0_sym(rng):
+def gen_hab02_um_select(rng):
+    p1 = rng.randint(3, 14)
+    x_bar = rng.randint(4, 20)
+    m = p1 * x_bar + rng.randint(10, 40)
+    um = {
+        "phase1_variables": {
+            "prompt": r"Identifica los roles en el problema del consumidor con umbral $\bar{x}_1 = @x_bar@$ y renta $m = @m@$:",
+            "roles": ["Variable endógena", "Parámetro exógeno"],
+            "items": [
+                {
+                    "id": "S_x1",
+                    "label": r"Demanda del bien 1 ($x_1$)",
+                    "correct_role": "Variable endógena",
+                    "distractor_id": "D-Hab02-05",
+                    "error_rationale": r"La cantidad $x_1$ frente al umbral $@x_bar@$ es elegida óptimamente por el hogar dado $m=@m@$.",
+                },
+                {
+                    "id": "S_m",
+                    "label": r"Ingreso monetario $m = @m@$",
+                    "correct_role": "Parámetro exógeno",
+                    "error_rationale": r"La renta $m = @m@$ es un dato presupuestario fijo para $p_1 = @p1@$.",
+                },
+                {
+                    "id": "S_xbar",
+                    "label": r"Umbral tarifario $\bar{x}_1 = @x_bar@$",
+                    "correct_role": "Parámetro exógeno",
+                    "error_rationale": r"El quiebre $\bar{x}_1 = @x_bar@$ es impuesto exógenamente por la estructura tarifaria.",
+                },
+            ],
+        },
+        "phase2_assumptions": {
+            "prompt": r"Selecciona las implicancias estructurales del quiebre en $\bar{x}_1 = @x_bar@$:",
+            "options": [
+                {
+                    "id": "P2_NONCONV",
+                    "content": r"El conjunto presupuestario pierde convexidad en $(\bar{x}_1, @m@ - @p1@ \cdot @x_bar@)$.",
+                    "is_required": True,
+                },
+                {
+                    "id": "P2_CAND",
+                    "content": r"Deben compararse tangencias del Tramo A, Tramo B y el vértice $\bar{x}_1 = @x_bar@$.",
+                    "is_required": True,
+                },
+                {
+                    "id": "P2_UNIQ",
+                    "content": r"La condición $TMS = p_1$ garantiza un óptimo interior único y continuo.",
+                    "is_required": False,
+                    "distractor_id": "D-Hab02-06",
+                    "error_rationale": r"Con descuento tras $\bar{x}_1 = @x_bar@$, el conjunto es no convexo y la demanda salta discontinuamente.",
+                },
+            ],
+        },
+        "phase3_formulation": {
+            "prompt": r"Elige el criterio válido de optimalidad global bajo ingreso $m = @m@$:",
+            "input_mode": "select",
+            "options": [
+                {
+                    "id": "OPT_GLOB",
+                    "content": r"Evaluar $x^* = \arg\max \{u(x^A), u(x^{\text{kink}}), u(x^B)\}$ con $\bar{x}_1 = @x_bar@$.",
+                    "is_correct": True,
+                },
+                {
+                    "id": "OPT_KKT",
+                    "content": r"Resolver un Lagrangiano único imponiendo $TMS = @p1@$ en todo el dominio.",
+                    "is_correct": False,
+                    "distractor_id": "D-Hab02-03",
+                    "error_rationale": r"Un Lagrangiano único falla ante la no convexidad generada en $\bar{x}_1 = @x_bar@$ con $p_1 = @p1@$.",
+                },
+                {
+                    "id": "OPT_NO_KINK",
+                    "content": r"Descartar el vértice $\bar{x}_1 = @x_bar@$ por carecer de derivada en el quiebre.",
+                    "is_correct": False,
+                    "distractor_id": "D-Hab02-04",
+                    "error_rationale": r"El vértice en $\bar{x}_1 = @x_bar@$ es óptimo cuando la $TMS$ yace entre $p_1(1-r)$ y $@p1@$.",
+                },
+            ],
+        },
+    }
+    return {"vars": {"p1": p1, "x_bar": x_bar, "m": m}, "unstructured_model": um}
+
+
+def ver_hab02_um_select(res):
+    um = res.get("unstructured_model") if isinstance(res, dict) else None
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    if not isinstance(um, dict) or not v.get("m"):
+        return False
+    p3 = um.get("phase3_formulation", {})
+    req = [o["id"] for o in um["phase2_assumptions"]["options"] if o.get("is_required")]
+    corr_p3 = [o["id"] for o in p3.get("options", []) if o.get("is_correct")]
+    return p3.get("input_mode") == "select" and req == ["P2_NONCONV", "P2_CAND"] and corr_p3 == ["OPT_GLOB"]
+
+
+def gen_hab02_um_sym(rng):
     p1 = rng.randint(2, 16)
     x_bar = rng.randint(4, 24)
     expr = f"{p1}*{x_bar} + {p1}*(1-r)*(x1 - {x_bar})"
@@ -594,7 +773,7 @@ def gen_hab02_stage0_sym(rng):
     return {"vars": {"p1": p1, "x_bar": x_bar}, "unstructured_model": um}
 
 
-def ver_hab02_stage0_sym(res):
+def ver_hab02_um_sym(res):
     um = res.get("unstructured_model") if isinstance(res, dict) else None
     v = res.get("vars", {}) if isinstance(res, dict) else {}
     if not isinstance(um, dict) or not v.get("p1"):
@@ -606,10 +785,10 @@ def ver_hab02_stage0_sym(res):
 
 
 # ==============================================================================
-# COMPETENCIA C-01 (Concept — Caso 3: Ruptura Axiomática Contorno Superior y Árbol)
+# COMPETENCIA C-01 (Concept — 0 MC7, M=3, K=2 => 6 plantillas, 100% activo)
 # ==============================================================================
 
-def gen_c01_counterexample(rng):
+def gen_c01_adv_ce(rng):
     k_lvl = rng.randint(3, 35)
     adv = {
         "mode": "counterexample",
@@ -640,17 +819,24 @@ def gen_c01_counterexample(rng):
                 "failure_rationale": "El punto medio $M = 0.5A + 0.5B$ quedó dentro del contorno $\\ge @k_lvl@$ y por ello no refuta la convexidad.",
             },
         ],
-        "sample_witness": {
-            "a1": 1.0,
-            "a2": float(k_lvl - 1),
-            "b1": 2.0,
-            "b2": float(k_lvl - 2),
-        },
+        "trap_predicates": [
+            {
+                "expr": f"(a1 + a2 >= {k_lvl} and floor(a1) + floor(a2) < {k_lvl}) or (b1 + b2 >= {k_lvl} and floor(b1) + floor(b2) < {k_lvl})",
+                "distractor_id": "D-C01-05",
+                "error_rationale": r"Evaluaste una canasta como suma continua $x_1 + x_2 \ge @k_lvl@$ ignorando el truncamiento entero $\lfloor x_i \rfloor$.",
+            },
+        ],
+        "computed_readouts": [
+            {"label": r"$M_1 = 0.5(a_1 + b_1)$", "expr": "0.5*(a1 + b1)"},
+            {"label": r"$M_2 = 0.5(a_2 + b_2)$", "expr": "0.5*(a2 + b2)"},
+            {"label": r"$u(M)$", "expr": "floor(0.5*(a1 + b1)) + floor(0.5*(a2 + b2))"},
+        ],
+        "sample_witness": {"a1": 1.0, "a2": float(k_lvl - 1), "b1": 2.0, "b2": float(k_lvl - 2)},
     }
     return {"vars": {"k_lvl": k_lvl}, "adversarial_break": adv}
 
 
-def ver_c01_counterexample(res):
+def ver_c01_adv_ce(res):
     adv = res.get("adversarial_break") if isinstance(res, dict) else None
     v = res.get("vars", {}) if isinstance(res, dict) else {}
     if not isinstance(adv, dict) or adv.get("mode") != "counterexample":
@@ -665,23 +851,87 @@ def ver_c01_counterexample(res):
     return ua >= k_lvl and ub >= k_lvl and um < k_lvl
 
 
+def gen_c01_adv_ff(rng):
+    k_lvl = rng.randint(4, 24)
+    adv = {
+        "mode": "find_fallacy",
+        "prompt": r"Audita el intento de demostrar cuasiconcavidad para $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en el nivel $k = @k_lvl@$:",
+        "steps": [
+            {
+                "id": "H1",
+                "label": "Paso 1",
+                "content": r"Se plantea el conjunto contorno superior $U(@k_lvl@) = \{(x_1, x_2) \in \mathbb{R}_+^2 : \lfloor x_1 \rfloor + \lfloor x_2 \rfloor \ge @k_lvl@\}$.",
+                "is_fallacy": False,
+                "valid_explanation": "La definición del conjunto contorno superior es formalmente exacta.",
+            },
+            {
+                "id": "H2",
+                "label": "Paso 2",
+                "content": r"Se toman derivadas parciales $u_1 = 1$, $u_2 = 1$ y hessiano orlado constante para evaluar curvatura alrededor de $@k_lvl@$.",
+                "is_fallacy": True,
+                "distractor_id": "D-C01-05",
+                "error_rationale": r"La función $\lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en cota $@k_lvl@$ es discontinua en enteros y carece de derivadas diferenciales.",
+            },
+            {
+                "id": "H3",
+                "label": "Paso 3",
+                "content": r"Al resultar el determinante orlado no negativo en el interior de los cuadros, se concluye cuasiconcavidad global.",
+                "is_fallacy": False,
+                "valid_explanation": "El criterio diferencial solo aplica bajo clase $C^2$; el quiebre ocurrió en el Paso 2 al diferenciar.",
+            },
+        ],
+        "reason_options": [
+            {
+                "id": "R_DISC",
+                "content": r"El operador piso introduce discontinuidades de salto en los enteros e invalida el cálculo diferencial.",
+                "is_correct": True,
+            },
+            {
+                "id": "R_CEIL",
+                "content": r"Se debía redondear hacia arriba con función techo $\lceil x_i \rceil$ antes de calcular el determinante.",
+                "is_correct": False,
+                "distractor_id": "D-C01-06",
+                "error_rationale": r"Sustituir $\lfloor x_i \rfloor$ por techo $\lceil x_i \rceil$ cambia la función y tampoco la hace diferenciable en cota $@k_lvl@$.",
+            },
+        ],
+    }
+    return {"vars": {"k_lvl": k_lvl}, "adversarial_break": adv}
+
+
+def ver_c01_adv_ff(res):
+    adv = res.get("adversarial_break") if isinstance(res, dict) else None
+    if not isinstance(adv, dict) or adv.get("mode") != "find_fallacy":
+        return False
+    steps = adv.get("steps", [])
+    return len(steps) >= 3 and [s["id"] for s in steps if s.get("is_fallacy")] == ["H2"]
+
+
 def gen_c01_tree(rng):
-    w1 = rng.randint(5, 30)
-    w2 = rng.randint(1, 4)
+    w1 = rng.randint(8, 32)
+    w2 = rng.randint(1, 5)
+    branch_map = [
+        ("t1", ["e_top", "e1"], "T1"),
+        ("t2", ["e_top", "e2"], "T2"),
+        ("t3", ["e_bot", "e3"], "T3"),
+        ("t4", ["e_bot", "e4"], "T4"),
+    ]
+    win_tid, req_edges, win_label = rng.choice(branch_map)
+    nodes = [
+        {"id": "n0", "label": "J1", "x": 80, "y": 150, "player": "J1"},
+        {"id": "n1", "label": "J2a", "x": 240, "y": 80, "player": "J2"},
+        {"id": "n2", "label": "J2b", "x": 240, "y": 220, "player": "J2"},
+    ]
+    ys = {"t1": 45, "t2": 115, "t3": 185, "t4": 255}
+    for tid, _, lbl in branch_map:
+        pay = f"({w1}, {w1})" if tid == win_tid else f"({w2}, 0)"
+        nodes.append({"id": tid, "label": lbl, "x": 420, "y": ys[tid], "terminal": True, "payoff": pay})
+
     ic = {
         "mode": "tree",
         "width": 520,
         "height": 300,
         "interaction_mode": "both",
-        "nodes": [
-            {"id": "n0", "label": "J1", "x": 80, "y": 150, "player": "J1"},
-            {"id": "n1", "label": "J2a", "x": 240, "y": 80, "player": "J2"},
-            {"id": "n2", "label": "J2b", "x": 240, "y": 220, "player": "J2"},
-            {"id": "t1", "label": "T1", "x": 420, "y": 45, "terminal": True, "payoff": f"({w1}, {w1})"},
-            {"id": "t2", "label": "T2", "x": 420, "y": 115, "terminal": True, "payoff": f"({w2}, 0)"},
-            {"id": "t3", "label": "T3", "x": 420, "y": 185, "terminal": True, "payoff": f"(0, {w2})"},
-            {"id": "t4", "label": "T4", "x": 420, "y": 255, "terminal": True, "payoff": "(1, 1)"},
-        ],
+        "nodes": nodes,
         "edges": [
             {"id": "e_top", "from": "n0", "to": "n1", "label": "Cooperar"},
             {"id": "e_bot", "from": "n0", "to": "n2", "label": "Desviar"},
@@ -691,67 +941,80 @@ def gen_c01_tree(rng):
             {"id": "e4", "from": "n2", "to": "t4", "label": "D_2"},
         ],
         "tree_invariants": {
-            "required_edges": ["e_top", "e1"],
+            "required_edges": req_edges,
             "required_info_sets": [["n1", "n2"]],
             "distractor_id": "D-C01-03",
             "distractor_ids": ["D-C01-03", "D-C01-04"],
-            "edge_error_rationale": "La senda óptima con pago dominante (@w1@, @w1@) exige activar exactamente las ramas 'Cooperar' y 'C_2' hacia T1.",
+            "edge_error_rationale": "La senda óptima con pago dominante (@w1@, @w1@) exige activar exactamente las dos ramas hacia @win_label@.",
             "info_set_error_rationale": "El Jugador 2 no observa la acción previa de J1; debes agrupar sus dos nodos de decisión J2a y J2b en un conjunto de información.",
         },
     }
-    return {"vars": {"w1": w1, "w2": w2}, "invariant_canvas": ic}
+    return {"vars": {"w1": w1, "w2": w2, "win_label": win_label, "req_edges": req_edges}, "invariant_canvas": ic}
 
 
 def ver_c01_tree(res):
     ic = res.get("invariant_canvas") if isinstance(res, dict) else None
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
     if not isinstance(ic, dict) or ic.get("mode") != "tree":
         return False
     ti = ic.get("tree_invariants", {})
-    return sorted(ti.get("required_edges", [])) == ["e1", "e_top"] and ti.get("required_info_sets") == [["n1", "n2"]]
+    return sorted(ti.get("required_edges", [])) == sorted(v.get("req_edges", [])) and ti.get("required_info_sets") == [["n1", "n2"]]
 
 
-def gen_c01_matching(rng):
-    c_lvl = round(rng.uniform(2.0, 9.5), 1)
-    cm = {
-        "left_title": "Propiedad / Escenario",
-        "right_title": "Consecuencia Formal",
-        "premises": [
-            {"id": "P_cut", "content": r"Corte discontinuo en $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ con cota @c_lvl@"},
-            {"id": "P_hess", "content": r"Intento de aplicar matriz hessiana orlada sobre la utilidad piso"},
-            {"id": "P_mid", "content": r"Punto medio $M = 0.5(1, 2) + 0.5(2, 1)$ evaluado bajo escalonamiento"},
+def gen_c01_cart(rng):
+    k_lvl = rng.randint(4, 12)
+    a1, a2 = 1, k_lvl - 1
+    b1, b2 = 2, k_lvl - 2
+    mx, my = 1.5, k_lvl - 1.5
+    ic = {
+        "mode": "cartesian",
+        "x_range": [0, 6],
+        "y_range": [0, 14],
+        "step": 0.5,
+        "x_label": "x_1",
+        "y_label": "x_2",
+        "fixed_points": [
+            {"id": "fp_A", "x": a1, "y": a2, "label": f"A({a1},{a2})", "color": "#16a34a"},
+            {"id": "fp_B", "x": b1, "y": b2, "label": f"B({b1},{b2})", "color": "#16a34a"},
         ],
-        "targets": [
-            {"id": "T_cut", "content": r"Contorno superior formado por unión no convexa de bloques enteros"},
-            {"id": "T_hess", "content": r"Método inaplicable por no existir derivadas en discontinuidades enteras"},
-            {"id": "T_mid", "content": r"Utilidad caída $u(1.5, 1.5) = 2 < 3$ refutando cuasiconcavidad"},
+        "interactive_points": [
+            {"id": "pt_mid", "label": "M", "x": 4, "y": 1, "color": "#dc2626"}
+        ],
+        "invariants": [
             {
-                "id": "T_dist1",
-                "content": r"Cuasiconcavidad estricta preservada alrededor de cota @c_lvl@",
-                "is_distractor": True,
+                "id": "INV_MID_POS",
+                "kind": "point_coords",
+                "point_id": "pt_mid",
+                "target_x": mx,
+                "target_y": my,
+                "tolerance": 0.35,
+                "distractor_id": "D-C01-02",
+                "error_rationale": r"Calcula el punto medio convexo $M = 0.5A + 0.5B$ promediando $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$ para cota $k=@k_lvl@$.",
+            },
+            {
+                "id": "INV_DROP",
+                "kind": "point_in_region",
+                "point_id": "pt_mid",
+                "expr": f"floor(x) + floor(y) < {k_lvl}",
                 "distractor_id": "D-C01-01",
-                "error_rationale": "La función piso quiebra la convexidad de los contornos superiores en cada valor entero independientemente de @c_lvl@.",
-            },
-            {
-                "id": "T_dist2",
-                "content": r"Observabilidad perfecta equivalente a juego sin conjuntos de información",
-                "is_distractor": True,
-                "distractor_id": "D-C01-04",
-                "error_rationale": "Un conjunto de información no trivial representa exactamente nodos donde el jugador desconoce la historia previa.",
+                "error_rationale": r"En el punto medio debe caer la utilidad escalonada $\lfloor x_1 \rfloor + \lfloor x_2 \rfloor < @k_lvl@$.",
             },
         ],
-        "correct_pairs": {"P_cut": "T_cut", "P_hess": "T_hess", "P_mid": "T_mid"},
+        "target_state": {"points": {"pt_mid": {"x": mx, "y": my}}},
     }
-    return {"vars": {"c_lvl": c_lvl}, "concept_matching": cm}
+    return {"vars": {"k_lvl": k_lvl, "a1": a1, "a2": a2, "b1": b1, "b2": b2}, "invariant_canvas": ic}
 
 
-def ver_c01_matching(res):
-    cm = res.get("concept_matching") if isinstance(res, dict) else None
-    if not isinstance(cm, dict):
+def ver_c01_cart(res):
+    ic = res.get("invariant_canvas") if isinstance(res, dict) else None
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    if not isinstance(ic, dict) or ic.get("mode") != "cartesian":
         return False
-    return cm.get("correct_pairs") == {"P_cut": "T_cut", "P_hess": "T_hess", "P_mid": "T_mid"}
+    pt = ((ic.get("target_state") or {}).get("points") or {}).get("pt_mid") or {}
+    return abs(pt.get("x", 0) - 1.5) < 1e-6 and abs(pt.get("y", 0) - (v.get("k_lvl", 0) - 1.5)) < 1e-6
 
 
-def gen_c01_fib(rng):
+def gen_c01_fib1(rng):
     i1 = rng.randint(1, 10)
     i2 = rng.randint(1, 10)
     f1 = rng.choice([0.3, 0.4, 0.6, 0.7, 0.8])
@@ -771,9 +1034,7 @@ def gen_c01_fib(rng):
     }
 
 
-def ver_c01_fib(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
+def ver_c01_fib1(c, v):
     try:
         expected = math.floor(v["x1"]) + math.floor(v["x2"])
         return abs(float(c) - expected) < 1e-6
@@ -781,8 +1042,40 @@ def ver_c01_fib(res):
         return False
 
 
+def gen_c01_fib2(rng):
+    for _ in range(40):
+        p1 = rng.randint(1, 8)
+        p2 = rng.randint(1, 8)
+        gap = rng.randint(2, 16)
+        k_lvl = p1 + p2 + gap
+        x1 = round(p1 + rng.choice([0.3, 0.4, 0.6]), 1)
+        x2 = round(p2 + rng.choice([0.2, 0.5, 0.7]), 1)
+        u_m = p1 + p2
+        ans = k_lvl - u_m
+        d_ceil = k_lvl - (p1 + p2 + 2)
+        d_cont = round(k_lvl - (x1 + x2), 1)
+        if d_ceil != ans and d_cont != ans:
+            break
+    return {
+        "vars": {"x1": x1, "x2": x2, "k_lvl": k_lvl, "u_m": u_m, "ans": ans},
+        "correct": str(ans),
+        "ds": [
+            ("D-C01-06", str(d_ceil), r"Restaste la suma techo $\lceil @x1@ \rceil + \lceil @x2@ \rceil$ a $@k_lvl@$ en vez del operador piso truncado."),
+            ("D-C01-05", str(d_cont), r"Calculaste el déficit con suma continua $@x1@ + @x2@$ frente a $@k_lvl@$ omitiendo truncar cada coordenada."),
+        ],
+    }
+
+
+def ver_c01_fib2(c, v):
+    try:
+        expected = v["k_lvl"] - (math.floor(v["x1"]) + math.floor(v["x2"]))
+        return abs(float(c) - expected) < 1e-6
+    except Exception:
+        return False
+
+
 # ==============================================================================
-# COMPETENCIA C-02 (Concept — Caso 4: Deducción Identidad de Roy vía Dualidad)
+# COMPETENCIA C-02 (Concept — 1 MC7, M=4 => 1 MC7 + 3*2 = 7 plantillas, 85.7% activo)
 # ==============================================================================
 
 def gen_c02_dag_roy(rng):
@@ -851,7 +1144,67 @@ def ver_c02_dag_roy(res):
     return valid_ids == ["S1", "S2", "S3", "S4", "S5"] and fallacy_ids == ["S_BAD"]
 
 
-def gen_c02_open_sym(rng):
+def gen_c02_dag_shephard(rng):
+    j_idx = rng.randint(1, 25)
+    u_bar = rng.randint(2, 18)
+    dag = {
+        "goal": r"Demostrar el Lema de Shephard para la demanda compensada $x_{@j_idx@}^h(p, @u_bar@)$ vía Teorema de la Envolvente:",
+        "steps": [
+            {
+                "id": "E1",
+                "content": r"Plantear el Lagrangiano del gasto mínimo: $\mathcal{L}(x,\mu) = p \cdot x + \mu(@u_bar@ - U(x))$.",
+                "justification": "Lagrangiano de minimización",
+                "is_fallacy": False,
+            },
+            {
+                "id": "E2",
+                "content": r"Evaluar la función valor en el óptimo compensado: $e(p, @u_bar@) = \mathcal{L}(x^h(p,@u_bar@), \mu^*)$.",
+                "justification": "Función valor óptima",
+                "is_fallacy": False,
+            },
+            {
+                "id": "E3",
+                "content": r"Aplicar Teorema de la Envolvente diferenciando $e(p,@u_bar@)$ respecto a $p_{@j_idx@}$ (términos indirectos se anulan).",
+                "justification": "Teorema de la Envolvente",
+                "is_fallacy": False,
+            },
+            {
+                "id": "E4",
+                "content": r"Concluir $\frac{\partial e(p,@u_bar@)}{\partial p_{@j_idx@}} = x_{@j_idx@}^h(p, @u_bar@)$ con signo positivo.",
+                "justification": "Lema de Shephard",
+                "is_fallacy": False,
+            },
+            {
+                "id": "E_BAD",
+                "content": r"Concluir que $x_{@j_idx@}^h(p, @u_bar@) = -\frac{\partial e/\partial p_{@j_idx@}}{\partial e/\partial u}$ dividiendo por $\partial e/\partial u$.",
+                "justification": "Teorema de la Envolvente",
+                "is_fallacy": True,
+                "distractor_id": "D-C02-04",
+                "error_rationale": r"Confunde Shephard con Roy en el bien $@j_idx@$ bajo nivel $@u_bar@$: la derivada directa de $e(p,u)$ ya entrega $x^h$.",
+            },
+        ],
+        "edges": [["E1", "E2"], ["E2", "E3"], ["E3", "E4"]],
+        "require_justification": True,
+        "justification_bank": [
+            "Lagrangiano de minimización",
+            "Función valor óptima",
+            "Teorema de la Envolvente",
+            "Lema de Shephard",
+        ],
+    }
+    return {"vars": {"j_idx": j_idx, "u_bar": u_bar}, "proof_dag": dag}
+
+
+def ver_c02_dag_shephard(res):
+    dag = res.get("proof_dag") if isinstance(res, dict) else None
+    if not isinstance(dag, dict):
+        return False
+    valid_ids = [s["id"] for s in dag.get("steps", []) if not s.get("is_fallacy")]
+    fallacy_ids = [s["id"] for s in dag.get("steps", []) if s.get("is_fallacy")]
+    return len(valid_ids) == 4 and fallacy_ids == ["E_BAD"]
+
+
+def gen_c02_os1(rng):
     k = rng.randint(2, 24)
     c_val = rng.randint(1, 15)
     ans = f"{k}*m/p"
@@ -872,14 +1225,42 @@ def gen_c02_open_sym(rng):
     }
 
 
-def ver_c02_open_sym(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
+def ver_c02_os1(c, v):
     k = v.get("k")
-    return bool(k) and c.replace(" ", "") == f"{k}*m/p"
+    return bool(k) and str(c).replace(" ", "") in (f"{k}*m/p", f"({k}*m)/p", f"{k}*(m/p)")
 
 
-def gen_c02_matching(rng):
+def gen_c02_os2(rng):
+    k = rng.randint(2, 16)
+    F = rng.randint(3, 25)
+    ans = f"{2 * k}*p*u"
+    return {
+        "vars": {"k": k, "F": F},
+        "correct": ans,
+        "accepted_equivalents": [ans, f"2*{k}*p*u", f"{2 * k}*u*p"],
+        "variables": ["p", "u"],
+        "symbolic_config": {
+            "variables": ["p", "u"],
+            "palette": ["*", "+", "-", "^"],
+            "placeholder": "Ej: 6*p*u",
+        },
+        "ds": [
+            ("D-C02-05", f"-{2 * k}*p*u", r"Introdujiste un signo negativo espurio al aplicar Shephard sobre $e(p,u)=@F@+@k@p^2 u$; la demanda compensada crece positivamente en $p$."),
+            ("D-C02-04", f"{k}*p^2", r"Derivaste respecto a $u$ en lugar de aplicar Shephard diferenciando $e(p,u)=@F@+@k@p^2 u$ respecto al precio $p$."),
+        ],
+    }
+
+
+def ver_c02_os2(c, v):
+    import sympy
+    p, u = sympy.symbols("p u")
+    try:
+        return sympy.simplify(sympy.sympify(str(c)) - 2 * v["k"] * p * u) == 0
+    except Exception:
+        return False
+
+
+def gen_c02_cm1(rng):
     idx_b = rng.randint(1, 30)
     cm = {
         "left_title": "Teorema / Identidad Dual",
@@ -913,212 +1294,308 @@ def gen_c02_matching(rng):
     return {"vars": {"idx_b": idx_b}, "concept_matching": cm}
 
 
-def ver_c02_matching(res):
+def ver_c02_cm1(res):
     cm = res.get("concept_matching") if isinstance(res, dict) else None
-    if not isinstance(cm, dict):
-        return False
-    return cm.get("correct_pairs") == {"M_roy": "R_roy", "M_shep": "R_shep", "M_dual": "R_dual"}
+    return isinstance(cm, dict) and cm.get("correct_pairs") == {"M_roy": "R_roy", "M_shep": "R_shep", "M_dual": "R_dual"}
+
+
+def gen_c02_cm2(rng):
+    idx_d = rng.randint(1, 25)
+    cm = {
+        "left_title": "Error en la Derivación Dual",
+        "right_title": "Consecuencia Analítica",
+        "premises": [
+            {"id": "E_umu", "content": r"Suponer $\partial e/\partial u = 1$ sin diferenciar $m \equiv e(p,v(p,m))$ respecto a $m$"},
+            {"id": "E_shep", "content": r"Sustituir $\partial e/\partial p_{@idx_d@}$ sin invocar el Lema de Shephard"},
+            {"id": "E_hom", "content": r"Afirmar que $e(p, v(p,m)) = u$ para el bien $x_{@idx_d@}$"},
+        ],
+        "targets": [
+            {"id": "C_umu", "content": r"Omite el factor $(\partial v/\partial m)^{-1}$ en la regla de la cadena"},
+            {"id": "C_shep", "content": r"Rompe el puente $\partial e/\partial p_{@idx_d@} = x_{@idx_d@}^h(p,u)$"},
+            {"id": "C_hom", "content": r"Confunde la identidad de gasto mínimo $m$ con nivel ordinal $u$"},
+            {
+                "id": "C_dist1",
+                "content": r"Garantiza que $v(p,m)$ es homogénea de grado uno en precios",
+                "is_distractor": True,
+                "distractor_id": "D-C02-06",
+                "error_rationale": r"Para el bien $x_{@idx_d@}$, $v(p,m)$ es homogénea de grado cero en $(p,m)$, nunca de grado uno.",
+            },
+            {
+                "id": "C_dist2",
+                "content": r"Invierte el cociente $-\frac{\partial v/\partial m}{\partial v/\partial p_{@idx_d@}}$",
+                "is_distractor": True,
+                "distractor_id": "D-C02-03",
+                "error_rationale": r"Invertir derivadas en $x_{@idx_d@}$ altera las unidades monetarias de la demanda marshalliana.",
+            },
+        ],
+        "correct_pairs": {"E_umu": "C_umu", "E_shep": "C_shep", "E_hom": "C_hom"},
+    }
+    return {"vars": {"idx_d": idx_d}, "concept_matching": cm}
+
+
+def ver_c02_cm2(res):
+    cm = res.get("concept_matching") if isinstance(res, dict) else None
+    return isinstance(cm, dict) and cm.get("correct_pairs") == {"E_umu": "C_umu", "E_shep": "C_shep", "E_hom": "C_hom"}
 
 
 def gen_c02_mc7(rng):
-    idx_g = rng.randint(1, 35)
-    correct = r"Se requiere $\partial v/\partial m > 0$ y usar el Lema de Shephard en $p_{" + str(idx_g) + r"}$ con signo negativo"
-    distractors = [
-        {"value": r"El signo resultante en la Identidad de Roy es positivo por la regla de la cadena para el bien " + str(idx_g), "distractor_id": "D-C02-01", "error_rationale": "Al despejar de la identidad derivada respecto a precio $p_{@idx_g@}$, el término pasa con signo negativo."},
-        {"value": r"Se asume automáticamente $\partial e/\partial u = 1$ simplificando la deducción en el bien " + str(idx_g), "distractor_id": "D-C02-02", "error_rationale": "El factor $\\partial e/\\partial u = (\\partial v/\\partial m)^{-1}$ debe despejarse derivando respecto a $m$ para bien @idx_g@."},
-        {"value": r"El cociente correcto coloca $\partial v/\partial m$ arriba y $\partial v/\partial p$ abajo en el bien " + str(idx_g), "distractor_id": "D-C02-03", "error_rationale": "Invertir el cociente destruye la dimensión económica correcta al despejar la demanda del bien @idx_g@."},
-        {"value": r"La identidad produce directamente la demanda hicksiana compensada en el bien " + str(idx_g), "distractor_id": "D-C02-04", "error_rationale": "La Identidad de Roy recupera la demanda ordinaria $x_{@idx_g@}^d(p,m)$, mientras Shephard entrega la hicksiana."},
-        {"value": r"Puede prescindirse de aplicar relaciones duales del gasto al derivar para el bien " + str(idx_g), "distractor_id": "D-C02-05", "error_rationale": "Sustituir $\\partial e/\\partial p_{@idx_g@} = x^h$ mediante Shephard es el eslabón formal obligatorio en el paso 2."},
-        {"value": r"La identidad dual $e(p,v(p,m)) \equiv m$ refleja homogeneidad lineal en precios para el bien " + str(idx_g), "distractor_id": "D-C02-06", "error_rationale": "La identidad del gasto recupera $m$ por inversión dual, no por homogeneidad de grado uno en $v$ para @idx_g@."},
-    ]
-    return {"vars": {"idx_g": idx_g}, "correct": correct, "distractors": distractors}
+    for _ in range(40):
+        p0 = rng.choice([2, 3, 4, 5, 6])
+        q_base = rng.randint(2, 14)
+        k = rng.randint(2, 7)
+        c_val = rng.randint(3, 18)
+        m0 = p0 * q_base
+        ans = k * q_base
+        d1 = -ans
+        d2 = k + q_base
+        d3 = m0 + k
+        d4 = c_val + k + p0
+        d5 = abs(m0 - k * p0) if m0 != k * p0 else m0 + p0 + k
+        d6 = k * m0 + c_val
+        ds_vals = [d1, d2, d3, d4, d5, d6]
+        if _ok_sep([ans, *ds_vals]):
+            break
+    dids = ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"]
+    rats = {
+        "D-C02-01": r"Error de signo en la Identidad de Roy con $p=@p0@$ y $m=@m0@$: el cociente $-(-@k@/@p0@)/(1/@m0@)$ cancela ambos signos negativos.",
+        "D-C02-02": r"Sumaste $@k@ + @m0@/@p0@$ asumiendo $\partial e/\partial u = 1$ en lugar de multiplicar por $m = @m0@$ al despejar.",
+        "D-C02-03": r"Alteraste el cociente entre $\partial v/\partial p$ y $\partial v/\partial m$ evaluado en $p=@p0@$ y renta $m=@m0@$.",
+        "D-C02-04": r"Confundiste la utilidad indirecta evaluada con constante $@c_val@$ y precio $@p0@$ con la demanda ordinaria.",
+        "D-C02-05": r"Omitiste el paso por el Lema de Shephard combinando erróneamente $m=@m0@$ y $@k@ \cdot @p0@$ sin dividir.",
+        "D-C02-06": r"Confundiste la inversión dual en $m=@m0@$ sin dividir entre el precio $p=@p0@$ y sumando $@c_val@$.",
+    }
+    return {
+        "vars": {"p0": p0, "m0": m0, "k": k, "c_val": c_val, "ans": ans},
+        "correct": str(ans),
+        "ds": [(did, str(val), rats[did]) for did, val in zip(dids, ds_vals)],
+    }
 
 
-def ver_c02_mc7(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
-    v = res.get("vars", {}) if isinstance(res, dict) else {}
-    return "Lema de Shephard" in c and str(v.get("idx_g")) in c
+def ver_c02_mc7(c, v):
+    try:
+        expected = v["k"] * (v["m0"] / v["p0"])
+        val = float(str(c).strip().strip("$").strip())
+        return abs(val - expected) < 1e-6
+    except Exception:
+        return False
 
 
 # ==============================================================================
-# STEMS & HINTS
+# STEMS & HINTS (disjuntos por Jaccard < 0.70 y con >= 4 variantes cada uno)
 # ==============================================================================
 
-stems_hab01_1 = [
-    r"Una firma precio-aceptante enfrenta el precio $p = @p@$ con función de costos $c(x) = @a@\sqrt{x} + @F@$. Ejecute la modelización Stage 0 antes de optimizar:",
-    r"Considere una empresa competitiva con tecnología $c(x) = @a@\sqrt{x} + @F@$ y precio exógeno $p = @p@$. Complete la auditoría estructural Stage 0:",
-    r"Evalúe la firma con costo total $c(x) = @a@\sqrt{x} + @F@$ operando bajo precio dado $p = @p@$. Formalice variables y curvatura en Stage 0:",
-    r"Antes de calcular extremos para $c(x) = @a@\sqrt{x} + @F@$ y precio $p = @p@$, estructure las fases del problema competitivo en Stage 0:",
-    r"Una planta tomadora de precios opera con $c(x) = @a@\sqrt{x} + @F@$ a precio $p = @p@$. Clasifique variables, supuestos y diagnóstico en Stage 0:",
-    r"Audite el modelo de la firma competitiva con costo $c(x) = @a@\sqrt{x} + @F@$ y precio $p = @p@$ siguiendo el flujo guiado de Stage 0:",
-]
-
-stems_hab01_2 = [
+stems_hab01_os1 = [
     r"Para la función de costo total $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@ = @a@/2$), obtenga la expresión simbólica exacta del costo marginal $CMg(x)$ en función de `x`:",
     r"Dada la tecnología $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$), derive algebraicamente $CMg(x) = c'(x)$ en términos de `x`:",
     r"Calcule la fórmula simbólica de $CMg(x)$ correspondiente al costo $c(x) = @a@\sqrt{x} + @F@$ (con parámetro $k = @k@$):",
-    r"Escriba la expresión simbólica equivalente a $c'(x)$ cuando el costo total es $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$):",
     r"Determine simbólicamente el costo marginal $CMg(x)$ para $c(x) = @a@\sqrt{x} + @F@$ donde el coeficiente reducido es $k = @k@$:",
-    r"Obtenga $CMg(x)$ en el editor simbólico respecto a `x` a partir de $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$):",
 ]
 
-stems_hab01_3 = [
+stems_hab01_os2 = [
+    r"Calcule el costo medio total $CMe(x) = c(x)/x$ para la planta con tecnología $c(x) = @a@\sqrt{x} + @F@$ en términos de `x`:",
+    r"Exprese simbólicamente el costo promedio por unidad producida cuando $c(x) = @a@\sqrt{x} + @F@$ en función de `x`:",
+    r"Divida el costo total $c(x) = @a@\sqrt{x} + @F@$ por la cantidad $x > 0$ para formular $CMe(x)$ en `x`:",
+    r"Escriba la regla algebraica del costo unitario medio para tecnología $c(x) = @a@\sqrt{x} + @F@$ usando `x`:",
+]
+
+stems_hab01_fib1 = [
     r"Con $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$) y precio $p = @p@$, la CPO anula $\pi'(x)$ en $x_{\text{stat}} = @x_stat@$ ($\pi_{\text{stat}} = @pi_stat@$). Calcule $\pi(x)$ al expandir a $x = @x_hi@$ ($\sqrt{@x_hi@} = @m_hi@$):",
     r"Evalúe el beneficio competitivo $\pi(@x_hi@)$ cuando $p = @p@$, $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$), frente al mínimo en $x_{\text{stat}} = @x_stat@$ ($\pi_{\text{stat}} = @pi_stat@$, $\sqrt{@x_hi@} = @m_hi@$):",
     r"Si $p = @p@$ y $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$), determine el beneficio exacto en $x = @x_hi@$ ($\sqrt{@x_hi@} = @m_hi@$) evitando el mínimo $x_{\text{stat}} = @x_stat@$ ($\pi_{\text{stat}} = @pi_stat@$):",
     r"Una firma con $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$) y $p = @p@$ descarta $x_{\text{stat}} = @x_stat@$ ($\pi_{\text{stat}} = @pi_stat@$) y produce $x = @x_hi@$ ($\sqrt{@x_hi@} = @m_hi@$). Halle $\pi(@x_hi@)$:",
-    r"Calcule el valor de $\pi(x) = px - c(x)$ en $x = @x_hi@$ ($\sqrt{@x_hi@} = @m_hi@$) dados $p = @p@$, $c(x) = @a@\sqrt{x} + @F@$ ($k = @k@$) y $\pi(x_{\text{stat}} = @x_stat@) = @pi_stat@$:",
-    r"Compare el óptimo respecto al mínimo $x_{\text{stat}} = @x_stat@$ ($\pi_{\text{stat}} = @pi_stat@$) calculando $\pi(@x_hi@)$ para $p = @p@$, $c(x) = @a@\sqrt{x} + @F@$ ($\sqrt{@x_hi@} = @m_hi@$, $k=@k@$):",
 ]
 
-stems_hab01_4 = [
+stems_hab01_fib2 = [
+    r"Para la empresa competitiva con $p = @p@$ y costo $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$), despeje numéricamente la escala estacionaria $x_{\text{stat}}$ donde $\pi'(x) = 0$:",
+    r"Iguale el precio $p = @p@$ al costo marginal de $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$) y halle el punto crítico $x_{\text{stat}}$:",
+    r"¿En qué nivel productivo $x_{\text{stat}}$ se anula la derivada del beneficio si $p = @p@$ y $c'(x) = @k@/\sqrt{x}$?",
+    r"Resuelva la ecuación $p = @k@/\sqrt{x}$ para $p = @p@$ ($a = @a@$) reportando el valor entero exacto de $x_{\text{stat}}$:",
+]
+
+stems_hab01_adv_ff = [
     r"Un alumno afirma maximizar beneficios con $c(x) = @b_dbl@\sqrt{x} + @F@$ ($b=@b@$) y $p = @p_val@$ igualando $p = CMg(x)$. Detecte el paso falaz y su justificación:",
     r"Audite esta deducción competitiva para $c(x) = @b_dbl@\sqrt{x} + @F@$ ($b=@b@$) a precio $p = @p_val@$ y señale el quiebre de segundo orden:",
     r"Examine el procedimiento propuesto bajo $c(x) = @b_dbl@\sqrt{x} + @F@$ ($b=@b@$, $p=@p_val@$). Identifique la afirmación errónea y el motivo correcto:",
     r"Caza de falacias para $c(x) = @b_dbl@\sqrt{x} + @F@$ con $b = @b@$ y precio $p = @p_val@$: marque el paso inválido y seleccione la explicación analítica:",
-    r"Revise los pasos para optimizar $c(x) = @b_dbl@\sqrt{x} + @F@$ ($b=@b@$, $p=@p_val@$) e indique dónde falla la condición de optimalidad:",
-    r"Identifique la falacia analítica al optimizar la tecnología $c(x) = @b_dbl@\sqrt{x} + @F@$ ($b=@b@, p=@p_val@$) de rendimientos crecientes:",
 ]
 
-stems_hab02_1 = [
+stems_hab01_adv_ce = [
+    r"Refute en la Arena Adversarial que $x_{\text{stat}} = @x_stat@$ ($\pi_{\text{stat}} = @pi_stat@$) maximiza $\pi(x) = @p@x - @a@\sqrt{x} - @F@$ ingresando un nivel $x > 0$ con mayor beneficio:",
+    r"Proponga un contraejemplo productivo $x > 0$ que demuestre que $\pi(x) = @p@x - @a@\sqrt{x} - @F@$ supera el valor crítico $@pi_stat@$ alcanzado en $x_{\text{stat}} = @x_stat@$:",
+    r"Construya un testigo numérico $x > 0$ para refutar la optimalidad de $x_{\text{stat}} = @x_stat@$ bajo $p = @p@$, $a = @a@$ y costo fijo $F = @F@$ ($\pi_{\text{stat}} = @pi_stat@$):",
+    r"Encuentre una escala $x > 0$ donde la firma con $c(x) = @a@\sqrt{x} + @F@$ y $p = @p@$ obtenga utilidad estrictamente mayor a $\pi(@x_stat@) = @pi_stat@$:",
+]
+
+stems_hab02_ic1 = [
     r"Con ingreso $m = @m@$, precio $p_1 = @p1@$, $p_2 = 1$ y descuento $r = @r_pct@\%$ tras superar $\bar{x}_1 = @x_bar@$, deduce el excedente $x_2^*$ y ubica el vértice no convexo:",
     r"Dada la restricción por tramos con renta $m = @m@$, tarifa $p_1 = @p1@$, $p_2 = 1$ y descuento marginal $r = @r_pct@\%$ desde $\bar{x}_1 = @x_bar@$, sitúa el punto de quiebre:",
     r"Analiza en el lienzo el quiebre presupuestario con $m = @m@$, $p_1 = @p1@$, $p_2 = 1$ y descuento $r = @r_pct@\%$ a partir de $\bar{x}_1 = @x_bar@$, marcando el vértice:",
     r"Localiza geométricamente el ángulo entrante no convexo bajo $m = @m@$, $p_1 = @p1@$, $p_2 = 1$, umbral $\bar{x}_1 = @x_bar@$ y descuento $r = @r_pct@\%$:",
-    r"Calcula $(x_1^*, x_2^*)$ en el cambio de tramo para $m = @m@$, $p_1 = @p1@$, $p_2 = 1$, $\bar{x}_1 = @x_bar@$ y descuento $r = @r_pct@\%$, y mueve el punto al vértice:",
-    r"Identifica sobre el plano el punto de quiebre presupuestario generado por $m = @m@$, $p_1 = @p1@$, $p_2 = 1$, umbral $\bar{x}_1 = @x_bar@$ y descuento $r = @r_pct@\%$:",
 ]
 
-stems_hab02_2 = [
+stems_hab02_ic2 = [
+    r"En el Tramo B ($x_1 \ge @x_bar@$) con tarifa inicial $p_1 = @p1@$, renta $m = @m@$ y descuento $@r_pct@\%$, configure estilo de frontera factible $\le$, región inferior y deslizador:",
+    r"Ajuste el deslizador del precio descontado para $p_1 = @p1@$ con rebaja $@r_pct@\%$ tras $\bar{x}_1 = @x_bar@$ ($m = @m@$) y trace borde sólido con sombreado debajo:",
+    r"Modele en el plano la desigualdad presupuestaria del segundo tramo ($m = @m@$, $p_1 = @p1@$, descuento $@r_pct@\%$ desde $\bar{x}_1 = @x_bar@$) fijando el deslizador:",
+    r"Determine borde, semiplano factible y parámetro marginal en el deslizador si el precio $@p1@$ recibe descuento $@r_pct@\%$ después de $@x_bar@$ ($m = @m@$):",
+]
+
+stems_hab02_os1 = [
     r"Con precio inicial $p_1 = @p1@$, umbral $\bar{x}_1 = @x_bar@$ y descuento `r` en el tramo $x_1 > @x_bar@$, escriba simbólicamente el precio efectivo unitario:",
     r"Exprese en función de `r` el costo marginal por unidad adicional cuando $x_1 > @x_bar@$ dado $\bar{x}_1 = @x_bar@$ y $p_1 = @p1@$:",
     r"Para el Tramo B ($x_1 > @x_bar@$) tras $\bar{x}_1 = @x_bar@$ con precio base $p_1 = @p1@$ y descuento `r`, ingrese la fórmula simbólica neta:",
     r"Determine simbólicamente (en `r`) la pendiente absoluta del segundo tramo $x_1 > @x_bar@$ tras $\bar{x}_1 = @x_bar@$ con $p_1 = @p1@$:",
-    r"Escriba la fórmula en `r` del precio descontado para $x_1 > @x_bar@$ con umbral $\bar{x}_1 = @x_bar@$ partiendo de $p_1 = @p1@$:",
-    r"Formule el precio efectivo unitario del tramo $x_1 > @x_bar@$ superando $\bar{x}_1 = @x_bar@$ con precio inicial $p_1 = @p1@$ y tasa `r`:",
 ]
 
-stems_hab02_3 = [
-    r"Ordene el protocolo deductivo en ProofDAG para hallar el óptimo global con restricción no convexa en $\bar{x}_1 = @x_bar@$, $p_1 = @p1@$ y descuento $r = @r_dec@$, descartando el paso falaz:",
-    r"Construya la cadena lógica de optimización bajo descuento por volumen ($\bar{x}_1 = @x_bar@$, $p_1 = @p1@$, $r = @r_dec@$) evitando el Lagrangiano único inválido:",
-    r"Encadene los pasos válidos para comparar tangencias locales y vértice en ($\bar{x}_1 = @x_bar@$, $p_1 = @p1@$, $r = @r_dec@$) y excluya el paso falaz:",
-    r"Establezca el orden topológico de optimalidad global cuando la restricción quiebra en $\bar{x}_1 = @x_bar@$ con $p_1 = @p1@$ y $r = @r_dec@$:",
-    r"Ordene la prueba formal del óptimo global por tramos ($\bar{x}_1 = @x_bar@$, tarifa $p_1 = @p1@$, descuento $r = @r_dec@$) omitiendo la falacia de convexidad:",
-    r"Ensamble en ProofDAG las condiciones necesarias de comparación global para $\bar{x}_1 = @x_bar@$, $p_1 = @p1@$ y descuento $r = @r_dec@$:",
+stems_hab02_os2 = [
+    r"Despeje $x_2$ en función de `x1` y `r` para el segundo tramo ($x_1 > @x_bar@$) cuando la renta es $m = @m@$, $p_1 = @p1@$ y $p_2 = 1$:",
+    r"Formule la frontera presupuestaria $x_2(x_1, r)$ válida tras superar $\bar{x}_1 = @x_bar@$ con ingreso $m = @m@$, $p_1 = @p1@$ y $p_2 = 1$:",
+    r"Escriba simbólicamente en `x1` y `r` el consumo máximo $x_2$ ($p_2 = 1$) tras superar $\bar{x}_1 = @x_bar@$ ($x_1 > @x_bar@$) con presupuesto $m = @m@$ y tarifa inicial $p_1 = @p1@$:",
+    r"Obtenga $x_2$ expresada en `x1` y `r` sobre el segmento con descuento por volumen ($\bar{x}_1 = @x_bar@$, $m = @m@$, $p_1 = @p1@$, $p_2 = 1$):",
 ]
 
-stems_hab02_4 = [
+stems_hab02_um1 = [
+    r"Un consumidor enfrenta ingreso $m = @m@$, precio $p_1 = @p1@$ hasta $\bar{x}_1 = @x_bar@$ y rebaja posterior. Ejecute el diagnóstico Stage 0 para elegir el criterio de optimalidad:",
+    r"Audite las tres fases Stage 0 para el problema con descuento tras $\bar{x}_1 = @x_bar@$ ($m = @m@$, $p_1 = @p1@$) seleccionando la regla global correcta:",
+    r"Clasifique variables, no convexidad y criterio global en Stage 0 antes de optimizar la cesta cuando $m = @m@$, $p_1 = @p1@$ y umbral $\bar{x}_1 = @x_bar@$:",
+    r"Complete el modelado guiado Stage 0 de selección para la restricción por bloques con renta $m = @m@$, precio $@p1@$ y corte en $\bar{x}_1 = @x_bar@$:",
+]
+
+stems_hab02_um2 = [
     r"Un consumidor paga $p_1 = @p1@$ hasta $\bar{x}_1 = @x_bar@$ y recibe descuento `r` por cada unidad adicional ($x_1 > @x_bar@$). Modele variables, supuestos y ecuación de gasto total en Stage 0:",
     r"Complete las tres fases Stage 0 para formular algebraicamente en `x1` y `r` el gasto del bien 1 en el Tramo B ($x_1 > @x_bar@$, $\bar{x}_1 = @x_bar@$) con tarifa base $p_1 = @p1@$:",
     r"Formalice en Stage 0 el presupuesto por bloques ($p_1 = @p1@$, umbral $\bar{x}_1 = @x_bar@$, tramo $x_1 > @x_bar@$, descuento `r`) culminando con el gasto en `x1` y `r`:",
-    r"Audite variables endógenas, quiebres de demanda y formule el gasto total para $x_1 > @x_bar@$ ($\bar{x}_1 = @x_bar@$) en `x1` y `r` dado $p_1 = @p1@$:",
     r"Resuelva el modelado progresivo Stage 0 hasta escribir simbólicamente el gasto en bien 1 para $x_1 > @x_bar@$ con $\bar{x}_1 = @x_bar@$, $p_1 = @p1@$ y descuento `r`:",
-    r"Desarrolle el stepper Stage 0 para tarifa por bloques ($p_1 = @p1@$, umbral $\bar{x}_1 = @x_bar@$, $x_1 > @x_bar@$, descuento `r`) y formule el gasto total:",
 ]
 
-stems_c01_1 = [
+stems_c01_adv_ce = [
     r"Dada $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$, refuta la convexidad del contorno superior en $k = @k_lvl@$ ingresando canastas $A=(a_1,a_2)$ y $B=(b_1,b_2)$ cuyo punto medio caiga debajo:",
     r"Encuentra un contraejemplo numérico $A=(a_1, a_2)$ y $B=(b_1, b_2)$ para $u(x_1,x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ con cota $k = @k_lvl@$ donde $u(0.5A+0.5B) < @k_lvl@$:",
     r"Demuestra en la Arena Adversarial que $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ no es cuasicóncava exhibiendo un testigo $A=(a_1, a_2)$, $B=(b_1, b_2)$ para $k = @k_lvl@$:",
     r"Propón coordenadas válidas $A=(a_1,a_2)$ y $B=(b_1,b_2)$ dentro del contorno de $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en cota $k = @k_lvl@$ cuya combinación media viole la convexidad:",
-    r"Refuta analíticamente mediante contraejemplo $A=(a_1, a_2)$ y $B=(b_1, b_2)$ la cuasiconcavidad de $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en el nivel $k = @k_lvl@$:",
-    r"Construye un testigo numérico $A=(a_1,a_2)$ y $B=(b_1,b_2)$ para $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ respecto al umbral $k = @k_lvl@$ violando convexidad:",
 ]
 
-stems_c01_2 = [
-    r"En el árbol extensivo de información imperfecta con pago cooperativo $(@w1@, @w1@)$ (y desvío $(@w2@, 0)$), seleccione las ramas correspondientes al equilibrio cooperativo y agrupe los nodos indistinguibles del Jugador 2:",
-    r"Trace en el árbol de juego extensivo la senda de equilibrio hacia el nodo terminal con pagos $(@w1@, @w1@)$ (alternativa $(@w2@, 0)$) y forme el conjunto de información correcto para `J2`:",
-    r"Marque en el lienzo las aristas hacia `T1` con utilidad conjunta $(@w1@, @w1@)$ frente a $(@w2@, 0)$ e indique la partición de información entre `J2a` y `J2b`:",
-    r"Configure la estrategia cooperativa $(@w1@, @w1@)$ (versus $(@w2@, 0)$) seleccionando sus ramas en el árbol e instanciando el conjunto de información de `J2`:",
-    r"Determine sobre el árbol extensivo las ramas que conducen al perfil $(@w1@, @w1@)$ frente al pago $(@w2@, 0)$ junto con el conjunto de información imperfecta:",
-    r"Construya en el árbol interactivo la trayectoria óptima hacia $(@w1@, @w1@)$ (con pago asimétrico $(@w2@, 0)$) y trace la equivalencia informacional de `J2`:",
+stems_c01_adv_ff = [
+    r"Un estudiante intenta probar con cálculo diferencial que $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ es cuasicóncava en $k = @k_lvl@$. Detecte el paso inválido y su motivo:",
+    r"Audite esta supuesta demostración por hessiano orlado sobre la utilidad parte entera en cota $@k_lvl@$ señalando la falacia:",
+    r"Identifique en qué paso quiebra el argumento diferencial aplicado a $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en nivel $@k_lvl@$:",
+    r"Localice la ruptura axiomática al aplicar derivadas parciales sobre contornos escalonados en $k = @k_lvl@$ y elija su razón formal:",
 ]
 
-stems_c01_3 = [
-    r"Empareje cada propiedad analítica sobre preferencias discontinuas en torno al nivel $k = @c_lvl@$ con su consecuencia formal correspondiente:",
-    r"Asocie causalmente los escenarios de ruptura axiomática alrededor del nivel de contorno $k = @c_lvl@$ con sus resultados deductivos:",
-    r"Relacione en la matriz causal cada enunciado de contorno superior (nivel $k = @c_lvl@$) y teoría de juegos con su implicación exacta:",
-    r"Vincule cada concepto analítico evaluado alrededor de $k = @c_lvl@$ con la propiedad formal correcta evitando distractores cruzados:",
-    r"Empareje los fenómenos de no diferenciabilidad en el umbral $k = @c_lvl@$ con el diagnóstico matemático adecuado:",
-    r"Seleccione la asociación correcta entre cada propiedad microeconómica en cota $k = @c_lvl@$ y su consecuencia formal:",
+stems_c01_tree = [
+    r"En el árbol extensivo de información imperfecta con pago óptimo $(@w1@, @w1@)$ en `@win_label@` (y pagos $(@w2@, 0)$ en desvíos), seleccione las ramas hacia `@win_label@` y agrupe los nodos indistinguibles de J2:",
+    r"Trace en el árbol de juego la trayectoria hacia `@win_label@` con pago $(@w1@, @w1@)$ frente a $(@w2@, 0)$ y forme el conjunto de información correcto para `J2`:",
+    r"Marque las aristas que conducen al nodo terminal `@win_label@` ($(@w1@, @w1@)$ vs $(@w2@, 0)$) e indique la partición informacional entre `J2a` y `J2b`:",
+    r"Configure en el árbol interactivo las acciones hacia `@win_label@` con utilidad $(@w1@, @w1@)$ (alternativa $(@w2@, 0)$) junto al conjunto de información de `J2`:",
 ]
 
-stems_c01_4 = [
+stems_c01_cart = [
+    r"Dados los extremos $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$ en el contorno $\lfloor x_1 \rfloor + \lfloor x_2 \rfloor \ge @k_lvl@$, mueve el punto `M` a la semisuma $0.5A + 0.5B$ verificando la caída debajo de $@k_lvl@$:",
+    r"Ubica sobre el plano el punto medio convexo `M` entre $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$ donde se rompe el contorno superior de cota $k = @k_lvl@$:",
+    r"En el lienzo cartesiano de la utilidad piso con cota $@k_lvl@$, sitúa el marcador `M` exactamente en el promedio aritmético de $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$:",
+    r"Localiza el testigo convexo `M` generado por la combinación equitativa de $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$ bajo umbral $k = @k_lvl@$:",
+]
+
+stems_c01_fib1 = [
     r"Calcule el valor entero exacto de $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ evaluado en la canasta fraccionaria $(x_1, x_2) = (@x1@, @x2@)$:",
     r"Determine numéricamente $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ evaluada en $(x_1, x_2) = (@x1@, @x2@)$:",
     r"Para $(x_1, x_2) = (@x1@, @x2@)$, evalúe $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ e ingrese el resultado numérico exacto:",
-    r"Halle el nivel de utilidad de $u(x_1,x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ para $(x_1, x_2) = (@x1@, @x2@)$:",
     r"Evalúe sin aproximaciones continuas la utilidad $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en la canasta $(x_1, x_2) = (@x1@, @x2@)$:",
-    r"Calcule el entero resultante de evaluar $u(x_1,x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ en el punto $(x_1, x_2) = (@x1@, @x2@)$:",
 ]
 
-stems_c02_1 = [
+stems_c01_fib2 = [
+    r"Para el umbral $k = @k_lvl@$ y el punto medio $M = (@x1@, @x2@)$, calcule el déficit entero $k - u(M)$ donde $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$:",
+    r"¿Cuántas unidades por debajo de la cota $k = @k_lvl@$ cae la utilidad parte entera en $M = (@x1@, @x2@)$?",
+    r"Calcule la brecha $k - (\lfloor @x1@ \rfloor + \lfloor @x2@ \rfloor)$ cuando el contorno superior exige al menos $k = @k_lvl@$:",
+    r"Determine exactamente cuánto falta al valor escalonado $u(@x1@, @x2@)$ para alcanzar el nivel de utilidad $k = @k_lvl@$:",
+]
+
+stems_c02_dag1 = [
     r"A partir de la identidad $m \equiv e(p, v(p,m))$, encadene los pasos y justificaciones para derivar la Identidad de Roy de $x_{@g_idx@}$ descartando la falacia:",
     r"Construya en ProofDAG la demostración de la Identidad de Roy para $x_{@g_idx@}$ a partir de $m \equiv e(p, v(p,m))$:",
     r"Ordene la deducción analítica formal de la Identidad de Roy de $x_{@g_idx@}$ desde $m \equiv e(p, v(p,m))$, asociando cada lema:",
     r"Ensamble los 5 eslabones lógicos desde $m \equiv e(p, v(p,m))$ para deducir la Identidad de Roy en $x_{@g_idx@}$, excluyendo el paso con signo errado:",
-    r"Desarrolle la prueba paso a paso de la Identidad de Roy para $x_{@g_idx@}$ partiendo de $m \equiv e(p, v(p,m))$ mediante regla de la cadena y Shephard:",
-    r"Verifique en ProofDAG el encadenamiento dual correcto desde $m \equiv e(p,v(p,m))$ hacia la Identidad de Roy del bien $x_{@g_idx@}$:",
 ]
 
-stems_c02_2 = [
+stems_c02_dag2 = [
+    r"Ordene la prueba formal del Lema de Shephard para la demanda compensada $x_{@j_idx@}^h(p, @u_bar@)$ vía Teorema de la Envolvente excluyendo la falacia de Roy:",
+    r"Construya en ProofDAG la derivación de $x_{@j_idx@}^h(p, @u_bar@) = \partial e/\partial p_{@j_idx@}$ desde el Lagrangiano del gasto descartando el paso erróneo:",
+    r"Encadene los pasos y justificaciones desde el problema mínimo del gasto en nivel $@u_bar@$ hasta obtener $x_{@j_idx@}^h$ para el bien $@j_idx@$:",
+    r"Ensamble topológicamente la demostración del Lema de Shephard en $x_{@j_idx@}^h(p, @u_bar@)$ mediante la función valor del gasto mínimo:",
+]
+
+stems_c02_os1 = [
     r"Dada $v(p, m) = @c_val@ + \ln(m) - @k@\ln(p)$, aplique la Identidad de Roy para hallar simbólicamente $x^d(p,m)$ en `m` y `p`:",
     r"Calcule algebraicamente $x^d(p,m)$ mediante Identidad de Roy si $v(p,m) = @c_val@ + \ln(m) - @k@\ln(p)$ en función de `m` y `p`:",
     r"Obtenga en términos simbólicos de `m` y `p` la demanda marshalliana $x^d(p,m)$ derivada de $v(p,m) = @c_val@ + \ln(m) - @k@\ln(p)$:",
-    r"Aplique la Identidad de Roy para $x^d(p,m)$ dada la utilidad indirecta $v(p,m) = @c_val@ + \ln(m) - @k@\ln(p)$ usando `m` y `p`:",
     r"Determine en el editor simbólico la expresión reducida de $x^d(p,m)$ en `m` y `p` para $v(p,m) = @c_val@ + \ln(m) - @k@\ln(p)$:",
-    r"Deduzca simbólicamente la función de demanda ordinaria $x^d(p,m)$ en `m` y `p` correspondiente a $v(p,m) = @c_val@ + \ln(m) - @k@\ln(p)$:",
 ]
 
-stems_c02_3 = [
+stems_c02_os2 = [
+    r"Dada la función de gasto $e(p, u) = @F@ + @k@p^2 u$, aplique el Lema de Shephard para obtener simbólicamente la demanda hicksiana $x^h(p,u)$ en `p` y `u`:",
+    r"Calcule por Lema de Shephard la demanda compensada $x^h(p,u) = \partial e/\partial p$ si $e(p,u) = @F@ + @k@p^2 u$ en términos de `p` y `u`:",
+    r"Derive simbólicamente en `p` y `u` la demanda hicksiana asociada al gasto mínimo $e(p,u) = @F@ + @k@p^2 u$:",
+    r"Exprese $x^h(p,u)$ en función de `p` y `u` diferenciando la función de gasto $e(p,u) = @F@ + @k@p^2 u$:",
+]
+
+stems_c02_cm1 = [
     r"Asocie cada identidad de dualidad del consumidor para el bien $x_{@idx_b@}$ con su fórmula analítica correcta:",
     r"Empareje los teoremas duales aplicados sobre el bien $x_{@idx_b@}$ con sus expresiones formales correspondientes:",
     r"Relacione correctamente la Identidad de Roy, el Lema de Shephard y la inversión gasto-utilidad para el bien $x_{@idx_b@}$:",
     r"Vincule cada principio de dualidad del consumidor del bien $x_{@idx_b@}$ con su expresión formal descartando distractores cruzados:",
-    r"Determine la correspondencia causal correcta entre los teoremas de dualidad del bien $x_{@idx_b@}$ y sus ecuaciones:",
-    r"Asocie cada identidad fundamental en teoría de la dualidad para el bien $x_{@idx_b@}$ con su expresión exacta:",
 ]
 
-stems_c02_4 = [
-    r"En la derivación de la Identidad de Roy para $x_{@idx_g@}$ a partir de $m \equiv e(p, v(p,m))$, indique el requisito analítico indispensable:",
-    r"Señale la condición formal correcta sobre la obtención analítica de la Identidad de Roy en $x_{@idx_g@}$ desde $m \equiv e(p, v(p,m))$:",
-    r"Identifique cuál afirmación describe rigurosamente el paso dual entre $m \equiv e(p, v(p,m))$ y la Identidad de Roy para $x_{@idx_g@}$:",
-    r"Determine el supuesto y mecanismo correcto al derivar la Identidad de Roy del bien $x_{@idx_g@}$ desde $m \equiv e(p,v(p,m))$:",
-    r"Seleccione la propiedad verdadera sobre la derivación general de la Identidad de Roy en $x_{@idx_g@}$ partiendo de $m \equiv e(p, v(p,m))$:",
-    r"Evalúe la validez deductiva de la Identidad de Roy para $x_{@idx_g@}$ desde $m \equiv e(p, v(p,m))$ y elija la proposición exacta:",
+stems_c02_cm2 = [
+    r"Empareje cada ruptura lógica en la deducción dual del bien $x_{@idx_d@}$ con su consecuencia analítica exacta:",
+    r"Asocie los errores frecuentes al derivar desde $m \equiv e(p,v(p,m))$ para el bien $@idx_d@$ con el fallo que producen:",
+    r"Relacione cada hipótesis omitida o inversión en la prueba de dualidad de $x_{@idx_d@}$ con su impacto deductivo:",
+    r"Vincule las fallas de derivación dual sobre el bien $x_{@idx_d@}$ con sus respectivos diagnósticos formales:",
 ]
 
-def _mk_hints(topic, a, b, c):
-    return [a, b, c]
+stems_c02_mc7 = [
+    r"Con utilidad indirecta $v(p, m) = @c_val@ + \ln(m) - @k@\ln(p)$, evalúe la demanda ordinaria $x^d(p, m)$ cuando $p = @p0@$ y la renta es $m = @m0@$:",
+    r"Aplique numéricamente la Identidad de Roy sobre $v(p,m) = @c_val@ + \ln(m) - @k@\ln(p)$ para precio $p = @p0@$ e ingreso $m = @m0@$:",
+    r"Si $v(p, m) = @c_val@ + \ln(m) - @k@\ln(p)$, ¿cuántas unidades demanda el consumidor en $(p, m) = (@p0@, @m0@)$?",
+    r"Calcule la cantidad marshalliana $x^d(@p0@, @m0@)$ correspondiente a $v(p, m) = @c_val@ + \ln(m) - @k@\ln(p)$:",
+]
 
 TEMPLATES = [
-    # Hab-01 (0 MC7, 100% active)
-    ("T-Hab-01-01", "Hab-01", "unstructured_model", gen_hab01_stage0, ver_hab01_stage0, ("easy", "Apply"), stems_hab01_1, [r"Distingue la decisión endógena $x$ de los datos exógenos $p$ y $F$.", r"Evalúa el signo de $c''(x)$ cuando el costo crece como raíz cuadrada.", r"Un $\pi''(x) > 0$ invierte el punto crítico de primer orden en mínimo local."], r"Con $c(x) = @a@\sqrt{x} + @F@$ y $p = @p@$, $\pi''(x) > 0$, por lo que $p = CMg(x)$ es mínimo local."),
-    ("T-Hab-01-02", "Hab-01", "open_symbolic", gen_hab01_open_sym, ver_hab01_open_sym, ("medium", "Analyze"), stems_hab01_2, [r"Expresa $\sqrt{x}$ como $x^{1/2}$ antes de derivar.", r"Multiplica por el coeficiente $@a@ = 2 \cdot @k@$ y reduce la potencia a $x^{-1/2}$.", r"El costo fijo $@F@$ desaparece al derivar respecto a $x$."], r"Derivando $c(x) = @a@\sqrt{x} + @F@$ se obtiene $CMg(x) = @k@/\sqrt{x}$."),
-    ("T-Hab-01-03", "Hab-01", "fill_in_the_blank", gen_hab01_fib_profit, ver_hab01_fib_profit, ("hard", "Analyze"), stems_hab01_3, [r"Calcula primero el ingreso total multiplicando $p = @p@$ por $x = @x_hi@$.", r"Evalúa el costo variable $@a@\sqrt{@x_hi@} = @a@ \cdot @m_hi@$ y añade $F = @F@$.", r"Comprueba que $\pi(@x_hi@)$ supera el mínimo local $\pi_{\text{stat}} = @pi_stat@$."], r"En $x = @x_hi@$, $\pi = (@p@)(@x_hi@) - (@a@)(@m_hi@) - @F@ = @pi_hi@ > @pi_stat@$."),
-    ("T-Hab-01-04", "Hab-01", "adversarial_break", gen_hab01_adv, ver_hab01_adv, ("hard", "Evaluate"), stems_hab01_4, [r"Revisa si la derivada primera en $x_{\text{stat}}$ basta para afirmar un máximo.", r"Deriva una segunda vez la expresión $\pi'(x) = @p_val@ - @b@/\sqrt{x}$.", r"Observa por qué un beneficio estrictamente convexo convierte la CPO en mínimo."], r"El Paso 3 ignora $\pi''(x) > 0$ bajo $c(x) = @b_dbl@\sqrt{x} + @F@$ y $p = @p_val@$."),
-    # Hab-02 (0 MC7, 100% active)
-    ("T-Hab-02-01", "Hab-02", "invariant_canvas", gen_hab02_canvas_cart, ver_hab02_canvas_cart, ("easy", "Analyze"), stems_hab02_1, [r"El tramo inicial rige exactamente hasta $x_1 = \bar{x}_1 = @x_bar@$.", r"Resta el gasto inicial $p_1 \cdot \bar{x}_1$ de la renta total $m = @m@$.", r"Coloca el punto sobre el vértice no diferenciable de la frontera presupuestaria."], r"El quiebre no convexo ocurre en $\bar{x}_1 = @x_bar@$, donde $x_2^* = m - p_1\bar{x}_1 = @m@ - (@p1@)(@x_bar@)$ con descuento $r = @r_pct@\%$."),
-    ("T-Hab-02-02", "Hab-02", "open_symbolic", gen_hab02_open_sym, ver_hab02_open_sym, ("medium", "Apply"), stems_hab02_2, [r"Identifica el precio de lista $@p1@$ antes del descuento proporcional.", r"Restar una proporción `r` equivale a multiplicar el precio base por $(1 - r)$.", r"Verifica que si $r = 0$, el precio marginal en $x_1 > @x_bar@$ se reduce a $@p1@$."], r"Para $x_1 > @x_bar@$, cada unidad cuesta $p_1(1-r) = @p1@(1-r)$."),
-    ("T-Hab-02-03", "Hab-02", "proof_dag", gen_hab02_dag, ver_hab02_dag, ("hard", "Evaluate"), stems_hab02_3, [r"La restricción presupuestaria no es un conjunto convexo alrededor de $@x_bar@$.", r"Cada tramo suave y el propio vértice deben evaluarse como candidatos independientes.", r"Un Lagrangiano global único no detecta tangencias locales múltiples ni esquinas."], r"Con $\bar{x}_1 = @x_bar@$, $p_1 = @p1@$ y $r = @r_dec@$, compara tangencias locales y vértice en $\arg\max$."),
-    ("T-Hab-02-04", "Hab-02", "unstructured_model", gen_hab02_stage0_sym, ver_hab02_stage0_sym, ("hard", "Create"), stems_hab02_4, [r"Separa el gasto fijo de las primeras $\bar{x}_1 = @x_bar@$ unidades a tarifa $@p1@$.", r"Suma únicamente las unidades excedentes $(x_1 - @x_bar@)$ al precio descontado.", r"Formula el gasto total como suma lineal por tramos en función de `x1` y `r`."], r"El gasto total en el Tramo B ($x_1 > @x_bar@$) es $@p1@\cdot @x_bar@ + @p1@(1-r)(x_1 - @x_bar@)$."),
-    # C-01 (0 MC7, 100% active)
-    ("T-C-01-01", "C-01", "adversarial_break", gen_c01_counterexample, ver_c01_counterexample, ("medium", "Evaluate"), stems_c01_1, [r"Elige primero canastas enteras $A$ y $B$ tales que ambas alcancen exactamente $@k_lvl@$.", r"Procura que al menos una coordenada de $A$ y $B$ difiera en una unidad impar.", r"Calcula la semisuma $0.5A + 0.5B$ para observar cómo $\lfloor \cdot \rfloor$ trunca abajo."], r"Un testigo como $A=(1, @k_lvl@-1)$ y $B=(2, @k_lvl@-2)$ da punto medio con suma $< @k_lvl@$."),
-    ("T-C-01-02", "C-01", "invariant_canvas", gen_c01_tree, ver_c01_tree, ("hard", "Analyze"), stems_c01_2, [r"Compara los perfiles de pago terminales hasta identificar $(@w1@, @w1@)$.", r"Activa de manera secuencial únicamente las dos aristas que llevan al nodo `T1`.", r"Cuando J2 desconoce qué eligió J1, sus dos nodos pertenecen al mismo conjunto informacional."], r"Activa las aristas hacia el pago $(@w1@, @w1@)$ (frente a $(@w2@, 0)$) y une J2a con J2b."),
-    ("T-C-01-03", "C-01", "concept_matching", gen_c01_matching, ver_c01_matching, ("easy", "Understand"), stems_c01_3, [r"Analiza si la función escalonada $\lfloor x_i \rfloor$ admite derivadas parciales continuas.", r"Contrasta la convexidad geométrica del contorno en cota $@c_lvl@$ frente a bloques.", r"Descarta asociaciones que atribuyan suavidad o información perfecta falsa."], r"La función piso alrededor de $@c_lvl@$ produce contornos en escalera no convexos e inaplicabilidad del hessiano."),
-    ("T-C-01-04", "C-01", "fill_in_the_blank", gen_c01_fib, ver_c01_fib, ("hard", "Analyze"), stems_c01_4, [r"Trunca separadamente la parte decimal de $x_1 = @x1@$ al entero menor o igual.", r"Trunca separadamente $x_2 = @x2@$ hacia abajo, nunca redondees hacia arriba.", r"Suma únicamente ambos resultados enteros tras aplicar el operador piso."], r"$\lfloor @x1@ \rfloor + \lfloor @x2@ \rfloor = @ans@$ (no $@cont_sum@$ ni $@ceil_sum@$)."),
-    # C-02 (1 MC7 + 3 active = 75% active)
-    ("T-C-02-01", "C-02", "proof_dag", gen_c02_dag_roy, ver_c02_dag_roy, ("hard", "Evaluate"), stems_c02_1, [r"Inicia diferenciando $m \equiv e(p, v(p,m))$ respecto a $p_{@g_idx@}$ por regla de la cadena.", r"Necesitas derivar además la identidad respecto a $m$ para despejar $\partial e/\partial u$.", r"Despeja la demanda ordinaria cuidando el signo negativo del término en precio."], r"La deducción para el bien $@g_idx@$ aplica regla de la cadena, Shephard y derivada respecto a $m$."),
-    ("T-C-02-02", "C-02", "open_symbolic", gen_c02_open_sym, ver_c02_open_sym, ("medium", "Analyze"), stems_c02_2, [r"Deriva $v = @c_val@ + \ln(m) - @k@\ln(p)$ respecto a $p$ obteniendo $-@k@/p$.", r"Deriva la misma función respecto a $m$ obteniendo el inverso multiplicativo $1/m$.", r"Divide $-(\partial v/\partial p)$ entre $(\partial v/\partial m)$ simplificando signos."], r"Con $v = @c_val@ + \ln(m) - @k@\ln(p)$, $-\frac{-@k@/p}{1/m} = @k@m/p$."),
-    ("T-C-02-03", "C-02", "concept_matching", gen_c02_matching, ver_c02_matching, ("easy", "Analyze"), stems_c02_3, [r"Identifica cuál teorema diferencia la utilidad indirecta $v(p,m)$ respecto a $p_{@idx_b@}$.", r"Recuerda el signo negativo que acompaña al cociente de derivadas en Roy.", r"Asocia la derivada de la función de gasto $e(p,u)$ con la demanda compensada."], r"Roy arroja demanda ordinaria con signo negativo y Shephard deriva $e(p,u)$ para el bien $@idx_b@$."),
-    ("T-C-02-04", "C-02", "multiple_choice", gen_c02_mc7, ver_c02_mc7, ("hard", "Evaluate"), stems_c02_4, [r"Verifica la condición de diferenciabilidad y no saciación $\partial v/\partial m > 0$ en $p_{@idx_g@}$.", r"El puente entre la derivada del gasto mínimo y la demanda usa el Lema de Shephard.", r"Examina el signo y la posición del numerador y denominador tras el despeje final."], r"La Identidad de Roy en el bien $p_{@idx_g@}$ requiere $\partial v/\partial m > 0$, Shephard y signo negativo."),
+    # Hab-01 (6 templates: 0 MC7, 100% active)
+    {"id": "T-Hab-01-01", "cid": "Hab-01", "qtype": "open_symbolic", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_hab01_os1, "ver": ver_hab01_os1, "stem_variants": stems_hab01_os1, "hints": [r"Expresa $\sqrt{x}$ como $x^{1/2}$ antes de derivar.", r"Multiplica por el coeficiente $@a@ = 2 \cdot @k@$ y reduce la potencia a $x^{-1/2}$.", r"El costo fijo $@F@$ desaparece al derivar respecto a $x$."], "sol": r"Derivando $c(x) = @a@\sqrt{x} + @F@$ se obtiene $CMg(x) = @k@/\sqrt{x}$."},
+    {"id": "T-Hab-01-02", "cid": "Hab-01", "qtype": "open_symbolic", "archetype": "perturbation", "band": ("medium", "Analyze"), "gen": gen_hab01_os2, "ver": ver_hab01_os2, "stem_variants": stems_hab01_os2, "hints": [r"Divide cada sumando de $c(x) = @a@\sqrt{x} + @F@$ entre la producción $x$.", r"Simplifica $\sqrt{x}/x$ como $1/\sqrt{x}$.", r"Conserva el término fijo medio $@F@/x$ junto al costo variable medio."], "sol": r"El costo medio total resulta $CMe(x) = (@a@\sqrt{x} + @F@)/x = @a@/\sqrt{x} + @F@/x$."},
+    {"id": "T-Hab-01-03", "cid": "Hab-01", "qtype": "fill_in_the_blank", "archetype": "direct", "band": ("medium", "Apply"), "gen": gen_hab01_fib1, "ver": ver_hab01_fib1, "stem_variants": stems_hab01_fib1, "hints": [r"Calcula primero el ingreso total multiplicando $p = @p@$ por $x = @x_hi@$.", r"Evalúa el costo variable $@a@\sqrt{@x_hi@} = @a@ \cdot @m_hi@$ y añade $F = @F@$.", r"Comprueba que $\pi(@x_hi@)$ supera el mínimo local $\pi_{\text{stat}} = @pi_stat@$."], "sol": r"En $x = @x_hi@$, $\pi = (@p@)(@x_hi@) - (@a@)(@m_hi@) - @F@ = @pi_hi@ > @pi_stat@$."},
+    {"id": "T-Hab-01-04", "cid": "Hab-01", "qtype": "fill_in_the_blank", "archetype": "inverse", "band": ("hard", "Analyze"), "gen": gen_hab01_fib2, "ver": ver_hab01_fib2, "stem_variants": stems_hab01_fib2, "hints": [r"Iguale el precio exógeno $@p@$ a $@k@/\sqrt{x}$.", r"Despeje $\sqrt{x} = @k@/@p@ = @m@$ antes de elevar.", r"Eleve al cuadrado para obtener $x_{\text{stat}} = @m@^2$."], "sol": r"De $@p@ = @k@/\sqrt{x}$ resulta $\sqrt{x} = @m@$ y por tanto $x_{\text{stat}} = @ans@$."},
+    {"id": "T-Hab-01-05", "cid": "Hab-01", "qtype": "adversarial_break", "archetype": "perturbation", "band": ("hard", "Evaluate"), "gen": gen_hab01_adv_ff, "ver": ver_hab01_adv_ff, "stem_variants": stems_hab01_adv_ff, "hints": [r"Revisa si la derivada primera en $x_{\text{stat}}$ basta para afirmar un máximo.", r"Deriva una segunda vez la expresión $\pi'(x) = @p_val@ - @b@/\sqrt{x}$.", r"Observa por qué un beneficio estrictamente convexo convierte la CPO en mínimo."], "sol": r"El Paso 3 ignora $\pi''(x) > 0$ bajo $c(x) = @b_dbl@\sqrt{x} + @F@$ y $p = @p_val@$."},
+    {"id": "T-Hab-01-06", "cid": "Hab-01", "qtype": "adversarial_break", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab01-01", "band": ("hard", "Create"), "gen": gen_hab01_adv_ce, "ver": ver_hab01_adv_ce, "stem_variants": stems_hab01_adv_ce, "hints": [r"Elige un valor positivo de $x$ bastante mayor que $x_{\text{stat}} = @x_stat@$.", r"Verifica que con $\pi''(x) > 0$, la función crece al alejarte del mínimo.", r"Prueba un cuadrado perfecto superior a $@x_stat@$ para comprobar $\pi(x) > @pi_stat@$."], "sol": r"Al expandir por encima de $x_{\text{stat}} = @x_stat@$, $\pi(x) = @p@x - @a@\sqrt{x} - @F@$ supera $@pi_stat@$."},
+    # Hab-02 (6 templates: 0 MC7, 100% active)
+    {"id": "T-Hab-02-01", "cid": "Hab-02", "qtype": "invariant_canvas", "archetype": "direct", "band": ("easy", "Analyze"), "gen": gen_hab02_ic1, "ver": ver_hab02_ic1, "stem_variants": stems_hab02_ic1, "hints": [r"El tramo inicial rige exactamente hasta $x_1 = \bar{x}_1 = @x_bar@$.", r"Resta el gasto inicial $p_1 \cdot \bar{x}_1$ de la renta total $m = @m@$.", r"Coloca el punto sobre el vértice no diferenciable de la frontera presupuestaria."], "sol": r"El quiebre no convexo ocurre en $\bar{x}_1 = @x_bar@$, donde $x_2^* = m - p_1\bar{x}_1 = @m@ - (@p1@)(@x_bar@)$ con descuento $r = @r_pct@\%$."},
+    {"id": "T-Hab-02-02", "cid": "Hab-02", "qtype": "invariant_canvas", "archetype": "perturbation", "band": ("hard", "Evaluate"), "gen": gen_hab02_ic2, "ver": ver_hab02_ic2, "stem_variants": stems_hab02_ic2, "hints": [r"Una desigualdad $\le$ incluye el borde con trazo sólido y región inferior.", r"El descuento $@r_pct@\%$ sobre $p_1 = @p1@$ fija el precio marginal $@p1_disc@$.", r"Mueve el deslizador de $p'_1$ exactamente a $p_1(1 - @r_pct@/100)$."], "sol": r"Para $x_1 \ge @x_bar@$ ($m = @m@$), la restricción $\le$ es sólida con sombra inferior y pendiente $@p1_disc@$."},
+    {"id": "T-Hab-02-03", "cid": "Hab-02", "qtype": "open_symbolic", "archetype": "direct", "band": ("medium", "Apply"), "gen": gen_hab02_os1, "ver": ver_hab02_os1, "stem_variants": stems_hab02_os1, "hints": [r"Identifica el precio de lista $@p1@$ antes del descuento proporcional.", r"Restar una proporción `r` equivale a multiplicar el precio base por $(1 - r)$.", r"Verifica que si $r = 0$, el precio marginal en $x_1 > @x_bar@$ se reduce a $@p1@$."], "sol": r"Para $x_1 > @x_bar@$, cada unidad cuesta $p_1(1-r) = @p1@(1-r)$."},
+    {"id": "T-Hab-02-04", "cid": "Hab-02", "qtype": "open_symbolic", "archetype": "inverse", "band": ("hard", "Analyze"), "gen": gen_hab02_os2, "ver": ver_hab02_os2, "stem_variants": stems_hab02_os2, "hints": [r"Reste primero el gasto completo $@p1@ \cdot @x_bar@$ de la renta $@m@$.", r"Las unidades adicionales $(x_1 - @x_bar@)$ pagan la tarifa reducida $@p1@(1-r)$.", r"Con $p_2 = 1$, $x_2$ iguala directamente el ingreso remanente."], "sol": r"En el Tramo B, $x_2 = @m@ - @p1@ \cdot @x_bar@ - @p1@(1-r)(x_1 - @x_bar@)$."},
+    {"id": "T-Hab-02-05", "cid": "Hab-02", "qtype": "unstructured_model", "archetype": "inverse", "band": ("easy", "Apply"), "gen": gen_hab02_um_select, "ver": ver_hab02_um_select, "stem_variants": stems_hab02_um1, "hints": [r"Distingue la decisión $x_1$ de los datos exógenos $m = @m@$ y $\bar{x}_1 = @x_bar@$.", r"El descuento por volumen quiebra la convexidad del presupuesto.", r"Debes comparar las tangencias de cada tramo frente al punto de quiebre."], "sol": r"Con $m = @m@$ y quiebre en $\bar{x}_1 = @x_bar@$, el óptimo global compara $\max\{u(x^A), u(x^{\text{kink}}), u(x^B)\}$."},
+    {"id": "T-Hab-02-06", "cid": "Hab-02", "qtype": "unstructured_model", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab02-01", "band": ("hard", "Create"), "gen": gen_hab02_um_sym, "ver": ver_hab02_um_sym, "stem_variants": stems_hab02_um2, "hints": [r"Separa el gasto fijo de las primeras $\bar{x}_1 = @x_bar@$ unidades a tarifa $@p1@$.", r"Suma únicamente las unidades excedentes $(x_1 - @x_bar@)$ al precio descontado.", r"Formula el gasto total como suma lineal por tramos en función de `x1` y `r`."], "sol": r"El gasto total en el Tramo B ($x_1 > @x_bar@$) es $@p1@\cdot @x_bar@ + @p1@(1-r)(x_1 - @x_bar@)$."},
+    # C-01 (6 templates: 0 MC7, 100% active)
+    {"id": "T-C-01-01", "cid": "C-01", "qtype": "adversarial_break", "archetype": "direct", "band": ("medium", "Evaluate"), "gen": gen_c01_adv_ce, "ver": ver_c01_adv_ce, "stem_variants": stems_c01_adv_ce, "hints": [r"Elige primero canastas enteras $A$ y $B$ tales que ambas alcancen exactamente $@k_lvl@$.", r"Procura que al menos una coordenada de $A$ y $B$ difiera en una unidad impar.", r"Calcula la semisuma $0.5A + 0.5B$ para observar cómo $\lfloor \cdot \rfloor$ trunca abajo."], "sol": r"Un testigo como $A=(1, @k_lvl@-1)$ y $B=(2, @k_lvl@-2)$ da punto medio con suma $< @k_lvl@$."},
+    {"id": "T-C-01-02", "cid": "C-01", "qtype": "adversarial_break", "archetype": "perturbation", "band": ("hard", "Evaluate"), "gen": gen_c01_adv_ff, "ver": ver_c01_adv_ff, "stem_variants": stems_c01_adv_ff, "hints": [r"Verifica si $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$ es diferenciable.", r"Las funciones escalonadas saltan en cada valor entero.", r"Un criterio basado en derivadas segundas es inválido sin continuidad ni diferenciabilidad."], "sol": r"El Paso 2 falla porque la función parte entera no es diferenciable en contorno $@k_lvl@$."},
+    {"id": "T-C-01-03", "cid": "C-01", "qtype": "invariant_canvas", "archetype": "inverse", "band": ("hard", "Analyze"), "gen": gen_c01_tree, "ver": ver_c01_tree, "stem_variants": stems_c01_tree, "hints": [r"Compara los perfiles de pago terminales hasta identificar $(@w1@, @w1@)$.", r"Activa únicamente las dos aristas que llevan al nodo terminal `@win_label@`.", r"Cuando J2 desconoce qué eligió J1, sus dos nodos pertenecen al mismo conjunto informacional."], "sol": r"Activa las aristas hacia `@win_label@` ($(@w1@, @w1@)$ frente a $(@w2@, 0)$) y une J2a con J2b."},
+    {"id": "T-C-01-04", "cid": "C-01", "qtype": "invariant_canvas", "archetype": "boundary_or_edge_case", "assumption_id": "A-C01-01", "band": ("hard", "Evaluate"), "gen": gen_c01_cart, "ver": ver_c01_cart, "stem_variants": stems_c01_cart, "hints": [r"Promedia las abscisas de $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$ para obtener $x_1$.", r"Promedia las ordenadas de ambas canastas para obtener $x_2$.", r"Verifica que en ese punto medio $u(M) < @k_lvl@$."], "sol": r"El punto medio de $A=(@a1@,@a2@)$ y $B=(@b1@,@b2@)$ cae por debajo del nivel $@k_lvl@$ tras aplicar piso."},
+    {"id": "T-C-01-05", "cid": "C-01", "qtype": "fill_in_the_blank", "archetype": "direct", "band": ("easy", "Understand"), "gen": gen_c01_fib1, "ver": ver_c01_fib1, "stem_variants": stems_c01_fib1, "hints": [r"Trunca separadamente la parte decimal de $x_1 = @x1@$ al entero menor o igual.", r"Trunca separadamente $x_2 = @x2@$ hacia abajo, nunca redondees hacia arriba.", r"Suma únicamente ambos resultados enteros tras aplicar el operador piso."], "sol": r"$\lfloor @x1@ \rfloor + \lfloor @x2@ \rfloor = @ans@$ (no $@cont_sum@$ ni $@ceil_sum@$)."},
+    {"id": "T-C-01-06", "cid": "C-01", "qtype": "fill_in_the_blank", "archetype": "inverse", "band": ("medium", "Analyze"), "gen": gen_c01_fib2, "ver": ver_c01_fib2, "stem_variants": stems_c01_fib2, "hints": [r"Aplica primero el operador piso a cada coordenada de $(@x1@, @x2@)$.", r"Suma ambas partes enteras obteniendo $@u_m@$.", r"Reste dicho valor al umbral requerido $@k_lvl@$."], "sol": r"El déficit resulta $@k_lvl@ - (\lfloor @x1@ \rfloor + \lfloor @x2@ \rfloor) = @k_lvl@ - @u_m@ = @ans@$."},
+    # C-02 (7 templates: 1 MC7 + 6 active = 85.7% >= 80% active)
+    {"id": "T-C-02-01", "cid": "C-02", "qtype": "proof_dag", "archetype": "perturbation", "band": ("hard", "Evaluate"), "gen": gen_c02_dag_roy, "ver": ver_c02_dag_roy, "stem_variants": stems_c02_dag1, "hints": [r"Inicia diferenciando $m \equiv e(p, v(p,m))$ respecto a $p_{@g_idx@}$ por regla de la cadena.", r"Necesitas derivar además la identidad respecto a $m$ para despejar $\partial e/\partial u$.", r"Despeja la demanda ordinaria cuidando el signo negativo del término en precio."], "sol": r"La deducción para el bien $@g_idx@$ aplica regla de la cadena, Shephard y derivada respecto a $m$."},
+    {"id": "T-C-02-02", "cid": "C-02", "qtype": "proof_dag", "archetype": "boundary_or_edge_case", "assumption_id": "A-C02-01", "band": ("hard", "Create"), "gen": gen_c02_dag_shephard, "ver": ver_c02_dag_shephard, "stem_variants": stems_c02_dag2, "hints": [r"Formula primero el Lagrangiano del problema de minimización del gasto en $@u_bar@$.", r"Evalúa la función valor óptima antes de derivar respecto a $p_{@j_idx@}$.", r"Aplica el Teorema de la Envolvente anulando derivadas indirectas para concluir con signo positivo."], "sol": r"Por Envolvente sobre $e(p,@u_bar@)$, la derivada respecto a $p_{@j_idx@}$ iguala $x_{@j_idx@}^h(p,@u_bar@)$."},
+    {"id": "T-C-02-03", "cid": "C-02", "qtype": "open_symbolic", "archetype": "direct", "band": ("medium", "Analyze"), "gen": gen_c02_os1, "ver": ver_c02_os1, "stem_variants": stems_c02_os1, "hints": [r"Deriva $v = @c_val@ + \ln(m) - @k@\ln(p)$ respecto a $p$ obteniendo $-@k@/p$.", r"Deriva la misma función respecto a $m$ obteniendo el inverso multiplicativo $1/m$.", r"Divide $-(\partial v/\partial p)$ entre $(\partial v/\partial m)$ simplificando signos."], "sol": r"Con $v = @c_val@ + \ln(m) - @k@\ln(p)$, $-\frac{-@k@/p}{1/m} = @k@m/p$."},
+    {"id": "T-C-02-04", "cid": "C-02", "qtype": "open_symbolic", "archetype": "inverse", "band": ("hard", "Analyze"), "gen": gen_c02_os2, "ver": ver_c02_os2, "stem_variants": stems_c02_os2, "hints": [r"Identifica la relación del Lema de Shephard: $x^h(p,u) = \partial e(p,u)/\partial p$.", r"La constante fija $@F@$ se anula al diferenciar respecto al precio $p$.", r"Deriva $@k@p^2 u$ respecto a `p` manteniendo fija la utilidad `u`."], "sol": r"Derivando $e(p,u)=@F@+@k@p^2 u$ respecto a $p$ resulta $x^h(p,u)=2 \cdot @k@pu$."},
+    {"id": "T-C-02-05", "cid": "C-02", "qtype": "concept_matching", "archetype": "direct", "band": ("easy", "Understand"), "gen": gen_c02_cm1, "ver": ver_c02_cm1, "stem_variants": stems_c02_cm1, "hints": [r"Identifica cuál teorema diferencia la utilidad indirecta $v(p,m)$ respecto a $p_{@idx_b@}$.", r"Recuerda el signo negativo que acompaña al cociente de derivadas en Roy.", r"Asocia la derivada de la función de gasto $e(p,u)$ con la demanda compensada."], "sol": r"Roy arroja demanda ordinaria con signo negativo y Shephard deriva $e(p,u)$ para el bien $@idx_b@$."},
+    {"id": "T-C-02-06", "cid": "C-02", "qtype": "concept_matching", "archetype": "inverse", "band": ("medium", "Analyze"), "gen": gen_c02_cm2, "ver": ver_c02_cm2, "stem_variants": stems_c02_cm2, "hints": [r"Revisa cómo despejar $\partial e/\partial u$ diferenciando la identidad en $m$.", r"Recuerda que el vínculo entre $\partial e/\partial p_{@idx_d@}$ y $x^h$ proviene de Shephard.", r"La identidad del gasto iguala la renta $m$, nunca la utilidad $u$."], "sol": r"Cada ruptura en la derivación dual de $x_{@idx_d@}$ destruye el despeje correcto de la Identidad de Roy."},
+    {"id": "T-C-02-07", "cid": "C-02", "qtype": "multiple_choice", "archetype": "perturbation", "band": ("medium", "Evaluate"), "gen": gen_c02_mc7, "ver": ver_c02_mc7, "stem_variants": stems_c02_mc7, "hints": [r"Calcula $\partial v/\partial p = -@k@/p$ y $\partial v/\partial m = 1/m$.", r"Aplica la fórmula $x^d = -(\partial v/\partial p)/(\partial v/\partial m) = @k@m/p$.", r"Sustituye $p = @p0@$ y $m = @m0@$ en $@k@m/p$."], "sol": r"Por Identidad de Roy, $x^d(@p0@, @m0@) = @k@ \cdot @m0@ / @p0@ = @ans@$ unidades.", "fmt": r"$@X@$"},
 ]
 '''
 
 
-def main() -> int:
+def main(out_json: Optional[Path] = None) -> int:
     out_dir = Path(__file__).resolve().parent
-    out_json = out_dir / "m20_canonical_course.json"
+    target_json = Path(out_json) if out_json is not None else (out_dir / "m20_canonical_course.json")
 
     with tempfile.TemporaryDirectory(prefix="m20_c2c_") as tmp_str:
         work_dir = Path(tmp_str)
@@ -1180,16 +1657,17 @@ def main() -> int:
         )
         (shards_dir / "shard_01_data.py").write_text(SHARD_01_DATA_PY, encoding="utf-8")
 
-        # 3. Stage 3: compile_shard(strict=True)
+        # 3. Stage 3: compile_shard(strict=True, templates_per_modality=2)
         cs_ok, cs_errs = compile_shard(
             work_dir_or_path=work_dir,
             shard_id="shard_01",
             strict=True,
             min_archetypes=4,
-            seeds=15,
+            templates_per_modality=2,
+            seeds=20,
         )
         assert cs_ok and not cs_errs, f"compile_shard failed:\n" + "\n".join(cs_errs)
-        print("[2/6] compile_shard(strict=True, min_archetypes=4) OK")
+        print("[2/6] compile_shard(strict=True, min_archetypes=4, templates_per_modality=2) OK")
 
         # 4. Stage 3B: check_templates_file_or_dir(strict=True)
         ct_ok, ct_errs = check_templates_file_or_dir(
@@ -1230,6 +1708,7 @@ def main() -> int:
                 "prerequisites": c.get("prerequisites", []),
                 "evidence": c.get("evidence", []),
                 "assumptions": c.get("assumptions", []),
+                "recommended_modalities": c.get("recommended_modalities", []),
                 "bloom_level": c.get("bloom", "Analyze"),
                 "mastery_target": 0.9,
             })
@@ -1237,6 +1716,7 @@ def main() -> int:
         course_obj: Dict[str, Any] = {
             "schema_version": "1.0.0",
             "version": "1.0.0",
+            "contract_version": 2,
             "course_id": "m20_canonical_course",
             "course_title": cta_dict["title"],
             "title": cta_dict["title"],
@@ -1261,6 +1741,8 @@ def main() -> int:
         bs_count = rm_summary.get("bloom_superior_count", 0)
         bs_breakdown = rm_summary.get("bloom_superior_breakdown", {})
         assert active_pct >= 80.0, f"Expected active_generation_or_discrimination_pct >= 80.0, got {active_pct} ({rm_summary})"
+        assert rm_summary.get("skill_mc7_violations_count", 0) == 0, f"Skill MC7 violations: {rm_summary}"
+        assert rm_summary.get("low_active_quota_competencies_count", 0) == 0, f"Low active quota: {rm_summary}"
         expected_types = {
             "open_symbolic",
             "proof_dag",
@@ -1276,8 +1758,9 @@ def main() -> int:
             f"breakdown={bs_breakdown})"
         )
 
-        out_json.write_text(json.dumps(course_obj, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"[6/6] Wrote canonical fixture to {out_json}")
+        target_json.parent.mkdir(parents=True, exist_ok=True)
+        target_json.write_text(json.dumps(course_obj, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"[6/6] Wrote canonical fixture to {target_json}")
     return 0
 
 

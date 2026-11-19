@@ -168,8 +168,9 @@ class TestM20ProofCompiler:
             "steps": [
                 {"id": "S1", "content": "Paso 1"},
                 {"id": "S2", "content": "Paso 2"},
+                {"id": "S3", "content": "Paso 3"},
             ],
-            "edges": [["S1", "S2"], ["S2", "S1"]],
+            "edges": [["S1", "S2"], ["S2", "S1"], ["S2", "S3"]],
         }
         with pytest.raises(ValueError, match="PROOF-DAG-CYCLE"):
             compile_and_verify_proof_dag(cyclic)
@@ -182,9 +183,10 @@ class TestM20ProofCompiler:
                     "sympy_expr": "m * g * cos(theta)",
                     "expected_sympy_expr": "m * g * sin(theta)",
                 },
-                {"id": "S2", "content": r"Cierre"},
+                {"id": "S2", "content": r"Desarrollo"},
+                {"id": "S3", "content": r"Cierre"},
             ],
-            "edges": [["S1", "S2"]],
+            "edges": [["S1", "S2"], ["S2", "S3"]],
         }
         with pytest.raises(ValueError, match="PROOF-DAG-SYMPY"):
             compile_and_verify_proof_dag(bad_sympy)
@@ -205,6 +207,7 @@ class TestM20AdversarialGenerator:
                     "distractor_id": "D-Hab20-02",
                     "error_rationale": r"Con exponente par $@p@$, $f''(0)=0$ no basta para concluir silla; requiere derivadas de orden $@p@$.",
                 },
+                {"id": "A3", "label": "Paso 3", "content": r"Reportamos un punto silla global en $x = 0$."},
             ],
             "reason_options": [
                 {"id": "R1", "content": r"El criterio de segunda derivada es inconcluso si $f''(0)=0$.", "is_correct": True},
@@ -306,18 +309,19 @@ def gen_3(rng):
         "proof_dag": {
             "steps": [
                 {"id": "S1", "content": r"Partimos de masa $m = @m@$ y factor $c = @c@$."},
-                {"id": "S2", "content": r"Calculamos el producto lineal $P = @m@ \cdot @c@ = @ans@$."},
+                {"id": "S2", "content": r"Planteamos la relación multiplicativa $P = m \cdot c$."},
+                {"id": "S3", "content": r"Calculamos el producto lineal $P = @m@ \cdot @c@ = @ans@$."},
                 {"id": "F1", "content": r"Restamos $m - c$ dando $@m@ - @c@$.", "is_fallacy": True, "distractor_id": "D-Hab20-04", "error_rationale": RATS["D-Hab20-04"]},
                 {"id": "F2", "content": r"Desplazamos por $-@c@$ fuera de rango.", "is_fallacy": True, "distractor_id": "D-Hab20-06", "error_rationale": RATS["D-Hab20-06"]},
             ],
-            "edges": [["S1", "S2"]],
+            "edges": [["S1", "S2"], ["S2", "S3"]],
         },
     }
 
 def ver_3(r):
     dag = r.get("proof_dag", {}) if isinstance(r, dict) else {}
     steps = dag.get("steps", [])
-    return len([s for s in steps if not s.get("is_fallacy")]) == 2 and len([s for s in steps if s.get("is_fallacy")]) == 2
+    return len([s for s in steps if not s.get("is_fallacy")]) == 3 and len([s for s in steps if s.get("is_fallacy")]) == 2
 
 def gen_4(rng):
     p = rng.choice([4, 6, 8, 10, 12, 14, 16, 18, 20, 22])
@@ -329,7 +333,8 @@ def gen_4(rng):
             "prompt": r"Detecta el error en la clasificación de $@coef@ x^{@p@}$ en $x=0$:",
             "steps": [
                 {"id": "A1", "label": "Paso 1", "content": r"Evaluamos $f'(x) = @coef@ \cdot @p@ x^{@p@-1}$ en $x=0$, resultando $0$."},
-                {"id": "A2", "label": "Paso 2", "content": r"Concluimos punto silla directo solo por obtener $f''(0)=0$ con $p=@p@$ y coeficiente $@coef@$.", "is_fallacy": True, "distractor_id": "D-Hab20-05", "error_rationale": RATS["D-Hab20-05"]},
+                {"id": "A2", "label": "Paso 2", "content": r"Verificamos que $f''(0) = 0$ al sustituir $x = 0$."},
+                {"id": "A3", "label": "Paso 3", "content": r"Concluimos punto silla directo solo por obtener $f''(0)=0$ con $p=@p@$ y coeficiente $@coef@$.", "is_fallacy": True, "distractor_id": "D-Hab20-05", "error_rationale": RATS["D-Hab20-05"]},
             ],
         },
     }
@@ -617,10 +622,11 @@ class TestM20EndToEndAssembleValidateAudit:
                     "proof_dag": {
                         "steps": [
                             {"id": "S1", "content": r"Fijamos $k=@x@$."},
-                            {"id": "S2", "content": r"Derivamos $f(t)=e^{-@x@t}$."},
+                            {"id": "S2", "content": r"Planteamos $f(t)=e^{-@x@t}$."},
+                            {"id": "S3", "content": r"Derivamos $f'(t)=-@x@e^{-@x@t}$."},
                             {"id": "F1", "content": r"Asumimos crecimiento $e^{+@x@t}$.", "is_fallacy": True, "distractor_id": "D-Hab20-03", "error_rationale": r"Invierte el signo exponencial de enfriamiento $-@x@t$."},
                         ],
-                        "edges": [["S1", "S2"]],
+                        "edges": [["S1", "S2"], ["S2", "S3"]],
                     },
                 },
             ),
@@ -752,3 +758,49 @@ class TestM20EndToEndAssembleValidateAudit:
         assert mod["bloom_superior_count"] == 30
         assert mod["active_generation_or_discrimination_pct"] == 100.0
         assert mod["mc7_count"] == 0
+        assert mod["m20_contract_active"] is True
+        assert mod["skill_mc7_violations_count"] == 0
+        assert mod["low_active_quota_competencies_count"] == 0
+
+    def test_retrieval_modality_linter_enforces_m20_quotas_and_preserves_legacy_v1(self):
+        from standardized_audit_engine import LintIssue, RetrievalModalityDiversityLinter
+
+        # 1. M20 course with MC7 in Skill & <80% active in Concept triggers [M20-MC7-CAP] and [M20-ACTIVE-QUOTA]
+        m20_bad = {
+            "contract_version": 2,
+            "competencies": [
+                {"id": "Hab-01", "category": "Skill", "recommended_modalities": ["open_symbolic"]},
+                {"id": "C-01", "category": "Concept", "recommended_modalities": ["proof_dag", "multiple_choice_7_options"]},
+            ],
+            "questions": [
+                {"id": "Q1", "competency_id": "Hab-01", "interaction_type": "multiple_choice_7_options"},
+                {"id": "Q2", "competency_id": "Hab-01", "interaction_type": "open_symbolic"},
+                {"id": "Q3", "competency_id": "Hab-01", "interaction_type": "open_symbolic"},
+                {"id": "Q4", "competency_id": "Hab-01", "interaction_type": "open_symbolic"},
+                {"id": "Q5", "competency_id": "C-01", "interaction_type": "multiple_choice_7_options"},
+                {"id": "Q6", "competency_id": "C-01", "interaction_type": "multiple_choice_7_options"},
+                {"id": "Q7", "competency_id": "C-01", "interaction_type": "proof_dag"},
+                {"id": "Q8", "competency_id": "C-01", "interaction_type": "proof_dag"},
+                {"id": "Q9", "competency_id": "C-01", "interaction_type": "proof_dag"},
+            ],
+        }
+        m20_issues: list[LintIssue] = []
+        m20_sum = RetrievalModalityDiversityLinter().run(m20_bad, m20_issues)
+        assert m20_sum["m20_contract_active"] is True
+        assert m20_sum["skill_mc7_violations"] == ["Hab-01"]
+        assert m20_sum["low_active_quota_competencies"] == ["C-01"]
+        assert any("[M20-MC7-CAP]" in iss.message and iss.severity == "critical" and iss.competency_id == "Hab-01" for iss in m20_issues)
+        assert any("[M20-ACTIVE-QUOTA]" in iss.message and iss.severity == "warning" and iss.competency_id == "C-01" for iss in m20_issues)
+
+        # 2. Legacy v1 course with MC7 in Skill does NOT emit M20 critical/warning quota issues
+        legacy_course = {
+            "competencies": [{"id": "Hab-01", "category": "Skill"}],
+            "questions": [
+                {"id": f"LQ{i}", "competency_id": "Hab-01", "interaction_type": "multiple_choice_7_options" if i < 4 else "fill_in_the_blank"}
+                for i in range(6)
+            ],
+        }
+        leg_issues: list[LintIssue] = []
+        leg_sum = RetrievalModalityDiversityLinter().run(legacy_course, leg_issues)
+        assert leg_sum["m20_contract_active"] is False
+        assert not any("[M20-MC7-CAP]" in iss.message or "[M20-ACTIVE-QUOTA]" in iss.message for iss in leg_issues)

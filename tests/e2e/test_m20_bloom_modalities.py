@@ -322,7 +322,10 @@ def test_all_bloom_superior_modalities_smart_blank_first_and_grading(m20_browser
         _launch_competency_practice(page, "Hab-01")
         expect(page.locator("[data-testid='blank-first-curtain']")).to_have_count(0)
         expect(page.locator("[data-testid='symbolic-input-root']")).to_be_visible()
-        page.locator("[data-testid='symbolic-palette-btn-0']").click()
+        page.locator("[data-testid='math-keypad-toggle-btn']").click()
+        expect(page.locator("[data-testid='math-keypad-popover']")).to_be_visible()
+        page.locator("[data-testid='math-keypad-key-0']").click()
+        page.locator("[data-testid='math-keypad-close-btn']").click()
         trap_os = q_os["diagnostic_distractors"][0]
         page.locator("[data-testid='symbolic-input']").fill(trap_os["expression"])
         page.locator("[data-testid='check-btn']").click()
@@ -389,14 +392,37 @@ def test_all_bloom_superior_modalities_smart_blank_first_and_grading(m20_browser
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='good-work-toast']")).to_be_visible()
 
-        # 5. adversarial_break counterexample (C-02): no curtain, invalid witness -> error, sample_witness -> pass
+        # 5. adversarial_break counterexample (C-02): no curtain, live readouts, trap/invalid witness -> error, sample_witness -> pass
         q_adv_c = by_comp["C-02"]
         adv_c = q_adv_c["adversarial_break"]
         _open_course_from_library(page, vite_server_url, proj_course["title"])
         _launch_competency_practice(page, "C-02")
         expect(page.locator("[data-testid='blank-first-curtain']")).to_have_count(0)
-        for inp in adv_c["inputs"]:
-            page.locator(f"[data-testid='adv-input-{inp['id']}']").fill("1")
+        if adv_c.get("computed_readouts"):
+            expect(page.locator("[data-testid='adv-computed-readouts']")).to_be_visible()
+        # Trigger trap_predicates if C-02 is the concave floor contour question (a1, a2, b1, b2)
+        input_ids = [inp["id"] for inp in adv_c["inputs"]]
+        if set(input_ids) >= {"a1", "a2", "b1", "b2"} and adv_c.get("trap_predicates"):
+            k_lvl = int(adv_c["sample_witness"]["a2"]) + 1
+            page.locator("[data-testid='adv-input-a1']").fill("0.5")
+            page.locator("[data-testid='adv-input-a2']").fill(str(k_lvl - 0.4))
+            page.locator("[data-testid='adv-input-b1']").fill("2")
+            page.locator("[data-testid='adv-input-b2']").fill(str(k_lvl - 2))
+            if adv_c.get("computed_readouts"):
+                ro_text = page.locator("[data-testid='adv-computed-readouts']").inner_text()
+                assert "—" not in ro_text, f"Expected live readout computation, got: {ro_text}"
+        elif input_ids == ["x"]:
+            import re as _re
+            trap_expr = ((adv_c.get("trap_predicates") or [{}])[0]).get("expr", "")
+            m_stat = _re.search(r"abs\(x\s*-\s*([0-9.]+)\)", trap_expr)
+            wrong_x = m_stat.group(1) if m_stat else "-5"
+            page.locator("[data-testid='adv-input-x']").fill(wrong_x)
+            if adv_c.get("computed_readouts"):
+                ro_text = page.locator("[data-testid='adv-computed-readouts']").inner_text()
+                assert "—" not in ro_text, f"Expected live readout computation, got: {ro_text}"
+        else:
+            for inp in adv_c["inputs"]:
+                page.locator(f"[data-testid='adv-input-{inp['id']}']").fill("-999")
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='feedback-toast']")).to_be_visible()
         _retry_click(page)
@@ -442,12 +468,16 @@ def test_all_bloom_superior_modalities_smart_blank_first_and_grading(m20_browser
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='good-work-toast']")).to_be_visible()
 
-        # 7. invariant_canvas cartesian (Hab-05): no curtain, wrong initial -> error, target kink coords -> pass
+        # 7. invariant_canvas cartesian (Hab-05): check disabled until interacted, wrong value -> error, target kink coords -> pass
         q_cart = by_comp["Hab-05"]
-        target_pt = q_cart["invariant_canvas"]["target_state"]["pt_kink"]
+        target_pt = q_cart["invariant_canvas"]["target_state"]["points"]["pt_kink"]
         _open_course_from_library(page, vite_server_url, proj_course["title"])
         _launch_competency_practice(page, "Hab-05")
         expect(page.locator("[data-testid='blank-first-curtain']")).to_have_count(0)
+        expect(page.locator("[data-testid='check-btn']")).to_be_disabled()
+        page.locator("[data-testid='canvas-pt-pt_kink-x']").fill("0")
+        page.locator("[data-testid='canvas-pt-pt_kink-y']").fill("0")
+        expect(page.locator("[data-testid='check-btn']")).to_be_enabled()
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='feedback-toast']")).to_be_visible()
         _retry_click(page)
@@ -456,17 +486,28 @@ def test_all_bloom_superior_modalities_smart_blank_first_and_grading(m20_browser
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='good-work-toast']")).to_be_visible()
 
-        # 8. invariant_canvas tree (C-03): no curtain, empty -> error, required edges + info_set -> pass
+        # 8. invariant_canvas tree (C-03): check disabled until interacted, wrong edge -> error, required edges + info_set -> pass
         q_tree = by_comp["C-03"]
         ti = q_tree["invariant_canvas"]["tree_invariants"]
+        edges_tree = q_tree["invariant_canvas"].get("edges") or []
+        req_edge_set = set(ti["required_edges"])
+        wrong_edge = next((e["id"] for e in edges_tree if e["id"] not in req_edge_set), None)
         _open_course_from_library(page, vite_server_url, proj_course["title"])
         _launch_competency_practice(page, "C-03")
         expect(page.locator("[data-testid='blank-first-curtain']")).to_have_count(0)
+        expect(page.locator("[data-testid='check-btn']")).to_be_disabled()
+        if wrong_edge:
+            page.locator(f"[data-testid='tree-edge-btn-{wrong_edge}']").click()
+        else:
+            page.locator(f"[data-testid='tree-edge-btn-{ti['required_edges'][0]}']").click()
+        expect(page.locator("[data-testid='check-btn']")).to_be_enabled()
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='feedback-toast']")).to_be_visible()
         _retry_click(page)
-        for eid in ti["required_edges"]:
-            page.locator(f"[data-testid='tree-edge-btn-{eid}']").click()
+        if wrong_edge:
+            page.locator(f"[data-testid='tree-edge-btn-{wrong_edge}']").click()
+            for eid in ti["required_edges"]:
+                page.locator(f"[data-testid='tree-edge-btn-{eid}']").click()
         for grp in ti["required_info_sets"]:
             for nid in grp:
                 page.locator(f"[data-testid='tree-node-toggle-{nid}']").click()
@@ -474,7 +515,7 @@ def test_all_bloom_superior_modalities_smart_blank_first_and_grading(m20_browser
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='good-work-toast']")).to_be_visible()
 
-        # 9. concept_matching (C-04): curtain shown, distractor selection -> error, exact pairs -> pass
+        # 9. concept_matching (C-04): curtain shown, <option> has no raw $ or \, KaTeX assigned badge renders, distractor -> error, exact pairs -> pass
         q_cm = by_comp["C-04"]
         cm = q_cm["concept_matching"]
         _open_course_from_library(page, vite_server_url, proj_course["title"])
@@ -482,10 +523,15 @@ def test_all_bloom_superior_modalities_smart_blank_first_and_grading(m20_browser
         expect(page.locator("[data-testid='blank-first-curtain']")).to_be_visible()
         page.locator("[data-testid='lift-curtain-btn']").click()
         expect(page.locator("[data-testid='concept-matching-root']")).to_be_visible()
+        first_select = page.locator(f"[data-testid='matching-select-{cm['premises'][0]['id']}']")
+        option_texts = first_select.locator("option").all_inner_texts()
+        for opt_txt in option_texts:
+            assert "$" not in opt_txt and "\\" not in opt_txt, f"Raw LaTeX leaked in <option>: {opt_txt}"
         dist_target_id = next(t["id"] for t in cm["targets"] if t.get("is_distractor"))
         for idx, pr in enumerate(cm["premises"]):
             tid = dist_target_id if idx == 0 else cm["correct_pairs"][pr["id"]]
             page.locator(f"[data-testid='matching-select-{pr['id']}']").select_option(tid)
+        expect(page.locator(f"[data-testid='matching-assigned-{cm['premises'][0]['id']}']")).to_be_visible()
         page.locator("[data-testid='check-btn']").click()
         expect(page.locator("[data-testid='feedback-toast']")).to_be_visible()
         _retry_click(page)
@@ -534,5 +580,94 @@ def test_m20_viewport_no_horizontal_overflow(m20_browser, vite_server_url, width
             )
         assert not console_errors, f"Console errors at {width}x{height}: {console_errors}"
         assert not page_errors, f"Page errors at {width}x{height}: {page_errors}"
+    finally:
+        context.close()
+
+
+def test_iron_exam_replaces_course_challenge_with_metacognitive_audit(m20_browser, vite_server_url):
+    """Modo Hierro replaces Course Challenge as single integrative exam, hides aids, and persists 80/20 mastery."""
+    base_course = _load_compiled_canonical_course()
+    proj_course, by_comp = _build_deterministic_e2e_projection(base_course)
+
+    context, page, console_errors, page_errors = _new_tracked_page(
+        m20_browser, proj_course, course_id="m20_e2e_projection", width=1280, height=800
+    )
+    try:
+        _open_course_from_library(page, vite_server_url, proj_course["title"])
+
+        # Single exam entry card labeled Modo Hierro
+        card = page.locator("[data-testid='course-challenge-card']")
+        expect(card).to_have_count(1)
+        expect(card).to_contain_text("MODO HIERRO")
+        card.locator("button").first.click()
+
+        start_btn = page.locator("[data-testid='start-challenge-btn']")
+        expect(start_btn).to_be_visible(timeout=10000)
+        expect(page.locator("[data-testid='iron-briefing-card']")).to_be_visible()
+        start_btn.click()
+
+        expect(page.locator("[data-testid='iron-exam-session']")).to_be_visible(timeout=10000)
+        expect(page.locator("[data-testid='iron-timer']")).to_be_visible()
+        # Closed-book exam must not expose hints, curtain, immediate feedback, or Socratic tutor
+        expect(page.locator("[data-testid='hints-toggle']")).to_have_count(0)
+        expect(page.locator("[data-testid='blank-first-curtain']")).to_have_count(0)
+        expect(page.locator("[data-testid='feedback-toast']")).to_have_count(0)
+        expect(page.locator("[data-testid='socratic-tutor-container']")).to_have_count(0)
+
+        # Find open_symbolic & fill_in_the_blank item indices robustly in shuffled Iron Exam order
+        nav_buttons = page.locator("[data-testid^='iron-nav-item-']")
+        total_items = nav_buttons.count()
+        assert total_items >= 2
+        q_os = by_comp["Hab-01"]
+        equiv_expr = (q_os["correct_answer"].get("accepted_equivalents") or [q_os["correct_answer"]["value"]])[-1]
+
+        answered_correct_once = False
+        answered_wrong_once = False
+        for i in range(total_items):
+            page.locator(f"[data-testid='iron-nav-item-{i}']").click()
+            sym = page.locator("[data-testid='symbolic-input']")
+            if sym.count() > 0 and not answered_correct_once:
+                sym.first.fill(equiv_expr)
+                page.locator("[data-testid='iron-confidence-high']").click()
+                page.locator("[data-testid='iron-flag-btn']").click()
+                answered_correct_once = True
+                continue
+            fib = page.locator("[data-testid='fill-blank-input']")
+            if fib.count() > 0 and not answered_wrong_once:
+                page.locator("[data-testid='iron-confidence-high']").click()
+                fib.first.fill("999999")  # deliberately wrong with high confidence => illusion of competence
+                answered_wrong_once = True
+            if answered_correct_once and answered_wrong_once:
+                break
+
+        # Verify zero horizontal overflow at 1280x800 and 640x720
+        for w, h in [(1280, 800), (640, 720)]:
+            page.set_viewport_size({"width": w, "height": h})
+            m = page.evaluate("() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth })")
+            assert m["sw"] <= m["iw"] + 2, f"Overflow in IronExam at {w}x{h}: {m}"
+        page.set_viewport_size({"width": 1280, "height": 800})
+
+        # Submit -> Metacognitive Modal -> Confirm
+        page.locator("[data-testid='iron-submit-exam-btn']").click()
+        modal = page.locator("[data-testid='metacognitive-modal']")
+        expect(modal).to_be_visible()
+        page.locator("[data-testid='meta-global-confidence-high']").click()
+        page.locator("[data-testid='metacognitive-confirm-btn']").click()
+
+        # CompletionScreen with Deferred Review & Metacognitive Audit Summary
+        expect(page.locator("[data-testid='completion-screen']")).to_be_visible(timeout=10000)
+        expect(page.locator("[data-testid='metacognitive-audit-summary']")).to_be_visible()
+        expect(page.locator("[data-testid='iron-deferred-review']")).to_be_visible()
+        illusions_text = page.locator("[data-testid='meta-illusions-count']").inner_text().strip()
+        assert int(illusions_text) >= 1, f"Expected >= 1 illusion of competence, got {illusions_text}"
+
+        # Back to course & verify non-zero 80/20 mastery percentage persists across reload
+        page.locator("button:has-text('Back to course')").first.click()
+        expect(page.locator("[data-testid='course-challenge-card']")).to_contain_text("11%")
+        page.reload()
+        page.locator("[data-testid='course-card']").filter(has_text=proj_course["title"]).first.click()
+        expect(page.locator("[data-testid='course-challenge-card']")).to_contain_text("11%")
+        assert not console_errors, f"Console errors in Iron Exam: {console_errors}"
+        assert not page_errors, f"Page errors in Iron Exam: {page_errors}"
     finally:
         context.close()

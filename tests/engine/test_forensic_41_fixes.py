@@ -250,16 +250,69 @@ def test_l2_c05_m01_m05_adversarial_and_proof_negative_numbers():
     assert compiled_adv["prompt"] == "Refuta para a=-3"
     assert ans_adv["sample_witness"]["x"] == -2.0
 
-    # Negative number in proof_dag sympy_verify
+    # Negative number in proof_dag sympy_expr / expected_sympy_expr (3+ valid steps, >=1 edge)
     raw_dag = {
         "steps": [
-            {"id": "S1", "content": "Paso 1: $@a@$", "sympy_verify": "@a@**2 - 9"},
+            {"id": "S1", "content": "Paso 1: $@a@$", "sympy_expr": "@a@**2", "expected_sympy_expr": "9"},
             {"id": "S2", "content": "Paso 2: $@b@$"},
+            {"id": "S3", "content": "Paso 3: cierre $@b@$"},
         ],
-        "edges": [["S1", "S2"]],
+        "edges": [["S1", "S2"], ["S2", "S3"]],
     }
     compiled_dag, _ = compile_and_verify_proof_dag(raw_dag, {"a": -3, "b": 9}, {}, random.Random(42))
-    assert len(compiled_dag["steps"]) == 2
+    assert len(compiled_dag["steps"]) == 3
+
+    # Non-equivalent sympy_expr must raise [PROOF-DAG-SYMPY]
+    bad_sympy_dag = {
+        "steps": [
+            {"id": "S1", "content": "Paso 1: $@a@$", "sympy_expr": "@a@**2", "expected_sympy_expr": "-9"},
+            {"id": "S2", "content": "Paso 2: $@b@$"},
+            {"id": "S3", "content": "Paso 3: cierre $@b@$"},
+        ],
+        "edges": [["S1", "S2"], ["S2", "S3"]],
+    }
+    with pytest.raises(ValueError, match="PROOF-DAG-SYMPY"):
+        compile_and_verify_proof_dag(bad_sympy_dag, {"a": -3, "b": 9}, {}, random.Random(42))
+
+    # Empty edges or < 3 valid steps in proof_dag must be rejected
+    with pytest.raises(ValueError, match="PROOF-DAG-EDGES"):
+        compile_and_verify_proof_dag({**raw_dag, "edges": []}, {"a": -3, "b": 9}, {}, random.Random(42))
+    with pytest.raises(ValueError, match="PROOF-DAG-SIZE"):
+        compile_and_verify_proof_dag(
+            {"steps": raw_dag["steps"][:2], "edges": [["S1", "S2"]]},
+            {"a": -3, "b": 9},
+            {},
+            random.Random(42),
+        )
+
+    # find_fallacy with < 3 steps must be rejected
+    with pytest.raises(ValueError, match="ADV-STEPS"):
+        compile_and_verify_adversarial(
+            {
+                "mode": "find_fallacy",
+                "steps": [
+                    {"id": "A1", "content": "Paso 1"},
+                    {"id": "A2", "content": "Paso 2", "is_fallacy": True, "error_rationale": "Fallo algebraico claro."},
+                ],
+            },
+            {},
+            {},
+            random.Random(42),
+        )
+
+    # counterexample witness_scope must NOT leak uninterpolated vars_dict scalars (browser parity)
+    with pytest.raises(ValueError, match="ADV-WITNESS-EVAL"):
+        compile_and_verify_adversarial(
+            {
+                "mode": "counterexample",
+                "inputs": [{"id": "x", "label": "x", "min": -5, "max": 5}],
+                "predicates": [{"id": "P1", "expr": "x <= a", "failure_rationale": "Falta interpolar."}],
+                "sample_witness": {"x": -2},
+            },
+            {"a": 3},
+            {},
+            random.Random(42),
+        )
 
 
 def test_l3_01_02_06_assemble_and_invariants():
@@ -332,17 +385,93 @@ def test_l4_01_03_judge_m20_arbitration():
     )
     assert ok_dag, msg_dag
 
-    # 2. adversarial_break counterexample alternative valid witness
-    gt_adv = {
-        "correct_answer": {"mode": "counterexample", "sample_witness": {"x": -2.0}},
-        "inputs": [{"name": "x", "min": -10, "max": 10}],
-        "predicates": [{"id": "P1", "expr": "x < 0"}],
-        "trap_predicates": [{"id": "T1", "expr": "x < -5"}],
-    }
-    ok_adv, msg_adv = judge._check_m20_answer_match({"sample_witness": {"x": -3.5}}, gt_adv, "adversarial_break")
-    assert ok_adv, msg_adv
+    # 2. adversarial_break counterexample via REAL compile_and_verify_adversarial + judge sanitization
+    from engine.adversarial_generator import compile_and_verify_adversarial
 
-    # 3. invariant_canvas tree edge ID vs [from, to] pair
+    compiled_adv, ca_adv = compile_and_verify_adversarial(
+        {
+            "mode": "counterexample",
+            "prompt": "Refuta con entero negativo:",
+            "inputs": [{"id": "x", "label": "x", "type": "integer", "min": -10, "max": 10}],
+            "predicates": [
+                {
+                    "id": "P1",
+                    "expr": "x < 0",
+                    "distractor_id": "D-ADV-01",
+                    "failure_rationale": "Debe ser estrictamente negativo.",
+                }
+            ],
+            "trap_predicates": [
+                {
+                    "expr": "x <= -6",
+                    "distractor_id": "D-ADV-02",
+                    "error_rationale": "Cayó en el extremo prohibido <= -6.",
+                }
+            ],
+            "sample_witness": {"x": -2},
+        },
+        {},
+        {},
+        random.Random(42),
+    )
+    ji_adv: Dict[str, Any] = {}
+    gt_adv: Dict[str, Any] = {}
+    judge._sanitize_m20_judge_item(
+        "adversarial_break",
+        {"adversarial_break": compiled_adv, "correct_answer": ca_adv},
+        ji_adv,
+        gt_adv,
+    )
+    # Blind judge payload must NOT leak failure_rationale or distractor_id
+    for b_pred in ji_adv["adversarial_break"]["predicates"]:
+        assert set(b_pred.keys()) <= {"id", "expr", "description"}
+        assert "failure_rationale" not in b_pred
+        assert "distractor_id" not in b_pred
+
+    ok_adv, msg_adv = judge._check_m20_answer_match({"sample_witness": {"x": -4}}, gt_adv, "adversarial_break")
+    assert ok_adv, msg_adv
+    assert not judge._check_m20_answer_match({"sample_witness": {"x": 2}}, gt_adv, "adversarial_break")[0]
+    assert not judge._check_m20_answer_match({"sample_witness": {"x": -7}}, gt_adv, "adversarial_break")[0]
+    assert not judge._check_m20_answer_match({"sample_witness": {"x": -3.5}}, gt_adv, "adversarial_break")[0]
+
+    # 3. invariant_canvas cartesian flat vs nested target_state + invariants fallthrough + kink_at without target_y
+    gt_ic_flat = {
+        "correct_answer": {"mode": "cartesian", "target_state": {"pt_kink": {"x": 5, "y": 10}}},
+        "invariants": [
+            {"id": "INV_POS", "kind": "point_coords", "point_id": "pt_kink", "target_x": 5, "target_y": 10},
+            {"id": "INV_KINK", "kind": "kink_at", "curve_id": "budget", "x": 5, "target": 0.5},
+        ],
+    }
+    ok_ic_norm, msg_ic_norm = judge._check_m20_answer_match(
+        {"points": {"pt_kink": {"x": 5, "y": 10}}},
+        gt_ic_flat,
+        "invariant_canvas",
+    )
+    assert ok_ic_norm, msg_ic_norm
+
+    gt_ic_fallthrough = {
+        "correct_answer": {
+            "mode": "cartesian",
+            "target_state": {"points": {"pt_kink": {"x": 5, "y": 10}}, "extra_field": "ignore_if_invs_hold"},
+        },
+        "invariants": [
+            {"id": "INV_POS", "kind": "point_coords", "point_id": "pt_kink", "target_x": 5, "target_y": 10},
+            {"id": "INV_KINK", "kind": "kink_at", "point_id": "pt_kink", "x": 5},
+        ],
+    }
+    ok_ic_ft, msg_ic_ft = judge._check_m20_answer_match(
+        {"points": {"pt_kink": {"x": 5.01, "y": 10.0}}},
+        gt_ic_fallthrough,
+        "invariant_canvas",
+    )
+    assert ok_ic_ft, msg_ic_ft
+    assert not judge._check_m20_answer_match(
+        {"points": {"pt_kink": {"x": 2, "y": 10}}},
+        gt_ic_fallthrough,
+        "invariant_canvas",
+    )[0]
+
+    # 4. invariant_canvas tree edge ID vs [from, to] pair
     gt_tree = {
         "correct_answer": {"mode": "tree", "required_edges": [["N1", "N2"]], "required_info_sets": [["N2", "N3"]]},
         "edges": [{"id": "E1", "from": "N1", "to": "N2"}],
@@ -353,3 +482,35 @@ def test_l4_01_03_judge_m20_arbitration():
         "invariant_canvas",
     )
     assert ok_tree, msg_tree
+
+
+def test_fib_single_digit_homogeneous_stem_no_false_leak():
+    from engine.invariants import check_instance_invariants
+
+    q_fib_zero = {
+        "stem": "Calcule el discriminante de $u_{xx} + 2u_{xy} + u_{yy} = 0$.",
+        "correct_answer": {
+            "value": "0",
+            "canonical_algebraic": "0",
+            "accepted_equivalents": ["0", "0.0"],
+            "tolerance": 0.0001,
+        },
+        "hints": ["A=1, B=2, C=1.", "Evalúa B^2 - 4AC.", "Simplifica."],
+        "solution": "Delta = 2^2 - 4(1)(1) = 0.",
+    }
+    ok_zero, errs_zero = check_instance_invariants(q_fib_zero, "fill_in_the_blank")
+    assert ok_zero, f"Unexpected leak error for homogeneous stem '= 0': {errs_zero}"
+
+    q_open_leak = {
+        "stem": "Determine la función sabiendo que $f(x) = 2*x + 1$.",
+        "correct_answer": {
+            "expression": "2*x + 1",
+            "canonical_algebraic": "2*x + 1",
+            "variables": ["x"],
+        },
+        "hints": ["Observa f(x).", "Simplifica.", "Escribe."],
+        "solution": "f(x) = 2*x + 1.",
+    }
+    ok_leak, errs_leak = check_instance_invariants(q_open_leak, "open_symbolic")
+    assert not ok_leak
+    assert any("leaked as direct assignment" in e for e in errs_leak), errs_leak
