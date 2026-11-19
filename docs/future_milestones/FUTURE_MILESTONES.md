@@ -296,6 +296,7 @@ Cuando se exige $K > 1$ plantillas dentro de un mismo arquetipo (por ejemplo, 3 
 - **Opcional A: Pipeline Performance Daemon en RAM / SSD:** Pool persistente en memoria para eliminar I/O de disco.
 - **Opcional B: Empaquetado Nativo con Capacitor:** Wrapper binario para publicación en Google Play / App Store (la PWA actual ya cubre el 95% de casos offline).
 - **Opcional C (Milestone 11b): Apertura Instantánea de Cursos Pesados:** Elimina micro-bloqueos en laptops de gama media al abrir cursos de más de 14 MB (desacoplar `await saveToIndexedDB` en `courseLoader.ts` hacia ejecución en segundo plano *fire-and-forget*, pausar la cola de prefetch mientras el usuario interactúa con la práctica, instrumentar marcas con `performance.mark` y code-splitting con `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge`). Estado: ⏳ *P3 — Optimización UX / Backlog Opcional (~0.5 a 1 d)*.
+- **Opcional D (Endurecimiento M20): Piso Mínimo `steps >= 3` en `proof_dag` y `adversarial_break` (`find_fallacy`):** Elevar el mínimo actual de `2` a **`>= 3` pasos** (ideal `3..5`) en `engine/proof_compiler.py` (`L180`: `valid_steps >= 3`), `engine/adversarial_generator.py` (`L226`: `len(raw_steps) >= 3`) y `engine/invariants.py` (`L1378`), evitando casos triviales de 2 permutaciones o 50/50 (1 correcto vs. 1 falacia) y actualizando los fixtures mínimos / ejemplo `gen_pd` de `prompt_shard_author.md`. Estado: ⏳ *Backlog / Mejora de Rigor (~2 h)*.
 
 ---
 
