@@ -134,7 +134,7 @@ Para llevar esto a cabo sin romper los cursos actuales, el orden óptimo de ejec
 
 1. **Fase 1 — Reforma del Contrato de Plantillas y Anti-Descarte (Back-end C2C, impacto inmediato):**
    * **Desacoplar `TPL-D3` de `MC7`** en `compile_shard.py` y `check_templates.py`: permitir que `FIB` (y luego `open_symbolic`) capturen distractores diagnósticos (`ds`/`RATS`) comparando la respuesta errónea del alumno contra los resultados de cada trampa.
-   * **Invertir la cuota de modalidades**: pasar de exigir "mínimo 1 o 2 activas" a exigir **"máximo 1 `MC7` por competencia (o 0 en `Hab-*`) y $\ge 75\%$ en `FIB`/`MS`/nuevas modalidades"**.
+   * **Invertir la cuota de modalidades**: pasar de exigir "mínimo 1 o 2 activas" a exigir **"máximo 1 `MC7` por competencia (o 0 en `Hab-*`) y $\ge 80\%$ en `FIB`/`MS`/nuevas modalidades"**.
    * **Parametrizar `TEMPLATES_PER_ARCHETYPE`** (default actual `1`, nuevo modo `2` o `3`) en `plan_shards.py`, `compile_shard.py` y `prompt_shard_author.md`, añadiendo el verificador AST de no-equivalencia entre plantillas del mismo arquetipo.
 2. **Fase 2 — Incorporación de Modalidades de Bloom Superior (Unificación con Milestones 5 y 20):**
    * Activar `open_symbolic` (`mathjs` AST en cliente + `SymPy` en compilación) para que el alumno escriba fórmulas y derivaciones cortas.

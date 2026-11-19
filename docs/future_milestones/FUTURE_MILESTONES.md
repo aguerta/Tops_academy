@@ -29,7 +29,7 @@
 | 📄 [`docs/specs/m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) | **Especificación del Milestone 9:** Tipados completos de TypeScript (`ContentCore`, `ContentModule`, `ExplicitAssumption`, `SubtopicUnit`), jerarquía de 3 niveles y extractor de Unidad 0 `PRE-XX`. |
 | 📄 [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) | **Especificación del Milestone 14 y 14-B:** Matriz canónica de transición psicométrica de 12 filas, interfaces de `masteryStorage.ts`, fórmula híbrida 80/20, *Hint-Cap* y simulador adaptativo de parcial. |
 | 📄 [`docs/specs/m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) | **Especificación de los Milestones 15 a 18:** Los 6 teoremas constructivos de `TopsAcademyC2C.lean`, compilación Perceus C FFI (`< 0.5 ms`), SMT Z3, arbitraje bicameral con $\alpha_{\text{Kernel}} = 0$ y arnés `#print axioms` con nonce criptográfico. |
-| 📄 [`sintesis_plantillas_arquetipos.md`](file:///C:/Users/augus/.gemini/antigravity/brain/9cddf88b-bcd6-41ad-99e6-6713f6a217a4/sintesis_plantillas_arquetipos.md) *(espejo en [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md))* | **Especificación de los Milestones 19 y 20 (Fusionado con M5):** Arquitectura de los 4 ejes (Arquetipo, Modalidad, Dificultad y Taxonomía de Bloom), reforma `TPL-D3` para entrada libre (`FIB`/`open_symbolic`), inversión de cuota anti-descarte y multiplicación $K=2..3$ plantillas disjuntas por arquetipo con 3 candados anti-clon. |
+| 📄 [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) | **Especificación de los Milestones 19 y 20 (Fusionado con M5):** Arquitectura de los 4 ejes (Arquetipo, Modalidad, Dificultad y Taxonomía de Bloom), reforma `TPL-D3` para entrada libre (`FIB`/`open_symbolic`), inversión de cuota anti-descarte y multiplicación $K=2..3$ plantillas disjuntas por arquetipo con 3 candados anti-clon. |
 | 📚 [`docs/investigaciones/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/) | **Estudios fundacionales:** Investigaciones de desacoplamiento KaTeX (01, 02), limitaciones cognitivas de la plataforma (03, 04) y análisis forenses externos. |
 
 ---
@@ -72,7 +72,18 @@ Cada plantilla en `TEMPLATES` es una tupla de 9 elementos (`[tpl_id, cid, qtype,
 | **3. Banda de Dificultad** | Ubicación en la Zona de Desarrollo Próximo (ZPD). | Cobertura obligatoria de las 3 bandas: `direct` $\to$ `'easy'`, `inverse` $\to$ `'medium'`, `perturbation` $\to$ `'hard'`, `boundary` $\to$ `'hard'`. | Se preserva el anclaje Tri-Banda por arquetipo para alimentar el enrutamiento ZPD (`sessionShuffler.ts`) y el simulador adaptativo en 2 módulos. |
 | **4. Taxonomía de Bloom** | Profundidad del procesamiento cognitivo. | Mínimo 2 niveles por competencia. Regla dura `[M3-SKILL-BLOOM]`: prohibido `Remember`/`Understand` en `Hab-*` (exige `Apply` o superior). | **Ascenso taxonómico dentro de cada arquetipo:** Las $K$ plantillas de un mismo arquetipo deben variar su tupla `(modalidad, bloom)`, empujando sistemáticamente hacia `Analyze`, `Evaluate` y `Create` mediante evaluación paso a paso. |
 
-### 1.2. Matriz de Contraste: *The Expert Myth* vs. Estado del Arte de Tops Academy
+### 1.2. Los 8 Puntos Ciegos Cognitivos que Definen la Nueva Vara
+Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plataforma_de_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/03_Limitaciones_de_la_plataforma_de_estudio.md) y [`04_Limites_de_la_plataforma_y_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/04_Limites_de_la_plataforma_y_estudio.md):
+1. **Evocación Libre (*Free Recall*) vs. Reconocimiento:** Superar el descarte asistido exigiendo formular respuestas sin opciones visibles.
+2. **Traducción Visoespacial (*Dual Channels*):** Evaluar interacción gráfico-espacial (diagramas de fase, isoclinas, campos vectoriales).
+3. **Encadenamiento de Demostraciones (*Step-by-Step Proofs*):** Evaluar secuencias de micro-decisiones analíticas encadenadas.
+4. **Combate a la Ilusión Explicativa:** Forzar la formulación activa y el contraste de contraejemplos.
+5. **Formulación No Estructurada:** Filtrar regularidades relevantes frente a datos distractores en el enunciado.
+6. **Trabajo Computacional (*Shop Time*):** Experimentación paramétrica sin solución analítica cerrada.
+7. **Andamiaje Diferido (*Delayed Scaffolding*):** Retardo inicial de pistas para entrenar la metacognición.
+8. **Síntesis Estructural (*Part-Whole*):** Unificar el aprendizaje en torno a la fuente real (PPT) con Glosario, Núcleo Conceptual y Challenges integradores.
+
+### 1.3. Matriz de Contraste: *The Expert Myth* vs. Estado del Arte de Tops Academy
 
 | Pilar de Pericia | Mecanismo Cognitivo Requerido | Estado Actual en Producción | Brecha Remanente (Gap hacia la Pericia) |
 | :--- | :--- | :--- | :--- |
@@ -104,8 +115,8 @@ Para alinear la ingeniería en torno al objetivo de **mayor exigencia cognitiva 
 
 | Hito / Milestone | Área | Impacto Cognitivo, Formal y de Eficiencia | Esfuerzo | Estado / Prioridad | Especificación Técnica |
 | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Milestone 20 (Fusiona M5 + M20): Arquitectura Epistémica Sobresaliente 20, Modalidades Bloom Superior y Reforma Anti-Descarte** | Full-Stack / Motor C2C | **Fin del descarte mecánico (`MC7` $\le 1$).** `TPL-D3` en `FIB`/`open_symbolic`, `proof_dag` (Parsons/DAG), `adversarial_break`, `unstructured_model` (Stage 0), `invariant_canvas` (SVG), `concept_matching` y Modo Hierro (`IronExamSession`) en GitHub Pages \$0 (`mathjs` AST + Shift-Left SymPy). | 3 a 5 d | 🎓 **P1 — Prioridad Cognitiva** | [Artefacto 4 Ejes y Bloom](file:///C:/Users/augus/.gemini/antigravity/brain/9cddf88b-bcd6-41ad-99e6-6713f6a217a4/sintesis_plantillas_arquetipos.md) / [Spec Repo](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
-| **Milestone 19: Multiplicación de Plantillas por Arquetipo ($K=2..3$) con Gemini 4 y Banco Anti-Overfitting 2x–3x** | Pipeline C2C / Compilador | **Erradicación del overfitting sintáctico.** `TEMPLATES_PER_ARCHETYPE = 2..3` ($8..12$ plantillas/competencia, $40..120$ problemas) con 3 candados anti-clon en `compile_shard.py`: Disyunción AST/SymPy, Disyunción `(Modalidad, Bloom)` y Distancia Léxica. | 1.5 a 2.5 d | 🧬 **P1 — Anti-Overfitting (Gemini 4)** | [Artefacto 4 Ejes y Bloom](file:///C:/Users/augus/.gemini/antigravity/brain/9cddf88b-bcd6-41ad-99e6-6713f6a217a4/sintesis_plantillas_arquetipos.md) / [Spec Repo](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
+| **Milestone 20 (Fusiona M5 + M20): Arquitectura Epistémica Sobresaliente 20, Modalidades Bloom Superior y Reforma Anti-Descarte** | Full-Stack / Motor C2C | **Fin del descarte mecánico (`MC7` $\le 1$).** `TPL-D3` en `FIB`/`open_symbolic`, `proof_dag` (Parsons/DAG), `adversarial_break`, `unstructured_model` (Stage 0), `invariant_canvas` (SVG), `concept_matching` y Modo Hierro (`IronExamSession`) en GitHub Pages \$0 (`mathjs` AST + Shift-Left SymPy). | 3 a 5 d | 🎓 **P1 — Prioridad Cognitiva** | [Spec 4 Ejes y Bloom](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
+| **Milestone 19: Multiplicación de Plantillas por Arquetipo ($K=2..3$) con Gemini 4 y Banco Anti-Overfitting 2x–3x** | Pipeline C2C / Compilador | **Erradicación del overfitting sintáctico.** `TEMPLATES_PER_ARCHETYPE = 2..3` ($8..12$ plantillas/competencia, $40..120$ problemas) con 3 candados anti-clon en `compile_shard.py`: Disyunción AST/SymPy, Disyunción `(Modalidad, Bloom)` y Distancia Léxica. | 1.5 a 2.5 d | 🧬 **P1 — Anti-Overfitting (Gemini 4)** | [Spec 4 Ejes y Bloom](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
 | **Milestone 15 (Fase 2): Kernel Nativo Perceus C Lean 4** | Pipeline / Formal Kernel | **Sobrecarga `< 0.5 ms` y verificación matemática nativa.** Compilar `TopsAcademyC2C.lean` a binario nativo C vía FFI, *Proof-Carrying Artifacts* (`*.cert.json`) y DRT estilo AWS Cedar. | 1.5 a 2.5 d | 🛡️ **P0 — En Roadmap** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | **Milestone 16 (Fase 2): Deducción Simbólica Z3 / Lean 4** | Motor / Verificación | **Más calidad matemática con 0 Late-Catches.** Integración de solver SMT Z3 y lemas Lean 4 (`omega`/`ring`/`grind`) para `TPL_D4_Universal` y prueba de no-equivalencia AST entre arquetipos y sub-plantillas. | 1.5 a 2 d | 📐 **P0 — En Roadmap** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | **Milestone 17: Certificación DAG y Arbitraje Bayesiano** | Curricular / Arbitraje | **Cero ciclos/huérfanos y dominancia $\alpha_{\text{Kernel}} = 0$.** Conectividad/aciclicidad en `cta_merge.py`; juez 1-seed pre-verificado; clausura epistémica de símbolos libres. | 1 a 1.5 d | 🧠 **P0 — En Progreso** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
@@ -140,14 +151,16 @@ Hoy `compile_shard.py` evalúa la cobertura de distractores (`TPL-D3`) contando 
 
 | Componente / Modalidad | Nivel de Bloom Objetivo | Factibilidad GitHub Pages ($0) | Implementación Técnica Concreta (Shift-Left Python + Client-Side TS) |
 | :--- | :---: | :---: | :--- |
-| **1. Álgebra Simbólica Libre (`open_symbolic`)** *(de M5 + M20)* | `Apply` / `Analyze` | ✅ **100% Factible** | **Editor MathLive + Client-Side CAS con `mathjs` AST:** Ya instalado en `platform/package.json` (`mathjs ^14.3.1`). Evalúa equivalencia algebraica (`simplify(user_expr - correct_expr) == 0`) y captura expresiones de distractores `ds` en `< 5 ms` sin servidor. En compilación (Stage 3/4), `SymPy` certifica la fórmula canónica. |
+| **1. Álgebra Simbólica Libre (`open_symbolic`)** *(de M5 + M20)* | `Apply` / `Analyze` | ✅ **100% Factible** | **Editor MathLive + Client-Side CAS con `mathjs` AST:** Ya instalado en `platform/package.json` (`mathjs ^14.3.1`). Evalúa equivalencia algebraica (`simplify(user_expr - correct_expr) == 0`) y captura expresiones de distractores `ds` en `< 5 ms` sin servidor. Alternativa modular: Pyodide en WebWorker si se requiere SymPy puro en cliente. En compilación (Stage 3/4), `SymPy` certifica la fórmula canónica. |
 | **2. Demostraciones Paso a Paso y Parsons Prover (`proof_dag`)** *(fusiona Parsons/Lean de M5 + DAG de M20)* | `Analyze` / `Evaluate` | ✅ **100% Factible** | **Shift-Left en Python (`proof_compiler.py`) + Validador Topológico en React (`ProofDAG.tsx` + `StepTile.tsx`):** Las derivaciones se precompilan offline como grafos dirigidos acíclicos con pasos válidos y pasos falaces distractores. El cliente valida en tiempo real (`< 5 ms`) el ordenamiento deductivo y la justificación de lemas sin requerir `lean --server` en vivo. |
 | **3. Modo Adversarial y Caza de Falacias (`adversarial_break`)** *(de M20)* | `Evaluate` | ✅ **100% Factible** | **Arena Adversarial (`AdversarialArena.tsx`):** Presenta una demostración o resolución con una falacia matemática deliberada (ej. dividir por cero, ignorar condición de 2do orden $\pi''(x) > 0$, aplicar Lagrangiano en conjunto no convexo). El alumno debe señalar el paso exacto que quiebra el supuesto o ingresar un contraejemplo numérico acotado. |
 | **4. Formulación No Estructurada Stage 0 (`unstructured_model`)** *(de M20)* | `Analyze` / `Create` | ✅ **100% Factible** | **Stepper de Modelado en 3 Fases (`Stage0Modeler.tsx`):** Transición guiada desde una narrativa con datos distractores hasta el modelo formal antes de permitir el cálculo (Clasificación de Variables $\to$ Restricciones/Supuestos $\to$ Función Objetivo y CPO/CSO). |
 | **5. Lienzo Visoespacial con Invariantes (`invariant_canvas` / `graph_manipulator`)** *(fusiona SVG de M5 + M20)* | `Analyze` / `Evaluate` | ✅ **100% Factible** | **Lienzo React SVG Reactivo (`InvariantCanvas.tsx` + `TopologyValidator.ts`):** Desplazamiento de curvas/isoclinas, sliders paramétricos continuos y construcción de árboles de decisión. El validador en TypeScript verifica invariantes geométricos y topológicos (pendientes, tangencias múltiples, conjuntos de información). |
 | **6. Emparejamiento Estructural (`concept_matching`)** *(de M5)* | `Understand` / `Analyze` | ✅ **100% Factible** | **Matriz de Asociación Causal:** Vincular supuestos formales con sus consecuencias algebraicas o regímenes dinámicos con condiciones de estabilidad, penalizando el tanteo mediante distractores cruzados. |
 | **7. Simulador de Fricción Cognitiva a Libro Cerrado** *(de M20)* | `Evaluate` | ✅ **100% Factible** | **Modo Hierro (`IronExamSession.tsx` + `MetacognitiveModal.tsx`):** Lógica pura de cliente en React + `sessionStore.ts`. Examen cronometrado con cero pistas, retención total del feedback hasta la entrega final y formulario obligatorio de auditoría metacognitiva previa. |
-| *Daemon Interactivo Lean 4 en Vivo (`lean --server`) o Backend FastAPI/Cloud* | — | ❌ **Inviable en GH Pages** | *Descartado definitivamente:* Exige VPS dedicado con 4–8 GB de RAM por sesión. Reemplazado al 100% por la precompilación Shift-Left de `proof_dag` validada localmente con SymPy/Z3/Lean 4 durante el build del curso. |
+| *Daemon Interactivo Lean 4 en Vivo (`lean --server`)* | — | ❌ **Inviable en GH Pages** | *Fuera de alcance:* Exige VPS Linux dedicado con 4–8 GB de RAM por sesión para compilar pruebas Lean 4 interactivas. Reemplazado al 100% por la precompilación Shift-Left de `proof_dag` validada localmente con SymPy/Z3/Lean 4 durante el build del curso. |
+| *Servidores de Backend C# / LINQ o Python FastAPI* | — | ❌ **Inviable en GH Pages** | *Fuera de alcance:* GitHub Pages es un CDN de archivos estáticos puros; no permite procesos de fondo ni motores en C# (.NET/LINQ) ni microservicios Python activos. Reemplazado por lógica isomórfica TS/WASM. |
+| *Sandbox de Código Remoto Arbitrario en la Nube* | — | ❌ **Inviable en GH Pages** | *Fuera de alcance:* Servidores Jupyter/Julia multiusuario en cloud implican riesgos severos de seguridad (minería/abuso) y costos mensuales altos. Reemplazado por scripts locales de laboratorio. |
 
 #### 3. Estructura de Archivos del Hito Unificado
 ```
@@ -188,12 +201,54 @@ Tops_academy/
 5. **AC-5 (Blindaje de Examen a Libro Cerrado):** `IronExamSession.tsx` desactiva completamente pistas, opciones y toasts durante una sesión cronometrada; almacena las respuestas y la autoevaluación metacognitiva del usuario antes de calcular la nota real.
 6. **AC-6 (Presupuesto PWA Estático y Shift-Left Pipeline):** El bundle de producción (`npm run build`) mantiene compatibilidad 100% offline en GitHub Pages incrementando el App Shell en $\le 120\text{ KB}$ gzip, y `engine/proof_compiler.py` precompila los esquemas `proof_dag` con validación local en SymPy/Z3.
 
-#### 5. Banco de 4 Casos Canónicos de Entrenamiento de Alta Demanda (Nivel Honores)
-1. **Caso 1 — Trampas de Segundo Orden y Rendimientos Crecientes ($c(x) = \sqrt{x} + F$):** *Stage 0* obliga a auditar $c''(x) < 0 \implies \pi''(x) > 0$ (el punto donde $p = CMg$ es un **mínimo local de beneficios**); si el alumno ingresa en `open_symbolic` el despeje mecánico $x = 1/(4p^2)$, el detector de distractores evalúa el contraejemplo numérico y el lienzo SVG muestra el colapso del equilibrio competitivo hacia monopolio natural.
-2. **Caso 2 — Restricción Presupuestaria No Convexa con Descuento por Volumen:** Formalización por tramos en *Stage 0*, visualización del quiebre entrante en `InvariantCanvas.tsx` con dos tangencias locales simultáneas y encadenamiento en `ProofDAG.tsx` de $x^* = \arg\max \{u(x^A), u(x^{\text{kink}}), u(x^B)\}$.
-3. **Caso 3 — Ruptura Axiomática y Contraejemplos en Contorno Superior ($u = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$):** En `AdversarialArena.tsx`, el alumno rechaza el uso de la matriz hessiana por discontinuidad e ingresa dos canastas $A=(1,2)$ y $B=(2,1)$ cuyo punto medio $M=(1.5, 1.5)$ cae fuera del contorno superior, refutando la cuasiconcavidad.
-4. **Caso 4 — Deducción Analítica General en Cadena Lógica (Identidad de Roy desde $m \equiv e(p, v(p,m))$):** Construcción paso a paso en `ProofDAG.tsx` encadenando diferenciación multivariable, Lema de Shephard, despeje de $\partial e / \partial u$ y sustitución con diagnóstico inmediato de errores de signo.
-> 📄 **Especificación Técnica Completa y Síntesis de los 4 Ejes:** Consultar el artefacto [`sintesis_plantillas_arquetipos.md`](file:///C:/Users/augus/.gemini/antigravity/brain/9cddf88b-bcd6-41ad-99e6-6713f6a217a4/sintesis_plantillas_arquetipos.md) *(espejo en el repositorio en [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md))*.
+#### 5. Banco de Casos Canónicos: Cómo la Plataforma Entrena Frente a Exámenes de Alta Demanda (San Marcos / Eloy Ávalos)
+
+A continuación se detallan los 4 casos arquetípicos extraídos de los exámenes reales de Microeconomía I y el flujo pedagógico exacto con el que la nueva plataforma entrena al estudiante:
+
+##### Caso 1: Trampas de Segundo Orden y Rendimientos Crecientes (Examen 2, Pregunta 2.1)
+* **Enunciado de Examen:** *«Una empresa precio-aceptante opera con una tecnología dada por $c(x) = \sqrt{x} + F$. ¿Qué acontece con la empresa en el nivel óptimo de producción? Luego, explique lo que ocurriría hacia el largo plazo.»*
+* **Falla Común del 85% de Alumnos:** Despeje mecánico $p = CMg \implies p = \frac{1}{2\sqrt{x}} \implies x^* = \frac{1}{4p^2}$. Calificación: 00/05 por ignorar que $CMg$ es estrictamente decreciente y que la condición de 2do orden $\frac{d^2\pi}{dx^2} > 0$ convierte la tangencia en un **mínimo local de beneficios**.
+* **Entrenamiento en la Plataforma:**
+  1. *Fase Stage 0:* Bloqueo de cálculo hasta auditar la tecnología. Clasificación obligatoria: rendimientos crecientes, $c''(x) < 0$ y $\pi''(x) > 0$. Identificación de que $d\pi/dx = 0$ representa el punto de **menor beneficio posible**.
+  2. *Trampa Adversarial Guiada (`open_symbolic` / `FIB` + `ds`):* Si el alumno introduce $x = 1/(4p^2)$, la plataforma evalúa numéricamente con $p=1, F=10$: beneficio en la supuesta solución $x=0.25$ es $\pi = -10.25$, mientras que para $x=100$ es $\pi = +80$. Diagnóstico en Toast: *«Has maximizado las pérdidas. Al ser el costo marginal decreciente, cada unidad adicional es más barata de producir que la anterior.»*
+  3. *Lienzo SVG de Invariantes:* Gráfica dinámica de $CMg(x)$ y $CMe(x)$ mostrando que el precio corta la curva de costo marginal por debajo. Deducción asistida de monopolio natural y colapso del equilibrio competitivo de largo plazo.
+
+##### Caso 2: Restricción Presupuestaria No Convexa con Descuento por Volumen (Examen 1, Pregunta 2.2)
+* **Enunciado de Examen:** *«Un hogar posee preferencias regulares $u(x_1, x_2)$ con $p_2 = 1$. Por cada unidad adicional del bien $B_1$ recibe un descuento de $r\%$ hasta $\bar{x}_1$. Si posee ingreso $m$, explique las condiciones del óptimo del hogar.»*
+* **Falla Común:** Aplicar un Lagrangiano global o asumir que existe una única tangencia interior.
+* **Entrenamiento en la Plataforma:**
+  1. *Formalización por Tramos (Stage 0):* Construcción de la restricción presupuestaria por partes: Tramo A ($x_1 \le \bar{x}_1$) con pendiente $-p_1$ y Tramo B ($x_1 > \bar{x}_1$) con pendiente más plana $-p_1(1-r)$.
+  2. *Diagnóstico Visual de No Convexidad:* El lienzo SVG muestra el ángulo entrante (quiebre no convexo) en $(\bar{x}_1, m - p_1\bar{x}_1)$. La plataforma permite arrastrar una curva de indiferencia convexa y evidencia que **pueden existir dos tangencias locales simultáneas** en distintos tramos.
+  3. *Protocolo Analítico Exhaustivo (DAG):* El estudiante encadena las condiciones de optimalidad global:
+     $$x^* = \arg\max \{ u(x^A), u(x^{\text{kink}}), u(x^B) \}$$
+     con la condición obligatoria en el vértice no diferenciable: $p_1(1-r) \le TMS(x^{\text{kink}}) \le p_1$.
+  4. *Ruptura de Continuidad de la Demanda:* Slider paramétrico de renta $m$ donde un incremento marginal de $m=100 \to 102$ hace saltar el óptimo bruscamente de $x_1 = 2$ a $x_1 = 15$, demostrando la pérdida de continuidad de la función de demanda ordinaria.
+
+##### Caso 3: Ruptura Axiomática y Contraejemplos en el Contorno Superior (2da PC, Pregunta 2)
+* **Enunciado de Examen:** *«Sea $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$. Determine analíticamente si es cuasiconcava demostrando si su conjunto contorno superior $MI(x) = \{x' : u(x') \ge u(x)\}$ es convexo para $x = (1.5, 1.5)$.»*
+* **Falla Común:** Intentar calcular el orlado de la matriz hessiana en una función discontinua donde no existen derivadas.
+* **Entrenamiento en la Plataforma:**
+  1. *Evaluación de la Base:* Cálculo de la cota $u(1.5, 1.5) = 1 + 1 = 2$.
+  2. *Arena Adversarial de Búsqueda de Contraejemplos:* El alumno debe ingresar dos canastas $A$ y $B$ que pertenezcan a un contorno superior superior ($u \ge 3$):
+     * Canasta $A = (1.0, 2.0) \implies u(A) = 1 + 2 = 3 \ge 3$.
+     * Canasta $B = (2.0, 1.0) \implies u(B) = 2 + 1 = 3 \ge 3$.
+  3. *Verificación de la Combinación Convexa:* La plataforma calcula el punto medio con $\lambda = 0.5$:
+     $$M = 0.5 A + 0.5 B = (1.5, 1.5)$$
+     y evalúa la utilidad: $u(M) = \lfloor 1.5 \rfloor + \lfloor 1.5 \rfloor = 1 + 1 = 2 < 3$.
+  4. *Conclusión Formal:* El punto medio $M$ queda **fuera** del conjunto contorno superior $MI$, demostrando formal y analíticamente que el conjunto no es convexo y que la función **no es cuasicóncava**.
+
+##### Caso 4: Deducción Analítica General en Cadena Lógica (3ra PC, Pregunta 6.1)
+* **Enunciado de Examen:** *«A partir de la identidad $m \equiv e(p, v(p,m))$, derive analíticamente la Identidad de Roy sin suponer una forma funcional para $v$.»*
+* **Falla Común:** Saltar pasos intermedios, olvidar el Lema de Shephard o asumir implícitamente que $\partial e / \partial u = 1$.
+* **Entrenamiento en la Plataforma (ProofDAG):**
+  1. *Paso 1:* Diferenciación respecto a $p_i$ vía Regla de la Cadena multivariable: $0 = \partial e / \partial p_i + (\partial e / \partial u)(\partial v / \partial p_i)$.
+  2. *Paso 2:* Invocación del Lema de Shephard: $\partial e / \partial p_i = x_i^h(p,u) = x_i^d(p,m)$.
+  3. *Paso 3:* Diferenciación de la identidad respecto a la renta $m$ para despejar el término marginal: $1 = (\partial e / \partial u)(\partial v / \partial m) \implies \partial e / \partial u = 1 / (\partial v / \partial m)$.
+  4. *Paso 4:* Sustitución algebraica de los Lemas 2 y 3 en el Paso 1.
+  5. *Paso 5:* Despeje riguroso de la demanda ordinaria: $x_i^d(p,m) = - \frac{\partial v / \partial p_i}{\partial v / \partial m}$ (Q.E.D.).
+  * *Refutación Inmediata ante Falacias:* Si el alumno elige el distractor con signo positivo o salta el Paso 3, la plataforma diagnostica con precisión el error conceptual antes de permitirle avanzar.
+
+> 📄 **Especificación Técnica Completa y Síntesis de los 4 Ejes:** Consultar [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md).
 
 ---
 
@@ -234,7 +289,7 @@ Cuando se exige $K > 1$ plantillas dentro de un mismo arquetipo (por ejemplo, 3 
 1. **AC-1 (Parametrización Unificada `--templates-per-archetype K`):** `plan_shards.py`, `dispatch.py`, `compile_shard.py`, `check_templates.py` y `prompt_shard_author.md` leen `TEMPLATES_PER_ARCHETYPE` (con retrocompatibilidad $K=1$ para cursos legacy y soporte nativo $K=2, 3$ para nuevos cursos con Gemini 4).
 2. **AC-2 (Enforcement de los 3 Candados Anti-Clon):** Suite de pruebas en `tests/` verificando que `compile_shard.py` rechaza automáticamente plantillas del mismo arquetipo que compartan fórmula AST equivalente, repitan `(modalidad, bloom)` sin variedad o superen el umbral de similitud léxica.
 3. **AC-3 (Piloto Empírico con Gemini 4):** Corrida certificada de un shard/curso piloto con $K=3$ ($12$ plantillas por competencia, $\ge 60$ reactivos instanciados por competencia) midiendo tasa de PASS en Turno 1 ($\ge 85\%$), tiempo de compilación y costo de arbitraje 1-seed.
-> 📄 **Especificación Técnica Completa y Síntesis de los 4 Ejes:** Consultar el artefacto [`sintesis_plantillas_arquetipos.md`](file:///C:/Users/augus/.gemini/antigravity/brain/9cddf88b-bcd6-41ad-99e6-6713f6a217a4/sintesis_plantillas_arquetipos.md) *(espejo en el repositorio en [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md))*.
+> 📄 **Especificación Técnica Completa y Síntesis de los 4 Ejes:** Consultar [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md).
 
 ---
 
