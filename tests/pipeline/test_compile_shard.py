@@ -667,7 +667,7 @@ TEMPLATES = [
 '''
         shard_py.write_text(shard_code, encoding="utf-8")
 
-        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True, templates_per_modality=1)
         assert success, f"Expected compile_shard to succeed, got errors: {errors}"
         assert errors == []
 
