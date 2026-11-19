@@ -17,6 +17,8 @@ interface Stage0ModelerProps {
   disabled?: boolean;
   isChecked?: boolean;
   isCorrect?: boolean | null;
+  ironMode?: boolean;
+  onSelectPhase?: (phase: 1 | 2 | 3) => void;
   onChange: (next: Stage0AnswerState) => void;
 }
 
@@ -41,6 +43,8 @@ export const Stage0Modeler: React.FC<Stage0ModelerProps> = ({
   disabled = false,
   isChecked = false,
   isCorrect = null,
+  ironMode = false,
+  onSelectPhase,
   onChange,
 }) => {
   const phases = [
@@ -51,9 +55,34 @@ export const Stage0Modeler: React.FC<Stage0ModelerProps> = ({
 
   return (
     <div data-testid="stage0-modeler-root" className="space-y-4">
-      {/* Sequential Locked Stepper Header */}
+      {/* Stepper Header: free clickable tabs in Iron Mode, sequential locked stepper otherwise */}
       <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="Fases de modelado">
         {phases.map((p) => {
+          if (ironMode) {
+            const isActive = activePhase === p.num;
+            return (
+              <button
+                key={p.num}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                data-testid={`stage0-tab-${p.num}`}
+                disabled={disabled}
+                onClick={() => onSelectPhase?.(p.num)}
+                className={`px-2.5 py-2 rounded-lg border text-xs font-bold flex items-center justify-between gap-1 cursor-pointer transition-colors ${
+                  isActive
+                    ? 'bg-blue-50 border-ka-blue text-ka-blue shadow-2xs'
+                    : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span className="truncate">{p.label}</span>
+                <span aria-hidden="true" className="shrink-0">
+                  {isActive ? '●' : '○'}
+                </span>
+              </button>
+            );
+          }
+
           const isDone = activePhase > p.num || (isChecked && isCorrect === true);
           const isCurrent = activePhase === p.num && !(isChecked && isCorrect === true);
           const isLocked = activePhase < p.num;

@@ -294,22 +294,22 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 <span className="text-2xl shrink-0">🏆</span>
                 <div className="min-w-0">
                   <div className="text-xs font-bold uppercase tracking-wide text-purple-800">
-                    Up Next for You • Desafío del Curso
+                    Up Next for You • Evaluación Final Modo Hierro
                   </div>
                   <div className="text-sm font-bold text-purple-950 truncate">
-                    Course Challenge: <MathText text={course.title} inline />
+                    Examen Modo Hierro: <MathText text={course.title} inline />
                   </div>
                   <p className="text-xs text-purple-700 mt-0.5">
-                    ¡Todos los Unit Tests están dominados! Rinde el Course Challenge para completar el curso al 100%.
+                    ¡Todos los Unit Tests están dominados! Rinde el Examen Modo Hierro (a libro cerrado) para completar el curso al 100%.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={onStartCourseChallenge}
-                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0 cursor-pointer"
               >
-                Rendir Course Challenge ➔
+                Rendir Examen Modo Hierro ➔
               </button>
             </div>
           );
@@ -576,11 +576,11 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
           <div className="flex items-start gap-3 min-w-0">
-            <span className="text-3xl leading-none shrink-0">📖</span>
+            <span className="text-3xl leading-none shrink-0">🛡️</span>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-ka-text-primary uppercase tracking-wide">
-                  COURSE CHALLENGE: {challengePercent}%
+                  EXAMEN MODO HIERRO: {challengePercent}%
                 </h3>
                 {challengeCompleted && (
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded shrink-0">
@@ -594,18 +594,18 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 )}
               </div>
               <p className="text-sm text-ka-text-secondary mt-1 break-words">
-                Test your knowledge of the skills in this course.
+                Evaluación integradora a libro cerrado sin pistas ni retroalimentación inmediata, con auditoría metacognitiva diferida.
               </p>
             </div>
           </div>
 
           <button
             type="button"
-            aria-label={challengeCompleted ? 'Take Course challenge again' : 'Take Course challenge'}
+            aria-label={challengeCompleted ? 'Volver a rendir Examen Modo Hierro' : 'Rendir Examen Modo Hierro'}
             onClick={onStartCourseChallenge}
-            className="px-5 py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white font-semibold text-sm rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+            className="px-5 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white font-semibold text-sm rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0 cursor-pointer"
           >
-            {challengeCompleted ? 'Take Course challenge again' : 'Take Course challenge'}
+            {challengeCompleted ? 'Rendir Modo Hierro de nuevo' : 'Rendir Examen Modo Hierro'}
           </button>
         </div>
       </div>

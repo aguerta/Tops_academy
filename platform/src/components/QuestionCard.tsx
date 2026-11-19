@@ -37,6 +37,8 @@ interface QuestionCardProps {
   courseTitle?: string;
   wrongAttemptsCount?: number;
   isPracticeMode?: boolean;
+  ironMode?: boolean;
+  onSelectStage0Phase?: (phase: 1 | 2 | 3) => void;
 }
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
@@ -65,27 +67,31 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   courseTitle = 'Tops Academy',
   wrongAttemptsCount = 0,
   isPracticeMode = true,
+  ironMode = false,
+  onSelectStage0Phase,
 }) => {
   const [showHintsSection, setShowHintsSection] = useState(false);
   const [hasCopiedPrompt, setHasCopiedPrompt] = useState(false);
   const fillInputRef = useRef<HTMLInputElement>(null);
 
+  const showBlankFirstCurtain =
+    !ironMode && blankFirstEnabled && !isCurtainLifted && requiresBlankFirstCurtain(question);
+
   useEffect(() => {
-    const showCurtain = blankFirstEnabled && !isCurtainLifted && requiresBlankFirstCurtain(question);
     if (
       question.type === 'fill_in_the_blank' &&
-      !showCurtain &&
+      !showBlankFirstCurtain &&
       !isChecked &&
       !isExhausted
     ) {
       fillInputRef.current?.focus({ preventScroll: true });
     }
-  }, [question.id, question.type, isCurtainLifted, blankFirstEnabled, isChecked, isExhausted]);
+  }, [question.id, question.type, showBlankFirstCurtain, isChecked, isExhausted]);
 
   const totalHints = question.hints ? question.hints.length : 0;
   const minAttemptsNeeded = totalHints > 0 ? 3 : 2;
   const isSocraticUnlocked =
-    isPracticeMode && (isExhausted || wrongAttemptsCount >= minAttemptsNeeded);
+    !ironMode && isPracticeMode && (isExhausted || wrongAttemptsCount >= minAttemptsNeeded);
 
   const handleCopySocraticPrompt = async () => {
     let selectedContent: string | undefined;
@@ -170,7 +176,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       )}
 
       {/* Milestone 6 / 20 Smart Blank-First Curtain (Free Recall for option-based / DAG / matching items only) */}
-      {blankFirstEnabled && !isCurtainLifted && requiresBlankFirstCurtain(question) ? (
+      {showBlankFirstCurtain ? (
         <div
           data-testid="blank-first-curtain"
           className="my-3 sm:my-4 p-5 sm:p-6 bg-gradient-to-b from-blue-50/70 via-indigo-50/40 to-slate-50/80 border border-blue-200/80 rounded-xl text-center shadow-sm animate-in fade-in duration-200"
@@ -526,6 +532,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           <Stage0Modeler
             spec={question.unstructured_model}
             activePhase={stage0Phase}
+            ironMode={ironMode}
+            onSelectPhase={onSelectStage0Phase}
             value={
               structuredAnswer?.kind === 'unstructured_model'
                 ? {
@@ -590,6 +598,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Type 9: Concept Matching */}
       {question.type === 'concept_matching' && question.concept_matching && (
         <ConceptMatching
+          key={question.id}
           spec={question.concept_matching}
           pairs={
             structuredAnswer?.kind === 'concept_matching' ? structuredAnswer.pairs : {}
@@ -604,8 +613,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         />
       )}
 
-      {/* Progressive Hints Section: Compact single-line toggle always visible below options */}
-      <div className="mt-1.5 sm:mt-2 pt-1 border-t border-ka-border-subtle/40">
+      {/* Progressive Hints Section: Hidden in Iron Exam closed-book mode */}
+      {!ironMode && (
+        <div className="mt-1.5 sm:mt-2 pt-1 border-t border-ka-border-subtle/40">
         <button
           data-testid="hints-toggle"
           aria-expanded={showHintsSection}
@@ -671,7 +681,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             ))}
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Milestone 6: Socratic Transfer ($0 API) Gate */}
       {isSocraticUnlocked && (

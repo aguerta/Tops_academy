@@ -347,13 +347,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 : 'hover:bg-slate-50 text-ka-text-primary'
             }`}
           >
-            <span className="text-xl leading-none shrink-0">📖</span>
+            <span className="text-xl leading-none shrink-0">🛡️</span>
             <div className="flex-1 min-w-0">
               <span className="block text-sm font-bold text-ka-text-primary">
-                Course challenge
+                Examen Modo Hierro
               </span>
               <span className="block text-xs text-ka-text-secondary mt-0.5 line-clamp-1">
-                Test your knowledge of the skills in this course.
+                Evaluación global a libro cerrado y calibración.
               </span>
             </div>
           </button>
