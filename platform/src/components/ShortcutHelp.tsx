@@ -7,6 +7,8 @@ const SECTIONS: { title: string; items: [string, string][] }[] = [
       ['A – G / 1 – 7', 'Select / toggle options without touching the mouse'],
       ['Enter', 'Reveal options (Blank-First) · Check answer · Next question · Retry'],
       ['Ctrl+S', 'Skip question'],
+      ['P', 'Toggle Scratchpad / Pizarra'],
+      ['Ctrl+Z / Ctrl+Y', 'Undo / Redo inside Pizarra'],
       ['Auto-focus', 'Fill-in-the-blank input is focused automatically'],
     ],
   },

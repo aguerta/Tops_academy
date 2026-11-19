@@ -58,7 +58,17 @@ function validateCourseJson(filePath, content) {
     return { valid: false, error: 'Course must specify non-empty questions array' };
   }
 
-  const validTypes = ['multiple_choice_7_options', 'multiple_select', 'fill_in_the_blank'];
+  const validTypes = [
+    'multiple_choice_7_options',
+    'multiple_select',
+    'fill_in_the_blank',
+    'open_symbolic',
+    'proof_dag',
+    'adversarial_break',
+    'unstructured_model',
+    'invariant_canvas',
+    'concept_matching',
+  ];
   for (const q of parsed.questions) {
     const qType = q.type || q.interaction_type;
     if (!validTypes.includes(qType)) {

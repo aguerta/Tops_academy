@@ -33,6 +33,10 @@ import { Sidebar } from './components/Sidebar';
 import { CourseOverview } from './components/CourseOverview';
 import { PreExerciseModal } from './components/PreExerciseModal';
 import { PracticeSession } from './components/PracticeSession';
+import {
+  IronExamCompletionOutcome,
+  IronExamSession,
+} from './components/session/IronExamSession';
 import { CompletionScreen } from './components/CompletionScreen';
 import { ShortcutHelp } from './components/ShortcutHelp';
 import { CourseChallenge } from './components/CourseChallenge';
@@ -106,8 +110,9 @@ export const App: React.FC = () => {
     );
   };
 
-  // Milestone 14: Timing, Telemetry & Challenge Execution Summary
+  // Milestone 14 & 20: Timing, Telemetry, Challenge Execution Summary & Iron Exam Outcome
   const [challengeSummary, setChallengeSummary] = useState<ChallengeExecutionSummary | null>(null);
+  const [ironOutcome, setIronOutcome] = useState<IronExamCompletionOutcome | null>(null);
   const [latestTimingData, setLatestTimingData] = useState<{
     totalSeconds?: number;
     avgSeconds?: number;
@@ -193,7 +198,8 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (viewMode !== 'practice') return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.isComposing || e.repeat) return;
+      if (e.key !== 'Escape' || e.isComposing || e.repeat || e.defaultPrevented) return;
+      if (!showQuitConfirm && document.querySelector('[role="dialog"]')) return;
       e.preventDefault();
       if (showQuitConfirm) {
         handleQuitSession();
@@ -377,6 +383,7 @@ export const App: React.FC = () => {
 
     clearActiveSession();
     setRestoredSnapshot(null);
+    setIronOutcome(null);
 
     let targetComp = comp;
     // In practice/quiz/test, if comp is not passed, attempt recovery from sessionCompetency or selectedUnitIndex
@@ -455,15 +462,16 @@ export const App: React.FC = () => {
     navigateView('challenge');
   };
 
-  // Start Course Challenge Session (unified pre-exercise modal)
+  // Start Examen Modo Hierro directly after briefing screen
   const handleBeginCourseChallenge = () => {
-    launchSession('challenge', null, false);
+    launchSession('challenge', null, true);
   };
 
   // Safe quit from session: replaces current transient state with overview so back never re-enters quizzes
   const handleQuitSession = () => {
     clearActiveSession();
     setRestoredSnapshot(null);
+    setIronOutcome(null);
     setShowQuitConfirm(false);
     setFocusCompetencyId(sessionType === 'challenge' ? null : sessionCompetency?.id ?? null);
     setViewMode('overview');
@@ -473,15 +481,17 @@ export const App: React.FC = () => {
     });
   };
 
-  // Handle Practice Session Completion with Milestone 14 Telemetry & Calibration
+  // Handle Practice / Iron Exam Session Completion with Milestone 14 Telemetry & Calibration
   const handleCompleteSession = (
     score: number,
     total: number,
     telemetryData?: QuestionTelemetry[],
-    totalSeconds?: number
+    totalSeconds?: number,
+    ironOutcomeParam?: IronExamCompletionOutcome
   ) => {
     clearActiveSession();
     setRestoredSnapshot(null);
+    setIronOutcome(sessionType === 'challenge' ? (ironOutcomeParam ?? null) : null);
     setSessionScore(score);
     setSessionTotal(total);
 
@@ -646,14 +656,28 @@ export const App: React.FC = () => {
         />
       )}
 
-      {viewMode === 'practice' && (
+      {viewMode === 'practice' && sessionType === 'challenge' && (
+        <IronExamSession
+          key={sessionKey}
+          sessionTitle={
+            restoredSnapshot?.sessionTitle ||
+            `Examen Modo Hierro • ${activeCourse?.title || 'Curso'}`
+          }
+          questions={sessionQuestions}
+          courseId={activeCourse?.course_id}
+          courseTitle={activeCourse?.title}
+          initialSnapshot={restoredSnapshot}
+          onComplete={handleCompleteSession}
+          onQuit={() => setShowQuitConfirm(true)}
+        />
+      )}
+
+      {viewMode === 'practice' && sessionType !== 'challenge' && (
         <PracticeSession
           key={sessionKey}
           sessionTitle={
             restoredSnapshot?.sessionTitle ||
-            (sessionType === 'challenge'
-              ? 'Course challenge'
-              : sessionType === 'quiz'
+            (sessionType === 'quiz'
               ? `Quiz • ${sessionCompetency?.name || 'Unit'}`
               : sessionType === 'test'
               ? `Unit test • ${sessionCompetency?.name || 'Unit'}`
@@ -683,6 +707,8 @@ export const App: React.FC = () => {
           total={sessionTotal}
           sessionType={sessionType}
           challengeSummary={challengeSummary}
+          metacognitiveAudit={ironOutcome?.metacognitiveAudit}
+          deferredReview={ironOutcome?.deferredReview}
           timingData={latestTimingData}
           misconceptions={latestMisconceptions}
           onRemediateCompetency={(comp) => {

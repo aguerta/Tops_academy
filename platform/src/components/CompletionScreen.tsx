@@ -4,7 +4,9 @@ import {
   Competency,
   Course,
   ChallengeExecutionSummary,
+  IronDeferredReviewItem,
   MasteryTier,
+  MetacognitiveAudit,
 } from '../types';
 import { MathText } from './MathText';
 import { formatTimingSeconds, TIER_COLORS, TIER_POINTS } from '../utils/masteryStorage';
@@ -20,6 +22,8 @@ interface CompletionScreenProps {
   onBackToCourse: () => void;
   onRemediateCompetency?: (comp: Competency) => void;
   challengeSummary?: ChallengeExecutionSummary | null;
+  metacognitiveAudit?: MetacognitiveAudit | null;
+  deferredReview?: IronDeferredReviewItem[];
   timingData?: {
     totalSeconds?: number;
     avgSeconds?: number;
@@ -46,6 +50,8 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
   onBackToCourse,
   onRemediateCompetency,
   challengeSummary,
+  metacognitiveAudit,
+  deferredReview,
   timingData,
   misconceptions,
 }) => {
@@ -111,7 +117,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
   const titlePrefix =
     sessionType === 'challenge'
-      ? 'Course challenge complete!'
+      ? '¡Examen Modo Hierro completado!'
       : sessionType === 'test'
       ? 'Unit test complete!'
       : sessionType === 'quiz'
@@ -204,7 +210,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
       </p>
 
       {/* Main Celebratory Container */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 min-w-0">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 gap-5 min-w-0">
         <div className="w-full max-w-4xl bg-ka-blue rounded-2xl p-6 sm:p-8 text-white shadow-xl flex flex-col lg:flex-row items-center lg:items-start justify-between gap-6 sm:gap-8 relative overflow-hidden min-w-0">
           {/* Left Hero Content: Result Emoji, score & Timing Metrics */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left min-w-0 flex-1">
@@ -429,6 +435,129 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
             </p>
           </div>
         </div>
+
+        {/* M20 Deferred Metacognitive Audit Summary (Modo Hierro) */}
+        {metacognitiveAudit && (
+          <section
+            data-testid="metacognitive-audit-summary"
+            className="w-full max-w-4xl bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4 min-w-0"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-extrabold text-slate-900">
+                  Auditoría Metacognitiva Diferida
+                </h2>
+                <p className="text-xs text-slate-600">
+                  Contraste entre tu nivel de certeza declarada y el desempeño verificado a libro cerrado.
+                </p>
+              </div>
+              <span
+                data-testid="meta-calibration-score"
+                className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-extrabold shrink-0"
+              >
+                Calibración: {metacognitiveAudit.calibration_score}%
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 min-w-0">
+                <div className="text-xl font-extrabold text-emerald-800">
+                  {metacognitiveAudit.calibrated_mastery_count}
+                </div>
+                <div className="font-bold text-emerald-950">Dominio Calibrado</div>
+                <div className="text-[11px] text-emerald-700">Alta certeza + acierto</div>
+              </div>
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 min-w-0">
+                <div
+                  data-testid="meta-illusions-count"
+                  className="text-xl font-extrabold text-rose-700"
+                >
+                  {metacognitiveAudit.illusions_of_competence_count}
+                </div>
+                <div className="font-bold text-rose-950">Ilusiones de Competencia</div>
+                <div className="text-[11px] text-rose-700">Alta certeza + error</div>
+              </div>
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 min-w-0">
+                <div className="text-xl font-extrabold text-amber-800">
+                  {metacognitiveAudit.lucky_guesses_count}
+                </div>
+                <div className="font-bold text-amber-950">Aciertos con Duda</div>
+                <div className="text-[11px] text-amber-700">Baja certeza + acierto</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 min-w-0">
+                <div className="text-xl font-extrabold text-slate-800">
+                  {metacognitiveAudit.known_gaps_count}
+                </div>
+                <div className="font-bold text-slate-900">Brechas Conocidas</div>
+                <div className="text-[11px] text-slate-600">Menor certeza + error</div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* M20 Deferred Item-by-Item Review (Modo Hierro) */}
+        {deferredReview && deferredReview.length > 0 && (
+          <section
+            data-testid="iron-deferred-review"
+            className="w-full max-w-4xl bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-3 min-w-0"
+          >
+            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 border-b border-slate-100 pb-2">
+              Revisión Diferida Pregunta por Pregunta ({deferredReview.length})
+            </h2>
+            <div className="space-y-3">
+              {deferredReview.map((item, idx) => (
+                <div
+                  key={item.question.id}
+                  data-testid={`iron-review-item-${idx}`}
+                  className={`p-3.5 rounded-xl border space-y-2 min-w-0 ${
+                    item.is_correct
+                      ? 'bg-emerald-50/40 border-emerald-200'
+                      : 'bg-rose-50/40 border-rose-200'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="font-extrabold text-slate-800">
+                      Pregunta #{idx + 1} •{' '}
+                      {item.is_correct ? '✓ Correcta' : item.answered ? '✕ Incorrecta' : '— En blanco'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {item.flagged && (
+                        <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold">
+                          ⚑ Marcada
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 font-semibold">
+                        Certeza:{' '}
+                        {item.confidence === 'high'
+                          ? 'Alta'
+                          : item.confidence === 'medium'
+                          ? 'Media'
+                          : 'Baja'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-xs sm:text-sm text-slate-900 min-w-0 break-words">
+                    <MathText text={item.question.stem} />
+                  </div>
+                  <div className="text-xs text-slate-700 bg-white/80 p-2 rounded border border-slate-200 break-words">
+                    <strong>Tu respuesta:</strong> <MathText text={item.user_summary} inline />
+                  </div>
+                  {item.diagnostic_rationale && !item.is_correct && (
+                    <div className="text-xs text-rose-900 bg-rose-50 p-2 rounded border border-rose-200 break-words">
+                      <strong>Diagnóstico:</strong>{' '}
+                      <MathText text={item.diagnostic_rationale} inline />
+                    </div>
+                  )}
+                  {item.question.solution && (
+                    <div className="text-xs text-emerald-950 bg-emerald-50/70 p-2 rounded border border-emerald-200 break-words">
+                      <strong>Solución:</strong> <MathText text={item.question.solution} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Bottom Footer Action Bar */}

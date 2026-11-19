@@ -8,6 +8,7 @@ interface FeedbackToastProps {
   question: Question;
   selectedOption?: string | null;
   selectedMultiOptions?: string[];
+  matchedDiagnosticRationale?: string | null;
   onClose?: () => void;
   onRedo?: () => void;
   isExhausted?: boolean;
@@ -25,6 +26,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
   question,
   selectedOption = null,
   selectedMultiOptions = [],
+  matchedDiagnosticRationale = null,
   onClose,
   onRedo,
   isExhausted = false,
@@ -39,7 +41,21 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
   }, [isExhausted]);
 
   const getDiagnosticRationales = (): DiagnosticRationaleItem[] => {
-    if (isCorrect || !question || !question.options) {
+    if (isCorrect || !question) {
+      return [];
+    }
+
+    if (matchedDiagnosticRationale && matchedDiagnosticRationale.trim() !== '') {
+      return [
+        {
+          optionId: 'M20-DIAG',
+          content: '',
+          rationale: matchedDiagnosticRationale.trim(),
+        },
+      ];
+    }
+
+    if (!question.options) {
       return [];
     }
 
@@ -131,7 +147,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
           </div>
         </div>
       );
-    } else if (question.type === 'fill_in_the_blank') {
+    } else if (question.type === 'fill_in_the_blank' || question.type === 'open_symbolic') {
       let ansText = '';
       if (
         typeof question.correct_answer === 'object' &&
@@ -157,6 +173,106 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
               <MathText text={`$${ansText}$`} inline />
             </div>
           </div>
+        </div>
+      );
+    } else if (question.type === 'proof_dag' && question.proof_dag) {
+      const ca = question.correct_answer as any;
+      const orderIds: string[] = Array.isArray(ca?.canonical_order)
+        ? ca.canonical_order
+        : Array.isArray(ca?.required_step_ids)
+        ? ca.required_step_ids
+        : question.proof_dag.steps.filter((s) => !s.is_fallacy).map((s) => s.id);
+      const stepMap = new Map(question.proof_dag.steps.map((s) => [s.id, s]));
+      return (
+        <div data-testid="correct-answer-display" className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 space-y-1.5">
+          <span className="font-bold text-emerald-800 uppercase tracking-wider text-[11px] block">
+            Demostración válida:
+          </span>
+          {orderIds.map((sid, idx) => {
+            const st = stepMap.get(sid);
+            if (!st) return null;
+            return (
+              <div key={sid} className="text-xs text-slate-800 flex items-start gap-1.5">
+                <span className="font-bold text-emerald-700">{idx + 1}.</span>
+                <MathText text={st.content} inline />
+              </div>
+            );
+          })}
+        </div>
+      );
+    } else if (question.type === 'adversarial_break' && question.adversarial_break) {
+      const spec = question.adversarial_break;
+      const fallStep = spec.steps?.find((s) => s.is_fallacy);
+      const corrReason = spec.reason_options?.find((r) => r.is_correct);
+      return (
+        <div data-testid="correct-answer-display" className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 space-y-1">
+          <span className="font-bold text-emerald-800 uppercase tracking-wider text-[11px] block">
+            {spec.mode === 'find_fallacy' ? 'Falacia detectada:' : 'Testigo válido:'}
+          </span>
+          {spec.mode === 'find_fallacy' && fallStep ? (
+            <div className="text-xs text-slate-800 space-y-1">
+              <div>
+                <strong>{fallStep.label || fallStep.id}:</strong> <MathText text={fallStep.content} inline />
+              </div>
+              {corrReason && (
+                <div>
+                  <strong>Razón:</strong> <MathText text={corrReason.content} inline />
+                </div>
+              )}
+              {fallStep.error_rationale && (
+                <div className="text-slate-700">
+                  <strong>Diagnóstico:</strong> <MathText text={fallStep.error_rationale} inline />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-xs font-mono text-slate-800">
+              {JSON.stringify(spec.sample_witness || question.correct_answer)}
+            </div>
+          )}
+        </div>
+      );
+    } else if (question.type === 'unstructured_model' && question.unstructured_model) {
+      const p3 = question.unstructured_model.phase3_formulation;
+      const p3Text =
+        p3.input_mode === 'select'
+          ? p3.options?.find((o) => o.is_correct)?.content || ''
+          : `$${p3.correct_expression?.expression || p3.correct_expression?.value || ''}$`;
+      return (
+        <div data-testid="correct-answer-display" className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 space-y-1">
+          <span className="font-bold text-emerald-800 uppercase tracking-wider text-[11px] block">
+            Formulación canónica (Stage 0):
+          </span>
+          <div className="text-xs text-slate-800">
+            <MathText text={p3Text} inline />
+          </div>
+        </div>
+      );
+    } else if (question.type === 'invariant_canvas' && question.invariant_canvas) {
+      return (
+        <div data-testid="correct-answer-display" className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 space-y-1">
+          <span className="font-bold text-emerald-800 uppercase tracking-wider text-[11px] block">
+            Configuración invariante esperada:
+          </span>
+          <div className="text-xs font-mono text-slate-800 break-words">
+            {JSON.stringify(question.correct_answer)}
+          </div>
+        </div>
+      );
+    } else if (question.type === 'concept_matching' && question.concept_matching) {
+      const cm = question.concept_matching;
+      const tMap = new Map(cm.targets.map((t) => [t.id, t.content]));
+      return (
+        <div data-testid="correct-answer-display" className="p-3 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 space-y-1">
+          <span className="font-bold text-emerald-800 uppercase tracking-wider text-[11px] block">
+            Asociaciones correctas:
+          </span>
+          {cm.premises.map((p) => (
+            <div key={p.id} className="text-xs text-slate-800 flex flex-wrap items-center gap-1">
+              <MathText text={p.content} inline /> <span>→</span>{' '}
+              <MathText text={tMap.get(cm.correct_pairs[p.id]) || ''} inline />
+            </div>
+          ))}
         </div>
       );
     }

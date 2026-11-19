@@ -1,4 +1,22 @@
-import { Question, QuestionOption } from '../types';
+import { Question, QuestionOption, QuestionType, StructuredUserAnswer } from '../types';
+
+const BLANK_FIRST_CURTAIN_TYPES: ReadonlySet<QuestionType> = new Set<QuestionType>([
+  'multiple_choice_7_options',
+  'multiple_select',
+  'concept_matching',
+  'proof_dag',
+]);
+
+/**
+ * Milestone 6 / Milestone 20 Smart Blank-First Curtain Rule:
+ * Active ONLY for option-selection / assembly modalities where visible alternatives
+ * could cue recognition prematurely; automatically bypassed for open construction modalities.
+ */
+export function requiresBlankFirstCurtain(question: Question | null | undefined): boolean {
+  if (!question) return false;
+  const qType = (question.type || question.interaction_type || 'multiple_choice_7_options') as QuestionType;
+  return BLANK_FIRST_CURTAIN_TYPES.has(qType);
+}
 
 /**
  * Checks whether an option (by its optId) in the given question is correct.
@@ -100,9 +118,13 @@ export function normalizeQuestion(question: Question): Question {
 
   const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
+  const resolvedType = (question.type || question.interaction_type || 'multiple_choice_7_options') as QuestionType;
+
   if (!question.options || question.options.length === 0) {
     return {
       ...question,
+      type: resolvedType,
+      options: question.options || [],
       solution: normalizedSolution,
       detailed_solution: question.detailed_solution || normalizedSolution,
       ...(normalizedMisconception
@@ -168,4 +190,57 @@ export function normalizeQuestion(question: Question): Question {
   }
 
   return q;
+}
+
+/**
+ * Creates the default initial structured answer state for a given Question.
+ */
+export function createInitialStructuredAnswer(
+  q: Question | undefined
+): StructuredUserAnswer | null {
+  if (!q) return null;
+  switch (q.type) {
+    case 'open_symbolic':
+      return { kind: 'open_symbolic', expression: '' };
+    case 'proof_dag':
+      return { kind: 'proof_dag', orderedStepIds: [], justifications: {} };
+    case 'adversarial_break':
+      return {
+        kind: 'adversarial_break',
+        selectedStepId: null,
+        selectedReasonId: null,
+        witnessValues: {},
+      };
+    case 'unstructured_model':
+      return {
+        kind: 'unstructured_model',
+        phase1Roles: {},
+        phase2SelectedIds: [],
+        phase3SelectedId: null,
+        phase3Expression: '',
+      };
+    case 'invariant_canvas': {
+      const sliderValues: Record<string, number> = {};
+      for (const sl of q.invariant_canvas?.sliders || []) {
+        sliderValues[sl.id] = sl.initial ?? (sl.min + sl.max) / 2;
+      }
+      const pointPositions: Record<string, { x: number; y: number }> = {};
+      for (const pt of q.invariant_canvas?.interactive_points || []) {
+        pointPositions[pt.id] = { x: pt.x, y: pt.y };
+      }
+      return {
+        kind: 'invariant_canvas',
+        sliderValues,
+        pointPositions,
+        selectedEdgeIds: [],
+        infoSets: [],
+        inequalityStyle: q.invariant_canvas?.inequality?.initial_style ?? 'solid',
+        inequalityShade: q.invariant_canvas?.inequality?.initial_shade ?? 'above',
+      };
+    }
+    case 'concept_matching':
+      return { kind: 'concept_matching', pairs: {} };
+    default:
+      return null;
+  }
 }

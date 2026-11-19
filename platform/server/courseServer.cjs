@@ -70,14 +70,17 @@ function serveIndexHtml(req, res) {
     return;
   }
 
-  // Inject manifest script inline into index.html
+  // Inject or replace manifest script inline into index.html
   const scriptTag = courseIndex.getSafeManifestHtmlScript();
-  if (html.includes('<!--COURSE_MANIFEST-->')) {
-    html = html.replace('<!--COURSE_MANIFEST-->', scriptTag);
+  const existingManifestRe = /<script\s+id=["']course-manifest["'][^>]*>[\s\S]*?<\/script>/i;
+  if (existingManifestRe.test(html)) {
+    html = html.replace(existingManifestRe, () => scriptTag);
+  } else if (html.includes('<!--COURSE_MANIFEST-->')) {
+    html = html.replace('<!--COURSE_MANIFEST-->', () => scriptTag);
   } else if (html.includes('</head>')) {
-    html = html.replace('</head>', `  ${scriptTag}\n</head>`);
+    html = html.replace('</head>', () => `  ${scriptTag}\n</head>`);
   } else if (html.includes('<div id="root">')) {
-    html = html.replace('<div id="root">', `${scriptTag}\n    <div id="root">`);
+    html = html.replace('<div id="root">', () => `${scriptTag}\n    <div id="root">`);
   } else {
     html = html + scriptTag;
   }

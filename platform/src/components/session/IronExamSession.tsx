@@ -1,0 +1,535 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  IronDeferredReviewItem,
+  IronExamQuestionDraft,
+  MetacognitiveAudit,
+  MetacognitiveConfidence,
+  Question,
+  QuestionTelemetry,
+  StructuredUserAnswer,
+} from '../../types';
+import { QuestionCard } from '../QuestionCard';
+import { MathText } from '../MathText';
+import {
+  ScratchBgMode,
+  SCRATCHPAD_GRID_BG_STYLE,
+  ScratchpadOverlay,
+} from '../ScratchpadOverlay';
+import {
+  ActiveSessionSnapshot,
+  clearActiveSession,
+  saveActiveSession,
+} from '../../utils/sessionStore';
+import {
+  computeMetacognitiveAudit,
+  createInitialIronDraft,
+  isDraftAnswered,
+} from '../../utils/ironExamGrading';
+import { MetacognitiveModal } from './MetacognitiveModal';
+
+export interface IronExamCompletionOutcome {
+  metacognitiveAudit: MetacognitiveAudit;
+  deferredReview: IronDeferredReviewItem[];
+}
+
+interface PersistedIronExamState {
+  drafts?: Record<string, IronExamQuestionDraft>;
+  itemConfidences?: Record<string, MetacognitiveConfidence>;
+  flaggedIds?: Record<string, boolean>;
+  stage0Phases?: Record<string, 1 | 2 | 3>;
+  globalConfidence?: MetacognitiveConfidence;
+  elapsedSeconds?: number;
+}
+
+interface IronExamSessionProps {
+  sessionTitle: string;
+  questions: Question[];
+  courseId?: string;
+  courseTitle?: string;
+  initialSnapshot?: ActiveSessionSnapshot | null;
+  onComplete: (
+    score: number,
+    total: number,
+    telemetry?: QuestionTelemetry[],
+    totalSeconds?: number,
+    ironOutcome?: IronExamCompletionOutcome
+  ) => void;
+  onQuit: () => void;
+}
+
+function formatClock(totalSeconds: number): string {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+export const IronExamSession: React.FC<IronExamSessionProps> = ({
+  sessionTitle,
+  questions,
+  courseId,
+  courseTitle,
+  initialSnapshot,
+  onComplete,
+  onQuit,
+}) => {
+  const restoredIron = (initialSnapshot?.ironExamState || {}) as PersistedIronExamState;
+
+  const [currentIndex, setCurrentIndex] = useState<number>(
+    () => Math.min(Math.max(0, initialSnapshot?.currentIndex ?? 0), Math.max(0, questions.length - 1))
+  );
+  const [drafts, setDrafts] = useState<Record<string, IronExamQuestionDraft>>(() => {
+    const base: Record<string, IronExamQuestionDraft> = {};
+    for (const q of questions) {
+      base[q.id] = restoredIron.drafts?.[q.id] || createInitialIronDraft(q);
+    }
+    return base;
+  });
+  const [itemConfidences, setItemConfidences] = useState<Record<string, MetacognitiveConfidence>>(
+    () => restoredIron.itemConfidences || {}
+  );
+  const [flaggedIds, setFlaggedIds] = useState<Record<string, boolean>>(
+    () => restoredIron.flaggedIds || {}
+  );
+  const [stage0Phases, setStage0Phases] = useState<Record<string, 1 | 2 | 3>>(
+    () => restoredIron.stage0Phases || {}
+  );
+  const [globalConfidence, setGlobalConfidence] = useState<MetacognitiveConfidence>(
+    () => restoredIron.globalConfidence || 'medium'
+  );
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(
+    () => restoredIron.elapsedSeconds ?? initialSnapshot?.elapsedSeconds ?? 0
+  );
+  const [showMetaModal, setShowMetaModal] = useState(false);
+  const [scratchpadOpen, setScratchpadOpen] = useState(false);
+  const [scratchpadBgMode, setScratchpadBgMode] = useState<ScratchBgMode>('transparent');
+
+  const questionEnterTimeRef = useRef<number>(Date.now());
+  const spentByQidRef = useRef<Record<string, number>>({});
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  const total = questions.length;
+  const currentQuestion = questions[currentIndex];
+  const currentDraft = currentQuestion
+    ? drafts[currentQuestion.id] || createInitialIronDraft(currentQuestion)
+    : createInitialIronDraft({
+        id: 'empty',
+        competency_id: '',
+        type: 'multiple_choice_7_options',
+        stem: '',
+        options: [],
+        correct_answer: '',
+        hints: [],
+        solution: '',
+      });
+
+  const answeredMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const q of questions) {
+      const d = drafts[q.id] || createInitialIronDraft(q);
+      map[q.id] = isDraftAnswered(q, d);
+    }
+    return map;
+  }, [questions, drafts]);
+
+  const answeredCount = useMemo(
+    () => questions.filter((q) => answeredMap[q.id]).length,
+    [questions, answeredMap]
+  );
+
+  // Elapsed timer tick
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Persist Iron Exam snapshot across page reload (sessionStore v1)
+  useEffect(() => {
+    if (!courseId || questions.length === 0 || !currentQuestion) return;
+    saveActiveSession({
+      version: 1,
+      courseId,
+      sessionType: 'challenge',
+      competencyId: null,
+      unitIndex: null,
+      sessionTitle,
+      questions,
+      currentIndex,
+      selectedOption: currentDraft.selectedOption,
+      selectedMultiOptions: currentDraft.selectedMultiOptions,
+      fillBlankValue: currentDraft.fillBlankValue,
+      structuredAnswer: currentDraft.structuredAnswer,
+      matchedDiagnosticRationale: null,
+      stage0Phase: stage0Phases[currentQuestion.id] || 1,
+      hintsRevealed: 0,
+      wrongAttemptsCount: 0,
+      isExhausted: false,
+      isChecked: false,
+      isCorrect: null,
+      isCurtainLifted: true,
+      canvasInteracted: currentDraft.canvasInteracted,
+      ironExamState: {
+        drafts,
+        itemConfidences,
+        flaggedIds,
+        stage0Phases,
+        globalConfidence,
+        elapsedSeconds,
+      },
+      results: [],
+      telemetry: [],
+      elapsedSeconds,
+      savedAt: Date.now(),
+    });
+  }, [
+    courseId,
+    sessionTitle,
+    questions,
+    currentIndex,
+    currentQuestion,
+    currentDraft,
+    drafts,
+    itemConfidences,
+    flaggedIds,
+    stage0Phases,
+    globalConfidence,
+    elapsedSeconds,
+  ]);
+
+  const recordTimeForCurrentQuestion = () => {
+    if (!currentQuestion) return;
+    const now = Date.now();
+    const delta = Math.max(1, Math.round((now - questionEnterTimeRef.current) / 1000));
+    spentByQidRef.current[currentQuestion.id] =
+      (spentByQidRef.current[currentQuestion.id] || 0) + delta;
+    questionEnterTimeRef.current = now;
+  };
+
+  const navigateToIndex = (targetIdx: number) => {
+    if (targetIdx < 0 || targetIdx >= total || targetIdx === currentIndex) return;
+    recordTimeForCurrentQuestion();
+    setCurrentIndex(targetIdx);
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  };
+
+  const updateCurrentDraft = (updater: (prev: IronExamQuestionDraft) => IronExamQuestionDraft) => {
+    if (!currentQuestion) return;
+    setDrafts((prev) => {
+      const existing = prev[currentQuestion.id] || createInitialIronDraft(currentQuestion);
+      return {
+        ...prev,
+        [currentQuestion.id]: updater(existing),
+      };
+    });
+  };
+
+  const handleConfirmSubmit = () => {
+    recordTimeForCurrentQuestion();
+    const { audit, deferredReview, gradedResults } = computeMetacognitiveAudit(
+      questions,
+      drafts,
+      itemConfidences,
+      globalConfidence,
+      flaggedIds
+    );
+
+    const telemetry: QuestionTelemetry[] = questions.map((q) => ({
+      question_id: q.id,
+      competency_id: q.competency_id,
+      is_correct: gradedResults[q.id]?.isCorrect === true,
+      hints_used: 0,
+      seconds_spent: Math.max(1, Math.min(300, spentByQidRef.current[q.id] || 1)),
+      question_text: q.stem,
+    }));
+
+    clearActiveSession();
+    setShowMetaModal(false);
+    onComplete(audit.correct_count, total, telemetry, Math.max(1, elapsedSeconds), {
+      metacognitiveAudit: audit,
+      deferredReview,
+    });
+  };
+
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-ka-bg-canvas p-6">
+        <div className="bg-white p-6 rounded-xl border border-ka-border-card text-center space-y-3">
+          <p className="text-sm font-bold text-slate-800">
+            No hay preguntas disponibles para el Examen Modo Hierro.
+          </p>
+          <button
+            type="button"
+            onClick={onQuit}
+            className="px-4 py-2 bg-ka-blue text-white rounded text-sm font-bold cursor-pointer"
+          >
+            Volver al curso
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const isFlagged = Boolean(flaggedIds[currentQuestion.id]);
+  const activeConf = itemConfidences[currentQuestion.id] || globalConfidence;
+
+  return (
+    <div
+      data-testid="iron-exam-session"
+      className="min-h-screen min-h-[100dvh] bg-ka-bg-canvas flex flex-col justify-between overflow-x-hidden"
+    >
+      {/* Closed-Book Dark Header */}
+      <header className="bg-slate-900 text-white px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button
+            type="button"
+            data-testid="iron-exit-btn"
+            aria-label="Salir del examen Modo Hierro"
+            onClick={onQuit}
+            className="w-8 h-8 rounded-full hover:bg-slate-800 flex items-center justify-center text-slate-300 hover:text-white transition-colors shrink-0 cursor-pointer"
+          >
+            ✕
+          </button>
+          <span className="px-2 py-0.5 rounded bg-indigo-600 text-[11px] font-extrabold uppercase tracking-wider shrink-0">
+            Modo Hierro
+          </span>
+          <h1 className="text-xs sm:text-sm font-bold truncate min-w-0">
+            <MathText text={sessionTitle} inline />
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button
+            type="button"
+            data-testid="scratchpad-toggle-btn"
+            aria-pressed={scratchpadOpen}
+            onClick={() => setScratchpadOpen((prev) => !prev)}
+            className={`px-2 py-1 rounded text-xs font-bold border transition-colors cursor-pointer ${
+              scratchpadOpen
+                ? 'bg-amber-400 text-slate-900 border-amber-300'
+                : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700'
+            }`}
+          >
+            ✎ Pizarra
+          </button>
+          <span
+            data-testid="iron-progress-counter"
+            className="hidden sm:inline-block px-2 py-1 rounded bg-slate-800 text-xs font-semibold text-slate-200"
+          >
+            {answeredCount}/{total} resp.
+          </span>
+          <span
+            data-testid="iron-timer"
+            className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-xs sm:text-sm font-bold text-emerald-300"
+          >
+            ⏱ {formatClock(elapsedSeconds)}
+          </span>
+        </div>
+      </header>
+
+      {/* Question Navigator Palette & Metacognitive Flag Bar */}
+      <div className="bg-white border-b border-ka-border-card px-3 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0 min-w-0">
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto max-w-full py-0.5"
+          aria-label="Navegador de preguntas"
+        >
+          {questions.map((q, idx) => {
+            const active = idx === currentIndex;
+            const ans = answeredMap[q.id];
+            const flg = Boolean(flaggedIds[q.id]);
+            return (
+              <button
+                key={q.id}
+                type="button"
+                data-testid={`iron-nav-item-${idx}`}
+                aria-current={active ? 'step' : undefined}
+                onClick={() => navigateToIndex(idx)}
+                className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-md text-xs font-bold border transition-all shrink-0 cursor-pointer ${
+                  active
+                    ? 'bg-ka-blue text-white border-ka-blue ring-2 ring-blue-200'
+                    : ans
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                    : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                {idx + 1}
+                {flg && (
+                  <span
+                    aria-label="Marcada"
+                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 border border-white"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1 text-[11px]">
+            <span className="font-semibold text-slate-500 hidden sm:inline">Certeza:</span>
+            {(['high', 'medium', 'low'] as MetacognitiveConfidence[]).map((conf) => (
+              <button
+                key={conf}
+                type="button"
+                data-testid={`iron-confidence-${conf}`}
+                aria-pressed={activeConf === conf}
+                onClick={() =>
+                  setItemConfidences((prev) => ({
+                    ...prev,
+                    [currentQuestion.id]: conf,
+                  }))
+                }
+                className={`px-2 py-1 rounded border font-bold cursor-pointer ${
+                  activeConf === conf
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                {conf === 'high' ? 'Alta' : conf === 'medium' ? 'Media' : 'Baja'}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            data-testid="iron-flag-btn"
+            aria-pressed={isFlagged}
+            onClick={() =>
+              setFlaggedIds((prev) => ({
+                ...prev,
+                [currentQuestion.id]: !prev[currentQuestion.id],
+              }))
+            }
+            className={`px-2.5 py-1 rounded border text-xs font-bold cursor-pointer ${
+              isFlagged
+                ? 'bg-amber-100 text-amber-900 border-amber-400'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            {isFlagged ? '⚑ Marcada' : '⚐ Revisar luego'}
+          </button>
+        </div>
+      </div>
+
+      {/* Exam Question Viewport (no feedback, no hints, no blank-first curtain) */}
+      <main
+        ref={mainRef}
+        className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden py-3 sm:py-5 px-2 sm:px-6 relative"
+        style={scratchpadOpen && scratchpadBgMode === 'grid' ? SCRATCHPAD_GRID_BG_STYLE : undefined}
+      >
+        <div className="max-w-3xl mx-auto mb-2 px-3 sm:px-4 flex items-center justify-between text-xs text-slate-500 font-semibold">
+          <span>
+            Pregunta {currentIndex + 1} de {total}
+          </span>
+          <span className="text-indigo-700">
+            Libro cerrado • Retroalimentación diferida
+          </span>
+        </div>
+
+        <QuestionCard
+          question={currentQuestion}
+          selectedOption={currentDraft.selectedOption}
+          selectedMultiOptions={currentDraft.selectedMultiOptions}
+          fillBlankValue={currentDraft.fillBlankValue}
+          structuredAnswer={currentDraft.structuredAnswer}
+          stage0Phase={stage0Phases[currentQuestion.id] || 1}
+          onSelectStage0Phase={(ph) =>
+            setStage0Phases((prev) => ({ ...prev, [currentQuestion.id]: ph }))
+          }
+          isChecked={false}
+          isCorrect={null}
+          hintsRevealed={0}
+          onRevealHint={() => {}}
+          isExhausted={false}
+          blankFirstEnabled={false}
+          isCurtainLifted={true}
+          courseTitle={courseTitle}
+          wrongAttemptsCount={0}
+          isPracticeMode={false}
+          ironMode={true}
+          onSelectOption={(id) =>
+            updateCurrentDraft((prev) => ({ ...prev, selectedOption: id }))
+          }
+          onToggleMultiOption={(id) =>
+            updateCurrentDraft((prev) => {
+              const exists = prev.selectedMultiOptions.includes(id);
+              return {
+                ...prev,
+                selectedMultiOptions: exists
+                  ? prev.selectedMultiOptions.filter((x) => x !== id)
+                  : [...prev.selectedMultiOptions, id],
+              };
+            })
+          }
+          onChangeFillBlank={(val) =>
+            updateCurrentDraft((prev) => ({ ...prev, fillBlankValue: val }))
+          }
+          onChangeStructuredAnswer={(next: StructuredUserAnswer) =>
+            updateCurrentDraft((prev) => ({
+              ...prev,
+              structuredAnswer: next,
+              canvasInteracted:
+                next.kind === 'invariant_canvas' ? true : prev.canvasInteracted,
+            }))
+          }
+        />
+
+        <ScratchpadOverlay
+          isOpen={scratchpadOpen}
+          questionId={currentQuestion.id}
+          bgMode={scratchpadBgMode}
+          onChangeBgMode={setScratchpadBgMode}
+          onClose={() => setScratchpadOpen(false)}
+        />
+      </main>
+
+      {/* Bottom Exam Navigation & Submit Bar */}
+      <footer className="bg-white border-t border-ka-border-card px-3 sm:px-8 py-3 flex items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-testid="iron-prev-btn"
+            disabled={currentIndex === 0}
+            onClick={() => navigateToIndex(currentIndex - 1)}
+            className="px-3 sm:px-4 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+          >
+            ← Anterior
+          </button>
+          <button
+            type="button"
+            data-testid="iron-next-btn"
+            disabled={currentIndex >= total - 1}
+            onClick={() => navigateToIndex(currentIndex + 1)}
+            className="px-3 sm:px-4 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+          >
+            Siguiente →
+          </button>
+        </div>
+
+        <button
+          type="button"
+          data-testid="iron-submit-exam-btn"
+          onClick={() => setShowMetaModal(true)}
+          className="px-4 sm:px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+        >
+          Entregar Examen ({answeredCount}/{total})
+        </button>
+      </footer>
+
+      <MetacognitiveModal
+        isOpen={showMetaModal}
+        questions={questions}
+        answeredMap={answeredMap}
+        flaggedMap={flaggedIds}
+        itemConfidences={itemConfidences}
+        globalConfidence={globalConfidence}
+        onSelectGlobalConfidence={setGlobalConfidence}
+        onSelectItemConfidence={(qid, conf) =>
+          setItemConfidences((prev) => ({ ...prev, [qid]: conf }))
+        }
+        onCancel={() => setShowMetaModal(false)}
+        onConfirm={handleConfirmSubmit}
+      />
+    </div>
+  );
+};

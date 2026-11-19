@@ -14,8 +14,30 @@ export function normalizeMathExpression(raw: string): string {
     return 'SYNTAX_ERROR';
   }
 
-  // Replace unicode minus and special dashes
+  // Replace unicode minus, multiplication/division, and Unicode Greek / sqrt symbols
   s = s.replace(/[\u2212\u2013\u2014]/g, '-');
+  s = s.replace(/[×·]/g, '*').replace(/÷/g, '/').replace(/√\s*\(/g, 'sqrt(');
+  s = s
+    .replace(/α/g, ' alpha ')
+    .replace(/β/g, ' beta ')
+    .replace(/γ/g, ' gamma ')
+    .replace(/δ/g, ' delta ')
+    .replace(/ε/g, ' epsilon ')
+    .replace(/ζ/g, ' zeta ')
+    .replace(/κ/g, ' kappa ')
+    .replace(/ξ/g, ' xi ')
+    .replace(/ψ/g, ' psi ')
+    .replace(/Δ/g, ' Delta ')
+    .replace(/θ/g, ' theta ')
+    .replace(/λ/g, ' lambda ')
+    .replace(/μ/g, ' mu ')
+    .replace(/σ/g, ' sigma ')
+    .replace(/ρ/g, ' rho ')
+    .replace(/φ/g, ' phi ')
+    .replace(/ω/g, ' omega ')
+    .replace(/η/g, ' eta ')
+    .replace(/τ/g, ' tau ')
+    .replace(/π/g, ' pi ');
 
   // Replace LaTeX multiplication
   s = s.replace(/\\cdot/g, '*').replace(/\\times/g, '*');
