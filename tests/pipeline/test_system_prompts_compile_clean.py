@@ -106,6 +106,7 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
         '            ("A-Hab01-01", r"Reversibilidad estricta $\\sigma_{\\text{irr}} = 0$", r"Bajo irreversibilidad $\\sigma_{\\text{irr}} > 0$, el rendimiento real es menor."),'
         '\n'
         '        ],\n'
+        '        ["MC7", "FIB", "MS"],\n'
         '    )\n'
         ']\n'
     )
@@ -142,13 +143,14 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
     shard_data_path = shards_dir / "shard_01_data.py"
     shard_data_path.write_text(canonical_py_code, encoding="utf-8")
 
-    # 4. Compile shard with --strict --min-archetypes 4 --seeds 50
+    # 4. Compile shard with --strict --min-archetypes 4 --seeds 50 (lean == non-lean: K=2 per modality)
     success, errors = compile_shard(
         work_dir_or_path=work_dir,
         shard_id="shard_01",
         strict=True,
         seeds=50,
         min_archetypes=4,
+        templates_per_modality=2,
     )
     assert success, f"compile_shard failed with errors: {errors}"
     assert errors == [], f"Unexpected compilation errors: {errors}"
@@ -166,12 +168,12 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
     assert hab_tpl_file.is_file(), "Hab-01.json was not generated"
     hab_tpl_data = json.loads(hab_tpl_file.read_text(encoding="utf-8"))
     tpl_list = hab_tpl_data.get("templates", [])
-    assert len(tpl_list) == 4, f"Expected 4 archetypes, found {len(tpl_list)}"
+    assert len(tpl_list) == 6, f"Expected 6 templates (M=3, K=2), found {len(tpl_list)}"
 
     tpl_types = [t.get("interaction_type") for t in tpl_list]
-    assert tpl_types.count("multiple_choice_7_options") >= 1 or tpl_types.count("multiple_choice") >= 1
+    assert tpl_types.count("multiple_choice_7_options") >= 2
     assert tpl_types.count("fill_in_the_blank") >= 2
-    assert tpl_types.count("multiple_select") >= 1
+    assert tpl_types.count("multiple_select") >= 2
 
     # 7. Instantiate questions
     distractor_map = {d["id"]: d for d in comp_hab.get("distractors", [])}

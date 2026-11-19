@@ -59,7 +59,8 @@ def _build_minimal_cta(
         for i in range(1, 7)
     )
     assump_block = '        [("A-Hab20-01", r"Regularidad analitica del dominio sobre $x$", r"Ignorar las condiciones del dominio invalida el estimador.")],' if is_skill else "        [],"
-    rec_block = f"\n        {repr(recommended_modalities)}," if recommended_modalities is not None else ""
+    eff_rec_mods = ["MC7", "FIB"] if recommended_modalities is None else recommended_modalities
+    rec_block = f"\n        {repr(eff_rec_mods)},"
     cta_code = f'''
 CTA_CONTRACT_VERSION = 2
 COURSE_ID = "m20_unit_course"
@@ -244,7 +245,12 @@ class TestM20AntiDescarteCompilerGates:
     def test_zero_mc7_with_ds_and_bloom_superior_passes_tpl_d3(self, tmp_path: Path):
         """0 MC7 competency covers 6/6 distractors across FIB ds + open_symbolic ds + proof_dag + adversarial_break."""
         work_dir = tmp_path / "work_zero_mc7"
-        shards_dir = _build_minimal_cta(work_dir, cid="Hab-20", is_skill=True)
+        shards_dir = _build_minimal_cta(
+            work_dir,
+            cid="Hab-20",
+            is_skill=True,
+            recommended_modalities=["fill_in_the_blank", "open_symbolic", "proof_dag", "adversarial_break"],
+        )
 
         shard_code = r'''
 RATS = {
@@ -374,7 +380,7 @@ TEMPLATES = [
         shard_py = shards_dir / "shard_01_data.py"
         shard_py.write_text(shard_code, encoding="utf-8")
 
-        ok, errs = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=4, seeds=20)
+        ok, errs = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=4, seeds=20, templates_per_modality=1)
         assert ok, f"0 MC7 shard failed compile_shard: {errs}"
         assert errs == []
 
@@ -382,9 +388,9 @@ TEMPLATES = [
         assert tpl_ok and tpl_errs == [], f"0 MC7 failed check_templates: {tpl_errs}"
 
     def test_flexible_modality_mix_without_rigid_quotas_passes(self, tmp_path: Path):
-        """Flexible modality mixes (e.g., 2 MC7 + 2 FIB without rigid quotas) pass compile_shard cleanly."""
+        """Flexible modality mixes (e.g., 2 MC7 + 2 FIB without rigid quotas) pass compile_shard cleanly with K=2."""
         work_dir = tmp_path / "work_2mc7_flex"
-        shards_dir = _build_minimal_cta(work_dir, cid="Hab-20", is_skill=True)
+        shards_dir = _build_minimal_cta(work_dir, cid="Hab-20", is_skill=True, recommended_modalities=["MC7", "FIB"])
 
         shard_code = r'''
 RATS = {
@@ -396,53 +402,63 @@ RATS = {
     "D-Hab20-06": r"Evalúas la fórmula con el valor inicial sin incorporar el incremento sobre @n@.",
 }
 
-def _gen(rng, k):
-    n = rng.randint(10, 80) + k
-    ans = n * (k + 1)
-    if k in (1, 2):
-        ds = [(f"D-Hab20-0{i}", str(ans + i * 3), RATS[f"D-Hab20-0{i}"]) for i in range(1, 7)]
-        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "ds": ds}
-    return {"vars": {"n": n, "ans": ans}, "correct": str(ans)}
+def gen_1(r):
+    n, a = r.randint(12, 48), r.randint(3, 9)
+    ans = a * n + 5
+    ds = [(f"D-Hab20-0{i}", str(ans + i * 4), RATS[f"D-Hab20-0{i}"]) for i in range(1, 7)]
+    return {"vars": {"n": n, "a": a, "ans": ans}, "correct": str(ans), "ds": ds}
 
-def gen_1(r): return _gen(r, 1)
-def gen_2(r): return _gen(r, 2)
-def gen_3(r): return _gen(r, 3)
-def gen_4(r): return _gen(r, 4)
-def ver_1(c, v): return str(c).strip() == str(v["ans"])
-def ver_2(c, v): return str(c).strip() == str(v["ans"])
-def ver_3(c, v): return str(c).strip() == str(v["ans"])
-def ver_4(c, v): return str(c).strip() == str(v["ans"])
+def gen_2(r):
+    n, b = r.randint(15, 65), r.randint(4, 14)
+    ans = n * n - b
+    ds = [(f"D-Hab20-0{i}", str(ans + i * 5), RATS[f"D-Hab20-0{i}"]) for i in range(1, 7)]
+    return {"vars": {"n": n, "b": b, "ans": ans}, "correct": str(ans), "ds": ds}
 
-H1 = [r"Identifica primero el parámetro base @n@.", r"Aplica el factor de escala lineal correspondiente.", r"Comprueba el producto entero resultante."]
-H2 = [r"Considera el factor inverso asociado a @n@.", r"Multiplica manteniendo el signo positivo inicial.", r"Verifica que el valor exceda la cota dada."]
-H3 = [r"Analiza cómo se propaga la perturbación sobre @n@.", r"Multiplica por la pendiente efectiva de la variante.", r"Confirma aritméticamente el entero final."]
-H4 = [r"Evalúa el comportamiento en el caso frontera @n@.", r"Aplica la regla límite sobre el parámetro.", r"Revisa el producto final antes de enviarlo."]
+def gen_3(r):
+    n, d = r.randint(10, 50), r.randint(3, 12)
+    ans = (n + d) * 3
+    return {"vars": {"n": n, "d": d, "ans": ans}, "correct": str(ans)}
+
+def gen_4(r):
+    n, c = r.randint(8, 40), r.randint(2, 11)
+    ans = (n - c) * 4 + c
+    return {"vars": {"n": n, "c": c, "ans": ans}, "correct": str(ans)}
+
+def ver_1(c, v): return str(c).strip() == str(v["a"] * v["n"] + 5)
+def ver_2(c, v): return str(c).strip() == str(v["n"] * v["n"] - v["b"])
+def ver_3(c, v): return str(c).strip() == str((v["n"] + v["d"]) * 3)
+def ver_4(c, v): return str(c).strip() == str((v["n"] - v["c"]) * 4 + v["c"])
+
+H1 = [r"Identifica primero la pendiente @a@ y el término @n@.", r"Multiplica @a@ por @n@ antes de sumar cinco.", r"Comprueba el entero positivo final obtenido."]
+H2 = [r"Eleva al cuadrado el argumento @n@ inicial.", r"Reste el desplazamiento constante @b@ después.", r"Verifica que el valor supere el cuadrado previo."]
+H3 = [r"Suma primero la perturbación @d@ al argumento @n@.", r"Multiplica la suma total por factor tres.", r"Confirma aritméticamente el entero final."]
+H4 = [r"Calcula la diferencia frontera @n@ menos @c@.", r"Escala esa diferencia por cuatro y suma @c@.", r"Revisa el producto límite antes de enviarlo."]
 
 S1 = [
-    r"Calcula la respuesta directa escalando $@n@$ por dos:",
-    r"Dado $@n@$ como entrada, determina el doble exacto:",
-    r"Evalúa el modelo lineal básico con argumento $@n@$:",
-    r"Obtén el producto directo para la observación $@n@$:",
+    r"Calcula la respuesta directa $f(@n@) = @a@(@n@) + 5$:",
+    r"Dado $@n@$ y pendiente $@a@$, evalúa $@a@ \cdot @n@ + 5$:",
+    r"Obtén el valor lineal directo con coeficiente $@a@$ en $@n@$:",
+    r"Determina $y = @a@x + 5$ evaluando en $x = @n@$:",
 ]
 S2 = [
-    r"Invierte la relación y halla el múltiplo triple para $@n@$:",
-    r"Con argumento $@n@$, calcula la magnitud triplicada:",
-    r"Determina tres veces el parámetro de estudio $@n@$:",
-    r"Resuelve el caso inverso multiplicando $@n@$ por tres:",
+    r"Invierte la relación cuadrática hallando $@n@^2 - @b@$:",
+    r"Con argumento $@n@$ y resta $@b@$, calcula la diferencia cuadrática:",
+    r"Determina el valor inverso restando $@b@$ al cuadrado de $@n@$:",
+    r"Resuelve $@n@^2 - @b@$ para los parámetros dados:",
 ]
 S3 = [
-    r"Bajo una perturbación de orden cuatro, evalúa $@n@$:",
-    r"Cuadruplica la variable de entrada $@n@$ paso a paso:",
-    r"Si el factor de ajuste cambia a cuatro, halla el valor para $@n@$:",
-    r"Calcula la respuesta perturbada multiplicando $@n@$ por cuatro:",
+    r"Bajo perturbación $+@d@$ sobre $@n@$, evalúa $3(@n@ + @d@)$:",
+    r"Desplaza la entrada $@n@$ en $@d@$ unidades y triplica el total:",
+    r"Si la entrada sube en $@d@$ desde $@n@$, halle el triple:",
+    r"Calcula la respuesta perturbada multiplicando $(@n@ + @d@)$ por tres:",
 ]
 S4 = [
-    r"En la frontera extrema con factor cinco, evalúa $@n@$:",
-    r"Para el caso borde de escala cinco, determina el valor de $@n@$:",
-    r"Multiplica por cinco la entrada crítica $@n@$ en el límite:",
-    r"Halla el producto de borde quíntuple asociado al valor $@n@$:",
+    r"En frontera con desplazamiento $@c@$, evalúa $4(@n@ - @c@) + @c@$:",
+    r"Para el caso borde dado por $@n@$ y $@c@$, calcula $4(@n@-@c@)+@c@$:",
+    r"Aplica la regla límite con brecha $@n@ - @c@$ escalada por cuatro:",
+    r"Halla el valor extremo de $4(@n@ - @c@) + @c@$:",
 ]
-SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su factor multiplicativo exacto. Paso 2: Calculamos el producto entero @ans@ sin omitir términos."
+SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su regla algebraica específica. Paso 2: Calculamos el entero exacto @ans@ sin omitir términos."
 
 TEMPLATES = [
     {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "MC7", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
@@ -456,7 +472,7 @@ TEMPLATES = [
         assert ok, f"Flexible mix should pass without hardcoded MC7/active quotas: {errs}"
 
     def test_cta_architect_recommended_modalities_enforced(self, tmp_path: Path):
-        """When CTA Architect sets recommended_modalities, unauthorized types fail [CTA-MODALITY-PLAN] while matching passes."""
+        """When CTA Architect sets recommended_modalities, unauthorized types fail [CTA-MODALITY-PLAN] while matching K=2 passes."""
         work_bad = tmp_path / "work_cta_plan_bad"
         shards_bad = _build_minimal_cta(
             work_bad,
@@ -473,31 +489,40 @@ RATS = {
     "D-Hab20-05": r"Omites el término independiente desplazando erróneamente el resultado desde @n@.",
     "D-Hab20-06": r"Evalúas la fórmula con el valor inicial sin incorporar el incremento sobre @n@.",
 }
-def _gen(rng, k):
-    n = rng.randint(10, 80) + k
-    ans = n * (k + 1)
-    ds = [(f"D-Hab20-0{i}", str(ans + i * 3), RATS[f"D-Hab20-0{i}"]) for i in range(1, 7)]
-    return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "ds": ds}
-def gen_1(r): return _gen(r, 1)
-def gen_2(r): return _gen(r, 2)
-def gen_3(r): return _gen(r, 3)
-def gen_4(r): return _gen(r, 4)
-def ver_1(c, v): return str(c).strip() == str(v["ans"])
-def ver_2(c, v): return str(c).strip() == str(v["ans"])
-def ver_3(c, v): return str(c).strip() == str(v["ans"])
-def ver_4(c, v): return str(c).strip() == str(v["ans"])
-H1 = [r"Identifica primero el parámetro base @n@.", r"Aplica el factor de escala lineal correspondiente.", r"Comprueba el producto entero resultante."]
-H2 = [r"Considera el factor inverso asociado a @n@.", r"Multiplica manteniendo el signo positivo inicial.", r"Verifica que el valor exceda la cota dada."]
-H3 = [r"Analiza cómo se propaga la perturbación sobre @n@.", r"Multiplica por la pendiente efectiva de la variante.", r"Confirma aritméticamente el entero final."]
-H4 = [r"Evalúa el comportamiento en el caso frontera @n@.", r"Aplica la regla límite sobre el parámetro.", r"Revisa el producto final antes de enviarlo."]
-S1 = [r"Calcula la respuesta directa escalando $@n@$ por dos:", r"Dado $@n@$ como entrada, determina el doble exacto:", r"Evalúa el modelo lineal básico con argumento $@n@$:", r"Obtén el producto directo para la observación $@n@$:",]
-S2 = [r"Invierte la relación y halla el múltiplo triple para $@n@$:", r"Con argumento $@n@$, calcula la magnitud triplicada:", r"Determina tres veces el parámetro de estudio $@n@$:", r"Resuelve el caso inverso multiplicando $@n@$ por tres:",]
-S3 = [r"Bajo una perturbación de orden cuatro, evalúa $@n@$:", r"Cuadruplica la variable de entrada $@n@$ paso a paso:", r"Si el factor de ajuste cambia a cuatro, halla el valor para $@n@$:", r"Calcula la respuesta perturbada multiplicando $@n@$ por cuatro:",]
-S4 = [r"En la frontera extrema con factor cinco, evalúa $@n@$:", r"Para el caso borde de escala cinco, determina el valor de $@n@$:", r"Multiplica por cinco la entrada crítica $@n@$ en el límite:", r"Halla el producto de borde quíntuple asociado al valor $@n@$:",]
-SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su factor multiplicativo exacto. Paso 2: Calculamos el producto entero @ans@ sin omitir términos."
+def gen_1(r):
+    n, a = r.randint(12, 48), r.randint(3, 9)
+    ans = a * n + 5
+    ds = [(f"D-Hab20-0{i}", str(ans + i * 4), RATS[f"D-Hab20-0{i}"]) for i in range(1, 7)]
+    return {"vars": {"n": n, "a": a, "ans": ans}, "correct": str(ans), "ds": ds}
+def gen_2(r):
+    n, b = r.randint(15, 65), r.randint(4, 14)
+    ans = n * n - b
+    ds = [(f"D-Hab20-0{i}", str(ans + i * 5), RATS[f"D-Hab20-0{i}"]) for i in range(1, 7)]
+    return {"vars": {"n": n, "b": b, "ans": ans}, "correct": str(ans), "ds": ds}
+def gen_3(r):
+    n, d = r.randint(10, 50), r.randint(3, 12)
+    ans = (n + d) * 3
+    return {"vars": {"n": n, "d": d, "ans": ans}, "correct": str(ans)}
+def gen_4(r):
+    n, c = r.randint(8, 40), r.randint(2, 11)
+    ans = (n - c) * 4 + c
+    return {"vars": {"n": n, "c": c, "ans": ans}, "correct": str(ans)}
+def ver_1(c, v): return str(c).strip() == str(v["a"] * v["n"] + 5)
+def ver_2(c, v): return str(c).strip() == str(v["n"] * v["n"] - v["b"])
+def ver_3(c, v): return str(c).strip() == str((v["n"] + v["d"]) * 3)
+def ver_4(c, v): return str(c).strip() == str((v["n"] - v["c"]) * 4 + v["c"])
+H1 = [r"Identifica primero la pendiente @a@ y el término @n@.", r"Multiplica @a@ por @n@ antes de sumar cinco.", r"Comprueba el entero positivo final obtenido."]
+H2 = [r"Eleva al cuadrado el argumento @n@ inicial.", r"Reste el desplazamiento constante @b@ después.", r"Verifica que el valor supere el cuadrado previo."]
+H3 = [r"Suma primero la perturbación @d@ al argumento @n@.", r"Multiplica la suma total por factor tres.", r"Confirma aritméticamente el entero final."]
+H4 = [r"Calcula la diferencia frontera @n@ menos @c@.", r"Escala esa diferencia por cuatro y suma @c@.", r"Revisa el producto límite antes de enviarlo."]
+S1 = [r"Calcula la respuesta directa $f(@n@) = @a@(@n@) + 5$:", r"Dado $@n@$ y pendiente $@a@$, evalúa $@a@ \cdot @n@ + 5$:", r"Obtén el valor lineal directo con coeficiente $@a@$ en $@n@$:", r"Determina $y = @a@x + 5$ evaluando en $x = @n@$:"]
+S2 = [r"Invierte la relación cuadrática hallando $@n@^2 - @b@$:", r"Con argumento $@n@$ y resta $@b@$, calcula la diferencia cuadrática:", r"Determina el valor inverso restando $@b@$ al cuadrado de $@n@$:", r"Resuelve $@n@^2 - @b@$ para los parámetros dados:"]
+S3 = [r"Bajo perturbación $+@d@$ sobre $@n@$, evalúa $3(@n@ + @d@)$:", r"Desplaza la entrada $@n@$ en $@d@$ unidades y triplica el total:", r"Si la entrada sube en $@d@$ desde $@n@$, halle el triple:", r"Calcula la respuesta perturbada multiplicando $(@n@ + @d@)$ por tres:"]
+S4 = [r"En frontera con desplazamiento $@c@$, evalúa $4(@n@ - @c@) + @c@$:", r"Para el caso borde dado por $@n@$ y $@c@$, calcula $4(@n@-@c@)+@c@$:", r"Aplica la regla límite con brecha $@n@ - @c@$ escalada por cuatro:", r"Halla el valor extremo de $4(@n@ - @c@) + @c@$:"]
+SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su regla algebraica específica. Paso 2: Calculamos el entero exacto @ans@ sin omitir términos."
 TEMPLATES = [
-    {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "FIB", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL},
-    {"id": "T-Hab-20-02", "cid": "Hab-20", "qtype": "FIB", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL},
+    {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "MC7", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
+    {"id": "T-Hab-20-02", "cid": "Hab-20", "qtype": "MC7", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
     {"id": "T-Hab-20-03", "cid": "Hab-20", "qtype": "FIB", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL},
     {"id": "T-Hab-20-04", "cid": "Hab-20", "qtype": "FIB", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab20-01", "band": ("hard", "Evaluate"), "gen": gen_4, "ver": ver_4, "stem_variants": S4, "hints": H4, "sol": SOL},
 ]
@@ -511,7 +536,7 @@ TEMPLATES = [
             work_ok,
             cid="Hab-20",
             is_skill=True,
-            recommended_modalities=["FIB"],
+            recommended_modalities=["MC7", "FIB"],
         )
         (shards_ok / "shard_01_data.py").write_text(shard_fib_code, encoding="utf-8")
         ok_good, errs_good = compile_shard(work_ok, shard_id="shard_01", strict=True, min_archetypes=4, seeds=20, fail_total=True)

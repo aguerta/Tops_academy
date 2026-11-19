@@ -269,7 +269,8 @@ def test_cta_module_contract_version_2_emitted() -> None:
             "concept", "C-01", "Concepto 1", "Descripción matemática del concepto 1.", "Understand",
             "doc.pdf", 1, [],
             [("D1", "Error 1", "Verdad 1", "$1$", "Hint 1 con longitud suficiente para test.", None)],
-            [("A-C01-01", "$x > 0$", "Consecuencia de violación formal de al menos 10 caracteres.")]
+            [("A-C01-01", "$x > 0$", "Consecuencia de violación formal de al menos 10 caracteres.")],
+            ["MC7", "FIB"],
         )
     ]
     res = compile_cta_module(raw_tuples, require_assumptions=True)

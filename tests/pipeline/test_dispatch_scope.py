@@ -57,7 +57,7 @@ def test_prompt_shard_author_contracts():
     content = (PROMPTS_DIR / "prompt_shard_author.md").read_text(encoding="utf-8")
     assert "compile_shard.py" in content, "prompt_shard_author.md must mention compile_shard.py"
     assert "Var(aX + bY)" in content or "varianza" in content.lower(), "Must include Statistics/Math domain example"
-    assert "quórum" in content.lower() or "clúster" in content.lower(), "Must include Distributed Systems domain example"
+    assert "C-02" in content and ("invariant_canvas" in content or "open_symbolic" in content), "Must include multi-modality Concept example"
     assert "Líneas" in content or "Line" in content or "line" in content or "línea" in content, "Must include tuple-line error resolution"
 
 
