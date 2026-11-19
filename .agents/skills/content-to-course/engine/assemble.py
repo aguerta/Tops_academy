@@ -17,9 +17,9 @@ import re
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 try:
-    from engine.invariants import validate_katex_syntax
+    from engine.invariants import VALID_CANVAS_INVARIANT_KINDS, validate_katex_syntax
 except ImportError:
-    from .invariants import validate_katex_syntax
+    from .invariants import VALID_CANVAS_INVARIANT_KINDS, validate_katex_syntax
 
 try:
     from engine.katex_ast import canonicalize_algebraic_katex
@@ -973,6 +973,18 @@ def _assemble_unstructured_model(
     return compiled_um, correct_answer
 
 
+_PURE_NUM_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+
+
+def _coerce_num_if_numeric(val: Any) -> Any:
+    """Convert pure numeric strings ('-?\\d+(?:\\.\\d+)?') to int/float; leave other values unchanged."""
+    if isinstance(val, str):
+        s = val.strip()
+        if _PURE_NUM_RE.fullmatch(s):
+            return float(s) if "." in s else int(s)
+    return val
+
+
 def _assemble_invariant_canvas(
     raw_ic: Any,
     variables: Dict[str, Any],
@@ -1024,12 +1036,35 @@ def _assemble_invariant_canvas(
         invs_out: List[Dict[str, Any]] = []
         for idx, inv in enumerate(invariants_raw):
             if not isinstance(inv, dict):
-                continue
+                raise ValueError(f"[CANVAS-INVARIANT-KIND] invariant[{idx}] must be a dict.")
             ni = dict(inv)
             ni.setdefault("id", f"INV{idx + 1}")
-            for expr_k in ("expr", "target_x", "target_y", "x"):
-                if isinstance(ni.get(expr_k), str):
-                    ni[expr_k] = format_template_string(ni[expr_k], variables)
+            inv_kind = str(ni.get("kind") or "").strip()
+            if inv_kind not in VALID_CANVAS_INVARIANT_KINDS:
+                raise ValueError(
+                    f"[CANVAS-INVARIANT-KIND] invariant[{idx}] has invalid kind '{inv_kind}'. "
+                    f"Allowed: {sorted(VALID_CANVAS_INVARIANT_KINDS)}"
+                )
+            ni["kind"] = inv_kind
+            if isinstance(ni.get("expr"), str):
+                ni["expr"] = format_template_string(ni["expr"], variables)
+            for num_k in ("target_x", "target_y", "x", "expected", "target_slope", "target", "min", "max"):
+                if isinstance(ni.get(num_k), str):
+                    ni[num_k] = _coerce_num_if_numeric(format_template_string(ni[num_k], variables))
+            if inv_kind == "inequality_state":
+                for ik in ("expected_style", "expected_shade"):
+                    if isinstance(ni.get(ik), str):
+                        ni[ik] = format_template_string(ni[ik], variables).strip()
+                if ni.get("expected_style") not in ("solid", "dashed"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] invariant[{idx}] (inequality_state) requires "
+                        f"expected_style in ('solid', 'dashed') (got {ni.get('expected_style')!r})."
+                    )
+                if ni.get("expected_shade") not in ("above", "below"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] invariant[{idx}] (inequality_state) requires "
+                        f"expected_shade in ('above', 'below') (got {ni.get('expected_shade')!r})."
+                    )
             did = ni.get("distractor_id") or ni.get("did")
             did_norm = str(did).strip().replace("_", "-") if did else None
             if not ni.get("error_rationale") and did_norm and did_norm in rats_map:
@@ -1062,7 +1097,7 @@ def _assemble_invariant_canvas(
             compiled_ic["snap"] = raw_ic["snap"]
 
         def _fmt_coord_val(v: Any) -> Any:
-            return format_template_string(v, variables) if isinstance(v, str) else v
+            return _coerce_num_if_numeric(format_template_string(v, variables)) if isinstance(v, str) else v
 
         def _fmt_label_item(obj: Dict[str, Any]) -> Dict[str, Any]:
             out_d = dict(obj)
@@ -1116,13 +1151,52 @@ def _assemble_invariant_canvas(
                     nsr["domain"] = [_fmt_coord_val(nsr["domain"][0]), _fmt_coord_val(nsr["domain"][1])]
                 sr_out.append(nsr)
             compiled_ic["shaded_regions"] = sr_out
-        if isinstance(raw_ic.get("inequality"), dict):
-            compiled_ic["inequality"] = dict(raw_ic["inequality"])
+        if raw_ic.get("inequality") is not None:
+            if not isinstance(raw_ic.get("inequality"), dict):
+                raise ValueError("[CANVAS-INEQUALITY] 'inequality' must be a dict.")
+            ineq = dict(raw_ic["inequality"])
+            for ik in ("curve_id", "initial_style", "initial_shade"):
+                if isinstance(ineq.get(ik), str):
+                    ineq[ik] = format_template_string(ineq[ik], variables).strip()
+            declared_curve_ids = {
+                str(cv.get("id")).strip()
+                for cv in (compiled_ic["fixed_curves"] + compiled_ic["interactive_curves"])
+                if isinstance(cv, dict) and cv.get("id") is not None and str(cv.get("id")).strip()
+            }
+            cid_ineq = str(ineq.get("curve_id") or "").strip()
+            if not cid_ineq or cid_ineq not in declared_curve_ids:
+                raise ValueError(
+                    f"[CANVAS-INEQUALITY] inequality.curve_id '{cid_ineq}' must reference a declared curve "
+                    f"in fixed_curves/interactive_curves (declared: {sorted(declared_curve_ids)})."
+                )
+            if "initial_style" in ineq and ineq["initial_style"] is not None:
+                if ineq["initial_style"] not in ("solid", "dashed"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] inequality.initial_style must be 'solid' or 'dashed' (got {ineq['initial_style']!r})."
+                    )
+            if "initial_shade" in ineq and ineq["initial_shade"] is not None:
+                if ineq["initial_shade"] not in ("above", "below"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] inequality.initial_shade must be 'above' or 'below' (got {ineq['initial_shade']!r})."
+                    )
+            compiled_ic["inequality"] = ineq
+
+        def _fmt_target_state(obj: Any) -> Any:
+            if isinstance(obj, str):
+                return _coerce_num_if_numeric(format_template_string(obj, variables))
+            if isinstance(obj, dict):
+                return {k: _fmt_target_state(v) for k, v in obj.items()}
+            if isinstance(obj, (list, tuple)):
+                return [_fmt_target_state(v) for v in obj]
+            return obj
+
+        formatted_target_state = None
         if raw_ic.get("target_state"):
-            compiled_ic["target_state"] = raw_ic["target_state"]
+            formatted_target_state = _fmt_target_state(raw_ic["target_state"])
+            compiled_ic["target_state"] = formatted_target_state
         correct_answer = {
             "mode": "cartesian",
-            "target_state": raw_ic.get("target_state") or {"invariants_count": len(invs_out)},
+            "target_state": formatted_target_state if formatted_target_state is not None else {"invariants_count": len(invs_out)},
         }
         return compiled_ic, correct_answer
 

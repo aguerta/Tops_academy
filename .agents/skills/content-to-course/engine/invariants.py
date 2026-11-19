@@ -112,6 +112,41 @@ ANTONYM_PAIRS: List[Tuple[str, str]] = [
     ("máximo", "mínimo"),
 ]
 
+VALID_CANVAS_INVARIANT_KINDS = frozenset({
+    "point_on_curve",
+    "point_coords",
+    "kink_at",
+    "slope_at",
+    "slider_eq",
+    "slider_range",
+    "curves_intersect_at",
+    "point_in_region",
+    "inequality_state",
+    "expr_true",
+})
+
+
+def _norm_coord_scalar(val: Any) -> Any:
+    """Normalize numeric scalars/strings to float for coordinate comparison."""
+    if isinstance(val, bool) or val is None:
+        return val
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, str):
+        s = val.strip()
+        try:
+            return float(s)
+        except ValueError:
+            return s
+    return val
+
+
+def _coord_regex_token(val: Any) -> str:
+    """Build a regex token matching integer/float coordinate representations."""
+    if isinstance(val, (int, float)) and not isinstance(val, bool) and float(val).is_integer():
+        return rf"{re.escape(str(int(val)))}(?:\.0+)?"
+    return re.escape(str(val))
+
 
 _LATEX_ARG_MACROS = {
     # Text / formatting / math style macros that take 1 argument: \text{...}, \mathbf{...}
@@ -1401,6 +1436,43 @@ def check_instance_invariants(
                     if not isinstance(ce, dict) or not str(ce.get("expression") or ce.get("value") or "").strip():
                         errors.append("unstructured_model phase3_formulation symbolic mode requires 'correct_expression'.")
 
+                for ph_name, ph_obj in (
+                    ("phase1_variables", p1),
+                    ("phase2_assumptions", p2),
+                    ("phase3_formulation", p3),
+                ):
+                    ph_prompt = ph_obj.get("prompt")
+                    if isinstance(ph_prompt, str) and ph_prompt:
+                        errors.extend(validate_katex_syntax(ph_prompt, f"unstructured_model.{ph_name}.prompt", variables=effective_vars))
+
+                for it_idx, it in enumerate(p1.get("items") or []):
+                    if isinstance(it, dict):
+                        for fld in ("label", "error_rationale"):
+                            fval = it.get(fld)
+                            if isinstance(fval, str) and fval:
+                                errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase1_variables.items[{it_idx}].{fld}", variables=effective_vars))
+
+                for o_idx, opt in enumerate(p2_opts):
+                    if isinstance(opt, dict):
+                        for fld in ("content", "error_rationale"):
+                            fval = opt.get(fld)
+                            if isinstance(fval, str) and fval:
+                                errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}", variables=effective_vars))
+
+                for o_idx, opt in enumerate(p3.get("options") or []):
+                    if isinstance(opt, dict):
+                        for fld in ("content", "error_rationale"):
+                            fval = opt.get(fld)
+                            if isinstance(fval, str) and fval:
+                                errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}", variables=effective_vars))
+
+                for dist_key in ("distractors", "diagnostic_distractors"):
+                    for d_idx, dd in enumerate(p3.get(dist_key) or []):
+                        if isinstance(dd, dict):
+                            rat = dd.get("error_rationale")
+                            if isinstance(rat, str) and rat:
+                                errors.extend(validate_katex_syntax(rat, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale", variables=effective_vars))
+
     # 7. Invariant Canvas
     elif interaction_type == "invariant_canvas":
         ic = instance.get("invariant_canvas")
@@ -1409,32 +1481,129 @@ def check_instance_invariants(
         else:
             mode = ic.get("mode")
             if mode == "cartesian":
+                for axis_k in ("x_label", "y_label"):
+                    axis_val = ic.get(axis_k)
+                    if isinstance(axis_val, str) and axis_val:
+                        errors.extend(validate_katex_syntax(axis_val, f"invariant_canvas.{axis_k}", variables=effective_vars))
+
+                for coll_k in (
+                    "fixed_curves",
+                    "interactive_curves",
+                    "interactive_points",
+                    "fixed_points",
+                    "sliders",
+                    "segments",
+                    "polygons",
+                    "shaded_regions",
+                ):
+                    for c_idx, c_item in enumerate(ic.get(coll_k) or []):
+                        if isinstance(c_item, dict):
+                            lbl = c_item.get("label")
+                            if isinstance(lbl, str) and lbl:
+                                errors.extend(validate_katex_syntax(lbl, f"invariant_canvas.{coll_k}[{c_idx}].label", variables=effective_vars))
+
+                ineq = ic.get("inequality")
+                if ineq is not None:
+                    if not isinstance(ineq, dict):
+                        errors.append("[CANVAS-INEQUALITY] invariant_canvas.inequality must be a dict.")
+                    else:
+                        declared_curve_ids = {
+                            str(cv.get("id")).strip()
+                            for coll in ("fixed_curves", "interactive_curves")
+                            for cv in (ic.get(coll) or [])
+                            if isinstance(cv, dict) and cv.get("id") is not None and str(cv.get("id")).strip()
+                        }
+                        cid_ineq = str(ineq.get("curve_id") or "").strip()
+                        if not cid_ineq or cid_ineq not in declared_curve_ids:
+                            errors.append(
+                                f"[CANVAS-INEQUALITY] invariant_canvas.inequality.curve_id '{cid_ineq}' "
+                                "is not declared in fixed_curves/interactive_curves."
+                            )
+                        if "initial_style" in ineq and ineq["initial_style"] is not None:
+                            if ineq["initial_style"] not in ("solid", "dashed"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.inequality.initial_style '{ineq['initial_style']}' "
+                                    "must be 'solid' or 'dashed'."
+                                )
+                        if "initial_shade" in ineq and ineq["initial_shade"] is not None:
+                            if ineq["initial_shade"] not in ("above", "below"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.inequality.initial_shade '{ineq['initial_shade']}' "
+                                    "must be 'above' or 'below'."
+                                )
+
                 invs = ic.get("invariants") or []
                 if not isinstance(invs, list) or not invs:
                     errors.append("invariant_canvas cartesian mode requires >= 1 invariant.")
                 else:
+                    for i_idx, inv in enumerate(invs):
+                        if not isinstance(inv, dict):
+                            errors.append(f"invariant_canvas.invariants[{i_idx}] must be a dict.")
+                            continue
+                        inv_kind = str(inv.get("kind") or "").strip()
+                        if inv_kind not in VALID_CANVAS_INVARIANT_KINDS:
+                            errors.append(
+                                f"[CANVAS-INVARIANT-KIND] invariant_canvas.invariants[{i_idx}] has invalid kind '{inv_kind}'."
+                            )
+                        if inv_kind == "inequality_state":
+                            if inv.get("expected_style") not in ("solid", "dashed"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.invariants[{i_idx}] (inequality_state) "
+                                    "requires expected_style in ('solid', 'dashed')."
+                                )
+                            if inv.get("expected_shade") not in ("above", "below"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.invariants[{i_idx}] (inequality_state) "
+                                    "requires expected_shade in ('above', 'below')."
+                                )
+                        rat = inv.get("error_rationale")
+                        if isinstance(rat, str) and rat:
+                            errors.extend(validate_katex_syntax(rat, f"invariant_canvas.invariants[{i_idx}].error_rationale", variables=effective_vars))
+
                     fixed_coords = {
-                        (fp.get("x"), fp.get("y"))
+                        (_norm_coord_scalar(fp.get("x")), _norm_coord_scalar(fp.get("y")))
                         for fp in (ic.get("fixed_points") or [])
                         if isinstance(fp, dict)
                     }
                     if isinstance(stem, str) and stem:
                         for inv in invs:
-                            if not isinstance(inv, dict) or inv.get("kind") != "point_coords":
+                            if not isinstance(inv, dict):
                                 continue
-                            tx, ty = inv.get("target_x"), inv.get("target_y")
-                            if tx is None or ty is None or (tx, ty) in fixed_coords:
+                            inv_kind = str(inv.get("kind") or "").strip()
+                            if inv_kind not in ("point_coords", "kink_at"):
                                 continue
-                            leak_pat = rf"\(\s*{re.escape(str(tx))}\s*,\s*{re.escape(str(ty))}\s*\)"
+                            tx = inv.get("target_x") if inv.get("target_x") is not None else (inv.get("x") if inv_kind == "kink_at" else None)
+                            ty = inv.get("target_y")
+                            if tx is None or ty is None or (_norm_coord_scalar(tx), _norm_coord_scalar(ty)) in fixed_coords:
+                                continue
+                            leak_pat = rf"\(\s*{_coord_regex_token(tx)}\s*,\s*{_coord_regex_token(ty)}\s*\)"
                             if re.search(leak_pat, stem):
                                 errors.append(
                                     f"invariant_canvas target coordinate pair '({tx}, {ty})' leaked verbatim in stem text."
                                 )
             elif mode == "tree":
-                if len(ic.get("nodes") or []) < 2 or not (ic.get("edges") or []):
+                nodes = ic.get("nodes") or []
+                edges = ic.get("edges") or []
+                tree_inv = ic.get("tree_invariants")
+                if len(nodes) < 2 or not edges:
                     errors.append("invariant_canvas tree mode requires >= 2 nodes and >= 1 edge.")
-                if not isinstance(ic.get("tree_invariants"), dict):
+                if not isinstance(tree_inv, dict):
                     errors.append("invariant_canvas tree mode requires 'tree_invariants'.")
+                for n_idx, nd in enumerate(nodes):
+                    if isinstance(nd, dict):
+                        lbl = nd.get("label")
+                        if isinstance(lbl, str) and lbl:
+                            errors.extend(validate_katex_syntax(lbl, f"invariant_canvas.nodes[{n_idx}].label", variables=effective_vars))
+                for e_idx, ed in enumerate(edges):
+                    if isinstance(ed, dict):
+                        lbl = ed.get("label")
+                        if isinstance(lbl, str) and lbl:
+                            errors.extend(validate_katex_syntax(lbl, f"invariant_canvas.edges[{e_idx}].label", variables=effective_vars))
+                if isinstance(tree_inv, dict):
+                    for rk in ("edge_error_rationale", "info_set_error_rationale"):
+                        rval = tree_inv.get(rk)
+                        if isinstance(rval, str) and rval:
+                            errors.extend(validate_katex_syntax(rval, f"invariant_canvas.tree_invariants.{rk}", variables=effective_vars))
             else:
                 errors.append(f"invariant_canvas has invalid mode '{mode}'.")
 

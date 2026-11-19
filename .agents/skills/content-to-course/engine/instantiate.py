@@ -30,9 +30,11 @@ def competency_seed_base(cid: str, base_seed: int = 42) -> int:
     return base_seed + (zlib.crc32(cid.encode("utf-8")) % 10000)
 
 
-def get_competency_quota(comp_type: str) -> int:
-    """Return required question quota: >=30 for Skill, >=20 for Fact/Concept."""
-    from engine.stage_contract import quota_for_type
+def get_competency_quota(comp_type: str, num_templates: int = 0) -> int:
+    """Return required question quota: max(30, N*4) for Skill, max(20, N*3) for Fact/Concept."""
+    from engine.stage_contract import quota_for_competency, quota_for_type
+    if num_templates and int(num_templates) > 0:
+        return quota_for_competency(comp_type, int(num_templates))
     return quota_for_type(comp_type)
 
 
@@ -340,7 +342,7 @@ def instantiate_competency(
     if quota is not None:
         target_quota = quota
     else:
-        target_quota = get_competency_quota(comp_type)
+        target_quota = get_competency_quota(comp_type, num_templates=len(templates))
 
     if base_seed is not None:
         seed_offset_base = base_seed
