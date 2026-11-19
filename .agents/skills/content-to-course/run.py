@@ -846,12 +846,27 @@ class PipelineRunner:
 
         shards_dir = self.work_dir / "shards"
         shards_dir.mkdir(parents=True, exist_ok=True)
+        eff_shards_k = self.shards_k
+        eff_comps_per_shard = self.comps_per_shard
+        eff_tpl_per_mod = self.templates_per_modality
+        lock_file = self.work_dir / ".c2c_subagent_lock.json"
+        if lock_file.is_file():
+            try:
+                lock_obj = json.loads(lock_file.read_text(encoding="utf-8"))
+                if eff_shards_k is None and lock_obj.get("shards_k") is not None:
+                    eff_shards_k = int(lock_obj["shards_k"])
+                if eff_comps_per_shard is None and lock_obj.get("comps_per_shard") is not None:
+                    eff_comps_per_shard = int(lock_obj["comps_per_shard"])
+                if eff_tpl_per_mod is None and lock_obj.get("templates_per_modality") is not None:
+                    eff_tpl_per_mod = int(lock_obj["templates_per_modality"])
+            except Exception:
+                pass
         res = plan_shards(
             cta_file,
             shards_dir,
-            k=self.shards_k,
-            max_comps=self.comps_per_shard,
-            templates_per_modality=self.templates_per_modality,
+            k=eff_shards_k,
+            max_comps=eff_comps_per_shard,
+            templates_per_modality=eff_tpl_per_mod,
         )
 
         # Verificar que exista work/shards/pre_shard_manifest.json (cero fallbacks)
@@ -981,6 +996,7 @@ class PipelineRunner:
             except Exception:
                 pass
 
+        compile_errors: List[str] = []
         if shard_data_files and (compile_shard_mod or compile_shard_script.is_file()):
             print(f"  [*] Compiling {len(shard_data_files)} pending shard data files...")
             cta_mtime = cta_file.stat().st_mtime if cta_file.is_file() else 0.0
@@ -1034,26 +1050,47 @@ class PipelineRunner:
                     )
                     if not ok:
                         logger.warning("Compilation for %s reported issues: %s", shard_id, errs[:3] if errs else "unknown")
+                        compile_errors.extend(errs or [f"[{shard_id}] compile_shard failed"])
                 elif compile_shard_script.is_file():
                     import subprocess
-                    subprocess.run(
+                    proc_res = subprocess.run(
                         [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "4", "--templates-per-modality", str(eff_k)],
                         check=False,
                     )
+                    if proc_res.returncode != 0:
+                        compile_errors.append(f"[{shard_id}] compile_shard exited with code {proc_res.returncode}")
 
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
+            if compile_errors:
+                raise RuntimeError(
+                    "Stage 3 (templates) compilation failed before generating template .json files:\n  - "
+                    + "\n  - ".join(str(e) for e in compile_errors[:15])
+                )
             raise FileNotFoundError(
                 f"Missing required templates: No .json files found in {templates_dir.resolve()}\n"
                 f"Strict fail-fast: Exercise creator subagents must author templates before this stage."
             )
 
         all_template_files = sorted(list(templates_dir.glob("*.json")))
+        expected_cids_all: Set[str] = {cid for cids_l in shard_to_cids.values() for cid in cids_l if cid}
+        if cta_file.is_file():
+            try:
+                _cta_d = json.loads(cta_file.read_text(encoding="utf-8"))
+                for _c in (_cta_d.get("competencies") or []):
+                    if isinstance(_c, dict) and _c.get("id"):
+                        expected_cids_all.add(str(_c["id"]))
+            except Exception:
+                pass
+        present_cids_all = {tf.stem for tf in all_template_files}
+        missing_cids = sorted(expected_cids_all - present_cids_all)
+        for m_cid in missing_cids:
+            compile_errors.append(f"[{m_cid}] Missing compiled template file 'templates/{m_cid}.json'.")
 
         # Cryptographic fast-path: verify shard_XX.cert.json receipts (< 5 ms)
         certified_cids: Set[str] = set()
         certified_template_files: Set[Path] = set()
 
-        if not getattr(self, "force_recheck", False) and cta_file.is_file():
+        if not getattr(self, "force_recheck", False) and not compile_errors and not missing_cids and cta_file.is_file():
             cta_bytes = cta_file.read_bytes()
             cta_sha = hashlib.sha256(cta_bytes).hexdigest()
 
@@ -1120,18 +1157,23 @@ class PipelineRunner:
 
         uncertified_templates = [tf for tf in all_template_files if tf not in certified_template_files]
 
-        if not getattr(self, "force_recheck", False) and len(certified_template_files) == len(all_template_files) and len(all_template_files) > 0:
+        if not getattr(self, "force_recheck", False) and not compile_errors and not missing_cids and len(certified_template_files) == len(all_template_files) and len(all_template_files) > 0:
             print(f"  [+] Fast-path < 5 ms: All {len(all_template_files)} template(s) cryptographically certified via shard_XX.cert.json.")
             is_valid = True
             errors = []
             (self.work_dir / "template_failures.json").unlink(missing_ok=True)
             (self.work_dir / "specific_error_report.json").unlink(missing_ok=True)
             (self.work_dir / "specific_error_report.md").unlink(missing_ok=True)
-        elif uncertified_templates and len(certified_template_files) > 0 and not getattr(self, "force_recheck", False):
+        elif uncertified_templates and len(certified_template_files) > 0 and not getattr(self, "force_recheck", False) and not compile_errors and not missing_cids:
             print(f"  [+] Fast-path < 5 ms: Skipping {len(certified_template_files)} pre-certified template(s). Checking {len(uncertified_templates)} pending template(s)...")
             is_valid, errors = check_templates_file_or_dir(uncertified_templates, cta_path=cta_file)
         else:
             is_valid, errors = check_templates_file_or_dir(templates_dir, cta_path=cta_file)
+        if compile_errors:
+            is_valid = False
+            for ce in compile_errors:
+                if ce not in errors:
+                    errors.append(ce)
 
         # Build errors_by_cid mapping
         errors_by_cid: Dict[str, List[str]] = {}
@@ -1413,9 +1455,12 @@ class PipelineRunner:
             for f_item in stem_gate_failures:
                 f_cid = f_item["cid"]
                 is_sk = is_skill_type(f_item["cat"])
+                c_tpls = templates_by_comp.get(f_cid, [])
+                n_arch = max(4, len(c_tpls))
                 req_u = required_unique_stems(f_item["quota"])
-                req_pt = stems_advice("skill" if is_sk else "concept")["per_tpl"]
-                tot_pt = stems_advice("skill" if is_sk else "concept")["total"]
+                adv_info = stems_advice("skill" if is_sk else "concept", min_archetypes=n_arch, quota=f_item["quota"])
+                req_pt = adv_info["per_tpl"]
+                tot_pt = adv_info["total"]
                 cat_lbl = "skills" if is_sk else "concepts/facts"
                 s_id = cid_to_shard.get(f_cid, "shard_01")
                 isolated_fix_p = shards_dir / "shard_fixes" / s_id / f"{f_cid}.py"
@@ -1424,7 +1469,6 @@ class PipelineRunner:
                 py_p = fix_p if fix_p.is_file() else (shards_dir / f"{s_id}_data.py")
                 s_file_rel = f"shards/shard_fixes/{s_id}/{f_cid}.py" if isolated_fix_p.is_file() else (f"shards/shard_fixes/{f_cid}.py" if flat_fix_p.is_file() else f"shards/{s_id}_data.py")
                 loc_inst = ShardDataLineLocator(py_p) if py_p.is_file() else None
-                c_tpls = templates_by_comp.get(f_cid, [])
                 for t_i, t_d in enumerate(c_tpls):
                     t_id = t_d.get("id") or t_d.get("template_id") or f"T-{f_cid}-{t_i+1:02d}"
                     t_info = loc_inst.find_tuple_for_question(f_cid, template_id=t_id) if loc_inst else None
@@ -2851,6 +2895,9 @@ class PipelineRunner:
             "error_sha256_streak": 0,
             "max_error_streak": 3,
             "exempt_conversation_ids": [],
+            "shards_k": self.shards_k,
+            "comps_per_shard": self.comps_per_shard,
+            "templates_per_modality": self.templates_per_modality,
         }
         lock_file.write_text(json.dumps(lock_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 

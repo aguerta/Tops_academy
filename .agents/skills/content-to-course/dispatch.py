@@ -1528,6 +1528,8 @@ def dispatch_authors(
             if str(s.get("shard_id")) in ids_set or any(str(cid) in ids_set for cid in (s.get("competency_ids") or []))
         ]
 
+    _MC7_MOD_ALIASES = {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"}
+
     # Swift-Dispatch SLA: Sort shards heaviest unit first
     def _shard_weight(shard: Dict[str, Any]) -> int:
         if shard.get("estimated_questions"):
@@ -1543,7 +1545,7 @@ def dispatch_authors(
             rec_m = c_obj.get("recommended_modalities") or []
             norm_m = list(dict.fromkeys(str(m).strip().lower() for m in rec_m if str(m).strip()))
             n_m = len(norm_m)
-            has_mc7_m = any(m in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options") for m in norm_m) and not is_skill_type(t)
+            has_mc7_m = any(m in _MC7_MOD_ALIASES for m in norm_m) and not (is_skill_type(t) or str(cid).startswith("Hab-"))
             n_t = required_templates_for_competency(n_m, eff_tpl_per_mod, has_mc7=has_mc7_m)
             w += quota_for_competency(t, n_t)
         return w if w > 0 else (len(c_ids) * 20)
@@ -1588,7 +1590,7 @@ def dispatch_authors(
             raw_rec_mods = c_obj.get("recommended_modalities") or []
             norm_rec_mods = list(dict.fromkeys(str(m).strip().lower() for m in raw_rec_mods if str(m).strip()))
             num_mods = len(norm_rec_mods)
-            has_mc7_comp = any(m in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options") for m in norm_rec_mods) and not (is_skill_type(raw_type) or cid.startswith("Hab-"))
+            has_mc7_comp = any(m in _MC7_MOD_ALIASES for m in norm_rec_mods) and not (is_skill_type(raw_type) or str(cid).startswith("Hab-"))
             _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(
                 raw_type,
                 num_modalities=num_mods,
@@ -1684,18 +1686,27 @@ def dispatch_authors(
                 logger.warning(warn_msg)
 
             cb_line = f"- **Modelo/Fórmula Correcta Canónica (correct_belief):** {correct_belief}\n" if correct_belief else ""
-            rec_mods_line = (
-                f"- **Modalidades decididas por CTA Architect (M={num_mods}, obligatorio >= {comp_k} plantillas distintas por modalidad => mínimo {min_tpls} plantillas):** "
-                f"{', '.join(str(m) for m in raw_rec_mods)}\n"
-                if raw_rec_mods
-                else f"- **Modalidades decididas por CTA Architect (mínimo {min_tpls} plantillas):** Libre criterio epistémico dentro de modalidades válidas del contrato (sin cuotas rígidas por tipo).\n"
+            if raw_rec_mods:
+                if has_mc7_comp and comp_k >= 2:
+                    mod_floor_desc = (
+                        f"M={num_mods}, exactamente 1 plantilla MC7 [tope M20-MC7-CAP <= 1] y >= {comp_k} plantillas distintas por cada modalidad activa [>= 80% activo M20-ACTIVE-QUOTA] => mínimo {min_tpls} plantillas"
+                    )
+                else:
+                    mod_floor_desc = (
+                        f"M={num_mods}, obligatorio >= {comp_k} plantillas distintas por modalidad => mínimo {min_tpls} plantillas"
+                    )
+                rec_mods_line = f"- **Modalidades decididas por CTA Architect ({mod_floor_desc}):** {', '.join(str(m) for m in raw_rec_mods)}\n"
+            else:
+                rec_mods_line = f"- **Modalidades decididas por CTA Architect (mínimo {min_tpls} plantillas):** Libre criterio epistémico dentro de modalidades válidas del contrato (sin cuotas rígidas por tipo).\n"
+            tpl_distrib_note = (
+                f"1 MC7 + >={comp_k}/modalidad activa" if (has_mc7_comp and comp_k >= 2) else f"{comp_k}/modalidad"
             )
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
                 f"{rec_mods_line}"
                 f"- **Umbrales Stage 4 (contrato exacto, se auditan al construir):** cuota **{quota}**; "
-                f"mínimo **{min_tpls} plantillas** ({comp_k}/modalidad, >= {_s4c['min_archetypes']} arquetipos); "
+                f"mínimo **{min_tpls} plantillas** ({tpl_distrib_note}, >= {_s4c['min_archetypes']} arquetipos); "
                 f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla); "
                 f"ratio de diversidad >= {_s4c['min_diversity_ratio']:.2f}\n"
                 f"- **Nombre:** {c_name}\n"
@@ -1755,7 +1766,7 @@ def dispatch_authors(
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
             f"1. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 contiene el 100% de competencias y distractores; NO abras ni leas los documentos fuente de content/ en Turno 1 y empieza directamente escribiendo {s_id}_data.py (`{out_py}`, <= 80-110 líneas por competencia, <= 180-220 líneas totales por shard).",
-            f"2. **Contrato Form-C (`min_archetypes = 4`, `[M3-ARCHETYPES]`, `K={eff_tpl_per_mod}`/modalidad):** Define `>= max(4, M * {eff_tpl_per_mod})` tuplas distintas en `TEMPLATES` por competencia (al menos `{eff_tpl_per_mod}` plantillas no-clon por cada modalidad en `'Modalidades decididas por CTA Architect'` —candados `[TPL-CLONE-AST]`, `[TPL-CLONE-BAND]`, `[TPL-CLONE-STEM]`, `[TPL-CLONE-SYMPY]`—) en bandas `'easy'`, `'medium'`, `'hard'` según tu SystemPrompt (`[TPL-DYNAMIC-RATIONALE]`, `[KATEX-TEXT-PROSE]`/`[KATEX-PROSE-OVERFLOW]`, FIB sin `$`).",
+            f"2. **Contrato Form-C (`min_archetypes = 4`, `[M3-ARCHETYPES]`, `K={eff_tpl_per_mod}`/modalidad activa, `[M20-MC7-CAP]`, `[M20-ACTIVE-QUOTA]`):** Define el mínimo requerido de tuplas distintas en `TEMPLATES` por competencia (al menos `{eff_tpl_per_mod}` plantillas no-clon por cada modalidad activa en `'Modalidades decididas por CTA Architect'`; `0 MC7` en `Skill`, y `<= 1 MC7` en `Concept`/`Fact` —candados `[TPL-CLONE-AST]`, `[TPL-CLONE-BAND]`, `[TPL-CLONE-STEM]`, `[TPL-CLONE-SYMPY]`—) en bandas `'easy'`, `'medium'`, `'hard'` según tu SystemPrompt (`[TPL-DYNAMIC-RATIONALE]`, `[KATEX-TEXT-PROSE]`/`[KATEX-PROSE-OVERFLOW]`, FIB sin `$`).",
             f"3. **Compilación determinista:** `{compile_cmd}`",
             f"4. **Reparación (Matriz 2D):** Con < 6 errores (1..5 errores) usa `edit_file` quirúrgico (en >= 300 líneas NO reescribas todo el archivo desde cero con `write_file`); con >= 6 errores usa `{work_rel}/shards/shard_fixes/<CID>.py`.",
             f"5. **[Corte Inmediato Post-PASS]:** Cierre al aprobar: `{target_json}` (señal terminal DONE).",
@@ -2485,7 +2496,7 @@ def build_dispatch(
                         for known_cid in shard_map.keys():
                             if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(known_cid)}(?![A-Za-z0-9_-])", err_str):
                                 matched_cids.add(known_cid)
-                        for m in re.finditer(r"\b(?:C|H|Hab)-\d+\b", err_str):
+                        for m in re.finditer(r"\b(?:PRE|Aut|C|H|Hab|COMP)-[A-Za-z0-9_-]+\b", err_str):
                             cand_cid = m.group(0)
                             if cand_cid in shard_map:
                                 matched_cids.add(cand_cid)
@@ -2920,6 +2931,7 @@ def build_dispatch(
                 "title": str(comp_info.get("name") or comp_info.get("title") or cid)[:100],
                 "description": str(comp_info.get("description_latex") or comp_info.get("description") or "")[:200],
                 "recommended_modalities": comp_info.get("recommended_modalities") or [],
+                "templates_per_modality": eff_repair_k,
                 "assumptions": comp_info.get("assumptions", [])[:4],
                 "distractors": [
                     {
@@ -3097,9 +3109,9 @@ def build_dispatch(
             # Pure-data payload file for live Repair Engineer (zero wrapper bloat)
             rec_mods_str = ", ".join(str(m) for m in (comp_info.get("recommended_modalities") or []))
             mods_meta_line = (
-                f"- **Modalidades recomendadas (CTA Architect):** {rec_mods_str}\n"
+                f"- **Modalidades recomendadas (CTA Architect, K={eff_repair_k}/modalidad activa, 0 MC7 en Skill, <=1 MC7 en Concept/Fact):** {rec_mods_str}\n"
                 if rec_mods_str
-                else "- **Modalidades recomendadas (CTA Architect):** libre según criterio epistémico sin cuotas rígidas\n"
+                else f"- **Modalidades recomendadas (CTA Architect, K={eff_repair_k}):** libre según criterio epistémico sin cuotas rígidas\n"
             )
             prompts_cid_data_file = prompts_repair_dir / f"repair_{cid_norm}_data.md"
             repair_data_md = (

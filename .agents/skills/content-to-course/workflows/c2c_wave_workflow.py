@@ -440,15 +440,25 @@ async def run_c2c_workflow() -> Dict[str, Any]:
     # Automated post-CTA pipeline:
     # shard -> dispatch-authors -> parallel(authors) -> templates -> build -> dispatch-judges -> parallel(judges) -> judge-compare -> gates
     phase("Stage 2: Sharding")
+    shard_cmd_args = ["--stage", "shard", "--work-dir", work_dir_arg]
+    if _WF_ARGS.get("shards") is not None:
+        shard_cmd_args.extend(["--shards", str(_WF_ARGS["shards"])])
+    if _WF_ARGS.get("comps_per_shard") is not None:
+        shard_cmd_args.extend(["--comps-per-shard", str(_WF_ARGS["comps_per_shard"])])
+    if _WF_ARGS.get("templates_per_modality") is not None:
+        shard_cmd_args.extend(["--templates-per-modality", str(_WF_ARGS["templates_per_modality"])])
     await run_cli(
-        _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "shard", "--work-dir", work_dir_arg),
+        _build_run_py_cmd(python_exe, run_py, director_id, *shard_cmd_args),
         "C2C stage shard",
         env_extra=cli_env,
     )
 
     phase("Stage 3: Dispatch & Run Authors")
+    author_dispatch_args = ["dispatch-authors", "--work-dir", work_dir_arg]
+    if _WF_ARGS.get("templates_per_modality") is not None:
+        author_dispatch_args.extend(["--templates-per-modality", str(_WF_ARGS["templates_per_modality"])])
     await run_cli(
-        _build_python_cmd(python_exe, dispatch_py, "dispatch-authors", "--work-dir", work_dir_arg),
+        _build_python_cmd(python_exe, dispatch_py, *author_dispatch_args),
         "C2C dispatch authors",
         env_extra=cli_env,
     )

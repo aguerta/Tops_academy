@@ -967,6 +967,13 @@ def _find_pending_director_stage_tasks(active_lock: Dict[str, Any]) -> List[str]
                 k in lower_c for k in ("run_workflow", "c2c_wave_workflow", "run.py", "command")
             ):
                 queued_task_labels.pop(0)
+        elif (
+            step_type in ("GENERIC", "TOOL_RESULT", "TOOL_RESPONSE")
+            and queued_task_labels
+            and "Tool is running as a background task with task id:" not in content
+            and ("Command exited with code" in content or "Workflow completed" in content or "STAGE " in content)
+        ):
+            queued_task_labels.pop(0)
 
         m_start = re.search(
             r"Tool is running as a background task with task id:\s*((?:[^\s\r\n]+/)?task-\d+)(?:.*?Task Description:\s*([^\r\n]+))?",
@@ -1762,7 +1769,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
                                     affected_cids = set()
                                     for err_msg in c_data.get("last_errors", []):
-                                        for m in re.finditer(r"\b(?:H|C|Hab|Fact|Concept|Skill)-?\d+\b", str(err_msg), re.IGNORECASE):
+                                        for m in re.finditer(r"\b(?:PRE|Aut|H|C|Hab|COMP|Fact|Concept|Skill)-?[A-Za-z0-9_]*\d+\b", str(err_msg), re.IGNORECASE):
                                             affected_cids.add(m.group(0).upper())
                                     aff_comp_cnt = max(len(affected_cids), int(c_data.get("affected_competencies_count", 0) or 0))
 
