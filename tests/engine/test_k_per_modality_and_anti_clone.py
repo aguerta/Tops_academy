@@ -191,16 +191,19 @@ class TestCtaModalityEnforcementAndMerge:
             compile_cta.compile_cta_module([(*base_tuple, [])], require_assumptions=True, contract_version=2)
 
         with pytest.raises(ValueError, match=r"\[CTA-MODALITY-RANGE\]"):
-            compile_cta.compile_cta_module([(*base_tuple, ["MC7"])], require_assumptions=True, contract_version=2)
+            compile_cta.compile_cta_module([(*base_tuple, ["FIB"])], require_assumptions=True, contract_version=2)
 
         with pytest.raises(ValueError, match=r"\[CTA-MODALITY-RANGE\]"):
             compile_cta.compile_cta_module(
-                [(*base_tuple, ["MC7", "FIB", "MS", "open_symbolic", "proof_dag"])],
+                [(*base_tuple, ["FIB", "MS", "open_symbolic", "proof_dag", "adversarial_break"])],
                 require_assumptions=True,
                 contract_version=2,
             )
 
-        for mods in (["MC7", "FIB"], ["MC7", "FIB", "MS"], ["MC7", "FIB", "MS", "open_symbolic"]):
+        with pytest.raises(ValueError, match=r"\[M20-MC7-CAP\]"):
+            compile_cta.compile_cta_module([(*base_tuple, ["MC7", "FIB"])], require_assumptions=True, contract_version=2)
+
+        for mods in (["FIB", "open_symbolic"], ["FIB", "MS", "open_symbolic"], ["FIB", "MS", "open_symbolic", "proof_dag"]):
             out = compile_cta.compile_cta_module([(*base_tuple, mods)], require_assumptions=True, contract_version=2)
             assert len(out["competencies"][0]["recommended_modalities"]) == len(mods)
 
@@ -318,7 +321,7 @@ class TestPlanShardsAndDispatchScaling:
         work = tmp_path / "work_plan"
         _write_manifest(work)
         comps = [
-            _make_cta_dict_comp("Hab-01", "skill", rec_mods=["multiple_choice_7_options", "fill_in_the_blank", "multiple_select"]),
+            _make_cta_dict_comp("Hab-01", "skill", rec_mods=["open_symbolic", "fill_in_the_blank", "multiple_select"]),
             _make_cta_dict_comp("Hab-02", "skill", rec_mods=["fill_in_the_blank", "open_symbolic", "proof_dag", "adversarial_break"]),
             _make_cta_dict_comp("C-01", "concept", rec_mods=["concept_matching", "invariant_canvas"]),
             _make_cta_dict_comp("C-02", "concept", rec_mods=["open_symbolic", "proof_dag", "adversarial_break"]),
@@ -426,19 +429,19 @@ H3 = [r"Suma primero el desplazamiento $@d@$ a $@a@$.", r"Multiplica la suma por
 H4 = [r"Escribe coeficiente $@a@$ multiplicando a x.", r"Añade intercepto $@b@$ como suma.", r"Usa sintaxis simbólica estándar en x."]
 SOL = r"Paso 1: Sustituimos parámetros reales en la expresión dada. Paso 2: Evaluamos el resultado exacto @ans@."
 TEMPLATES = [
-    {"id": "T-Hab-01-01", "cid": "Hab-01", "qtype": "MC7", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
-    {"id": "T-Hab-01-02", "cid": "Hab-01", "qtype": "MC7", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
-    {"id": "T-Hab-01-03", "cid": "Hab-01", "qtype": "MC7", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL, "rats": RATS},
+    {"id": "T-Hab-01-01", "cid": "Hab-01", "qtype": "FIB", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
+    {"id": "T-Hab-01-02", "cid": "Hab-01", "qtype": "FIB", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
+    {"id": "T-Hab-01-03", "cid": "Hab-01", "qtype": "FIB", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL, "rats": RATS},
     {"id": "T-Hab-01-04", "cid": "Hab-01", "qtype": "open_symbolic", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab01-01", "band": ("hard", "Evaluate"), "gen": gen_4, "ver": ver_4, "stem_variants": S4, "hints": H4, "sol": SOL},
 ]
 '''
-        work = _setup_shard_workspace(tmp_path / "k2", "Hab-01", "skill", ["multiple_choice_7_options", "open_symbolic"], code)
+        work = _setup_shard_workspace(tmp_path / "k2", "Hab-01", "skill", ["fill_in_the_blank", "open_symbolic"], code)
         ok, errs = compile_shard(work, shard_id="shard_01", strict=True, seeds=30, min_archetypes=4, templates_per_modality=2)
         joined = "\n".join(errs)
         assert not ok and "[CTA-MODALITY-PLAN]" in joined and "'open_symbolic' solo tiene 1/2" in joined
 
-        # Explicit legacy K=1 override permits 3 MC7 + 1 open_symbolic across 2 modalities
-        work_k1 = _setup_shard_workspace(tmp_path / "k1", "Hab-01", "skill", ["multiple_choice_7_options", "open_symbolic"], code)
+        # Explicit legacy K=1 override permits 3 FIB + 1 open_symbolic across 2 modalities
+        work_k1 = _setup_shard_workspace(tmp_path / "k1", "Hab-01", "skill", ["fill_in_the_blank", "open_symbolic"], code)
         ok_k1, errs_k1 = compile_shard(work_k1, shard_id="shard_01", strict=True, seeds=30, min_archetypes=4, templates_per_modality=1)
         assert ok_k1 and errs_k1 == [], errs_k1
 
@@ -452,7 +455,7 @@ TEMPLATES = [
             tmp_path / "m3_ok",
             "Hab-01",
             "skill",
-            ["multiple_choice_7_options", "fill_in_the_blank", "multiple_select"],
+            ["fill_in_the_blank", "open_symbolic", "multiple_select"],
             hab_code,
         )
         ok, errs = compile_shard(work_ok, shard_id="shard_01", strict=True, seeds=30, min_archetypes=4, templates_per_modality=2)
@@ -468,7 +471,7 @@ TEMPLATES = [
             tmp_path / "m3_short",
             "Hab-01",
             "skill",
-            ["multiple_choice_7_options", "fill_in_the_blank", "multiple_select"],
+            ["fill_in_the_blank", "open_symbolic", "multiple_select"],
             short_code,
         )
         ok_b, errs_b = compile_shard(work_bad, shard_id="shard_01", strict=True, seeds=15, min_archetypes=4, templates_per_modality=2)

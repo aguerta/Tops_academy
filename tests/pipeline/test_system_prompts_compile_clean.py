@@ -106,7 +106,7 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
         '            ("A-Hab01-01", r"Reversibilidad estricta $\\sigma_{\\text{irr}} = 0$", r"Bajo irreversibilidad $\\sigma_{\\text{irr}} > 0$, el rendimiento real es menor."),'
         '\n'
         '        ],\n'
-        '        ["MC7", "FIB", "MS"],\n'
+        '        ["FIB", "open_symbolic", "MS"],\n'
         '    )\n'
         ']\n'
     )
@@ -171,8 +171,9 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
     assert len(tpl_list) == 6, f"Expected 6 templates (M=3, K=2), found {len(tpl_list)}"
 
     tpl_types = [t.get("interaction_type") for t in tpl_list]
-    assert tpl_types.count("multiple_choice_7_options") >= 2
+    assert tpl_types.count("multiple_choice_7_options") == 0
     assert tpl_types.count("fill_in_the_blank") >= 2
+    assert tpl_types.count("open_symbolic") >= 2
     assert tpl_types.count("multiple_select") >= 2
 
     # 7. Instantiate questions

@@ -63,10 +63,10 @@ CANONICAL_9_MODALITIES = {
 }
 
 
-def _make_valid_cta_dict(rec_mods: Any = None, cid: str = "Hab-01") -> Dict[str, Any]:
+def _make_valid_cta_dict(rec_mods: Any = None, cid: str = "C-01", ctype: str = "concept") -> Dict[str, Any]:
     comp: Dict[str, Any] = {
         "id": cid,
-        "type": "skill",
+        "type": ctype,
         "name": "Análisis paramétrico de equilibrio",
         "description_latex": "Determina puntos de equilibrio y restricciones analíticas sobre parámetros reales.",
         "bloom": "Analyze",

@@ -55,11 +55,12 @@ def _build_minimal_cta(
 
     comp_type = "skill" if is_skill else "concept"
     d_entries = "\n".join(
-        f'            ("Trampa {i}", r"$x_{i}$", r"$x^2$", r"$y_{i}$", "Revisar minuciosamente el error conceptual numero {i} y verificar la formula analitica antes de responder.", "Paso {i}."), '
+        f'            ("Trampa {i}", r"$x_{i}$", r"$x^2$", r"$y_{i}$", "Revisar minuciosamente el error conceptual numero {i} y verificar la formula analitica antes de responder.", "Paso {i}." if {is_skill} else None), '
         for i in range(1, 7)
     )
-    assump_block = '        [("A-Hab20-01", r"Regularidad analitica del dominio sobre $x$", r"Ignorar las condiciones del dominio invalida el estimador.")],' if is_skill else "        [],"
-    eff_rec_mods = ["MC7", "FIB"] if recommended_modalities is None else recommended_modalities
+    assump_block = '        [("A-Hab20-01", r"Regularidad analitica del dominio sobre $x$", r"Ignorar las condiciones del dominio invalida el estimador.")],'
+    default_rec = ["FIB", "open_symbolic"] if is_skill else ["MC7", "FIB"]
+    eff_rec_mods = default_rec if recommended_modalities is None else recommended_modalities
     rec_block = f"\n        {repr(eff_rec_mods)},"
     cta_code = f'''
 CTA_CONTRACT_VERSION = 2
@@ -387,10 +388,13 @@ TEMPLATES = [
         tpl_ok, tpl_errs = check_templates_file_or_dir(work_dir / "templates", work_dir / "cta.json", num_dry_run_seeds=20, strict=True)
         assert tpl_ok and tpl_errs == [], f"0 MC7 failed check_templates: {tpl_errs}"
 
-    def test_flexible_modality_mix_without_rigid_quotas_passes(self, tmp_path: Path):
-        """Flexible modality mixes (e.g., 2 MC7 + 2 FIB without rigid quotas) pass compile_shard cleanly with K=2."""
-        work_dir = tmp_path / "work_2mc7_flex"
-        shards_dir = _build_minimal_cta(work_dir, cid="Hab-20", is_skill=True, recommended_modalities=["MC7", "FIB"])
+    def test_m20_mc7_cap_and_active_quota_reject_2_mc7_and_skill_mc7(self, tmp_path: Path):
+        """[M20-MC7-CAP] and [M20-ACTIVE-QUOTA] reject MC7 in Skill competencies and >1 MC7 / <80% active in Concept competencies."""
+        with pytest.raises(Exception):
+            _build_minimal_cta(tmp_path / "work_skill_mc7", cid="Hab-20", is_skill=True, recommended_modalities=["MC7", "FIB"])
+
+        work_dir = tmp_path / "work_2mc7_concept"
+        shards_dir = _build_minimal_cta(work_dir, cid="C-20", is_skill=False, recommended_modalities=["MC7", "FIB"])
 
         shard_code = r'''
 RATS = {
@@ -461,15 +465,18 @@ S4 = [
 SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su regla algebraica específica. Paso 2: Calculamos el entero exacto @ans@ sin omitir términos."
 
 TEMPLATES = [
-    {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "MC7", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
-    {"id": "T-Hab-20-02", "cid": "Hab-20", "qtype": "MC7", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
-    {"id": "T-Hab-20-03", "cid": "Hab-20", "qtype": "FIB", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL},
-    {"id": "T-Hab-20-04", "cid": "Hab-20", "qtype": "FIB", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab20-01", "band": ("hard", "Evaluate"), "gen": gen_4, "ver": ver_4, "stem_variants": S4, "hints": H4, "sol": SOL},
+    {"id": "T-C-20-01", "cid": "C-20", "qtype": "MC7", "archetype": "direct", "band": ("easy", "Understand"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
+    {"id": "T-C-20-02", "cid": "C-20", "qtype": "MC7", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
+    {"id": "T-C-20-03", "cid": "C-20", "qtype": "FIB", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL},
+    {"id": "T-C-20-04", "cid": "C-20", "qtype": "FIB", "archetype": "boundary_or_edge_case", "band": ("hard", "Evaluate"), "gen": gen_4, "ver": ver_4, "stem_variants": S4, "hints": H4, "sol": SOL},
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_code, encoding="utf-8")
         ok, errs = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=4, seeds=20, fail_total=True)
-        assert ok, f"Flexible mix should pass without hardcoded MC7/active quotas: {errs}"
+        joined = "\n".join(errs)
+        assert not ok, "2 MC7 + 2 FIB must be rejected by [M20-MC7-CAP] and [M20-ACTIVE-QUOTA]"
+        assert "[M20-MC7-CAP]" in joined
+        assert "[M20-ACTIVE-QUOTA]" in joined
 
     def test_cta_architect_recommended_modalities_enforced(self, tmp_path: Path):
         """When CTA Architect sets recommended_modalities, unauthorized types fail [CTA-MODALITY-PLAN] while matching K=2 passes."""
@@ -501,30 +508,30 @@ def gen_2(r):
     return {"vars": {"n": n, "b": b, "ans": ans}, "correct": str(ans), "ds": ds}
 def gen_3(r):
     n, d = r.randint(10, 50), r.randint(3, 12)
-    ans = (n + d) * 3
-    return {"vars": {"n": n, "d": d, "ans": ans}, "correct": str(ans)}
+    ans = f"{n}*x+{d}"
+    return {"vars": {"n": n, "d": d, "ans": ans}, "correct": ans, "variables": ["x"], "symbolic_config": {"variables": ["x"]}}
 def gen_4(r):
     n, c = r.randint(8, 40), r.randint(2, 11)
-    ans = (n - c) * 4 + c
-    return {"vars": {"n": n, "c": c, "ans": ans}, "correct": str(ans)}
+    ans = f"{n}*x-{c}"
+    return {"vars": {"n": n, "c": c, "ans": ans}, "correct": ans, "variables": ["x"], "symbolic_config": {"variables": ["x"]}}
 def ver_1(c, v): return str(c).strip() == str(v["a"] * v["n"] + 5)
 def ver_2(c, v): return str(c).strip() == str(v["n"] * v["n"] - v["b"])
-def ver_3(c, v): return str(c).strip() == str((v["n"] + v["d"]) * 3)
-def ver_4(c, v): return str(c).strip() == str((v["n"] - v["c"]) * 4 + v["c"])
+def ver_3(c, v): return str(c).replace(" ", "") == f"{v['n']}*x+{v['d']}"
+def ver_4(c, v): return str(c).replace(" ", "") == f"{v['n']}*x-{v['c']}"
 H1 = [r"Identifica primero la pendiente @a@ y el término @n@.", r"Multiplica @a@ por @n@ antes de sumar cinco.", r"Comprueba el entero positivo final obtenido."]
 H2 = [r"Eleva al cuadrado el argumento @n@ inicial.", r"Reste el desplazamiento constante @b@ después.", r"Verifica que el valor supere el cuadrado previo."]
-H3 = [r"Suma primero la perturbación @d@ al argumento @n@.", r"Multiplica la suma total por factor tres.", r"Confirma aritméticamente el entero final."]
-H4 = [r"Calcula la diferencia frontera @n@ menos @c@.", r"Escala esa diferencia por cuatro y suma @c@.", r"Revisa el producto límite antes de enviarlo."]
+H3 = [r"Identifica la pendiente @n@ y desplazamiento @d@.", r"Multiplica la variable x por el coeficiente @n@.", r"Suma el término independiente @d@ al cierre."]
+H4 = [r"Identifica el coeficiente frontera @n@ y resta @c@.", r"Escala la variable x por el factor @n@.", r"Resta la constante @c@ en la expresión simbólica."]
 S1 = [r"Calcula la respuesta directa $f(@n@) = @a@(@n@) + 5$:", r"Dado $@n@$ y pendiente $@a@$, evalúa $@a@ \cdot @n@ + 5$:", r"Obtén el valor lineal directo con coeficiente $@a@$ en $@n@$:", r"Determina $y = @a@x + 5$ evaluando en $x = @n@$:"]
 S2 = [r"Invierte la relación cuadrática hallando $@n@^2 - @b@$:", r"Con argumento $@n@$ y resta $@b@$, calcula la diferencia cuadrática:", r"Determina el valor inverso restando $@b@$ al cuadrado de $@n@$:", r"Resuelve $@n@^2 - @b@$ para los parámetros dados:"]
-S3 = [r"Bajo perturbación $+@d@$ sobre $@n@$, evalúa $3(@n@ + @d@)$:", r"Desplaza la entrada $@n@$ en $@d@$ unidades y triplica el total:", r"Si la entrada sube en $@d@$ desde $@n@$, halle el triple:", r"Calcula la respuesta perturbada multiplicando $(@n@ + @d@)$ por tres:"]
-S4 = [r"En frontera con desplazamiento $@c@$, evalúa $4(@n@ - @c@) + @c@$:", r"Para el caso borde dado por $@n@$ y $@c@$, calcula $4(@n@-@c@)+@c@$:", r"Aplica la regla límite con brecha $@n@ - @c@$ escalada por cuatro:", r"Halla el valor extremo de $4(@n@ - @c@) + @c@$:"]
-SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su regla algebraica específica. Paso 2: Calculamos el entero exacto @ans@ sin omitir términos."
+S3 = [r"Bajo perturbación $+@d@$ y pendiente $@n@$, formule $@n@x + @d@$:", r"Exprese en función de $x$ la recta perturbada de pendiente $@n@$ e intercepto $@d@$:", r"Si la pendiente vale $@n@$ con choque $+@d@$, escriba la fórmula en $x$:", r"Modele simbólicamente la regla afín con pendiente $@n@$ y término $@d@$:"]
+S4 = [r"En frontera con desplazamiento $-@c@$ y pendiente $@n@$, formule $@n@x - @c@$:", r"Para el caso borde dado por $@n@$ y $@c@$, exprese en $x$ la regla $@n@x-@c@$:", r"Escriba la expresión simbólica límite con pendiente $@n@$ y resta $@c@$:", r"Formule en términos de $x$ la cota $@n@x - @c@$:"]
+SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su regla algebraica específica. Paso 2: Calculamos el resultado exacto @ans@ sin omitir términos."
 TEMPLATES = [
-    {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "MC7", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
-    {"id": "T-Hab-20-02", "cid": "Hab-20", "qtype": "MC7", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
-    {"id": "T-Hab-20-03", "cid": "Hab-20", "qtype": "FIB", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL},
-    {"id": "T-Hab-20-04", "cid": "Hab-20", "qtype": "FIB", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab20-01", "band": ("hard", "Evaluate"), "gen": gen_4, "ver": ver_4, "stem_variants": S4, "hints": H4, "sol": SOL},
+    {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "FIB", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},
+    {"id": "T-Hab-20-02", "cid": "Hab-20", "qtype": "FIB", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_2, "ver": ver_2, "stem_variants": S2, "hints": H2, "sol": SOL, "rats": RATS},
+    {"id": "T-Hab-20-03", "cid": "Hab-20", "qtype": "open_symbolic", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_3, "ver": ver_3, "stem_variants": S3, "hints": H3, "sol": SOL},
+    {"id": "T-Hab-20-04", "cid": "Hab-20", "qtype": "open_symbolic", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab20-01", "band": ("hard", "Evaluate"), "gen": gen_4, "ver": ver_4, "stem_variants": S4, "hints": H4, "sol": SOL},
 ]
 '''
         (shards_bad / "shard_01_data.py").write_text(shard_fib_code, encoding="utf-8")
@@ -536,7 +543,7 @@ TEMPLATES = [
             work_ok,
             cid="Hab-20",
             is_skill=True,
-            recommended_modalities=["MC7", "FIB"],
+            recommended_modalities=["FIB", "open_symbolic"],
         )
         (shards_ok / "shard_01_data.py").write_text(shard_fib_code, encoding="utf-8")
         ok_good, errs_good = compile_shard(work_ok, shard_id="shard_01", strict=True, min_archetypes=4, seeds=20, fail_total=True)
