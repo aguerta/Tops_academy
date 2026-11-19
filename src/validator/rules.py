@@ -1376,6 +1376,72 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                         errors.extend(check_latex_and_templates(tg["content"], q_id, f"concept_matching.targets[{t_idx}].content"))
                     if isinstance(tg.get("error_rationale"), str):
                         errors.extend(check_latex_and_templates(tg["error_rationale"], q_id, f"concept_matching.targets[{t_idx}].error_rationale"))
+        elif itype == "unstructured_model" and isinstance(q.get("unstructured_model"), dict):
+            um = q["unstructured_model"]
+            p1 = um.get("phase1_variables") if isinstance(um.get("phase1_variables"), dict) else {}
+            p2 = um.get("phase2_assumptions") if isinstance(um.get("phase2_assumptions"), dict) else {}
+            p3 = um.get("phase3_formulation") if isinstance(um.get("phase3_formulation"), dict) else {}
+            for ph_name, ph_obj in (
+                ("phase1_variables", p1),
+                ("phase2_assumptions", p2),
+                ("phase3_formulation", p3),
+            ):
+                if isinstance(ph_obj.get("prompt"), str):
+                    errors.extend(check_latex_and_templates(ph_obj["prompt"], q_id, f"unstructured_model.{ph_name}.prompt"))
+            for it_idx, it in enumerate(p1.get("items") or []):
+                if isinstance(it, dict):
+                    for fld in ("label", "error_rationale"):
+                        if isinstance(it.get(fld), str):
+                            errors.extend(check_latex_and_templates(it[fld], q_id, f"unstructured_model.phase1_variables.items[{it_idx}].{fld}"))
+            for o_idx, opt in enumerate(p2.get("options") or []):
+                if isinstance(opt, dict):
+                    for fld in ("content", "error_rationale"):
+                        if isinstance(opt.get(fld), str):
+                            errors.extend(check_latex_and_templates(opt[fld], q_id, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}"))
+            for o_idx, opt in enumerate(p3.get("options") or []):
+                if isinstance(opt, dict):
+                    for fld in ("content", "error_rationale"):
+                        if isinstance(opt.get(fld), str):
+                            errors.extend(check_latex_and_templates(opt[fld], q_id, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}"))
+            for dist_key in ("distractors", "diagnostic_distractors"):
+                for d_idx, dd in enumerate(p3.get(dist_key) or []):
+                    if isinstance(dd, dict) and isinstance(dd.get("error_rationale"), str):
+                        errors.extend(check_latex_and_templates(dd["error_rationale"], q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale"))
+        elif itype == "invariant_canvas" and isinstance(q.get("invariant_canvas"), dict):
+            ic = q["invariant_canvas"]
+            ic_mode = str(ic.get("mode") or "cartesian").strip().lower()
+            if ic_mode == "cartesian":
+                for axis_k in ("x_label", "y_label"):
+                    if isinstance(ic.get(axis_k), str):
+                        errors.extend(check_latex_and_templates(ic[axis_k], q_id, f"invariant_canvas.{axis_k}"))
+                for coll_k in (
+                    "fixed_curves",
+                    "interactive_curves",
+                    "interactive_points",
+                    "fixed_points",
+                    "sliders",
+                    "segments",
+                    "polygons",
+                    "shaded_regions",
+                ):
+                    for c_idx, c_item in enumerate(ic.get(coll_k) or []):
+                        if isinstance(c_item, dict) and isinstance(c_item.get("label"), str):
+                            errors.extend(check_latex_and_templates(c_item["label"], q_id, f"invariant_canvas.{coll_k}[{c_idx}].label"))
+                for i_idx, inv in enumerate(ic.get("invariants") or []):
+                    if isinstance(inv, dict) and isinstance(inv.get("error_rationale"), str):
+                        errors.extend(check_latex_and_templates(inv["error_rationale"], q_id, f"invariant_canvas.invariants[{i_idx}].error_rationale"))
+            elif ic_mode == "tree":
+                for n_idx, nd in enumerate(ic.get("nodes") or []):
+                    if isinstance(nd, dict) and isinstance(nd.get("label"), str):
+                        errors.extend(check_latex_and_templates(nd["label"], q_id, f"invariant_canvas.nodes[{n_idx}].label"))
+                for e_idx, ed in enumerate(ic.get("edges") or []):
+                    if isinstance(ed, dict) and isinstance(ed.get("label"), str):
+                        errors.extend(check_latex_and_templates(ed["label"], q_id, f"invariant_canvas.edges[{e_idx}].label"))
+                ti = ic.get("tree_invariants")
+                if isinstance(ti, dict):
+                    for rk in ("edge_error_rationale", "info_set_error_rationale"):
+                        if isinstance(ti.get(rk), str):
+                            errors.extend(check_latex_and_templates(ti[rk], q_id, f"invariant_canvas.tree_invariants.{rk}"))
 
         # --- Rule R-19: Answer Leak in fill_in_the_blank, open_symbolic, multiple_choice_7_options, and multiple_select ---
         if itype in ("fill_in_the_blank", "open_symbolic", "multiple_choice_7_options", "multiple_select"):
@@ -1447,6 +1513,52 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                             rule_id="R-19",
                             code="ERR_ANSWER_LEAK",
                             message=f"Question '{q_id}': Stem explicitly leaks the correct answer '{clean_cand}' as '= {clean_cand}' or 'es {clean_cand}'",
+                            item_id=q_id
+                        ))
+                        break
+        elif itype == "invariant_canvas" and isinstance(q.get("invariant_canvas"), dict):
+            ic = q["invariant_canvas"]
+            ic_mode = str(ic.get("mode") or "cartesian").strip().lower()
+            stem = q.get("stem")
+            if ic_mode == "cartesian" and isinstance(stem, str) and stem:
+                def _norm_c(val: Any) -> Any:
+                    if isinstance(val, bool) or val is None:
+                        return val
+                    if isinstance(val, (int, float)):
+                        return float(val)
+                    if isinstance(val, str):
+                        try:
+                            return float(val.strip())
+                        except ValueError:
+                            return val.strip()
+                    return val
+
+                def _tok_c(val: Any) -> str:
+                    if isinstance(val, (int, float)) and not isinstance(val, bool) and float(val).is_integer():
+                        return rf"{re.escape(str(int(val)))}(?:\.0+)?"
+                    return re.escape(str(val))
+
+                fixed_coords = {
+                    (_norm_c(fp.get("x")), _norm_c(fp.get("y")))
+                    for fp in (ic.get("fixed_points") or [])
+                    if isinstance(fp, dict)
+                }
+                for inv in (ic.get("invariants") or []):
+                    if not isinstance(inv, dict):
+                        continue
+                    inv_kind = str(inv.get("kind") or "").strip()
+                    if inv_kind not in ("point_coords", "kink_at"):
+                        continue
+                    tx = inv.get("target_x") if inv.get("target_x") is not None else (inv.get("x") if inv_kind == "kink_at" else None)
+                    ty = inv.get("target_y")
+                    if tx is None or ty is None or (_norm_c(tx), _norm_c(ty)) in fixed_coords:
+                        continue
+                    leak_pat = rf"\(\s*{_tok_c(tx)}\s*,\s*{_tok_c(ty)}\s*\)"
+                    if re.search(leak_pat, stem):
+                        errors.append(ValidationError(
+                            rule_id="R-19",
+                            code="ERR_ANSWER_LEAK",
+                            message=f"Question '{q_id}': Stem explicitly leaks invariant_canvas target coordinate pair '({tx}, {ty})'",
                             item_id=q_id
                         ))
                         break
