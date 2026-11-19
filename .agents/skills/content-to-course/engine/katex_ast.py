@@ -638,7 +638,7 @@ def pykatex_validate_with_column(
     if pykatex is None:
         return True, None, None
 
-    strict_mode = getattr(pykatex, "STRICT_IGNORE", "ignore")
+    strict_mode = getattr(pykatex, "STRICT_ERROR", "error")
     with _KATEX_LOCK:
         try:
             pykatex.renderToString(math_content, is_display, strict=strict_mode)

@@ -349,7 +349,8 @@ def pykatex_warnings(text: Any, context: str, whole_is_math: bool = False) -> Li
         if not probe:
             continue
         try:
-            _pykatex.renderToString(probe, display)
+            strict_mode = getattr(_pykatex, "STRICT_ERROR", "error")
+            _pykatex.renderToString(probe, display, strict=strict_mode)
         except Exception as exc:
             raw_msg = str(exc)
             col = None
@@ -2213,7 +2214,7 @@ def _compile_shard_body(
         state["updated_at"] = time.time()
 
         res_msg = msg
-        if _EDIT_FILE_REMINDER not in res_msg:
+        if error_count < 6 and _EDIT_FILE_REMINDER not in res_msg:
             res_msg = f"{res_msg}\n{_EDIT_FILE_REMINDER}"
         if same_error_streak >= 3:
             terminal_stop = (
@@ -4662,7 +4663,7 @@ cross_check=verify
 
         fail_summary = (
             f"[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) "
-            f"al compilar {shard_id}:\n{compact_report}\n{_EDIT_FILE_REMINDER}"
+            f"al compilar {shard_id}:\n{compact_report}" + (f"\n{_EDIT_FILE_REMINDER}" if error_count < 6 else "")
         )
         total_output_bytes = len(fail_summary.encode("utf-8"))
 
