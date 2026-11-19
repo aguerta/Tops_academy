@@ -190,6 +190,223 @@ def _normalize_str(s: Any) -> str:
     return re.sub(r"\s+", "", st)
 
 
+_M20_INTERACTION_TYPES = (
+    "open_symbolic",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+)
+
+_GREEK_EXPR_MAP = {
+    "α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon",
+    "ζ": "zeta", "η": "eta", "θ": "theta", "κ": "kappa", "λ": "lambda_",
+    "μ": "mu", "ξ": "xi", "π": "pi", "ρ": "rho", "σ": "sigma",
+    "τ": "tau", "φ": "phi", "ψ": "psi", "ω": "omega", "Δ": "Delta",
+    "×": "*", "·": "*", "÷": "/", "−": "-", "√(": "sqrt(",
+}
+
+
+def _parse_json_or_dict(val: Any) -> Optional[Dict[str, Any]]:
+    """Coerces a dict or serialized JSON object string into a Python dict."""
+    if isinstance(val, dict):
+        return val
+    if isinstance(val, str):
+        s = val.strip()
+        if s.startswith("{") and s.endswith("}"):
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                return None
+    return None
+
+
+def _normalize_expr_text(expr: Any) -> str:
+    """Normalizes symbolic expression strings before SymPy or string comparison."""
+    s = str(expr or "").strip()
+    s = re.sub(r"^\$\$?(.*?)\$\$?$", r"\1", s).strip()
+    for src, dst in _GREEK_EXPR_MAP.items():
+        s = s.replace(src, dst)
+    s = re.sub(r"\\sqrt\{([^{}]+)\}", r"sqrt(\1)", s)
+    s = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", r"((\1)/(\2))", s)
+    return s.replace("^", "**")
+
+
+def _is_symbolic_equal(u_raw: Any, gt_raw: Any, tol: float = 0.001) -> bool:
+    """Checks mathematical equivalence between two symbolic/numeric expressions."""
+    if _is_numeric_equal(u_raw, gt_raw, tol=tol):
+        return True
+    u_norm = _normalize_str(_normalize_expr_text(u_raw))
+    g_norm = _normalize_str(_normalize_expr_text(gt_raw))
+    if not u_norm or not g_norm:
+        return False
+    if u_norm == g_norm:
+        return True
+    try:
+        import sympy as sp
+        from sympy.parsing.sympy_parser import (
+            convert_xor,
+            implicit_multiplication_application,
+            parse_expr,
+            standard_transformations,
+        )
+        trans = standard_transformations + (implicit_multiplication_application, convert_xor)
+        e1 = parse_expr(_normalize_expr_text(u_raw), transformations=trans)
+        e2 = parse_expr(_normalize_expr_text(gt_raw), transformations=trans)
+        diff = sp.simplify(e1 - e2)
+        if diff == 0 or diff.equals(0):
+            return True
+        syms = sorted(list(e1.free_symbols | e2.free_symbols), key=lambda x: x.name)
+        if syms:
+            vals = [1.37 + 0.41 * idx for idx in range(len(syms))]
+            subs = dict(zip(syms, vals))
+            d_num = complex(diff.evalf(subs=subs))
+            return abs(d_num.imag) < 1e-6 and abs(d_num.real) <= max(tol, 1e-4)
+    except Exception:
+        pass
+    return False
+
+
+def _sanitize_m20_judge_item(
+    itype: str,
+    assembled: Dict[str, Any],
+    judge_item: Dict[str, Any],
+    gt_record: Dict[str, Any],
+) -> None:
+    """Populates blind prompt payload and isolated ground_truth record for M20 interaction types."""
+    if itype == "open_symbolic":
+        ca = assembled.get("correct_answer") if isinstance(assembled.get("correct_answer"), dict) else {}
+        sym_cfg = assembled.get("symbolic_config") if isinstance(assembled.get("symbolic_config"), dict) else {}
+        tol = float(ca.get("tolerance", 0.001) or 0.001)
+        if sym_cfg:
+            judge_item["symbolic_config"] = sym_cfg
+        judge_item["answer_contract"] = {
+            "expected_format": "open_symbolic",
+            "variables": sym_cfg.get("variables") or [],
+            "tolerance": tol,
+        }
+        gt_record["correct_value"] = ca.get("expression") or ca.get("value") or ""
+        gt_record["canonical_algebraic"] = ca.get("canonical_algebraic") or ""
+        gt_record["accepted_equivalents"] = ca.get("accepted_equivalents") or []
+        gt_record["variables"] = sym_cfg.get("variables") or []
+        gt_record["tolerance"] = tol
+        return
+
+    if itype == "proof_dag":
+        pd = assembled.get("proof_dag") if isinstance(assembled.get("proof_dag"), dict) else {}
+        blind_dag: Dict[str, Any] = {
+            "steps": [{"id": s.get("id"), "content": s.get("content")} for s in (pd.get("steps") or []) if isinstance(s, dict)],
+            "require_justification": bool(pd.get("require_justification", False)),
+        }
+        if pd.get("goal"):
+            blind_dag["goal"] = pd["goal"]
+        if pd.get("justification_bank"):
+            blind_dag["justification_bank"] = pd["justification_bank"]
+        judge_item["proof_dag"] = blind_dag
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        return
+
+    if itype == "adversarial_break":
+        adv = assembled.get("adversarial_break") if isinstance(assembled.get("adversarial_break"), dict) else {}
+        adv_mode = str(adv.get("mode") or "find_fallacy")
+        blind_adv: Dict[str, Any] = {"mode": adv_mode}
+        if adv_mode == "find_fallacy":
+            blind_adv["steps"] = [
+                {"id": s.get("id"), "content": s.get("content")}
+                for s in (adv.get("steps") or [])
+                if isinstance(s, dict)
+            ]
+            if adv.get("reason_options"):
+                blind_adv["reason_options"] = [
+                    {"id": r.get("id"), "content": r.get("content")}
+                    for r in adv["reason_options"]
+                    if isinstance(r, dict)
+                ]
+        else:
+            for key in ("inputs", "predicates", "claim", "computed_readouts"):
+                if key in adv:
+                    blind_adv[key] = adv[key]
+        judge_item["adversarial_break"] = blind_adv
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        return
+
+    if itype == "unstructured_model":
+        um = assembled.get("unstructured_model") if isinstance(assembled.get("unstructured_model"), dict) else {}
+        p1 = um.get("phase1_variables") if isinstance(um.get("phase1_variables"), dict) else {}
+        p2 = um.get("phase2_assumptions") if isinstance(um.get("phase2_assumptions"), dict) else {}
+        p3 = um.get("phase3_formulation") if isinstance(um.get("phase3_formulation"), dict) else {}
+        p3_mode = str(p3.get("input_mode") or "select")
+        blind_p3: Dict[str, Any] = {"prompt": p3.get("prompt", ""), "input_mode": p3_mode}
+        if p3_mode == "select":
+            blind_p3["options"] = [
+                {"id": o.get("id"), "content": o.get("content")}
+                for o in (p3.get("options") or [])
+                if isinstance(o, dict)
+            ]
+        elif p3.get("symbolic_config"):
+            blind_p3["symbolic_config"] = p3["symbolic_config"]
+        judge_item["unstructured_model"] = {
+            "phase1_variables": {
+                "prompt": p1.get("prompt", ""),
+                "roles": p1.get("roles") or [],
+                "items": [
+                    {k: it[k] for k in ("id", "label", "symbol") if k in it}
+                    for it in (p1.get("items") or [])
+                    if isinstance(it, dict)
+                ],
+            },
+            "phase2_assumptions": {
+                "prompt": p2.get("prompt", ""),
+                "options": [
+                    {"id": o.get("id"), "content": o.get("content")}
+                    for o in (p2.get("options") or [])
+                    if isinstance(o, dict)
+                ],
+            },
+            "phase3_formulation": blind_p3,
+        }
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        return
+
+    if itype == "invariant_canvas":
+        ic = assembled.get("invariant_canvas") if isinstance(assembled.get("invariant_canvas"), dict) else {}
+        c_mode = str(ic.get("mode") or "cartesian")
+        if c_mode == "tree":
+            blind_keys = ("mode", "width", "height", "interaction_mode", "nodes", "edges")
+        else:
+            blind_keys = (
+                "mode", "x_range", "y_range", "step", "x_label", "y_label", "snap", "sliders",
+                "fixed_curves", "fixed_points", "segments", "polygons", "shaded_regions",
+                "inequality", "interactive_curves", "interactive_points",
+            )
+        judge_item["invariant_canvas"] = {k: ic[k] for k in blind_keys if k in ic}
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        if c_mode == "cartesian" and isinstance(ic.get("invariants"), list):
+            gt_record["invariants"] = ic["invariants"]
+        return
+
+    if itype == "concept_matching":
+        cm = assembled.get("concept_matching") if isinstance(assembled.get("concept_matching"), dict) else {}
+        judge_item["concept_matching"] = {
+            "left_title": cm.get("left_title", "Premisa"),
+            "right_title": cm.get("right_title", "Consecuencia"),
+            "premises": [
+                {"id": p.get("id"), "content": p.get("content")}
+                for p in (cm.get("premises") or [])
+                if isinstance(p, dict)
+            ],
+            "targets": [
+                {"id": t.get("id"), "content": t.get("content")}
+                for t in (cm.get("targets") or [])
+                if isinstance(t, dict)
+            ],
+        }
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+
+
 def generate_judge_batch(
     templates_path: Union[str, Path],
     work_dir: Union[str, Path],
@@ -603,6 +820,9 @@ def generate_judge_batch(
             }
             judge_item["answer_contract"] = contract
             gt_record["answer_contract"] = contract
+
+        elif itype in _M20_INTERACTION_TYPES:
+            _sanitize_m20_judge_item(itype, assembled, judge_item, gt_record)
 
         if "graph" in assembled and assembled["graph"]:
             judge_item["graph"] = assembled["graph"]
@@ -1098,6 +1318,20 @@ def _validate_ground_truth_item(gt: Dict[str, Any], itype: str) -> None:
             raise ValueError(
                 f"Ground truth schema violation for '{eff_type}': 'correct_value' must be non-None and non-empty (preserving 0/'0'), got {val!r}"
             )
+    elif eff_type == "open_symbolic":
+        val = gt.get("correct_value")
+        if not (isinstance(val, str) and val.strip() != ""):
+            ca = gt.get("correct_answer")
+            if not (isinstance(ca, dict) and str(ca.get("expression") or ca.get("value") or "").strip()):
+                raise ValueError(
+                    f"Ground truth schema violation for '{eff_type}': 'correct_value' must be a non-empty expression"
+                )
+    elif eff_type in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+        ca = gt.get("correct_answer")
+        if not (isinstance(ca, dict) and len(ca) > 0):
+            raise ValueError(
+                f"Ground truth schema violation for '{eff_type}': 'correct_answer' must be a non-empty dict, got {ca!r}"
+            )
     elif eff_type == "multiple_select":
         val = gt.get("correct_letters")
         if not (isinstance(val, list) and len(val) > 0):
@@ -1197,6 +1431,149 @@ def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) ->
             return True, ""
         else:
             return False, f"Judge selected {raw_items} (letters: {sorted(u_letters)}) but expected {sorted(gt_letters)}"
+
+    elif itype in _M20_INTERACTION_TYPES:
+        return _check_m20_answer_match(user_ans, gt, itype)
+
+    return False, f"Unsupported interaction type '{itype}'"
+
+
+def _values_approx_equal(u_val: Any, g_val: Any, tol: float = 0.02) -> bool:
+    """Recursively compares structured ground-truth objects with float tolerance."""
+    if isinstance(g_val, (int, float)) and not isinstance(g_val, bool):
+        return _is_numeric_equal(u_val, g_val, tol=tol)
+    if isinstance(g_val, dict):
+        if not isinstance(u_val, dict):
+            return False
+        return all(k in u_val and _values_approx_equal(u_val[k], v, tol=tol) for k, v in g_val.items())
+    if isinstance(g_val, list):
+        if not isinstance(u_val, (list, tuple)) or len(u_val) != len(g_val):
+            return False
+        return all(_values_approx_equal(u_v, g_v, tol=tol) for u_v, g_v in zip(u_val, g_val))
+    return _normalize_str(u_val) == _normalize_str(g_val)
+
+
+def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tuple[bool, str]:
+    """Evaluates blind judge responses for all 6 M20 interaction modalities."""
+    if itype == "open_symbolic":
+        u_dict = _parse_json_or_dict(user_ans)
+        u_expr = (u_dict.get("expression") or u_dict.get("value") or "") if u_dict else user_ans
+        ca = gt.get("correct_answer") if isinstance(gt.get("correct_answer"), dict) else {}
+        gt_val = gt.get("correct_value") or ca.get("expression") or ca.get("value") or ""
+        gt_canon = gt.get("canonical_algebraic") or ca.get("canonical_algebraic") or ""
+        gt_equivs = gt.get("accepted_equivalents") or ca.get("accepted_equivalents") or []
+        tol = float(gt.get("tolerance") or ca.get("tolerance") or 0.001)
+        cands = [x for x in [gt_val, gt_canon, *gt_equivs] if str(x).strip()]
+        if any(_is_symbolic_equal(u_expr, c, tol=tol) for c in cands):
+            return True, ""
+        return False, f"Judge symbolic '{u_expr}' does not match expected '{gt_val}'"
+
+    ans = _parse_json_or_dict(user_ans)
+    if ans is None:
+        return False, f"Expected JSON object response for '{itype}', got {user_ans!r}"
+    ca = gt.get("correct_answer") if isinstance(gt.get("correct_answer"), dict) else {}
+
+    if itype == "proof_dag":
+        gt_order = [str(x) for x in (ca.get("canonical_order") or [])]
+        u_order = [str(x) for x in (ans.get("canonical_order") or [])]
+        if u_order != gt_order:
+            return False, f"proof_dag canonical_order mismatch: got {u_order}, expected {gt_order}"
+        if "required_step_ids" in ans and [str(x) for x in (ans.get("required_step_ids") or [])] != [str(x) for x in (ca.get("required_step_ids") or [])]:
+            return False, "proof_dag required_step_ids mismatch"
+        if "edges" in ans:
+            gt_edges = {(str(e[0]), str(e[1])) for e in (ca.get("edges") or []) if isinstance(e, (list, tuple)) and len(e) == 2}
+            u_edges = {(str(e[0]), str(e[1])) for e in (ans.get("edges") or []) if isinstance(e, (list, tuple)) and len(e) == 2}
+            if u_edges != gt_edges:
+                return False, f"proof_dag edges mismatch: got {sorted(u_edges)}, expected {sorted(gt_edges)}"
+        if ca.get("justifications"):
+            gt_just = {str(k): _normalize_str(v) for k, v in ca["justifications"].items()}
+            u_just = {str(k): _normalize_str(v) for k, v in (ans.get("justifications") or {}).items()}
+            if u_just != gt_just:
+                return False, "proof_dag justifications mismatch"
+        return True, ""
+
+    if itype == "adversarial_break":
+        mode = str(ca.get("mode") or ans.get("mode") or "find_fallacy")
+        if mode == "find_fallacy":
+            if str(ans.get("fallacy_step_id") or "") != str(ca.get("fallacy_step_id") or ""):
+                return False, f"adversarial_break fallacy_step_id mismatch: got {ans.get('fallacy_step_id')!r}, expected {ca.get('fallacy_step_id')!r}"
+            if ca.get("correct_reason_id") and str(ans.get("correct_reason_id") or "") != str(ca["correct_reason_id"]):
+                return False, f"adversarial_break correct_reason_id mismatch: got {ans.get('correct_reason_id')!r}, expected {ca['correct_reason_id']!r}"
+            return True, ""
+        u_w = ans.get("sample_witness") if isinstance(ans.get("sample_witness"), dict) else ans
+        gt_w = ca.get("sample_witness") if isinstance(ca.get("sample_witness"), dict) else {}
+        if _values_approx_equal(u_w, gt_w, tol=0.01):
+            return True, ""
+        return False, f"adversarial_break witness mismatch: got {u_w}, expected {gt_w}"
+
+    if itype == "unstructured_model":
+        gt_p1 = {str(k): _normalize_str(v) for k, v in (ca.get("phase1") or {}).items()}
+        u_p1 = {str(k): _normalize_str(v) for k, v in (ans.get("phase1") or {}).items()}
+        if u_p1 != gt_p1:
+            return False, f"unstructured_model phase1 mismatch: got {u_p1}, expected {gt_p1}"
+        gt_p2 = {str(x) for x in (ca.get("phase2") or [])}
+        u_p2 = {str(x) for x in (ans.get("phase2") or [])}
+        if u_p2 != gt_p2:
+            return False, f"unstructured_model phase2 mismatch: got {sorted(u_p2)}, expected {sorted(gt_p2)}"
+        gt_p3 = ca.get("phase3")
+        u_p3 = ans.get("phase3")
+        if isinstance(gt_p3, dict):
+            cands = [gt_p3.get("expression"), gt_p3.get("value"), gt_p3.get("canonical_algebraic"), *(gt_p3.get("accepted_equivalents") or [])]
+            if any(_is_symbolic_equal(u_p3, c, tol=float(gt_p3.get("tolerance", 0.001) or 0.001)) for c in cands if c):
+                return True, ""
+            return False, f"unstructured_model phase3 expression mismatch: got {u_p3!r}"
+        if _normalize_str(u_p3) == _normalize_str(gt_p3):
+            return True, ""
+        return False, f"unstructured_model phase3 mismatch: got {u_p3!r}, expected {gt_p3!r}"
+
+    if itype == "invariant_canvas":
+        c_mode = str(ca.get("mode") or ans.get("mode") or "cartesian")
+        if c_mode == "tree":
+            gt_edges = {(str(e[0]), str(e[1])) if isinstance(e, (list, tuple)) and len(e) == 2 else str(e) for e in (ca.get("required_edges") or [])}
+            u_edges = {(str(e[0]), str(e[1])) if isinstance(e, (list, tuple)) and len(e) == 2 else str(e) for e in (ans.get("required_edges") or [])}
+            if u_edges != gt_edges:
+                return False, f"invariant_canvas tree required_edges mismatch: got {sorted(map(str, u_edges))}"
+            gt_sets = {frozenset(str(x) for x in grp) for grp in (ca.get("required_info_sets") or [])}
+            u_sets = {frozenset(str(x) for x in grp) for grp in (ans.get("required_info_sets") or [])}
+            if u_sets != gt_sets:
+                return False, "invariant_canvas tree required_info_sets mismatch"
+            return True, ""
+        u_ts = ans.get("target_state") if isinstance(ans.get("target_state"), dict) else ans
+        gt_ts = ca.get("target_state") if isinstance(ca.get("target_state"), dict) else {}
+        # Alias support in case client sends style/shade or inequalityStyle/inequalityShade
+        if "style" in u_ts and "inequalityStyle" not in u_ts:
+            u_ts = {**u_ts, "inequalityStyle": u_ts["style"]}
+        if "shade" in u_ts and "inequalityShade" not in u_ts:
+            u_ts = {**u_ts, "inequalityShade": u_ts["shade"]}
+        if gt_ts and "invariants_count" not in gt_ts:
+            if _values_approx_equal(u_ts, gt_ts, tol=0.05):
+                return True, ""
+            return False, f"invariant_canvas target_state mismatch: got {u_ts}, expected {gt_ts}"
+        # Fallback check against extracted cartesian invariants when explicit target_state was omitted
+        invs = gt.get("invariants") if isinstance(gt.get("invariants"), list) else []
+        for inv in invs:
+            if not isinstance(inv, dict):
+                continue
+            kind = str(inv.get("kind") or "")
+            if kind == "inequality_state":
+                if inv.get("expected_style") and _normalize_str(u_ts.get("inequalityStyle")) != _normalize_str(inv["expected_style"]):
+                    return False, f"Expected inequalityStyle={inv['expected_style']}"
+                if inv.get("expected_shade") and _normalize_str(u_ts.get("inequalityShade")) != _normalize_str(inv["expected_shade"]):
+                    return False, f"Expected inequalityShade={inv['expected_shade']}"
+            elif kind == "point_coords":
+                pid = str(inv.get("target") or inv.get("point_id") or "")
+                u_pt = (u_ts.get("points") or {}).get(pid) if isinstance(u_ts.get("points"), dict) else None
+                if not (isinstance(u_pt, dict) and _values_approx_equal(u_pt, {"x": inv.get("target_x"), "y": inv.get("target_y")}, tol=0.05)):
+                    return False, f"Expected point '{pid}' at ({inv.get('target_x')}, {inv.get('target_y')})"
+        return (True, "") if u_ts else (False, "Empty cartesian target_state")
+
+    if itype == "concept_matching":
+        gt_pairs = {str(k): _normalize_str(v) for k, v in (ca.get("pairs") or {}).items()}
+        u_raw = ans.get("pairs") if isinstance(ans.get("pairs"), dict) else ans
+        u_pairs = {str(k): _normalize_str(v) for k, v in u_raw.items()}
+        if u_pairs == gt_pairs and len(gt_pairs) > 0:
+            return True, ""
+        return False, f"concept_matching pairs mismatch: got {u_pairs}, expected {gt_pairs}"
 
     return False, f"Unsupported interaction type '{itype}'"
 
@@ -1710,7 +2087,7 @@ def compare_judge_responses(
                 correct_ans = gt.get("correct_letters")
             else:
                 solver_ans = user_ans
-                correct_ans = None
+                correct_ans = gt.get("correct_value") if gt.get("correct_value") is not None else gt.get("correct_answer")
 
             neuro_verdict = resolve_neuro_symbolic_verdict(
                 kernel_verified=True,

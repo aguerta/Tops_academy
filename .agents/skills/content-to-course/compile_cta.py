@@ -1141,6 +1141,55 @@ def count_evaluated_fields(cta_dict: Dict[str, Any]) -> int:
     return max(1, total)
 
 
+_MODALITY_ALIASES: Dict[str, str] = {
+    "mc7": "multiple_choice_7_options",
+    "mc": "multiple_choice_7_options",
+    "multiple_choice": "multiple_choice_7_options",
+    "multiple_choice_7_options": "multiple_choice_7_options",
+    "ms": "multiple_select",
+    "multiple_select": "multiple_select",
+    "fib": "fill_in_the_blank",
+    "open_ended": "fill_in_the_blank",
+    "fill_in_the_blank": "fill_in_the_blank",
+    "sym": "open_symbolic",
+    "symbolic": "open_symbolic",
+    "open_symbolic": "open_symbolic",
+    "proof": "proof_dag",
+    "parsons": "proof_dag",
+    "proof_dag": "proof_dag",
+    "adversarial": "adversarial_break",
+    "fallacy": "adversarial_break",
+    "adversarial_break": "adversarial_break",
+    "stage0": "unstructured_model",
+    "stage_0": "unstructured_model",
+    "modeling": "unstructured_model",
+    "unstructured_model": "unstructured_model",
+    "canvas": "invariant_canvas",
+    "graph_manipulator": "invariant_canvas",
+    "invariant_canvas": "invariant_canvas",
+    "matching": "concept_matching",
+    "concept_matching": "concept_matching",
+}
+
+
+def _normalize_recommended_modalities(raw_mods: Any) -> List[str]:
+    """Normalize optional CTA-Architect modality recommendations preserving order."""
+    if not raw_mods:
+        return []
+    if isinstance(raw_mods, str):
+        items = [x.strip() for x in raw_mods.split(",") if x.strip()]
+    elif isinstance(raw_mods, (list, tuple, set)):
+        items = [str(x).strip() for x in raw_mods if x is not None and str(x).strip()]
+    else:
+        return []
+    out: List[str] = []
+    for raw in items:
+        norm = _MODALITY_ALIASES.get(raw.lower(), raw)
+        if norm not in out:
+            out.append(norm)
+    return out
+
+
 def compile_cta_module(
     competencies_data: Any,
     course_id: str = "custom_course",
@@ -1153,7 +1202,8 @@ def compile_cta_module(
 ) -> Dict[str, Any]:
     """Compiles tabular positional tuples into formal cta.json dictionary.
 
-    Supports tuples (6 to 10 elements) and dicts with 'assumptions' or spliced from cta_fixes/.
+    Supports tuples (6 to 11 elements; optional 11th element = recommended_modalities)
+    and dicts with 'assumptions' or spliced from cta_fixes/.
     """
     if hasattr(competencies_data, "COMPETENCIES"):
         competencies_tuples = getattr(competencies_data, "COMPETENCIES")
@@ -1237,6 +1287,7 @@ def compile_cta_module(
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
         raw_assumptions = []
+        raw_rec_mods: Any = []
         if isinstance(item, dict):
             if "assumptions" in item or item.get("_is_spliced"):
                 raw_type = str(item.get("type", "concept")).strip().lower()
@@ -1262,6 +1313,7 @@ def compile_cta_module(
                 prereqs = list(item.get("prerequisites", []))
                 raw_distractors = item.get("distractors", [])
                 raw_assumptions = item.get("assumptions", [])
+                raw_rec_mods = item.get("recommended_modalities", [])
             else:
                 raise TypeError(
                     f"[compile_cta] Competencia en índice {comp_idx} es un diccionario. "
@@ -1431,6 +1483,8 @@ def compile_cta_module(
                     prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple, set)) else []
                     raw_distractors = item[8] if len(item) > 8 else []
                     raw_assumptions = item[9] if len(item) > 9 else []
+                    if len(item) >= 11 and item[10] is not None:
+                        raw_rec_mods = item[10]
                 elif len(item) == 9:
                     doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
                     page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
@@ -1473,6 +1527,7 @@ def compile_cta_module(
             raw_assumptions=raw_assumptions,
             cid_clean=cid_clean,
         )
+        recommended_modalities = _normalize_recommended_modalities(raw_rec_mods)
 
         comp_dict = {
             "id": raw_id,
@@ -1492,6 +1547,8 @@ def compile_cta_module(
             "distractors": compiled_distractors,
             "assumptions": compiled_assumptions,
         }
+        if recommended_modalities:
+            comp_dict["recommended_modalities"] = recommended_modalities
         if raw_id.upper().startswith("PRE-") or (isinstance(item, dict) and item.get("is_prerequisite")):
             comp_dict["is_prerequisite"] = True
         sanitize_competency_math(comp_dict)

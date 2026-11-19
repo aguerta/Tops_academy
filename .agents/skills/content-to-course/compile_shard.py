@@ -55,6 +55,128 @@ from engine.stage_contract import (
     stems_advice as _s4_stems_advice,
 )
 
+_QTYPE_TO_INTERACTION: Dict[str, str] = {
+    "mc7": "multiple_choice_7_options",
+    "mc": "multiple_choice_7_options",
+    "multiple_choice": "multiple_choice_7_options",
+    "multiple_choice_7_options": "multiple_choice_7_options",
+    "fib": "fill_in_the_blank",
+    "open_ended": "fill_in_the_blank",
+    "fill_in_the_blank": "fill_in_the_blank",
+    "ms": "multiple_select",
+    "multiple_select": "multiple_select",
+    "open_symbolic": "open_symbolic",
+    "sym": "open_symbolic",
+    "symbolic": "open_symbolic",
+    "proof_dag": "proof_dag",
+    "proof": "proof_dag",
+    "parsons": "proof_dag",
+    "adversarial_break": "adversarial_break",
+    "adversarial": "adversarial_break",
+    "fallacy": "adversarial_break",
+    "unstructured_model": "unstructured_model",
+    "stage0": "unstructured_model",
+    "stage_0": "unstructured_model",
+    "modeling": "unstructured_model",
+    "invariant_canvas": "invariant_canvas",
+    "graph_manipulator": "invariant_canvas",
+    "canvas": "invariant_canvas",
+    "concept_matching": "concept_matching",
+    "matching": "concept_matching",
+}
+
+ACTIVE_INTERACTION_TYPES: Set[str] = {
+    "fill_in_the_blank",
+    "multiple_select",
+    "open_symbolic",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+}
+
+PURE_PRODUCTION_TYPES: Set[str] = {
+    "fill_in_the_blank",
+    "open_symbolic",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+}
+
+STRUCTURED_M20_TYPES: Set[str] = {
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+}
+
+_STRUCTURED_PAYLOAD_KEYS = (
+    "proof_dag",
+    "dag",
+    "adversarial_break",
+    "adversarial",
+    "unstructured_model",
+    "stage0",
+    "invariant_canvas",
+    "canvas",
+    "concept_matching",
+    "matching",
+    "symbolic_config",
+    "accepted_equivalents",
+)
+
+
+def _extract_m20_structured_dids(interaction_type: str, compiled: Any) -> List[str]:
+    """Extract normalized distractor_ids from a compiled M20 structured modality payload."""
+    if not isinstance(compiled, dict):
+        return []
+    raw_dids: List[str] = []
+
+    def _add_did(obj: Any) -> None:
+        if isinstance(obj, dict):
+            did = obj.get("distractor_id") or obj.get("did")
+            if isinstance(did, str) and did.strip():
+                raw_dids.append(did.strip().replace("_", "-"))
+
+    if interaction_type == "proof_dag":
+        from engine.proof_compiler import extract_proof_dag_distractor_ids
+        return extract_proof_dag_distractor_ids(compiled)
+    if interaction_type == "adversarial_break":
+        from engine.adversarial_generator import extract_adversarial_distractor_ids
+        return extract_adversarial_distractor_ids(compiled)
+    if interaction_type == "unstructured_model":
+        for item in (compiled.get("phase1_variables") or {}).get("items") or []:
+            _add_did(item)
+        for opt in (compiled.get("phase2_assumptions") or {}).get("options") or []:
+            _add_did(opt)
+        p3 = compiled.get("phase3_formulation") or {}
+        for opt in p3.get("options") or []:
+            _add_did(opt)
+        for dd in p3.get("diagnostic_distractors") or []:
+            _add_did(dd)
+    elif interaction_type == "invariant_canvas":
+        for inv in compiled.get("invariants") or []:
+            _add_did(inv)
+        ti = compiled.get("tree_invariants") or {}
+        if isinstance(ti, dict):
+            _add_did(ti)
+            for tdid in ti.get("distractor_ids") or []:
+                if isinstance(tdid, str) and tdid.strip():
+                    raw_dids.append(tdid.strip().replace("_", "-"))
+    elif interaction_type == "concept_matching":
+        for tg in compiled.get("targets") or []:
+            _add_did(tg)
+    return list(dict.fromkeys(raw_dids))
+
+
+def _structured_payload_fingerprint(res: Dict[str, Any]) -> str:
+    """Return deterministic JSON fingerprint for structured M20 keys present in a generator dict."""
+    sub = {k: res[k] for k in _STRUCTURED_PAYLOAD_KEYS if k in res and res[k] is not None}
+    return json.dumps(sub, sort_keys=True, default=str) if sub else ""
+
 
 class EvaluationContext:
     """Thread-safe context tracking active template, generator callable and seed during compilation."""
@@ -2375,7 +2497,7 @@ def _compile_shard_body(
         })
 
     # Splice fix files from shards/shard_fixes/<CID>.py
-    known_types = {"multiple_choice", "multiple_choice_7_options", "fill_in_the_blank", "multiple_select", "open_ended", "mc7", "fib", "ms"}
+    known_types = set(_QTYPE_TO_INTERACTION.keys())
 
     for cid_fix, fix_path in fix_files_by_cid.items():
         if not fix_path.is_file():
@@ -2639,14 +2761,7 @@ def _compile_shard_body(
             tpl_id = str(t.get("id") or t.get("tpl_id") or t.get("template_id") or "").strip()
             cid = str(t.get("cid") or t.get("competency_id") or "").strip()
             qtype_in = str(t.get("qtype") or t.get("question_type") or "").strip().lower()
-            if qtype_in in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options"):
-                qtype = "multiple_choice_7_options"
-            elif qtype_in in ("fib", "open_ended", "fill_in_the_blank"):
-                qtype = "fill_in_the_blank"
-            elif qtype_in in ("ms", "multiple_select"):
-                qtype = "multiple_select"
-            else:
-                qtype = qtype_in
+            qtype = _QTYPE_TO_INTERACTION.get(qtype_in, qtype_in)
             gen_raw = t.get("gen") or t.get("generator_code") or t.get("generate_py")
             ver_raw = t.get("ver") or t.get("verifier_code") or t.get("cross_check_py")
             diff_raw = t.get("band") or t.get("difficulty_bloom")
@@ -2713,15 +2828,9 @@ def _compile_shard_body(
                     return _fail(err_msg)
 
         # Determine interaction_type
-        if qtype in ("multiple_choice", "multiple_choice_7_options", "mc7"):
-            interaction_type = "multiple_choice_7_options"
-        elif qtype in ("open_ended", "fill_in_the_blank", "fib"):
-            interaction_type = "fill_in_the_blank"
+        interaction_type = _QTYPE_TO_INTERACTION.get(qtype, qtype)
+        if interaction_type == "fill_in_the_blank":
             target_misc = []
-        elif qtype in ("multiple_select", "ms"):
-            interaction_type = "multiple_select"
-        else:
-            interaction_type = qtype
 
         # Stems Cartesian expansion if 2-tuple of (contexts, questions)
         if isinstance(stems_raw, (list, tuple)) and len(stems_raw) == 2:
@@ -3175,18 +3284,27 @@ cross_check=verify
             has_var_in_correct = bool(re.search(r"@([a-zA-Z0-9_]+)@", str(sample_dict.get("correct", ""))))
             has_var_in_stem = bool(re.search(r"@([a-zA-Z0-9_]+)@", stem_es)) or any(bool(re.search(r"@([a-zA-Z0-9_]+)@", s)) for s in stem_variants)
 
-            # FIB KaTeX guard
-            if interaction_type == "fill_in_the_blank":
-                corr_str = str(sample_dict.get("correct", "")).strip()
+            # FIB & Open Symbolic KaTeX / diagnostic_distractors guard
+            if interaction_type in ("fill_in_the_blank", "open_symbolic"):
+                raw_corr_obj = sample_dict.get("correct", "")
+                if interaction_type == "open_symbolic" and isinstance(raw_corr_obj, dict):
+                    corr_str = str(
+                        raw_corr_obj.get("expression")
+                        or raw_corr_obj.get("value")
+                        or raw_corr_obj.get("canonical_algebraic")
+                        or ""
+                    ).strip()
+                else:
+                    corr_str = str(raw_corr_obj).strip()
                 if corr_str.startswith("$") and corr_str.endswith("$") and len(corr_str) >= 2:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, corr_str)
                     err_msg = (
-                        f"FAIL: [TPL-FIB-KATEX] La respuesta FIB en '{tpl_id}' ('{corr_str}') (Línea {line_no} en {curr_p.name}) contiene delimitadores '$' externos. "
+                        f"FAIL: [TPL-FIB-KATEX] La respuesta {interaction_type} en '{tpl_id}' ('{corr_str}') (Línea {line_no} en {curr_p.name}) contiene delimitadores '$' externos. "
                         f"En Frontend (FeedbackToast) se formatea automáticamente en modo matemático; retire los '$' externos."
                     )
                     if _step5_err(err_msg):
                         return _fail(err_msg)
-                fib_katex_errs = validate_katex_syntax(corr_str, f"FIB correct answer in '{tpl_id}'", allow_template_vars=True)
+                fib_katex_errs = validate_katex_syntax(corr_str, f"{interaction_type} correct answer in '{tpl_id}'", allow_template_vars=True)
                 if fib_katex_errs:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, corr_str)
                     err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {fib_katex_errs[0]}"
@@ -3194,11 +3312,12 @@ cross_check=verify
                         return _fail(err_msg)
 
             # Warn-only PyKaTeX render check (does not affect pass/fail)
-            _is_fib = interaction_type == "fill_in_the_blank"
-            for _w in pykatex_warnings(sample_dict.get("correct", ""), f"correct in '{tpl_id}'", whole_is_math=_is_fib):
+            _is_fib = interaction_type in ("fill_in_the_blank", "open_symbolic")
+            _pykatex_corr = corr_str if _is_fib else sample_dict.get("correct", "")
+            for _w in pykatex_warnings(_pykatex_corr, f"correct in '{tpl_id}'", whole_is_math=_is_fib):
                 print(_w, file=sys.stderr)
             for _d in (sample_dict.get("distractors") or []):
-                _dv = _d.get("value") if isinstance(_d, dict) else (_d[1] if isinstance(_d, (tuple, list)) and len(_d) > 1 else _d)
+                _dv = _d.get("value") or _d.get("expression") if isinstance(_d, dict) else (_d[1] if isinstance(_d, (tuple, list)) and len(_d) > 1 else _d)
                 for _w in pykatex_warnings(_dv, f"distractor in '{tpl_id}'"):
                     print(_w, file=sys.stderr)
 
@@ -3242,38 +3361,53 @@ cross_check=verify
                         file=sys.stderr,
                     )
 
-            # MC7 checks
-            if interaction_type == "multiple_choice_7_options":
-                s_corr_raw = str(sample_dict.get("correct", "")).strip()
-                if s_corr_raw:
-                    corr_katex_errs = validate_katex_syntax(s_corr_raw, f"correct answer in '{tpl_id}'", allow_template_vars=True)
-                    if corr_katex_errs:
-                        line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, s_corr_raw)
-                        err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {corr_katex_errs[0]}"
-                        if _step5_err(err_msg):
-                            return _fail(err_msg)
-                    if strict:
-                        m_tt = _find_telltale_in_option(s_corr_raw, is_distractor=False)
-                        if m_tt:
+            # MC7 and FIB / Open Symbolic diagnostic distractor checks
+            if interaction_type in ("multiple_choice_7_options", "fill_in_the_blank", "open_symbolic"):
+                is_mc7_tpl = interaction_type == "multiple_choice_7_options"
+                if is_mc7_tpl:
+                    s_corr_raw = str(sample_dict.get("correct", "")).strip()
+                    if s_corr_raw:
+                        corr_katex_errs = validate_katex_syntax(s_corr_raw, f"correct answer in '{tpl_id}'", allow_template_vars=True)
+                        if corr_katex_errs:
                             line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, s_corr_raw)
-                            err_msg = (
-                                f"FAIL: [TPL-TELLTALE / parenthetical_telltale_linter / distractor_integrity_linter] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): "
-                                f"la opción visible contiene metainformación delatora: '{m_tt}'. "
-                                f"Elimina palabras y coletillas delatoras del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
-                            )
+                            err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {corr_katex_errs[0]}"
                             if _step5_err(err_msg):
                                 return _fail(err_msg)
-                dists_list = sample_dict.get("distractors") or []
+                        if strict:
+                            m_tt = _find_telltale_in_option(s_corr_raw, is_distractor=False)
+                            if m_tt:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, s_corr_raw)
+                                err_msg = (
+                                    f"FAIL: [TPL-TELLTALE / parenthetical_telltale_linter / distractor_integrity_linter] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): "
+                                    f"la opción visible contiene metainformación delatora: '{m_tt}'. "
+                                    f"Elimina palabras y coletillas delatoras del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
+                                )
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
+                dists_list = sample_dict.get("distractors") or sample_dict.get("ds") or []
                 if isinstance(dists_list, list) and dists_list:
                     dids_found = []
                     for d_idx, d_item in enumerate(dists_list, start=1):
                         did = None
                         rat = ""
                         val = ""
+                        is_regex_trap = False
                         if isinstance(d_item, dict):
                             did = d_item.get("distractor_id") or d_item.get("id") or d_item.get("did")
+                            if isinstance(did, str):
+                                did = did.strip().replace("_", "-")
                             rat = str(d_item.get("error_rationale") or d_item.get("rationale") or "")
-                            val = str(d_item.get("value") if "value" in d_item else (d_item.get("content") or ""))
+                            if not rat and did and did in combined_rats:
+                                rat = combined_rats[did]
+                            val = str(
+                                d_item.get("value")
+                                if "value" in d_item
+                                else (d_item.get("expression") or d_item.get("content") or d_item.get("pattern") or "")
+                            )
+                            is_regex_trap = (
+                                str(d_item.get("match_type") or d_item.get("kind") or "").lower() == "regex"
+                                or ("pattern" in d_item and "value" not in d_item and "expression" not in d_item)
+                            )
                         elif isinstance(d_item, (tuple, list)):
                             if len(d_item) >= 3:
                                 did = str(d_item[0]).strip().replace("_", "-")
@@ -3288,8 +3422,9 @@ cross_check=verify
                                     rat = combined_rats.get(did_cand) or combined_rats[orig_did0]
                                 elif strict:
                                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(d_item[0]))
+                                    err_tag = "[TPL-MC7-STRICT]" if is_mc7_tpl else "[TPL-DIAG-DISTRACTOR]"
                                     err_msg = (
-                                        f"FAIL: [TPL-MC7-STRICT] En modo estricto, la 2-tupla (distractor_id, value) está prohibida en MC7 ('{tpl_id}') (Línea {line_no} en {curr_p.name}). "
+                                        f"FAIL: {err_tag} En modo estricto, la 2-tupla (distractor_id, value) sin entrada en RATS está prohibida en {interaction_type} ('{tpl_id}') (Línea {line_no} en {curr_p.name}). "
                                         f"Cada distractor debe ser una 3-tupla (distractor_id, value, error_rationale) con error_rationale >= 20 caracteres: {repr(d_item)}"
                                     )
                                     if _step5_err(err_msg):
@@ -3300,17 +3435,17 @@ cross_check=verify
                                     did = did_cand
                                     val = str(d_item[1]).strip()
 
-                        if fmt_str and "@X@" in fmt_str and val:
+                        if is_mc7_tpl and fmt_str and "@X@" in fmt_str and val:
                             val = _format_with_fmt(val, fmt_str)
 
-                        if val:
+                        if val and not is_regex_trap:
                             val_katex_errs = validate_katex_syntax(val, f"distractor '{did}' value in '{tpl_id}'", allow_template_vars=True)
                             if val_katex_errs:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
                                 err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {val_katex_errs[0]}"
                                 if _step5_err(err_msg):
                                     return _fail(err_msg)
-                            if strict:
+                            if is_mc7_tpl and strict:
                                 m_tt = _find_telltale_in_option(val, is_distractor=True)
                                 if m_tt:
                                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
@@ -3345,15 +3480,17 @@ cross_check=verify
                             norm_rat_s = re.sub(r"@[A-Za-z0-9_]+@", "X", rat_s)
                             if len(rat_s) < 20:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                rat_tag = "[TPL-MC7-RATIONALE]" if is_mc7_tpl else "[TPL-DIAG-RATIONALE]"
                                 err_msg = (
-                                    f"FAIL: [TPL-MC7-RATIONALE] El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat_s)} (< 20 caracteres): '{rat}'."
+                                    f"FAIL: {rat_tag} El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat_s)} (< 20 caracteres): '{rat}'."
                                 )
                                 if _step5_err(err_msg):
                                     return _fail(err_msg)
                             elif len(norm_rat_s) < 50:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                rat_tag = "[TPL-MC7-RATIONALE]" if is_mc7_tpl else "[TPL-DIAG-RATIONALE]"
                                 deferred_hints_dup_errors.append(
-                                    f"FAIL: [TPL-MC7-RATIONALE] El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale demasiado corto tras interpolación de @var@ "
+                                    f"FAIL: {rat_tag} El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale demasiado corto tras interpolación de @var@ "
                                     f"(raw={len(rat_s)}c, normalizado @var@->X={len(norm_rat_s)}c < 50c): '{rat}'."
                                 )
                             # Dynamic rationale check [TPL-DYNAMIC-RATIONALE]
@@ -3371,7 +3508,7 @@ cross_check=verify
                                         )
                                         if _step5_err(err_msg):
                                             return _fail(err_msg)
-                    target_misc = dids_found
+                    target_misc = list(dict.fromkeys(dids_found))
 
             # MS checks
             if interaction_type == "multiple_select":
@@ -3455,6 +3592,86 @@ cross_check=verify
                                             return _fail(err_msg)
                 target_misc = list(dict.fromkeys(ms_dids))
 
+            # Bloom Superior structured modalities (Shift-Left structural check + distractor_ids extraction)
+            if interaction_type in STRUCTURED_M20_TYPES:
+                sample_vars = sample_dict.get("vars") if isinstance(sample_dict.get("vars"), dict) else {}
+                cta_dmap = {d["id"]: d for d in clean_cta_distractors if isinstance(d, dict) and d.get("id")}
+                compiled_m20: Optional[Dict[str, Any]] = None
+                try:
+                    if interaction_type == "proof_dag":
+                        from engine.proof_compiler import compile_and_verify_proof_dag
+                        raw_p = sample_dict.get("proof_dag") or sample_dict.get("dag") or (t.get("proof_dag") if is_form_c else None)
+                        compiled_m20, _ = compile_and_verify_proof_dag(
+                            raw_p,
+                            variables=sample_vars,
+                            cta_distractors_map=cta_dmap,
+                            rng=_make_sandbox_rng(42),
+                            rats_map=combined_rats,
+                        )
+                    elif interaction_type == "adversarial_break":
+                        from engine.adversarial_generator import compile_and_verify_adversarial
+                        raw_p = sample_dict.get("adversarial_break") or sample_dict.get("adversarial") or (t.get("adversarial_break") if is_form_c else None)
+                        compiled_m20, _ = compile_and_verify_adversarial(
+                            raw_p,
+                            variables=sample_vars,
+                            cta_distractors_map=cta_dmap,
+                            rng=_make_sandbox_rng(42),
+                            rats_map=combined_rats,
+                        )
+                    elif interaction_type == "unstructured_model":
+                        from engine.assemble import _assemble_unstructured_model
+                        raw_p = sample_dict.get("unstructured_model") or sample_dict.get("stage0") or (t.get("unstructured_model") if is_form_c else None)
+                        compiled_m20, _ = _assemble_unstructured_model(
+                            raw_p,
+                            variables=sample_vars,
+                            cta_distractors_map=cta_dmap,
+                            rng=_make_sandbox_rng(42),
+                            rats_map=combined_rats,
+                        )
+                    elif interaction_type == "invariant_canvas":
+                        from engine.assemble import _assemble_invariant_canvas
+                        raw_p = sample_dict.get("invariant_canvas") or sample_dict.get("canvas") or (t.get("invariant_canvas") if is_form_c else None)
+                        compiled_m20, _ = _assemble_invariant_canvas(
+                            raw_p,
+                            variables=sample_vars,
+                            cta_distractors_map=cta_dmap,
+                            rats_map=combined_rats,
+                        )
+                    elif interaction_type == "concept_matching":
+                        from engine.assemble import _assemble_concept_matching
+                        raw_p = sample_dict.get("concept_matching") or sample_dict.get("matching") or (t.get("concept_matching") if is_form_c else None)
+                        compiled_m20, _ = _assemble_concept_matching(
+                            raw_p,
+                            variables=sample_vars,
+                            cta_distractors_map=cta_dmap,
+                            rng=_make_sandbox_rng(42),
+                            rats_map=combined_rats,
+                        )
+                except ValueError as m20_err:
+                    line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx)
+                    err_tag = {
+                        "proof_dag": "TPL-M20-PROOF-DAG",
+                        "adversarial_break": "TPL-M20-ADVERSARIAL",
+                        "unstructured_model": "TPL-M20-UNSTRUCTURED-MODEL",
+                        "invariant_canvas": "TPL-M20-INVARIANT-CANVAS",
+                        "concept_matching": "TPL-M20-CONCEPT-MATCHING",
+                    }[interaction_type]
+                    err_msg = f"FAIL: [{err_tag}] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {m20_err}"
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+
+                if compiled_m20 is not None:
+                    m20_dids = _extract_m20_structured_dids(interaction_type, compiled_m20)
+                    for norm_did in m20_dids:
+                        if cta_declared_ids and norm_did not in cta_declared_ids:
+                            line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, norm_did)
+                            err_msg = (
+                                f"FAIL: Distractor ID '{norm_did}' en {interaction_type} de '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'."
+                            )
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
+                    target_misc = m20_dids
+
         # Soundness and Distractor Refutation Dry-Run (seeds 42, 43, 44)
         if callable(gen_raw) and callable(ver_raw) and strict:
             import random
@@ -3476,15 +3693,30 @@ cross_check=verify
                 if "vars" not in res_test:
                     c_val = res_test.get("correct") or res_test.get("ans") or ""
                     res_test["vars"] = {"ans": c_val} if c_val else {}
-                c_test = str(res_test.get("correct", "")).strip()
+                raw_c_test = res_test.get("correct")
+                if isinstance(raw_c_test, dict) and interaction_type == "open_symbolic":
+                    c_test = str(
+                        raw_c_test.get("expression")
+                        or raw_c_test.get("value")
+                        or raw_c_test.get("canonical_algebraic")
+                        or ""
+                    ).strip()
+                elif isinstance(raw_c_test, (dict, list)):
+                    c_test = ""
+                else:
+                    c_test = str(raw_c_test or "").strip()
                 v_test = res_test.get("vars", {}) if isinstance(res_test.get("vars"), dict) else {}
-                if fmt_str and "@X@" in fmt_str and c_test:
+                if fmt_str and "@X@" in fmt_str and c_test and not isinstance(raw_c_test, dict):
                     c_test = _format_with_fmt(c_test, fmt_str)
                     res_test["correct"] = c_test
 
                 # Soundness check
-                if callable(ver_raw) and not c_test and isinstance(res_test.get("options"), list):
-                    # Multiple Select: sin clave "correct"; el verificador recibe la instancia completa.
+                is_instance_verifier = (
+                    (not c_test and isinstance(res_test.get("options"), list))
+                    or (interaction_type in STRUCTURED_M20_TYPES)
+                )
+                if callable(ver_raw) and is_instance_verifier:
+                    # Multiple Select & structured M20 modalities: el verificador recibe la instancia completa.
                     try:
                         from engine.sandbox import call_with_timeout
                         sound_res = call_with_timeout(ver_raw, args=(res_test,), timeout=0.8, seed=test_seed)
@@ -3504,19 +3736,34 @@ cross_check=verify
                         return _fail(err_msg)
                     break
 
-                # Distractor refutation
+                # Distractor refutation (scalar MC7 / FIB / non-regex open_symbolic)
                 dists_test = res_test.get("distractors") or []
-                if isinstance(dists_test, list) and not tautology_recorded:
+                if (
+                    interaction_type in ("multiple_choice_7_options", "fill_in_the_blank", "open_symbolic")
+                    and isinstance(dists_test, list)
+                    and not tautology_recorded
+                ):
                     for d_t in dists_test:
                         d_val = ""
+                        is_regex_trap = False
                         if isinstance(d_t, dict):
-                            d_val = str(d_t.get("value") if "value" in d_t else d_t.get("content", "")).strip()
+                            is_regex_trap = (
+                                str(d_t.get("match_type") or d_t.get("kind") or "").lower() == "regex"
+                                or ("pattern" in d_t and "value" not in d_t and "expression" not in d_t)
+                            )
+                            d_val = str(
+                                d_t.get("value")
+                                if "value" in d_t
+                                else (d_t.get("expression") or d_t.get("content", ""))
+                            ).strip()
                         elif isinstance(d_t, (tuple, list)) and len(d_t) >= 2:
                             d_val = str(d_t[1]).strip()
                         elif isinstance(d_t, (tuple, list)) and len(d_t) == 1:
                             d_val = str(d_t[0]).strip()
                         elif isinstance(d_t, (str, int, float)):
                             d_val = str(d_t).strip()
+                        if is_regex_trap:
+                            continue
                         if fmt_str and "@X@" in fmt_str and d_val:
                             d_val = _format_with_fmt(d_val, fmt_str)
                         if d_val and d_val != c_test:
@@ -3720,6 +3967,13 @@ cross_check=verify
             canonical_dict["archetype"] = archetype
         if assumption_id:
             canonical_dict["assumption_id"] = assumption_id
+        _has_scalar_ds = interaction_type in ("fill_in_the_blank", "open_symbolic") and bool(
+            sample_dict.get("distractors") or sample_dict.get("ds")
+        )
+        if combined_rats and (interaction_type in STRUCTURED_M20_TYPES or _has_scalar_ds):
+            canonical_dict["rats"] = combined_rats
+        if is_form_c and isinstance(t.get("symbolic_config"), dict):
+            canonical_dict["symbolic_config"] = t["symbolic_config"]
 
         # Apply mechanical auto-healing
         auto_heal_template_data(canonical_dict, cta_comp=cta_comp)
@@ -3939,18 +4193,40 @@ cross_check=verify
                             f"calcular/aplicar, o reescribe el ítem; si es puramente conceptual, muévelo a una "
                             f"competencia Concept."
                         )
-                req_active = 2 if is_skill else 1
-                active_tpls = [
-                    t for t in tpls
-                    if t.get("interaction_type") in ("fill_in_the_blank", "multiple_select")
-                    or t.get("question_type") in ("fib", "fill_in_the_blank", "ms", "multiple_select")
-                ]
-                if len(active_tpls) < req_active:
-                    m3_errors.append(
-                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Práctica activa insuficiente para '{cid}' "
-                        f"({'habilidad' if is_skill else 'concepto/misconception'}). Se requieren al menos {req_active} plantilla(s) "
-                        f"de tipo FIB o MS (encontradas: {len(active_tpls)})."
-                    )
+
+                # CTA-Architect-driven modality plan enforcement (replaces rigid per-type quotas)
+                raw_rec_mods = cta_c.get("recommended_modalities")
+                if isinstance(raw_rec_mods, list) and len(raw_rec_mods) > 0:
+                    allowed_mods_list: List[str] = []
+                    for rm in raw_rec_mods:
+                        rm_norm = _QTYPE_TO_INTERACTION.get(
+                            str(rm).strip().lower(),
+                            str(rm).strip().lower(),
+                        )
+                        if rm_norm and rm_norm not in allowed_mods_list:
+                            allowed_mods_list.append(rm_norm)
+                    allowed_mods = set(allowed_mods_list)
+                    actual_mods_seq = [
+                        _QTYPE_TO_INTERACTION.get(
+                            str(t.get("interaction_type") or t.get("question_type") or "").strip().lower(),
+                            str(t.get("interaction_type") or t.get("question_type") or "").strip().lower(),
+                        )
+                        for t in tpls
+                    ]
+                    unexpected_mods = sorted({m for m in actual_mods_seq if m and m not in allowed_mods})
+                    if unexpected_mods:
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' usa modalidad(es) "
+                            f"no autorizada(s) por el CTA Architect ({unexpected_mods}). "
+                            f"Modalidades permitidas en cta.json para '{cid}': {allowed_mods_list}."
+                        )
+                    if len(tpls) >= len(allowed_mods) and len(allowed_mods) >= 2:
+                        missing_rec = sorted(allowed_mods - set(actual_mods_seq))
+                        if missing_rec:
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' omitió modalidad(es) "
+                                f"designada(s) por el CTA Architect ({missing_rec}). Plan requerido: {allowed_mods_list}."
+                            )
 
                 if eff_min_arch >= 4 and is_skill:
                     high_blooms = {"Apply", "Analyze", "Evaluate", "Create"}
@@ -3958,16 +4234,6 @@ cross_check=verify
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [M3-ARCHETYPES] Diversidad cognitiva insuficiente para habilidad '{cid}'. "
                             f"Se requiere al menos 1 nivel Bloom de aplicación o superior ({sorted(list(high_blooms))})."
-                        )
-                    fib_tpls = [
-                        t for t in tpls
-                        if t.get("interaction_type") == "fill_in_the_blank"
-                        or t.get("question_type") in ("fib", "fill_in_the_blank")
-                    ]
-                    if len(fib_tpls) < 1:
-                        m3_errors.append(
-                            f"{cid}.json ({source_name}): [M3-ARCHETYPES] Práctica activa insuficiente para habilidad '{cid}'. "
-                            f"Se requiere al menos 1 plantilla de tipo FIB (fill_in_the_blank) cuando eff_min_arch >= 4."
                         )
 
                 # Verificación 1 — Enunciados (stem_es) distintos por arquetipo & detección de clones
@@ -4073,6 +4339,9 @@ cross_check=verify
                                             for o in opts if isinstance(o, dict)
                                         ]
                                         opts_s = json.dumps(sorted(simplified_opts), default=str)
+                                    struct_s = _structured_payload_fingerprint(res)
+                                    if struct_s:
+                                        opts_s = f"{opts_s}|{struct_s}"
                                     return (c_v, v_s, opts_s)
                                 elif isinstance(res, (tuple, list)) and len(res) >= 1 and isinstance(res[0], dict):
                                     v_d = res[0]
@@ -4101,6 +4370,9 @@ cross_check=verify
                                             for o in opts if isinstance(o, dict)
                                         ]
                                         opts_s = json.dumps(sorted(simplified_opts), default=str)
+                                    struct_s = _structured_payload_fingerprint(res)
+                                    if struct_s:
+                                        opts_s = f"{opts_s}|{struct_s}"
                                     return (c_v, v_s, opts_s)
                             except Exception:
                                 pass
@@ -4446,11 +4718,11 @@ cross_check=verify
                                     )
                                     break
 
-            # Verificación 4b — Detección Temprana de Mono-Clave [TPL-STATIC-OPT] para FIB y MS
+            # Verificación 4b — Detección Temprana de Mono-Clave [TPL-STATIC-OPT] para FIB, open_symbolic y MS
             if strict:
                 for t_idx_m, tpl_m in enumerate(tpls):
                     itype_m = tpl_m.get("interaction_type") or tpl_m.get("question_type")
-                    if itype_m not in ("fill_in_the_blank", "multiple_select"):
+                    if itype_m not in ("fill_in_the_blank", "open_symbolic", "multiple_select"):
                         continue
                     c_call_m = gen_callables[t_idx_m] if t_idx_m < len(gen_callables) else None
                     if not callable(c_call_m):
@@ -4469,8 +4741,12 @@ cross_check=verify
                             if not isinstance(res_m, dict):
                                 continue
                             vars_m = res_m.get("vars", {}) if isinstance(res_m.get("vars"), dict) else {}
-                            if itype_m == "fill_in_the_blank":
-                                c_raw = str(res_m.get("correct", ""))
+                            if itype_m in ("fill_in_the_blank", "open_symbolic"):
+                                raw_cm = res_m.get("correct", res_m.get("ans", ""))
+                                if isinstance(raw_cm, dict):
+                                    c_raw = str(raw_cm.get("expression") or raw_cm.get("value") or raw_cm.get("canonical_algebraic") or "")
+                                else:
+                                    c_raw = str(raw_cm)
                                 c_txt = format_template_string(c_raw, vars_m) if format_template_string else c_raw
                                 corr_samples.append(c_txt.strip())
                             else:  # multiple_select

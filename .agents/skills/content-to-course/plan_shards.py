@@ -71,13 +71,18 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
 # Self-contained reference for shard authors so they never read engine code
 DSL_REFERENCE: Dict[str, Any] = {
     "min_archetypes": MIN_ARCHETYPES,
-    "description": "Form-C / Form-B (min_archetypes = 4) parametric exercise architecture (direct, inverse, perturbation, boundary_or_edge_case)",
-    "canonical_template_schema": "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)",
+    "description": "Form-C Quad-Band dicts in TEMPLATES (or 9-tupla legacy) with min_archetypes = 4 (direct, inverse, perturbation, boundary_or_edge_case)",
+    "canonical_template_schema": "{'id': '^T-...', 'cid': '...', 'qtype': '...', 'archetype': '...', 'band': (diff, bloom), 'gen': gen_fn, 'ver': ver_fn, 'stem_variants': [...], 'hints': [...], 'sol': '...', 'rats': RATS}",
     "supported_question_types": [
-        "multiple_choice",
+        "multiple_choice_7_options",
         "fill_in_the_blank",
         "multiple_select",
-        "open_ended",
+        "open_symbolic",
+        "proof_dag",
+        "adversarial_break",
+        "unstructured_model",
+        "invariant_canvas",
+        "concept_matching",
     ],
     "distractor_rules": {
         "mc7_tuple_format": "(did, val, rationale_con_@var@)",
@@ -111,27 +116,23 @@ DSL_REFERENCE: Dict[str, Any] = {
         "quotas": (
             "Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de 4 plantillas paramétricas disjuntas "
             "(1 por arquetipo bajo contrato Form-C / Form-B, min_archetypes = 4: 'direct', 'inverse', 'perturbation', "
-            "'boundary_or_edge_case', cubriendo >= 2 niveles Bloom con práctica activa multimodal: FIB sin signos de dólar "
-            "externos, MS [2-4 distractores/semilla] y MC7 [6 distractores/semilla] con 3-tuplas dinámicas). "
-            "Si una competencia declara en cta.json más distractores de los que caben en una sola semilla de las plantillas "
-            "base (MC7 = 6 distractores/semilla, MS = 2-4 distractores/semilla, FIB = 0), el autor DEBE agregar plantillas "
-            "MC7 adicionales (no intentar cubrir por rotación entre semillas si TPL-D3 evalúa una semilla, manteniendo el "
-            "contrato multimodal) en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json."
+            "'boundary_or_edge_case', cubriendo >= 2 niveles Bloom). Las modalidades concretas se rigen por las "
+            "'recommended_modalities' decididas por el CTA Architect para cada competencia (o libre criterio epistémico "
+            "del catálogo activo —FIB con 'ds', open_symbolic, MS, MC7, proof_dag, adversarial_break, unstructured_model, "
+            "invariant_canvas, concept_matching— sin cuotas fijas rígidas por tipo de pregunta). "
+            "Si una competencia declara en cta.json más distractores de los que caben en una sola plantilla, "
+            "cubre 100% de distractor_ids mediante 'ds' diagnósticos en FIB/open_symbolic, MS, modalidades Bloom Superior "
+            "o MC7 si forma parte del plan del CTA Architect."
         ),
         "form_b_triband": (
-            "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla "
-            "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution). Toda competencia "
-            "debe cubrir los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') con >= 2 niveles Bloom y práctica activa obligatoria (FIB / MS / MC7)."
+            "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla o dict Form-C "
+            "por competencia cubriendo los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') "
+            "con >= 2 niveles Bloom y las modalidades decididas en 'recommended_modalities' por el CTA Architect."
         ),
         "distractor_coverage": (
-            "Regla TPL-D3: 100% de los distractor_ids declarados en cta.json deben usarse en al menos una plantilla "
-            "(evaluado por semilla). "
-            "Regla TPL-D2: Cada plantilla MC7 requiere exactamente 6 distractores por semilla estructurados como 3-tuplas "
-            "obligatorias (did, val, rationale_con_@var@) con longitud >= 20 caracteres interpolando variables paramétricas; "
-            "cada MS admite 2-4 distractores/semilla; FIB no usa distractores. "
-            "Cuando n_distractors > capacidad_base de las 4 plantillas mínimas, agrega plantillas MC7 adicionales "
-            "(mínimo ceil(n_distractors / 6) MC7 si cubres solo con MC7, o ceil(max(0, n_distractors - 4) / 6) MC7 "
-            "combinando con 1 MS de 4 distractores) para lograr 100% de cobertura TPL-D3."
+            "Regla TPL-D3: 100% de los distractor_ids declarados en cta.json deben cubrirse en la semilla representativa "
+            "de las plantillas de la competencia (via 'ds' en FIB/open_symbolic, MS, pasos falaces/distractores en modalidades "
+            "Bloom Superior o MC7 con exactamente 6 distractores en 3-tupla (did, val, rationale_con_@var@)). Sin cuotas rígidas fijas por tipo."
         ),
         "dynamic_rationale": (
             "[TPL-DYNAMIC-RATIONALE]: En MC7, cada distractor DEBE declararse como una 3-tupla (did, val, rationale_con_@var@) "
@@ -434,7 +435,7 @@ def calculate_competency_weight(comp: Dict[str, Any]) -> float:
 def _compute_distractor_template_guidance(
     competencies: List[Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
-    """Compute per-competency MC7 template requirements when distractors exceed base capacity."""
+    """Compute per-competency distractor coverage guidance aligned with CTA recommended_modalities."""
     guidance: Dict[str, Dict[str, Any]] = {}
     for comp in competencies:
         if not isinstance(comp, dict):
@@ -444,14 +445,14 @@ def _compute_distractor_template_guidance(
             continue
         distractors_raw = comp.get("distractors")
         n_distractors = len(distractors_raw) if isinstance(distractors_raw, list) else 0
-        # Base multimodal 4-template capacity: 1 MC7 (6) + 1 MS (2-4) + FIB (0) -> max 10 distractors;
-        # single MC7 capacity is 6 distractors/seed.
+        rec_mods = comp.get("recommended_modalities") or []
         if n_distractors > 6:
             min_mc7_only = math.ceil(n_distractors / 6)
             min_mc7_with_ms4 = max(1, math.ceil(max(0, n_distractors - 4) / 6))
             exceeds_base_multimodal = n_distractors > 10
             entry: Dict[str, Any] = {
                 "n_distractors": n_distractors,
+                "recommended_modalities": list(rec_mods),
                 "mc7_capacity_per_seed": 6,
                 "ms_capacity_per_seed": "2-4",
                 "min_mc7_if_mc7_only": min_mc7_only,
@@ -460,10 +461,9 @@ def _compute_distractor_template_guidance(
             }
             if exceeds_base_multimodal:
                 entry["warning"] = (
-                    f"{cid} declara {n_distractors} distractores (> capacidad base multimodal 10 = 1 MC7 + 1 MS). "
-                    f"Para cumplir TPL-D3 (100% cobertura por semilla) sin romper el contrato multimodal, "
-                    f"agrega plantillas MC7 adicionales (mínimo {min_mc7_with_ms4} MC7 combinando con 1 MS de 4 distractores, "
-                    f"o {min_mc7_only} MC7 si cubres solo con MC7)."
+                    f"{cid} declara {n_distractors} distractores. Para cumplir TPL-D3 (100% cobertura por semilla) "
+                    f"respetando las modalidades decididas por el CTA Architect ({rec_mods or 'libre elección'}), "
+                    f"distribuye los distractor_ids mediante 'ds' en FIB/open_symbolic, MS o modalidades Bloom Superior."
                 )
             guidance[cid] = entry
     return guidance

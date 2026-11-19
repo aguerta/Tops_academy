@@ -1156,7 +1156,7 @@ def _build_outline_payload(
     if existing_competencies:
         for bc in existing_competencies:
             bc_id = bc.get("id") or bc.get("competency_id", "")
-            outline_competencies.append({
+            outline_entry = {
                 "id": bc_id,
                 "name": bc.get("name") or bc.get("title", ""),
                 "type": (bc.get("type") or bc.get("category", "concept")).lower(),
@@ -1168,10 +1168,13 @@ def _build_outline_payload(
                 "prerequisites": bc.get("prerequisites", []),
                 "distractor_names": bc.get("distractor_names", []),
                 "read_only_base": True,
-            })
+            }
+            if bc.get("recommended_modalities"):
+                outline_entry["recommended_modalities"] = list(bc["recommended_modalities"])
+            outline_competencies.append(outline_entry)
 
     for c in draft_competencies:
-        outline_competencies.append({
+        outline_entry = {
             "id": c["id"],
             "name": c.get("name", ""),
             "type": c.get("type", ""),
@@ -1183,7 +1186,10 @@ def _build_outline_payload(
             "prerequisites": c.get("prerequisites", []),
             "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
             "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
-        })
+        }
+        if c.get("recommended_modalities"):
+            outline_entry["recommended_modalities"] = list(c["recommended_modalities"])
+        outline_competencies.append(outline_entry)
 
     draft_count = len(draft_competencies)
     recommended_min = max(14, int(round(draft_count * 0.50)))
@@ -2247,6 +2253,15 @@ def apply_harmonize(
                         comp_survivor.get("source_examples", []) + comp_absorbed.get("source_examples", [])
                     ))
                     comp_survivor["source_examples"] = merged_examples
+
+                # Unify CTA Architect recommended_modalities if present
+                if comp_survivor.get("recommended_modalities") or comp_absorbed.get("recommended_modalities"):
+                    merged_mods = list(dict.fromkeys(
+                        list(comp_survivor.get("recommended_modalities") or [])
+                        + list(comp_absorbed.get("recommended_modalities") or [])
+                    ))
+                    if merged_mods:
+                        comp_survivor["recommended_modalities"] = merged_mods
 
                 # Unify assumptions
                 survivor_assumptions = list(comp_survivor.get("assumptions", []))

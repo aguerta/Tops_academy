@@ -2672,6 +2672,139 @@ def validate_template_schema(data: Dict[str, Any]) -> List[str]:
     return errors
 
 
+_M20_STRUCTURED_TYPES: Set[str] = {
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+}
+
+
+def _extract_instance_distractor_ids(instance: Any) -> Set[str]:
+    """Collect all normalized distractor_id references across all 9 interaction modalities."""
+    if not isinstance(instance, dict):
+        return set()
+    dids: Set[str] = set()
+
+    def _add(val: Any) -> None:
+        if isinstance(val, str) and val.strip():
+            dids.add(val.strip().replace("_", "-"))
+
+    for opt in instance.get("options") or []:
+        if isinstance(opt, dict):
+            _add(opt.get("distractor_id") or opt.get("did"))
+    for dd in instance.get("diagnostic_distractors") or []:
+        if isinstance(dd, dict):
+            _add(dd.get("distractor_id") or dd.get("did"))
+    dag = instance.get("proof_dag")
+    if isinstance(dag, dict):
+        for st in dag.get("steps") or []:
+            if isinstance(st, dict):
+                _add(st.get("distractor_id") or st.get("did"))
+    adv = instance.get("adversarial_break")
+    if isinstance(adv, dict):
+        for st in adv.get("steps") or []:
+            if isinstance(st, dict):
+                _add(st.get("distractor_id") or st.get("did"))
+        for ro in adv.get("reason_options") or []:
+            if isinstance(ro, dict):
+                _add(ro.get("distractor_id") or ro.get("did"))
+        for pr in adv.get("predicates") or []:
+            if isinstance(pr, dict):
+                _add(pr.get("distractor_id") or pr.get("did"))
+    um = instance.get("unstructured_model")
+    if isinstance(um, dict):
+        for it in (um.get("phase1_variables") or {}).get("items") or []:
+            if isinstance(it, dict):
+                _add(it.get("distractor_id") or it.get("did"))
+        for opt in (um.get("phase2_assumptions") or {}).get("options") or []:
+            if isinstance(opt, dict):
+                _add(opt.get("distractor_id") or opt.get("did"))
+        p3 = um.get("phase3_formulation") or {}
+        if isinstance(p3, dict):
+            for opt in p3.get("options") or []:
+                if isinstance(opt, dict):
+                    _add(opt.get("distractor_id") or opt.get("did"))
+            for dd in p3.get("diagnostic_distractors") or []:
+                if isinstance(dd, dict):
+                    _add(dd.get("distractor_id") or dd.get("did"))
+    ic = instance.get("invariant_canvas")
+    if isinstance(ic, dict):
+        for inv in ic.get("invariants") or []:
+            if isinstance(inv, dict):
+                _add(inv.get("distractor_id") or inv.get("did"))
+        ti = ic.get("tree_invariants") or {}
+        if isinstance(ti, dict):
+            _add(ti.get("distractor_id") or ti.get("did"))
+            for tdid in ti.get("distractor_ids") or []:
+                _add(tdid)
+    cm = instance.get("concept_matching")
+    if isinstance(cm, dict):
+        for tg in cm.get("targets") or []:
+            if isinstance(tg, dict):
+                _add(tg.get("distractor_id") or tg.get("did"))
+    return dids
+
+
+def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
+    """Return a hashable signature of the assembled answer/payload across all 9 interaction types."""
+    if q_type in ("multiple_choice_7_options", "multiple_choice"):
+        correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
+        return re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
+    if q_type in ("fill_in_the_blank", "open_symbolic"):
+        ans = q.get("correct_answer")
+        if isinstance(ans, dict):
+            val = ans.get("expression") or ans.get("value") or ans.get("canonical_algebraic") or q.get("correct", "")
+        else:
+            val = ans if ans is not None else q.get("correct", "")
+        return re.sub(r"\s+", " ", str(val)).strip()
+    if q_type == "multiple_select":
+        return frozenset(
+            (re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct")))
+            for opt in q.get("options", [])
+        )
+    if q_type in _M20_STRUCTURED_TYPES:
+        sig_obj: Dict[str, Any] = {"correct_answer": q.get("correct_answer")}
+        if q_type in q and isinstance(q[q_type], dict):
+            payload = q[q_type]
+            # Include rendered text/math fields so parametric steps/curves with static IDs reflect variance
+            if q_type == "proof_dag":
+                sig_obj["steps"] = [
+                    (s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                    for s in (payload.get("steps") or []) if isinstance(s, dict)
+                ]
+            elif q_type == "adversarial_break":
+                sig_obj["prompt"] = payload.get("prompt")
+                sig_obj["sample_witness"] = payload.get("sample_witness")
+                sig_obj["steps"] = [
+                    (s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                    for s in (payload.get("steps") or []) if isinstance(s, dict)
+                ]
+                sig_obj["predicates"] = [
+                    p.get("expr") for p in (payload.get("predicates") or []) if isinstance(p, dict)
+                ]
+            elif q_type == "unstructured_model":
+                sig_obj["p1"] = [
+                    (it.get("id"), it.get("label"))
+                    for it in ((payload.get("phase1_variables") or {}).get("items") or []) if isinstance(it, dict)
+                ]
+                sig_obj["p3"] = (payload.get("phase3_formulation") or {}).get("correct_expression")
+            elif q_type == "invariant_canvas":
+                sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
+                sig_obj["invariants"] = payload.get("invariants")
+                sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
+            elif q_type == "concept_matching":
+                sig_obj["premises"] = [
+                    (p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)
+                ]
+                sig_obj["targets"] = [
+                    (t.get("id"), t.get("content")) for t in (payload.get("targets") or []) if isinstance(t, dict)
+                ]
+        return json.dumps(sig_obj, sort_keys=True, default=str)
+    return str(q.get("correct", "")).strip()
+
+
 def check_distractor_refutation(
     cross_check_py: str,
     gen_result: Dict[str, Any],
@@ -2687,8 +2820,16 @@ def check_distractor_refutation(
     elif isinstance(distractors, list):
         for i, d in enumerate(distractors):
             if isinstance(d, dict):
+                is_regex_trap = (
+                    str(d.get("match_type") or d.get("kind") or "").lower() == "regex"
+                    or ("pattern" in d and "value" not in d and "expression" not in d)
+                )
+                if is_regex_trap:
+                    continue
                 did = d.get("distractor_id") or f"d{i+1}"
                 val = d.get("value")
+                if val is None:
+                    val = d.get("expression")
                 if val is None:
                     val = d.get("content")
                 if val is None:
@@ -3113,24 +3254,23 @@ def check_single_template(
             continue
 
         # Collect rendered correct answer and distractors for TPL-STATIC-OPT and TPL-DYNAMIC-RATIONALE
+        rendered_correct_answers.append(_canonical_answer_signature(assembled_q, interaction_type))
         if interaction_type in ("multiple_choice_7_options", "multiple_choice"):
-            correct_opt = next((opt for opt in assembled_q.get("options", []) if opt.get("is_correct")), None)
-            c_val = re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
-            rendered_correct_answers.append(c_val)
             for opt_idx, opt in enumerate(assembled_q.get("options", [])):
                 if not opt.get("is_correct"):
                     did = str(opt.get("distractor_id") or "").strip()
                     slot_key = did or str(opt.get("id") or opt.get("option_id") or f"slot_{opt_idx}").strip()
                     distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
                     distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
-        elif interaction_type == "fill_in_the_blank":
-            ans_obj = assembled_q.get("correct_answer", {})
-            val = ans_obj.get("value") if isinstance(ans_obj, dict) else assembled_q.get("correct")
-            c_val = re.sub(r"\s+", " ", str(val)).strip()
-            rendered_correct_answers.append(c_val)
+        elif interaction_type in ("fill_in_the_blank", "open_symbolic"):
+            for dd_idx, dd in enumerate(assembled_q.get("diagnostic_distractors") or []):
+                if isinstance(dd, dict):
+                    did = str(dd.get("distractor_id") or "").strip()
+                    slot_key = did or f"diag_{dd_idx}"
+                    val_str = str(dd.get("expression") if "expression" in dd else (dd.get("value") or "")).strip()
+                    distractor_contents_by_slot[slot_key].append(val_str)
+                    distractor_rationales_by_slot[slot_key].append(str(dd.get("error_rationale", "")).strip())
         elif interaction_type == "multiple_select":
-            opt_set = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in assembled_q.get("options", []))
-            rendered_correct_answers.append(opt_set)
             for opt_idx, opt in enumerate(assembled_q.get("options", [])):
                 opt_txt = str(opt.get("content") or opt.get("text") or "")
                 m_tt = re.search(
@@ -3251,6 +3391,21 @@ def check_single_template(
                         [
                             "Parametrizar las opciones o su veracidad en generate_py.",
                             "Asegurar que la selección de afirmaciones correctas varíe según los parámetros.",
+                        ]
+                    ))
+            elif interaction_type in _M20_STRUCTURED_TYPES:
+                min_req_m20 = 4 if has_dynamic_vars else 2
+                if len(unique_correct) < min_req_m20:
+                    errors.append(format_diagnostic_error(
+                        "TPL-STATIC-OPT: ESTRUCTURA ESTÁTICA",
+                        competency_id,
+                        tpl_id,
+                        "dry-run",
+                        interaction_type,
+                        f"Únicamente {len(unique_correct)}/{min_req_m20} variantes generadas en {N_eval} semillas.",
+                        f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': {interaction_type} template must generate at least {min_req_m20} distinct parametric instances.",
+                        [
+                            "Parametrizar los valores o restricciones del payload estructurado en generate_py.",
                         ]
                     ))
             else:
@@ -3538,21 +3693,10 @@ def check_competency_diversity(
 
     # Strict pool correct key concentration check
     if strict and len(questions) >= 20:
-        correct_keys = []
-        for q in questions:
-            q_type = q.get("interaction_type") or q.get("type", "")
-            if q_type == "multiple_choice_7_options":
-                correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
-                correct_keys.append(re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else "")
-            elif q_type == "fill_in_the_blank":
-                ans = q.get("correct_answer", {})
-                val = ans.get("value") if isinstance(ans, dict) else q.get("correct")
-                correct_keys.append(re.sub(r"\s+", " ", str(val)).strip())
-            elif q_type == "multiple_select":
-                opt_tuples = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in q.get("options", []))
-                correct_keys.append(opt_tuples)
-            else:
-                correct_keys.append(str(q.get("correct", "")).strip())
+        correct_keys = [
+            _canonical_answer_signature(q, str(q.get("interaction_type") or q.get("type", "")))
+            for q in questions
+        ]
 
         from collections import Counter
         key_counts = Counter(correct_keys)
@@ -3738,9 +3882,26 @@ def _validate_single_template_file(
     referenced_dids: Set[str] = set()
 
     for tpl in templates_list:
-        t_dids = tpl.get("distractor_ids", [])
+        t_dids = tpl.get("distractor_ids", []) or []
         for did in t_dids:
-            referenced_dids.add(did)
+            if isinstance(did, str) and did.strip():
+                referenced_dids.add(did.strip().replace("_", "-"))
+
+        if not t_dids and tpl.get("generate_py") and tpl.get("interaction_type") != "multiple_choice_7_options":
+            try:
+                rep_batch = execute_sandbox_batch(tpl["generate_py"], [42], timeout_per_item=0.8)
+                if rep_batch and rep_batch[0].get("success"):
+                    rep_q = assemble_question(
+                        template=tpl,
+                        gen_result=rep_batch[0].get("result", {}),
+                        competency_id=comp_id or "UNKNOWN",
+                        question_index=1,
+                        cta_distractors_map=cta_distractors_map,
+                        seed=42,
+                    )
+                    referenced_dids.update(_extract_instance_distractor_ids(rep_q))
+            except Exception:
+                pass
 
         single_errs = check_single_template(
             template=tpl,
@@ -4121,47 +4282,61 @@ def check_templates_file_or_dir(
                 if comp_id in referenced_distractors_by_comp:
                     referenced_distractors_by_comp[comp_id].update(ref_dids)
 
-    # Rule TPL-D3: Multimodal distractor coverage across templates
+    # Rule TPL-D3: Multimodal distractor coverage across templates (M20 Anti-Descarte Decoupling)
     if cta_distractors_by_comp:
         comps_to_check = list(referenced_distractors_by_comp.keys()) if is_full_dir else list(processed_comp_ids)
+        _bloom_sup_types = {
+            "open_symbolic",
+            "proof_dag",
+            "adversarial_break",
+            "unstructured_model",
+            "invariant_canvas",
+            "concept_matching",
+        }
         for cid in comps_to_check:
-            declared_set = cta_distractors_by_comp.get(cid, set())
-            referenced_set = referenced_distractors_by_comp.get(cid, set())
+            declared_set = {d.replace("_", "-") for d in (cta_distractors_by_comp.get(cid, set()) or set())}
+            referenced_set = {d.replace("_", "-") for d in (referenced_distractors_by_comp.get(cid, set()) or set())}
             c_tpls = templates_by_comp.get(cid, [])
             has_mc7 = any(t.get("interaction_type") == "multiple_choice_7_options" for t in c_tpls)
             has_ms = any(t.get("interaction_type") == "multiple_select" for t in c_tpls)
-            is_100_fib = all(t.get("interaction_type") == "fill_in_the_blank" for t in c_tpls) and len(c_tpls) > 0
+            has_bloom_superior = any(t.get("interaction_type") in _bloom_sup_types for t in c_tpls)
+            has_fib_ds = any(
+                t.get("interaction_type") == "fill_in_the_blank" and bool(t.get("distractor_ids"))
+                for t in c_tpls
+            )
+            is_100_fib_legacy = (
+                len(c_tpls) > 0
+                and all(t.get("interaction_type") == "fill_in_the_blank" for t in c_tpls)
+                and not referenced_set
+            )
+            is_legacy_pure_ms = (
+                has_ms
+                and not has_mc7
+                and not has_bloom_superior
+                and not has_fib_ds
+                and not (declared_set and referenced_set and len(declared_set - referenced_set) == 0)
+            )
 
             tpl_d3_failed = False
             snippet_msg = ""
             cause_msg = ""
-            if has_mc7:
-                uncovered = declared_set - referenced_set
-                if uncovered:
-                    tpl_d3_failed = True
-                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = (
-                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando "
-                        "en su semilla representativa (TPL-D3 evalúa los distractor_ids de la semilla representativa por plantilla; "
-                        "rotar distractores entre semillas en generate() NO los cubre y MC7 exige 6/6)."
-                    )
-            elif has_ms:
+            if is_100_fib_legacy:
+                tpl_d3_failed = False
+            elif is_legacy_pure_ms:
                 valid_ref = referenced_set.intersection(declared_set)
                 if len(valid_ref) < 2:
                     tpl_d3_failed = True
                     snippet_msg = f"Distractores cubiertos: {sorted(valid_ref)} ({len(valid_ref)}/2 requeridos para MS)"
                     cause_msg = "Las plantillas multiple_select requieren al menos 2 distractores declarados en cta.json."
-            elif is_100_fib:
-                tpl_d3_failed = False
             else:
                 uncovered = declared_set - referenced_set
                 if uncovered:
                     tpl_d3_failed = True
                     snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
                     cause_msg = (
-                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando "
-                        "en su semilla representativa (TPL-D3 evalúa los distractor_ids de la semilla representativa por plantilla; "
-                        "rotar distractores entre semillas NO los cubre)."
+                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está cubriendo "
+                        "en su semilla representativa a través de MC7 (si aplica en el plan), MS, FIB ('ds'), open_symbolic o modalidades Bloom Superior "
+                        "(rotar distractores solo entre semillas sin incluirlos en la semilla representativa NO los cubre)."
                     )
 
             if tpl_d3_failed:
@@ -4174,9 +4349,9 @@ def check_templates_file_or_dir(
                     snippet=snippet_msg,
                     cause=cause_msg,
                     actions=[
-                        f"Añadir plantillas MC7 adicionales en '{cid}' que emitan en su semilla representativa los distractores faltantes (rotar distractores entre semillas en una sola plantilla NO cubre TPL-D3).",
-                        f"O asignar los distractores faltantes en los distractor_ids de la semilla representativa de las plantillas existentes de '{cid}'.",
-                        "Asegurar la cobertura de distractores requerida por el contrato psicométrico.",
+                        f"Cubrir los distractores faltantes de '{cid}' usando trampas diagnósticas ('ds') en FIB / open_symbolic, pasos falaces en proof_dag / adversarial_break, opciones de Phase 1-3 en unstructured_model o pares distractores en concept_matching / invariant_canvas.",
+                        f"O declarar los distractor_ids faltantes en la semilla representativa de las plantillas de '{cid}' manteniendo fidelidad al plan de modalidades del CTA Architect.",
+                        "Asegurar la cobertura diagnóstica completa de distractores requerida por el contrato psicométrico M20.",
                     ],
                 )
                 errors.append(err_diag)
