@@ -264,4 +264,31 @@
 * **Commits:** `1bc0b4c`.
 
 ---
+
+## Milestone 20 Core: Arquitectura Epistémica de Excelencia, 6 Modalidades de Bloom Superior, Reforma Anti-Descarte (`TPL-D3`) y Smart `Blank-First` en GitHub Pages ($0)
+* **Estado:** ✅ **Completado y verificado automáticamente al 100% (2026-11-18).** *(Modo Hierro — `IronExamSession.tsx` + `MetacognitiveModal.tsx` — diferido explícitamente a **Milestone 20-B** en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md#milestone-20-b-modo-hierro-simulador-a-libro-cerrado-y-calibración-metacognitiva-en-github-pages-0)).*
+* **Objetivo:** Erradicar la ilusión de competencia por reconocimiento o descarte en `MC7`, implementando evaluación activa y análisis paso a paso sin servidor (\$0 GitHub Pages / PWA offline) a través de toda la cadena C2C, validadores, QA y plataforma React.
+* **Componentes Técnicos Entregados:**
+  1. **Reforma Anti-Descarte (`TPL-D3`) y Compiladores Shift-Left (Fase 1 Back-End C2C):**
+     - `compile_shard.py` y `check_templates.py`: desacople de `TPL-D3` contabilizando `diagnostic_distractors` (`ds`) en `fill_in_the_blank` y `open_symbolic` en `seed=42`, más cumplimiento estricto de `[M20-MC7-CAP]` (máximo 1 `MC7` por competencia, `0` válido) y `[M20-ACTIVE-QUOTA]` ($\ge 75\%$ activo en 4 plantillas, $\ge 80\%$ en $\ge 5$).
+     - `.agents/skills/content-to-course/engine/proof_compiler.py` (`compile_and_verify_proof_dag`) y `adversarial_generator.py` (`compile_and_verify_adversarial`, `eval_safe_predicate`), integrados en `assemble.py`, `invariants.py`, `template.schema.json`, `src/validator/` (`schema_validator.py`, `rules.py`) y `.agents/skills/course-qa-evaluator/` (`standardized_audit_engine.py`, `prepare_course_payload.py`).
+     - Actualización sincronizada de los 6 system prompts de shard/repair/judge y regeneración de `subagent_types.json`.
+  2. **Validadores Client-Side `mathjs` y Contrato TS (`0` nuevas dependencias npm, `0` `eval`/`new Function`):**
+     - `platform/src/types.ts`, `questionUtils.ts` (`requiresBlankFirstCurtain`), `sessionStore.ts` y `socraticPrompt.ts`.
+     - `platform/src/services/symbolicValidator.ts` (`normalizeSymbolicInput`, `checkSymbolicSyntax`, `areSymbolicExpressionsEquivalent`, `validateSymbolicAnswer`, `validateProofDagSubmission`, `evaluateSafePredicate`, `validateAdversarialSubmission`, `validateStage0Phase`, `validateConceptMatchingSubmission`) y `platform/src/components/canvas/TopologyValidator.ts` (`cartesian` y `tree`).
+  3. **6 Modalidades de Bloom Superior en React + Smart `Blank-First`:**
+     - `SymbolicInput.tsx` (`open_symbolic` con paleta ligera y preview KaTeX), `ProofDAG.tsx` + `StepTile.tsx` (`proof_dag` con órdenes topológicos múltiples, justificaciones y falacias), `AdversarialArena.tsx` (`find_fallacy` y `counterexample`), `Stage0Modeler.tsx` (`unstructured_model` con bloqueo estricto Fase 1 $\to$ 2 $\to$ 3 y conteo de fallos en intentos), `InvariantCanvas.tsx` (SVG cartesiano no convexo y árbol extensivo con conjuntos de información) y `ConceptMatching.tsx`.
+     - Integración en `QuestionCard.tsx`, `FeedbackToast.tsx` y `PracticeSession.tsx` preservando retrocompatibilidad total con `courses/` existentes y mostrando `blank-first-curtain` únicamente en `MC7`, `MS`, `concept_matching` y `proof_dag`.
+     - Bundle App Shell (`index-LU3h7wbM.js` + `index-Cp3vBGVD.css`): `392,767 B` gzip (`+15,660 B` / **`+15.29 KB`** sobre línea base `377,107 B`, dentro del presupuesto `<= 120 KB`).
+  4. **Banco Canónico Compilado y Suite E2E Playwright (`courses/` intacto):**
+     - `tests/fixtures/m20_canonical_cases/build_canonical_course.py` compila los 4 casos canónicos reales (100 preguntas, `active=95.00%`, `bloom_superior=83` cubriendo las 6 modalidades y `ds`) a `tests/fixtures/m20_canonical_cases/m20_canonical_course.json`.
+     - `tests/e2e/test_m20_bloom_modalities.py`: verifica carga completa del curso canónico, Smart `Blank-First`, trampas `ds`, orden topológico alternativo + justificaciones en `proof_dag`, Stage 0, ambos submodos adversariales, canvas cartesiano/árbol, `concept_matching` y cero desborde horizontal en `1280x800` y `640x720` con 0 errores de consola/página.
+* **Pruebas Verificadas:**
+  - `pytest tests/engine tests/pipeline tests/platform tests/test_assemble_and_hook_hardening.py tests/test_qa_evaluator_hardening.py -q`: **1,465 passed, 6 skipped** (51.51 s).
+  - `pytest tests/e2e/test_m20_bloom_modalities.py -v -n 0`: **4 passed** (17.06 s).
+  - `node tests/test_m20_validators.mjs`: **PASS**; `node tests/platform/test_math_adversarial_suite.mjs`: **81/81 Passed, 0 Failed**.
+  - `npm --prefix platform run build`: **exit 0** (`+15.29 KB` App Shell gzip delta).
+* **Commits:** `main`.
+
+---
 *Fin del Registro de Milestones Completados. Para consultar la hoja de ruta pendiente, ver `FUTURE_MILESTONES.md`.*

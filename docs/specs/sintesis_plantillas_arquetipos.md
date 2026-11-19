@@ -132,12 +132,12 @@ Con $K = 2$ o $K = 3$ plantillas por arquetipo (8 a 12 plantillas por competenci
 
 Para llevar esto a cabo sin romper los cursos actuales, el orden óptimo de ejecución es:
 
-1. **Fase 1 — Reforma del Contrato de Plantillas y Anti-Descarte (Back-end C2C, impacto inmediato):**
-   * **Desacoplar `TPL-D3` de `MC7`** en `compile_shard.py` y `check_templates.py`: permitir que `FIB` (y luego `open_symbolic`) capturen distractores diagnósticos (`ds`/`RATS`) comparando la respuesta errónea del alumno contra los resultados de cada trampa.
-   * **Invertir la cuota de modalidades**: pasar de exigir "mínimo 1 o 2 activas" a exigir **"máximo 1 `MC7` por competencia (o 0 en `Hab-*`) y $\ge 80\%$ en `FIB`/`MS`/nuevas modalidades"**.
-   * **Parametrizar `TEMPLATES_PER_ARCHETYPE`** (default actual `1`, nuevo modo `2` o `3`) en `plan_shards.py`, `compile_shard.py` y `prompt_shard_author.md`, añadiendo el verificador AST de no-equivalencia entre plantillas del mismo arquetipo.
-2. **Fase 2 — Incorporación de Modalidades de Bloom Superior (Unificación con Milestones 5 y 20):**
-   * Activar `open_symbolic` (`mathjs` AST en cliente + `SymPy` en compilación) para que el alumno escriba fórmulas y derivaciones cortas.
-   * Activar `proof_dag` (encadenamiento paso a paso) y `adversarial_break` (caza del paso erróneo en una demostración), que atacan directamente `Analyze` y `Evaluate` en la Taxonomía de Bloom.
-3. **Fase 3 — Piloto Empírico con Gemini 4:**
+1. **Fase 1 — Reforma del Contrato de Plantillas y Anti-Descarte (Back-end C2C) ✅ Completada en Milestone 20 Core (2026-11-18):**
+   * **Desacople de `TPL-D3` de `MC7`** en `compile_shard.py`, `check_templates.py`, `assemble.py` e `invariants.py`: tanto `FIB` como `open_symbolic` declaran y evalúan distractores diagnósticos (`ds` / `diagnostic_distractors`) comparando la respuesta errónea del alumno contra los resultados de cada trampa.
+   * **Inversión de la cuota de modalidades (`[M20-MC7-CAP]` y `[M20-ACTIVE-QUOTA]`):** máximo `1` plantilla `MC7` por competencia (`0` válido) y $\ge 75\%$ de plantillas activas en $N=4$ ($\ge 80\%$ en $N \ge 5$) contabilizadas por `compile_shard.py` y `course-qa-evaluator`.
+   * *Pendiente (Milestone 19):* Parametrizar `TEMPLATES_PER_ARCHETYPE = K` ($K=2..3$) en `plan_shards.py`, `compile_shard.py` y prompts autores, añadiendo el verificador AST de no-equivalencia intra-arquetipo.
+2. **Fase 2 — Incorporación de las 6 Modalidades de Bloom Superior en GitHub Pages (\$0) ✅ Completada en Milestone 20 Core (2026-11-18):**
+   * Activadas de principio a fin (schemas C2C/validator, ensamblador/compiladores Shift-Left, `course-qa-evaluator`, validadores cliente TS y componentes React): `open_symbolic` (`mathjs` AST en `SymbolicInput.tsx`), `proof_dag` (`proof_compiler.py` + `ProofDAG.tsx`/`StepTile.tsx`), `adversarial_break` (`adversarial_generator.py` + `AdversarialArena.tsx`), `unstructured_model` (`Stage0Modeler.tsx`), `invariant_canvas` (`InvariantCanvas.tsx` + `TopologyValidator.ts` cartesiano y árbol) y `concept_matching` (`ConceptMatching.tsx`), junto con Smart `Blank-First`.
+   * *Pendiente (Milestone 20-B):* Modo Hierro (`IronExamSession.tsx` + `MetacognitiveModal.tsx`).
+3. **Fase 3 — Piloto Empírico con Gemini 4 (Pendiente en Milestone 19):**
    * Probar una corrida de un curso (o un shard piloto) con `TEMPLATES_PER_ARCHETYPE = 3` (12 plantillas por competencia) usando Gemini 4 para medir tiempo de generación, tasa de aprobación en Turno 1 y variedad real de las plantillas generadas.

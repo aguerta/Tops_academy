@@ -24,7 +24,7 @@
 | Archivo de Referencia | Qué Contiene y Cuándo Debe Consultarse / Actualizarse |
 | :--- | :--- |
 | 📘 [`CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/CONOCIMIENTO_TRIBAL.md) | **Física de inferencia, causas raíz y arquitectura causal:** Velocidades de streaming de `flash`, Matriz 2D de Gobernanza, las 11 patologías del código, mediciones de hardware (ASUS TUF vs 14" 150%), lecciones KaTeX (no `white-space: normal`) y contratos de los 4 arquetipos. Consultar siempre que se modifiquen hooks, compiladores o reglas de la plataforma. |
-| 📗 [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) | **Registro histórico de lo ya certificado:** Bitácora forense de entrega de los Milestones 1, 1-T, 2, 2a, 3, 4, 6, 7, 10, 11 (núcleo), 12, 13, 14, 15 (F1) y 16 (F1), con commits y suites de verificación. Consultar para auditar lo existente y registrar nuevos cierres. |
+| 📗 [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) | **Registro histórico de lo ya certificado:** Bitácora forense de entrega de los Milestones 1, 1-T, 2, 2a, 3, 4, 6, 7, 9 (Quick Wins), 10, 11 (núcleo), 12, 13, 14, 15 (F1), 16 (F1) y **20 (Core)**, con commits y suites de verificación. Consultar para auditar lo existente y registrar nuevos cierres. |
 | 📄 [`docs/specs/m06_study_harness.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md) | **Especificación del Milestone 6:** Wireframes ASCII de 1/2 pantalla, máquina de estados de la cortina *Blank-First*, diagrama de secuencia, contraste de la Hipótesis Huerta y suite de 4 prompts Khanmigo \$0 API. |
 | 📄 [`docs/specs/m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) | **Especificación del Milestone 9:** Tipados completos de TypeScript (`ContentCore`, `ContentModule`, `ExplicitAssumption`, `SubtopicUnit`), jerarquía de 3 niveles y extractor de Unidad 0 `PRE-XX`. |
 | 📄 [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) | **Especificación del Milestone 14 y 14-B:** Matriz canónica de transición psicométrica de 12 filas, interfaces de `masteryStorage.ts`, fórmula híbrida 80/20, *Hint-Cap* y simulador adaptativo de parcial. |
@@ -87,7 +87,7 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 
 | Pilar de Pericia | Mecanismo Cognitivo Requerido | Estado Actual en Producción | Brecha Remanente (Gap hacia la Pericia) |
 | :--- | :--- | :--- | :--- |
-| **1. Evocación Pura vs. Reconocimiento** | Producir la respuesta o derivación frente a la hoja en blanco (*free recall*), sin descartar opciones. | Cortina *Blank-First* y Navegación Mouseless activas ([Milestone 6](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-6-antigravity-study-harness-20-modo-blank-first-y-transferencia-khanmigo-0-api)). Formatos `MC7`, `FIB` y `MS`. | ⚠️ Reforma `TPL-D3` para captura de distractores en `FIB`/`open_symbolic`, reducción drástica de `MC7` y despliegue de `proof_dag`, `adversarial_break`, `unstructured_model` e `invariant_canvas` ([Milestone 20 — fusiona M5 y M20](#milestone-20-fusiona-m5-y-m20-arquitectura-epistémica-de-excelencia-sobresaliente-20-modalidades-de-bloom-superior-y-reforma-anti-descarte-en-github-pages-0)). |
+| **1. Evocación Pura vs. Reconocimiento** | Producir la respuesta o derivación frente a la hoja en blanco (*free recall*), sin descartar opciones. | Cortina Smart *Blank-First* y Navegación Mouseless ([Milestone 6](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-6-antigravity-study-harness-20-modo-blank-first-y-transferencia-khanmigo-0-api) + **Milestone 20 Core**). Reforma `TPL-D3` con `ds` en `FIB`/`open_symbolic`, cuota $\le 1$ `MC7` y 6 modalidades de Bloom Superior (`proof_dag`, `adversarial_break`, `unstructured_model`, `invariant_canvas`, `concept_matching`, `open_symbolic`) activas en producción estática (\$0). | ⚠️ Simulacro cronometrado a libro cerrado con feedback diferido y calibración metacognitiva obligatoria (**Modo Hierro**, [Milestone 20-B](#milestone-20-b-modo-hierro-simulador-a-libro-cerrado-y-calibración-metacognitiva-en-github-pages-0)). |
 | **2. Variedad Estructural sin Overfitting** | Miles de intentos sobre el principio evitando que el alumno memorice un único molde de despeje. | Contrato de 4 arquetipos obligatorios (`1` plantilla por arquetipo) y verificación en `seed=100` ([Milestone 16 F1](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)). | ⚠️ Multiplicación a $K=2..3$ plantillas por arquetipo ($8..12$ por competencia) con 3 candados anti-clon ([Milestone 19](#milestone-19-multiplicación-estructural-de-plantillas-por-arquetipo-k23-con-gemini-4-y-escalamiento-2x3x-anti-overfitting)) + deducción SMT Z3 ([Milestone 16 F2](#milestone-16-fase-2-deducción-algebraica-automática-con-z3-y-lemas-lean-4)). |
 | **3. Alta Validez Interna y Rigor Formal** | Garantía matemática de ausencia de colisiones, ciclos curriculares o enunciados incompletos. | Patrón PrairieLearn `@var@`, compilador AST `KaTeXAST` ([Milestone 4](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)) y Kernel Python isomórfico ([Milestone 15 F1](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)). | ⚠️ Binario nativo Perceus C Lean 4 `< 0.5 ms` ([Milestone 15 F2](#milestone-15-fase-2-kernel-nativo-perceus-c-lean-4-ffi-05-ms-y-drt-industrial)), clausura epistémica DAG ([Milestone 17](#milestone-17-certificación-formal-del-dag-curricular-clausura-epistémica-y-arbitraje-neuro-simbólico)) y arnés CI `#print axioms` ([Milestone 18](#milestone-18-arnés-de-certificación-continua-anti-drift-de-contratos-y-auditoría-print-axioms)). |
 | **4. Feedback Inmediato** | Diagnóstico instantáneo de por qué falló el razonamiento. | Refutation Feedback en Toast (`FeedbackToast.tsx`) con `error_rationale`. | ⚠️ Falta bifurcación adaptativa de examen parcial en 2 módulos ([Milestone 14-B](#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)); remediación y degradación core cerradas en [Milestone 14](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-fluidez-y-motor-up-next). |
@@ -99,9 +99,9 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 
 Para alinear la ingeniería en torno al objetivo de **mayor exigencia cognitiva (Bloom superior sin descarte) + cero overfitting (más y mejores plantillas con Gemini 4)**, se han estructurado los siguientes ejes sobre el banco de problemas:
 
-1. 🔗 **Fusión de Milestone 5 + Milestone 20 $\longrightarrow$ [Milestone 20 (Unificado con M5)](#milestone-20-fusiona-m5-y-m20-arquitectura-epistémica-de-excelencia-sobresaliente-20-modalidades-de-bloom-superior-y-reforma-anti-descarte-en-github-pages-0):**
-   - Ambos hitos buscaban superar el reconocimiento pasivo (`MC7`) mediante nuevas modalidades interactivas (`open_symbolic`, demostraciones paso a paso / Parsons, diagramas SVG y emparejamiento conceptual).
-   - Se unifican bajo la arquitectura viable de **GitHub Pages (\$0 costo de infraestructura)**: las demostraciones se precompilan *Shift-Left* en Python como DAGs (`proof_dag`) validados en `< 5 ms` en el cliente (descartando el servidor pesado `lean --server` en vivo que proponía M5 originalmente), el álgebra simbólica libre (`open_symbolic`) se evalúa con `mathjs` AST en cliente + `SymPy` en compilación, se mantiene el Modo Hierro a libro cerrado (`IronExamSession.tsx` + `MetacognitiveModal.tsx`) dentro de M20 y se incorpora la **reforma `TPL-D3`** para capturar distractores en `FIB`/`open_symbolic` reduciendo `MC7` al mínimo.
+1. 🔗 **Fusión de Milestone 5 + Milestone 20 $\longrightarrow$ Milestone 20 Core ✅ Completado + [Milestone 20-B: Modo Hierro](#milestone-20-b-modo-hierro-simulador-a-libro-cerrado-y-calibración-metacognitiva-en-github-pages-0):**
+   - **Milestone 20 Core (✅ Certificado el 2026-11-18 en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)):** Completó íntegramente bajo arquitectura estática de **GitHub Pages (\$0)** la reforma `TPL-D3` (`ds` en `FIB` y `open_symbolic`), cuota anti-descarte ($\le 1$ `MC7`, $\ge 75\%\text{–}80\%$ activo), compiladores Shift-Left (`proof_compiler.py`, `adversarial_generator.py`), Smart `Blank-First` y las 6 modalidades de Bloom Superior (`open_symbolic` con `mathjs`, `proof_dag`, `adversarial_break`, `unstructured_model` Stage 0, `invariant_canvas` SVG cartesiano/árbol y `concept_matching`) con `+15.29 KB` gzip delta sobre el App Shell.
+   - **Remanente Activo $\longrightarrow$ [Milestone 20-B (Modo Hierro)](#milestone-20-b-modo-hierro-simulador-a-libro-cerrado-y-calibración-metacognitiva-en-github-pages-0):** Arnés cronometrado a libro cerrado (`IronExamSession.tsx` + `MetacognitiveModal.tsx`) con retención total de feedback hasta entrega final y auditoría metacognitiva de certeza.
 2. 🔗 **Reforma de Milestone 19 con Gemini 4 $\longrightarrow$ [Milestone 19 (Multiplicación de Plantillas por Arquetipo $K=2..3$ y Anti-Overfitting)](#milestone-19-multiplicación-estructural-de-plantillas-por-arquetipo-k23-con-gemini-4-y-escalamiento-2x3x-anti-overfitting):**
    - Pasa de ser un simple incremento volumétrico en backlog a ser el motor estructural contra el overfitting del estudiante y la pereza del autor LLM: exige **$K = 2..3$ plantillas distintas por cada uno de los 4 arquetipos** ($8..12$ plantillas por competencia) gobernadas por **3 candados deterministas anti-clon** en `compile_shard.py`.
 
@@ -111,11 +111,11 @@ Para alinear la ingeniería en torno al objetivo de **mayor exigencia cognitiva 
 
 ## 3. Matriz Maestra de Priorización de Ingeniería (Hitos Activos)
 
-> *Nota: Los hitos completados y certificados (1, 1-T, 2, 2a, 3, 4, 6, 7, 10, 11 [núcleo], 12, 13, 14, 15 [F1], 16 [F1]) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).*
+> *Nota: Los hitos completados y certificados (1, 1-T, 2, 2a, 3, 4, 6, 7, 9 [Quick Wins], 10, 11 [núcleo], 12, 13, 14, 15 [F1], 16 [F1] y **20 [Core]**) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).*
 
 | Hito / Milestone | Área | Impacto Cognitivo, Formal y de Eficiencia | Esfuerzo | Estado / Prioridad | Especificación Técnica |
 | :--- | :--- | :--- | :---: | :---: | :--- |
-| **Milestone 20 (Fusiona M5 + M20): Arquitectura Epistémica Sobresaliente 20, Modalidades Bloom Superior y Reforma Anti-Descarte** | Full-Stack / Motor C2C | **Fin del descarte mecánico (`MC7` $\le 1$).** `TPL-D3` en `FIB`/`open_symbolic`, `proof_dag` (Parsons/DAG), `adversarial_break`, `unstructured_model` (Stage 0), `invariant_canvas` (SVG), `concept_matching` y Modo Hierro (`IronExamSession`) en GitHub Pages \$0 (`mathjs` AST + Shift-Left SymPy). | 3 a 5 d | 🎓 **P1 — Prioridad Cognitiva** | [Spec 4 Ejes y Bloom](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
+| **Milestone 20-B: Modo Hierro (Simulador a Libro Cerrado y Calibración Metacognitiva)** | Frontend PWA (\$0) | **Entrenamiento bajo presión de examen real.** `IronExamSession.tsx` + `MetacognitiveModal.tsx`: sesión cronometrada con pistas/toasts bloqueados, feedback diferido hasta entrega y calibración previa de certeza *(remanente de M20 tras cerrar M20 Core)*. | 1 a 1.5 d | 🎓 **P1 — Prioridad Cognitiva** *(M20 Core ✅)* | [Spec 4 Ejes y Bloom](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
 | **Milestone 19: Multiplicación de Plantillas por Arquetipo ($K=2..3$) con Gemini 4 y Banco Anti-Overfitting 2x–3x** | Pipeline C2C / Compilador | **Erradicación del overfitting sintáctico.** `TEMPLATES_PER_ARCHETYPE = 2..3` ($8..12$ plantillas/competencia, $40..120$ problemas) con 3 candados anti-clon en `compile_shard.py`: Disyunción AST/SymPy, Disyunción `(Modalidad, Bloom)` y Distancia Léxica. | 1.5 a 2.5 d | 🧬 **P1 — Anti-Overfitting (Gemini 4)** | [Spec 4 Ejes y Bloom](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
 | **Milestone 15 (Fase 2): Kernel Nativo Perceus C Lean 4** | Pipeline / Formal Kernel | **Sobrecarga `< 0.5 ms` y verificación matemática nativa.** Compilar `TopsAcademyC2C.lean` a binario nativo C vía FFI, *Proof-Carrying Artifacts* (`*.cert.json`) y DRT estilo AWS Cedar. | 1.5 a 2.5 d | 🛡️ **P0 — En Roadmap** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | **Milestone 16 (Fase 2): Deducción Simbólica Z3 / Lean 4** | Motor / Verificación | **Más calidad matemática con 0 Late-Catches.** Integración de solver SMT Z3 y lemas Lean 4 (`omega`/`ring`/`grind`) para `TPL_D4_Universal` y prueba de no-equivalencia AST entre arquetipos y sub-plantillas. | 1.5 a 2 d | 📐 **P0 — En Roadmap** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
@@ -133,122 +133,26 @@ Para alinear la ingeniería en torno al objetivo de **mayor exigencia cognitiva 
 
 <a id="milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso"></a>
 <a id="milestone-20-arquitectura-epistémica-de-excelencia-sobresaliente-20--el-arnés-cognitivo-para-github-pages"></a>
-### Milestone 20 (Fusiona M5 y M20): Arquitectura Epistémica de Excelencia (Sobresaliente 20), Modalidades de Bloom Superior y Reforma Anti-Descarte en GitHub Pages ($0)
-* **Estado:** 🎓 **P1 — Prioridad Cognitiva y Excelencia Académica (~3 a 5 d).** *(Unifica e integra íntegramente el antiguo **Milestone 5: Modalidades Interactivas Avanzadas, `Open Symbolic` y Demostraciones Paso a Paso** con el **Milestone 20** bajo una única arquitectura 100% compatible con GitHub Pages estático).*
-* **Objetivo:** Erradicar la ilusión de competencia por reconocimiento o descarte de opciones (`MC7`), migrando hacia la **evocación directa** y el **análisis paso a paso en los niveles superiores de la Taxonomía de Bloom (`Analyze`, `Evaluate`, `Create`)**. Capacita al estudiante para alcanzar calificaciones sobresalientes (18–20, nivel honores) en cursos de alta densidad analítica (Microeconomía I/II, Dinámica Macroeconómica, Análisis Real, Econometría Teórica) con costo \$0 de infraestructura y soporte offline PWA.
+<a id="milestone-20-b-modo-hierro-simulador-a-libro-cerrado-y-calibración-metacognitiva-en-github-pages-0"></a>
+### Milestone 20-B: Modo Hierro (Simulador a Libro Cerrado y Calibración Metacognitiva en GitHub Pages ($0))
+* **Estado:** 🎓 **P1 — Prioridad Cognitiva (~1 a 1.5 d).** *(Remanente específico de **Milestone 20** tras completarse y certificarse íntegramente **Milestone 20 Core** el 2026-11-18 en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md): Reforma Anti-Descarte `TPL-D3` + Cuota $\le 1$ `MC7`, compiladores Shift-Left `proof_compiler.py` & `adversarial_generator.py`, Smart `Blank-First` y las 6 modalidades de Bloom Superior en GitHub Pages \$0).*
+* **Objetivo:** Replicar la fricción cognitiva real de evaluaciones cronometradas a libro cerrado mediante lógica pura de cliente (`sessionStore.ts` + PWA offline, \$0 infraestructura), eliminando ayudas inmediatas durante el intento y midiendo la calibración entre confianza y acierto.
 
-#### 1. Reforma del Contrato de Distractores (`TPL-D3`) e Inversión de la Cuota de Modalidades (Fase 1 — Back-End C2C)
-Hoy `compile_shard.py` evalúa la cobertura de distractores (`TPL-D3`) contando únicamente las opciones falsas emitidas por plantillas `MC7` (6 distractores) y `MS` (1–4 distractores) en `seed=42`, mientras que `FIB` aporta 0. Esto obligaba a inflar el número de plantillas `MC7` cuando una competencia tenía $N_d > 6$ distractores.
-* **Desacople de `TPL-D3` hacia Entrada Libre (`FIB` y `open_symbolic`):**
-  - Las plantillas `FIB` y `open_symbolic` pasan a declarar en su retorno el mapa `ds: [("D-XX-01", trampa_val), ...]` y `rats: RATS`.
-  - El estudiante enfrenta el campo de respuesta en blanco (cero opciones visibles para descartar). Cuando introduce su respuesta numérica o simbólica, el motor compara primero contra `correct`; si falla, compara contra los valores/expresiones instanciados en `ds` y despliega el `error_rationale` exacto del distractor en `FeedbackToast.tsx`.
-  - `compile_shard.py` contabiliza los `D-XX-YY` declarados en `FIB` y `open_symbolic` para satisfacer el 100% de `TPL-D3` en `seed=42`, eliminando la necesidad de crear plantillas `MC7` de relleno.
-* **Inversión de la Cuota de Modalidades por Competencia:**
-  - En competencias de habilidad (`Hab-*`): **0 `MC7` requeridas (máximo 1 `MC7` opcional)** y **$\ge 80\%$ de plantillas en modalidades de producción activa y análisis** (`FIB`, `open_symbolic`, `proof_dag`, `adversarial_break`, `unstructured_model`, `invariant_canvas`).
-  - En competencias conceptuales (`C-*`, `H-*`, `PRE-*`): máximo 1 `MC7` por competencia; el resto se distribuye en `FIB`, `MS`, `concept_matching`, `adversarial_break` y `proof_dag`.
-
-#### 2. Catálogo Unificado de Modalidades de Bloom Superior y Frontera Técnica en GitHub Pages ($0 Infra)
-
-| Componente / Modalidad | Nivel de Bloom Objetivo | Factibilidad GitHub Pages ($0) | Implementación Técnica Concreta (Shift-Left Python + Client-Side TS) |
-| :--- | :---: | :---: | :--- |
-| **1. Álgebra Simbólica Libre (`open_symbolic`)** *(de M5 + M20)* | `Apply` / `Analyze` | ✅ **100% Factible** | **Editor MathLive + Client-Side CAS con `mathjs` AST:** Ya instalado en `platform/package.json` (`mathjs ^14.3.1`). Evalúa equivalencia algebraica (`simplify(user_expr - correct_expr) == 0`) y captura expresiones de distractores `ds` en `< 5 ms` sin servidor. Alternativa modular: Pyodide en WebWorker si se requiere SymPy puro en cliente. En compilación (Stage 3/4), `SymPy` certifica la fórmula canónica. |
-| **2. Demostraciones Paso a Paso y Parsons Prover (`proof_dag`)** *(fusiona Parsons/Lean de M5 + DAG de M20)* | `Analyze` / `Evaluate` | ✅ **100% Factible** | **Shift-Left en Python (`proof_compiler.py`) + Validador Topológico en React (`ProofDAG.tsx` + `StepTile.tsx`):** Las derivaciones se precompilan offline como grafos dirigidos acíclicos con pasos válidos y pasos falaces distractores. El cliente valida en tiempo real (`< 5 ms`) el ordenamiento deductivo y la justificación de lemas sin requerir `lean --server` en vivo. |
-| **3. Modo Adversarial y Caza de Falacias (`adversarial_break`)** *(de M20)* | `Evaluate` | ✅ **100% Factible** | **Arena Adversarial (`AdversarialArena.tsx`):** Presenta una demostración o resolución con una falacia matemática deliberada (ej. dividir por cero, ignorar condición de 2do orden $\pi''(x) > 0$, aplicar Lagrangiano en conjunto no convexo). El alumno debe señalar el paso exacto que quiebra el supuesto o ingresar un contraejemplo numérico acotado. |
-| **4. Formulación No Estructurada Stage 0 (`unstructured_model`)** *(de M20)* | `Analyze` / `Create` | ✅ **100% Factible** | **Stepper de Modelado en 3 Fases (`Stage0Modeler.tsx`):** Transición guiada desde una narrativa con datos distractores hasta el modelo formal antes de permitir el cálculo (Clasificación de Variables $\to$ Restricciones/Supuestos $\to$ Función Objetivo y CPO/CSO). |
-| **5. Lienzo Visoespacial con Invariantes (`invariant_canvas` / `graph_manipulator`)** *(fusiona SVG de M5 + M20)* | `Analyze` / `Evaluate` | ✅ **100% Factible** | **Lienzo React SVG Reactivo (`InvariantCanvas.tsx` + `TopologyValidator.ts`):** Desplazamiento de curvas/isoclinas, sliders paramétricos continuos y construcción de árboles de decisión. El validador en TypeScript verifica invariantes geométricos y topológicos (pendientes, tangencias múltiples, conjuntos de información). |
-| **6. Emparejamiento Estructural (`concept_matching`)** *(de M5)* | `Understand` / `Analyze` | ✅ **100% Factible** | **Matriz de Asociación Causal:** Vincular supuestos formales con sus consecuencias algebraicas o regímenes dinámicos con condiciones de estabilidad, penalizando el tanteo mediante distractores cruzados. |
-| **7. Simulador de Fricción Cognitiva a Libro Cerrado** *(de M20)* | `Evaluate` | ✅ **100% Factible** | **Modo Hierro (`IronExamSession.tsx` + `MetacognitiveModal.tsx`):** Lógica pura de cliente en React + `sessionStore.ts`. Examen cronometrado con cero pistas, retención total del feedback hasta la entrega final y formulario obligatorio de auditoría metacognitiva previa. |
-| *Daemon Interactivo Lean 4 en Vivo (`lean --server`)* | — | ❌ **Inviable en GH Pages** | *Fuera de alcance:* Exige VPS Linux dedicado con 4–8 GB de RAM por sesión para compilar pruebas Lean 4 interactivas. Reemplazado al 100% por la precompilación Shift-Left de `proof_dag` validada localmente con SymPy/Z3/Lean 4 durante el build del curso. |
-| *Servidores de Backend C# / LINQ o Python FastAPI* | — | ❌ **Inviable en GH Pages** | *Fuera de alcance:* GitHub Pages es un CDN de archivos estáticos puros; no permite procesos de fondo ni motores en C# (.NET/LINQ) ni microservicios Python activos. Reemplazado por lógica isomórfica TS/WASM. |
-| *Sandbox de Código Remoto Arbitrario en la Nube* | — | ❌ **Inviable en GH Pages** | *Fuera de alcance:* Servidores Jupyter/Julia multiusuario en cloud implican riesgos severos de seguridad (minería/abuso) y costos mensuales altos. Reemplazado por scripts locales de laboratorio. |
-
-#### 3. Estructura de Archivos del Hito Unificado
-```
-Tops_academy/
-├── schemas/
-│   └── course.schema.json         <-- Extensión: tipos "open_symbolic", "proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching" + soporte "ds" en FIB/open_symbolic
-├── .agents/skills/content-to-course/engine/
-│   ├── compile_shard.py           <-- Reforma TPL-D3 (contabilizar ds en FIB/open_symbolic) + límite máx. 1 MC7
-│   ├── proof_compiler.py          <-- Compilador Shift-Left en Python: genera DAGs válidos y pasos falaces
-│   └── adversarial_generator.py   <-- Generador de resoluciones con falacias matemáticas controladas
-├── platform/
-│   ├── package.json               <-- mathjs (^14.3.1 activo) + integración ligera de mathlive para input LaTeX
-│   └── src/
-│       ├── types.ts               <-- Interfaces ProofStep, DAGEdge, MetacognitiveAudit, Stage0Data, SymbolicDistractor
-│       ├── components/
-│       │   ├── proof/
-│       │   │   ├── ProofDAG.tsx          <-- UI de encadenamiento de demostraciones con justificación de lemas
-│       │   │   └── StepTile.tsx          <-- Bloques lógicos interactivos (Parsons Prover)
-│       │   ├── canvas/
-│       │   │   ├── InvariantCanvas.tsx   <-- SVG interactivo para árboles de juegos e isocuantas
-│       │   │   └── TopologyValidator.ts  <-- Validador de invariantes geométricos en TypeScript
-│       │   ├── arena/
-│       │   │   └── AdversarialArena.tsx  <-- Interfaz de caza de falacias matemáticas y contraejemplos
-│       │   ├── modeling/
-│       │   │   └── Stage0Modeler.tsx     <-- Stepper de formalización de narrativa difusa
-│       │   └── session/
-│       │       ├── IronExamSession.tsx    <-- Arnés de examen a libro cerrado con feedback diferido
-│       │       └── MetacognitiveModal.tsx <-- Formulario de calibración y grado de certeza antes de calificar
-│       └── services/
-│           └── symbolicValidator.ts      <-- Comparador AST con mathjs (simplify(user - sol) == 0 y match de ds[])
+#### 1. Entregables Pendientes de Modo Hierro
+```text
+platform/src/
+├── types.ts                              <-- Extensión: interfaz MetacognitiveAudit y configuración de sesión IronExam
+└── components/session/
+    ├── IronExamSession.tsx               <-- Arnés cronometrado a libro cerrado con feedback y solución diferidos hasta entrega final
+    └── MetacognitiveModal.tsx            <-- Formulario obligatorio de calibración y grado de certeza previo a calificar
 ```
 
-#### 4. Criterios de Aceptación (AC):
-1. **AC-1 (Reforma `TPL-D3` en Entrada Libre):** `compile_shard.py` valida competencias con `0` o `1` plantilla `MC7` verificando que el 100% de los `D-XX-YY` estén cubiertos a través del arreglo `ds` en plantillas `FIB` y `open_symbolic` en `seed=42`.
-2. **AC-2 (Equivalencia Simbólica Client-Side y Diagnóstico de Trampas):** `symbolicValidator.ts` compara expresiones algebraicas libres con `mathjs.simplify` (100% de acierto en identidades de cálculo/microeconomía) y, ante un fallo, identifica si la expresión ingresada equivale a algún distractor `D-XX-YY` para mostrar su `error_rationale`.
-3. **AC-3 (Verificación Topológica de Pruebas en $< 5\text{ ms}$):** `ProofDAG.tsx` valida la secuencia y justificación de una demostración de hasta 10 pasos en tiempo real en el navegador sin consultar servidores externos.
-4. **AC-4 (Invariante Geométrico SVG y Arena Adversarial):** `InvariantCanvas.tsx` y `AdversarialArena.tsx` validan gráficamente condiciones de tangencia/partición e identifican pasos con falacias de 2do orden o contraejemplos de convexidad.
-5. **AC-5 (Blindaje de Examen a Libro Cerrado):** `IronExamSession.tsx` desactiva completamente pistas, opciones y toasts durante una sesión cronometrada; almacena las respuestas y la autoevaluación metacognitiva del usuario antes de calcular la nota real.
-6. **AC-6 (Presupuesto PWA Estático y Shift-Left Pipeline):** El bundle de producción (`npm run build`) mantiene compatibilidad 100% offline en GitHub Pages incrementando el App Shell en $\le 120\text{ KB}$ gzip, y `engine/proof_compiler.py` precompila los esquemas `proof_dag` con validación local en SymPy/Z3.
+#### 2. Criterios de Aceptación (AC) de Milestone 20-B:
+1. **AC-1 (Blindaje de Examen a Libro Cerrado):** `IronExamSession.tsx` desactiva completamente pistas (`hints`), mensajes de error inmediatos (`FeedbackToast`) y consulta de solución paso a paso durante la sesión cronometrada, persistiendo respuestas y tiempo en `sessionStore.ts` sin degradar el presupuesto offline PWA.
+2. **AC-2 (Auditoría Metacognitiva Pre-Calificación):** Antes de calcular y revelar la nota real al entregar, `MetacognitiveModal.tsx` exige al estudiante registrar su nivel de certeza y diagnóstico percibido por ejercicio o bloque, generando una métrica de calibración (sobreconfianza vs. subconfianza) sobre todas las modalidades existentes (incluidas las 6 de M20 Core).
+3. **AC-3 (Cobertura Multi-Modalidad y Banco Canónico):** Compatibilidad 100% E2E sobre las modalidades activas y el banco de casos canónicos ([`tests/fixtures/m20_canonical_cases/m20_canonical_course.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/fixtures/m20_canonical_cases/m20_canonical_course.json)), manteniendo cero dependencias de backend en GitHub Pages (\$0).
 
-#### 5. Banco de Casos Canónicos: Cómo la Plataforma Entrena Frente a Exámenes de Alta Demanda (San Marcos / Eloy Ávalos)
-
-A continuación se detallan los 4 casos arquetípicos extraídos de los exámenes reales de Microeconomía I y el flujo pedagógico exacto con el que la nueva plataforma entrena al estudiante:
-
-##### Caso 1: Trampas de Segundo Orden y Rendimientos Crecientes (Examen 2, Pregunta 2.1)
-* **Enunciado de Examen:** *«Una empresa precio-aceptante opera con una tecnología dada por $c(x) = \sqrt{x} + F$. ¿Qué acontece con la empresa en el nivel óptimo de producción? Luego, explique lo que ocurriría hacia el largo plazo.»*
-* **Falla Común del 85% de Alumnos:** Despeje mecánico $p = CMg \implies p = \frac{1}{2\sqrt{x}} \implies x^* = \frac{1}{4p^2}$. Calificación: 00/05 por ignorar que $CMg$ es estrictamente decreciente y que la condición de 2do orden $\frac{d^2\pi}{dx^2} > 0$ convierte la tangencia en un **mínimo local de beneficios**.
-* **Entrenamiento en la Plataforma:**
-  1. *Fase Stage 0:* Bloqueo de cálculo hasta auditar la tecnología. Clasificación obligatoria: rendimientos crecientes, $c''(x) < 0$ y $\pi''(x) > 0$. Identificación de que $d\pi/dx = 0$ representa el punto de **menor beneficio posible**.
-  2. *Trampa Adversarial Guiada (`open_symbolic` / `FIB` + `ds`):* Si el alumno introduce $x = 1/(4p^2)$, la plataforma evalúa numéricamente con $p=1, F=10$: beneficio en la supuesta solución $x=0.25$ es $\pi = -10.25$, mientras que para $x=100$ es $\pi = +80$. Diagnóstico en Toast: *«Has maximizado las pérdidas. Al ser el costo marginal decreciente, cada unidad adicional es más barata de producir que la anterior.»*
-  3. *Lienzo SVG de Invariantes:* Gráfica dinámica de $CMg(x)$ y $CMe(x)$ mostrando que el precio corta la curva de costo marginal por debajo. Deducción asistida de monopolio natural y colapso del equilibrio competitivo de largo plazo.
-
-##### Caso 2: Restricción Presupuestaria No Convexa con Descuento por Volumen (Examen 1, Pregunta 2.2)
-* **Enunciado de Examen:** *«Un hogar posee preferencias regulares $u(x_1, x_2)$ con $p_2 = 1$. Por cada unidad adicional del bien $B_1$ recibe un descuento de $r\%$ hasta $\bar{x}_1$. Si posee ingreso $m$, explique las condiciones del óptimo del hogar.»*
-* **Falla Común:** Aplicar un Lagrangiano global o asumir que existe una única tangencia interior.
-* **Entrenamiento en la Plataforma:**
-  1. *Formalización por Tramos (Stage 0):* Construcción de la restricción presupuestaria por partes: Tramo A ($x_1 \le \bar{x}_1$) con pendiente $-p_1$ y Tramo B ($x_1 > \bar{x}_1$) con pendiente más plana $-p_1(1-r)$.
-  2. *Diagnóstico Visual de No Convexidad:* El lienzo SVG muestra el ángulo entrante (quiebre no convexo) en $(\bar{x}_1, m - p_1\bar{x}_1)$. La plataforma permite arrastrar una curva de indiferencia convexa y evidencia que **pueden existir dos tangencias locales simultáneas** en distintos tramos.
-  3. *Protocolo Analítico Exhaustivo (DAG):* El estudiante encadena las condiciones de optimalidad global:
-     $$x^* = \arg\max \{ u(x^A), u(x^{\text{kink}}), u(x^B) \}$$
-     con la condición obligatoria en el vértice no diferenciable: $p_1(1-r) \le TMS(x^{\text{kink}}) \le p_1$.
-  4. *Ruptura de Continuidad de la Demanda:* Slider paramétrico de renta $m$ donde un incremento marginal de $m=100 \to 102$ hace saltar el óptimo bruscamente de $x_1 = 2$ a $x_1 = 15$, demostrando la pérdida de continuidad de la función de demanda ordinaria.
-
-##### Caso 3: Ruptura Axiomática y Contraejemplos en el Contorno Superior (2da PC, Pregunta 2)
-* **Enunciado de Examen:** *«Sea $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$. Determine analíticamente si es cuasiconcava demostrando si su conjunto contorno superior $MI(x) = \{x' : u(x') \ge u(x)\}$ es convexo para $x = (1.5, 1.5)$.»*
-* **Falla Común:** Intentar calcular el orlado de la matriz hessiana en una función discontinua donde no existen derivadas.
-* **Entrenamiento en la Plataforma:**
-  1. *Evaluación de la Base:* Cálculo de la cota $u(1.5, 1.5) = 1 + 1 = 2$.
-  2. *Arena Adversarial de Búsqueda de Contraejemplos:* El alumno debe ingresar dos canastas $A$ y $B$ que pertenezcan a un contorno superior superior ($u \ge 3$):
-     * Canasta $A = (1.0, 2.0) \implies u(A) = 1 + 2 = 3 \ge 3$.
-     * Canasta $B = (2.0, 1.0) \implies u(B) = 2 + 1 = 3 \ge 3$.
-  3. *Verificación de la Combinación Convexa:* La plataforma calcula el punto medio con $\lambda = 0.5$:
-     $$M = 0.5 A + 0.5 B = (1.5, 1.5)$$
-     y evalúa la utilidad: $u(M) = \lfloor 1.5 \rfloor + \lfloor 1.5 \rfloor = 1 + 1 = 2 < 3$.
-  4. *Conclusión Formal:* El punto medio $M$ queda **fuera** del conjunto contorno superior $MI$, demostrando formal y analíticamente que el conjunto no es convexo y que la función **no es cuasicóncava**.
-
-##### Caso 4: Deducción Analítica General en Cadena Lógica (3ra PC, Pregunta 6.1)
-* **Enunciado de Examen:** *«A partir de la identidad $m \equiv e(p, v(p,m))$, derive analíticamente la Identidad de Roy sin suponer una forma funcional para $v$.»*
-* **Falla Común:** Saltar pasos intermedios, olvidar el Lema de Shephard o asumir implícitamente que $\partial e / \partial u = 1$.
-* **Entrenamiento en la Plataforma (ProofDAG):**
-  1. *Paso 1:* Diferenciación respecto a $p_i$ vía Regla de la Cadena multivariable: $0 = \partial e / \partial p_i + (\partial e / \partial u)(\partial v / \partial p_i)$.
-  2. *Paso 2:* Invocación del Lema de Shephard: $\partial e / \partial p_i = x_i^h(p,u) = x_i^d(p,m)$.
-  3. *Paso 3:* Diferenciación de la identidad respecto a la renta $m$ para despejar el término marginal: $1 = (\partial e / \partial u)(\partial v / \partial m) \implies \partial e / \partial u = 1 / (\partial v / \partial m)$.
-  4. *Paso 4:* Sustitución algebraica de los Lemas 2 y 3 en el Paso 1.
-  5. *Paso 5:* Despeje riguroso de la demanda ordinaria: $x_i^d(p,m) = - \frac{\partial v / \partial p_i}{\partial v / \partial m}$ (Q.E.D.).
-  * *Refutación Inmediata ante Falacias:* Si el alumno elige el distractor con signo positivo o salta el Paso 3, la plataforma diagnostica con precisión el error conceptual antes de permitirle avanzar.
-
-> 📄 **Especificación Técnica Completa y Síntesis de los 4 Ejes:** Consultar [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md).
+> 📄 **Registro del Núcleo Ya Certificado (Milestone 20 Core):** Consultar [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) y [`docs/specs/sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md).
 
 ---
 
