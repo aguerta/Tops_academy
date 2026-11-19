@@ -82,7 +82,7 @@ DSL_REFERENCE: Dict[str, Any] = {
     "templates_per_modality": DEFAULT_TEMPLATES_PER_MODALITY,
     "min_modalities": MIN_MODALITIES_PER_COMPETENCY,
     "max_modalities": MAX_MODALITIES_PER_COMPETENCY,
-    "description": "Form-C Quad-Band dicts in TEMPLATES (or 9-tupla legacy) with min_archetypes = 4 (direct, inverse, perturbation, boundary_or_edge_case) and N_min = max(4, M * K)",
+    "description": "Form-C Quad-Band dicts in TEMPLATES (or 9-tupla legacy) with min_archetypes = 4 (direct, inverse, perturbation, boundary_or_edge_case) and N_min = max(4, M * K) (Skill: 0 MC7; Concept/Fact: <= 1 MC7 y >= 80% activo => N_min = max(4, 5, 1 + (M-1)*K) si el plan incluye MC7)",
     "canonical_template_schema": "{'id': '^T-...', 'cid': '...', 'qtype': '...', 'archetype': '...', 'band': (diff, bloom), 'gen': gen_fn, 'ver': ver_fn, 'stem_variants': [...], 'hints': [...], 'sol': '...', 'rats': RATS}",
     "supported_question_types": [
         "multiple_choice_7_options",
@@ -125,7 +125,7 @@ DSL_REFERENCE: Dict[str, Any] = {
             f"python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4 --templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}"
         ),
         "quotas": (
-            f"Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de N_min = max(4, M * K) plantillas paramétricas "
+            f"Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de N_min = max(4, M * K) plantillas paramétricas (si una competencia Concept/Fact incluye MC7: exactamente 1 MC7 y N_min = max(4, 5, 1 + (M-1)*K); en Skill MC7 está prohibido, [M20-MC7-CAP]/[M20-ACTIVE-QUOTA]) "
             f"disjuntas (con K = {DEFAULT_TEMPLATES_PER_MODALITY} por defecto vía --templates-per-modality K, M = len(recommended_modalities) "
             f"en [{MIN_MODALITIES_PER_COMPETENCY}..{MAX_MODALITIES_PER_COMPETENCY}], cubriendo >= K plantillas distintas por cada modalidad recomendada, "
             f"los 4 arquetipos Form-C 'direct', 'inverse', 'perturbation', 'boundary_or_edge_case', las 3 bandas easy/medium/hard y >= 2 niveles Bloom). "
@@ -349,6 +349,38 @@ DSL_REFERENCE: Dict[str, Any] = {
 }
 
 
+def _dsl_reference_for_k(k: int) -> Dict[str, Any]:
+    """Return DSL_REFERENCE with templates_per_modality / K strings aligned to the effective K."""
+    import copy as _copy
+    ref = _copy.deepcopy(DSL_REFERENCE)
+    try:
+        k_int = max(1, int(k))
+    except (TypeError, ValueError):
+        return ref
+    if k_int == DEFAULT_TEMPLATES_PER_MODALITY:
+        return ref
+    ref["templates_per_modality"] = k_int
+
+    def _sub(node: Any) -> Any:
+        if isinstance(node, str):
+            return (
+                node.replace(
+                    f"--templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}",
+                    f"--templates-per-modality {k_int}",
+                ).replace(
+                    f"K = {DEFAULT_TEMPLATES_PER_MODALITY} por defecto",
+                    f"K = {k_int} por defecto",
+                )
+            )
+        if isinstance(node, dict):
+            return {kk: _sub(vv) for kk, vv in node.items()}
+        if isinstance(node, list):
+            return [_sub(x) for x in node]
+        return node
+
+    return _sub(ref)
+
+
 def is_skill_competency(comp: Dict[str, Any]) -> bool:
     """Return True if competency is classified as a Skill (Hab)."""
     ctype = str(comp.get("type", "")).lower().strip()
@@ -448,7 +480,13 @@ def calculate_competency_weight(comp: Dict[str, Any]) -> float:
 
     distractors_raw = comp.get("distractors")
     distractors_count = len(distractors_raw) if isinstance(distractors_raw, list) else 0
-    return round(base + (0.1 * distractors_count), 2)
+    extra_templates = 0.0
+    rec_mods_w = comp.get("recommended_modalities")
+    if isinstance(rec_mods_w, list) and rec_mods_w:
+        n_mods_w = len({str(m).strip().lower() for m in rec_mods_w if str(m).strip()})
+        n_req_w = required_templates_for_competency(n_mods_w, DEFAULT_TEMPLATES_PER_MODALITY)
+        extra_templates = 0.5 * max(0, n_req_w - MIN_ARCHETYPES)
+    return round(base + (0.1 * distractors_count) + extra_templates, 2)
 
 
 def _compute_distractor_template_guidance(
@@ -466,14 +504,16 @@ def _compute_distractor_template_guidance(
         n_distractors = len(distractors_raw) if isinstance(distractors_raw, list) else 0
         rec_mods = comp.get("recommended_modalities") or []
         if n_distractors > 6:
-            min_mc7_only = math.ceil(n_distractors / 6)
-            min_mc7_with_ms4 = max(1, math.ceil(max(0, n_distractors - 4) / 6))
+            max_mc7_allowed = 0 if is_skill_competency(comp) else 1
+            min_mc7_only = max_mc7_allowed
+            min_mc7_with_ms4 = max_mc7_allowed
             exceeds_base_multimodal = n_distractors > 10
             entry: Dict[str, Any] = {
                 "n_distractors": n_distractors,
                 "recommended_modalities": list(rec_mods),
                 "mc7_capacity_per_seed": 6,
                 "ms_capacity_per_seed": "2-4",
+                "max_mc7_allowed": max_mc7_allowed,
                 "min_mc7_if_mc7_only": min_mc7_only,
                 "min_mc7_with_ms4": min_mc7_with_ms4,
                 "exceeds_base_multimodal": exceeds_base_multimodal,
@@ -786,7 +826,7 @@ def plan_shards(
     manifest_shards = []
     # Stage 4 authority: type is read exactly as run.py --stage build reads it (comp["type"]).
     cta_type_by_cid = {
-        str(c.get("id")): str(c.get("type", "concept"))
+        str(c.get("id")): ("skill" if is_skill_competency(c) else str(c.get("type", "concept")))
         for c in competencies
         if isinstance(c, dict) and c.get("id")
     }
@@ -847,9 +887,13 @@ def plan_shards(
         s4_by_cid = {}
         for cid_s4 in shard["competency_ids"]:
             rec_mods_s4 = cta_rec_mods_by_cid.get(cid_s4) or []
-            norm_mods_s4 = list(dict.fromkeys(str(m).strip().lower() for m in rec_mods_s4 if str(m).strip()))
+            _mc7_aliases = {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"}
+            _canon_alias = {"fib": "fill_in_the_blank", "ms": "multiple_select", **{a: "multiple_choice_7_options" for a in _mc7_aliases}}
+            norm_mods_s4 = list(dict.fromkeys(
+                _canon_alias.get(str(m).strip().lower(), str(m).strip().lower()) for m in rec_mods_s4 if str(m).strip()
+            ))
             num_mods_s4 = len(norm_mods_s4)
-            has_mc7_s4 = any(m in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options") for m in norm_mods_s4)
+            has_mc7_s4 = "multiple_choice_7_options" in norm_mods_s4
             s4_by_cid[cid_s4] = competency_contract(
                 cta_type_by_cid.get(cid_s4, "concept"),
                 num_modalities=num_mods_s4,
@@ -894,7 +938,7 @@ def plan_shards(
             "shard_data_path": shard_data_path_abs,
             "templates_dir": templates_dir_abs,
             "source_files": matched_sources,
-            "dsl_reference": DSL_REFERENCE,
+            "dsl_reference": _dsl_reference_for_k(eff_tpl_per_mod),
             "stage4_contract": {"global": global_contract(templates_per_modality=eff_tpl_per_mod), "per_competency": s4_by_cid},
         }
         if distractor_guidance:

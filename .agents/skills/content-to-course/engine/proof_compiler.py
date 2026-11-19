@@ -52,12 +52,24 @@ def _verify_sympy_step(step: Dict[str, Any], step_id: str, variables: Dict[str, 
     except ImportError:
         return
 
-    lhs_str = format_fn(str(lhs_raw), variables) if variables else str(lhs_raw)
-    rhs_str = format_fn(str(rhs_raw), variables) if variables else str(rhs_raw)
+    safe_vars = {
+        k: (f"({v})" if isinstance(v, (int, float)) and not isinstance(v, bool) and v < 0 else v)
+        for k, v in (variables or {}).items()
+    }
+    lhs_str = format_fn(str(lhs_raw), safe_vars) if safe_vars else str(lhs_raw)
+    rhs_str = format_fn(str(rhs_raw), safe_vars) if safe_vars else str(rhs_raw)
     try:
         lhs = sp.sympify(lhs_str)
         rhs = sp.sympify(rhs_str)
         diff = sp.simplify(lhs - rhs)
+        if diff != 0 and getattr(diff, "free_symbols", None):
+            num_subs = {
+                sp.Symbol(str(k)): v
+                for k, v in (variables or {}).items()
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            }
+            if num_subs and {sy for sy in diff.free_symbols} <= set(num_subs):
+                diff = sp.simplify(diff.subs(num_subs))
         if diff != 0:
             raise ValueError(
                 f"[PROOF-DAG-SYMPY] Step '{step_id}' failed SymPy equivalence check: "

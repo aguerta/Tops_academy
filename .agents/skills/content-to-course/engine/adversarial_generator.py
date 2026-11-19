@@ -33,6 +33,29 @@ def _get_format_helpers():
     return format_template_string, sanitize_katex_syntax, _resolve_distractor_rationale, _is_generic_placeholder
 
 
+def _format_expr(expr_raw: Any, variables: Dict[str, Any], format_fn: Any) -> str:
+    """Interpolate @var@ in an expression parenthesizing negative numeric values (avoids -3**2 / --3)."""
+    s_expr = str(expr_raw or "")
+    if not s_expr or not variables:
+        return s_expr.strip()
+    safe_vars = {
+        k: (f"({v})" if isinstance(v, (int, float)) and not isinstance(v, bool) and v < 0 else v)
+        for k, v in variables.items()
+    }
+    return format_fn(s_expr, safe_vars).strip()
+
+
+def _coerce_num(val: Any, variables: Dict[str, Any], format_fn: Any) -> Any:
+    """Interpolate @var@ in numeric-like strings and coerce to float when possible."""
+    if isinstance(val, str):
+        txt = format_fn(val, variables).strip() if variables else val.strip()
+        try:
+            return float(txt)
+        except ValueError:
+            return txt
+    return val
+
+
 def _format_text(text: Any, variables: Dict[str, Any], format_fn, sanitize_fn) -> str:
     if text is None:
         return ""
@@ -351,6 +374,9 @@ def compile_and_verify_adversarial(
             "mode": "find_fallacy",
             "steps": compiled_steps,
         }
+        _prompt_ff = _format_text(raw_adv.get("prompt"), vars_dict, format_fn, sanitize_fn)
+        if _prompt_ff:
+            compiled_adv["prompt"] = _prompt_ff
         if compiled_reasons:
             compiled_adv["reason_options"] = compiled_reasons
 
@@ -373,6 +399,7 @@ def compile_and_verify_adversarial(
         raise ValueError("[ADV-CE-PREDS] counterexample mode requires non-empty 'predicates'.")
     if not isinstance(sample_witness, dict) or not sample_witness:
         raise ValueError("[ADV-CE-WITNESS] counterexample mode requires 'sample_witness' dictionary.")
+    sample_witness = dict(sample_witness)
 
     compiled_inputs: List[Dict[str, Any]] = []
     witness_scope: Dict[str, float] = {}
@@ -388,6 +415,7 @@ def compile_and_verify_adversarial(
             raise ValueError(f"[ADV-CE-INPUT] input[{idx}] has empty id.")
         if iid not in sample_witness:
             raise ValueError(f"[ADV-WITNESS-MISSING] sample_witness missing value for input '{iid}'.")
+        sample_witness[iid] = _coerce_num(sample_witness[iid], vars_dict, format_fn)
         try:
             w_val = float(sample_witness[iid])
         except (TypeError, ValueError) as exc:
@@ -395,8 +423,8 @@ def compile_and_verify_adversarial(
         if not math.isfinite(w_val):
             raise ValueError(f"[ADV-WITNESS-FINITE] sample_witness['{iid}'] must be finite.")
 
-        inp_min = inp.get("min")
-        inp_max = inp.get("max")
+        inp_min = _coerce_num(inp.get("min"), vars_dict, format_fn)
+        inp_max = _coerce_num(inp.get("max"), vars_dict, format_fn)
         if inp_min is not None and w_val < float(inp_min):
             raise ValueError(f"[ADV-WITNESS-BOUNDS] sample_witness['{iid}']={w_val} < min {inp_min}.")
         if inp_max is not None and w_val > float(inp_max):
@@ -414,7 +442,7 @@ def compile_and_verify_adversarial(
         if inp_max is not None:
             c_inp["max"] = float(inp_max)
         if inp.get("step") is not None:
-            c_inp["step"] = float(inp["step"])
+            c_inp["step"] = float(_coerce_num(inp["step"], vars_dict, format_fn))
         compiled_inputs.append(c_inp)
 
     compiled_preds: List[Dict[str, Any]] = []
@@ -422,7 +450,7 @@ def compile_and_verify_adversarial(
         if not isinstance(pred, dict):
             raise ValueError(f"[ADV-CE-PRED] predicates[{p_idx}] must be a dict.")
         pid = str(pred.get("id") or f"P{p_idx + 1}").strip()
-        expr_raw = format_fn(str(pred.get("expr") or ""), vars_dict) if vars_dict else str(pred.get("expr") or "")
+        expr_raw = _format_expr(pred.get("expr"), vars_dict, format_fn)
         expr_str = expr_raw.strip()
         if not expr_str:
             raise ValueError(f"[ADV-CE-PRED] Predicate '{pid}' has empty 'expr'.")
@@ -468,7 +496,7 @@ def compile_and_verify_adversarial(
     for t_idx, tp in enumerate(raw_adv.get("trap_predicates") or []):
         if not isinstance(tp, dict):
             continue
-        t_expr = format_fn(str(tp.get("expr") or ""), vars_dict) if vars_dict else str(tp.get("expr") or "")
+        t_expr = _format_expr(tp.get("expr"), vars_dict, format_fn)
         t_expr = t_expr.strip()
         if not t_expr:
             continue
@@ -498,6 +526,7 @@ def compile_and_verify_adversarial(
     if isinstance(non_witness, dict) and non_witness:
         nw_scope = dict(witness_scope)
         for k, v in non_witness.items():
+            v = _coerce_num(v, vars_dict, format_fn)
             if isinstance(v, (int, float)) and not isinstance(v, bool):
                 nw_scope[str(k)] = float(v)
         all_ok = all(bool(eval_safe_predicate(p["expr"], nw_scope)) for p in compiled_preds)
@@ -510,7 +539,7 @@ def compile_and_verify_adversarial(
     for r_idx, ro in enumerate(raw_adv.get("computed_readouts") or []):
         if not isinstance(ro, dict):
             continue
-        r_expr = format_fn(str(ro.get("expr") or ""), vars_dict) if vars_dict else str(ro.get("expr") or "")
+        r_expr = _format_expr(ro.get("expr"), vars_dict, format_fn)
         r_expr = r_expr.strip()
         if not r_expr:
             continue
@@ -530,6 +559,9 @@ def compile_and_verify_adversarial(
         "predicates": compiled_preds,
         "sample_witness": clean_witness,
     }
+    _prompt_ce = _format_text(raw_adv.get("prompt"), vars_dict, format_fn, sanitize_fn)
+    if _prompt_ce:
+        compiled_adv["prompt"] = _prompt_ce
     if compiled_traps:
         compiled_adv["trap_predicates"] = compiled_traps
     if compiled_readouts:

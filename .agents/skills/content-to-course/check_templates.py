@@ -2713,6 +2713,9 @@ def _extract_instance_distractor_ids(instance: Any) -> Set[str]:
         for pr in adv.get("predicates") or []:
             if isinstance(pr, dict):
                 _add(pr.get("distractor_id") or pr.get("did"))
+        for tp in adv.get("trap_predicates") or []:
+            if isinstance(tp, dict):
+                _add(tp.get("distractor_id") or tp.get("did"))
     um = instance.get("unstructured_model")
     if isinstance(um, dict):
         for it in (um.get("phase1_variables") or {}).get("items") or []:
@@ -2770,10 +2773,11 @@ def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
             payload = q[q_type]
             # Include rendered text/math fields so parametric steps/curves with static IDs reflect variance
             if q_type == "proof_dag":
-                sig_obj["steps"] = [
-                    (s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
-                    for s in (payload.get("steps") or []) if isinstance(s, dict)
-                ]
+                sig_obj["steps"] = sorted(
+                    ((s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                     for s in (payload.get("steps") or []) if isinstance(s, dict)),
+                    key=lambda t: str(t),
+                )
             elif q_type == "adversarial_break":
                 sig_obj["prompt"] = payload.get("prompt")
                 sig_obj["sample_witness"] = payload.get("sample_witness")
@@ -2785,11 +2789,21 @@ def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
                     p.get("expr") for p in (payload.get("predicates") or []) if isinstance(p, dict)
                 ]
             elif q_type == "unstructured_model":
-                sig_obj["p1"] = [
-                    (it.get("id"), it.get("label"))
-                    for it in ((payload.get("phase1_variables") or {}).get("items") or []) if isinstance(it, dict)
-                ]
-                sig_obj["p3"] = (payload.get("phase3_formulation") or {}).get("correct_expression")
+                sig_obj["p1"] = sorted(
+                    ((it.get("id"), it.get("label"))
+                     for it in ((payload.get("phase1_variables") or {}).get("items") or []) if isinstance(it, dict)),
+                    key=lambda t: str(t),
+                )
+                sig_obj["p2"] = sorted(
+                    str((o.get("id"), o.get("content")))
+                    for o in ((payload.get("phase2_assumptions") or {}).get("options") or []) if isinstance(o, dict)
+                )
+                _p3 = payload.get("phase3_formulation") or {}
+                sig_obj["p3"] = _p3.get("correct_expression")
+                sig_obj["p3_opts"] = sorted(
+                    str((o.get("id"), o.get("content")))
+                    for o in (_p3.get("options") or []) if isinstance(o, dict)
+                )
             elif q_type == "invariant_canvas":
                 sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
                 sig_obj["invariants"] = payload.get("invariants")
@@ -2805,12 +2819,14 @@ def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
                 sig_obj["target_state"] = payload.get("target_state")
                 sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
             elif q_type == "concept_matching":
-                sig_obj["premises"] = [
-                    (p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)
-                ]
-                sig_obj["targets"] = [
-                    (t.get("id"), t.get("content")) for t in (payload.get("targets") or []) if isinstance(t, dict)
-                ]
+                sig_obj["premises"] = sorted(
+                    ((p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)),
+                    key=lambda t: str(t),
+                )
+                sig_obj["targets"] = sorted(
+                    ((t.get("id"), t.get("content")) for t in (payload.get("targets") or []) if isinstance(t, dict)),
+                    key=lambda t: str(t),
+                )
         return json.dumps(sig_obj, sort_keys=True, default=str)
     return str(q.get("correct", "")).strip()
 
@@ -4303,6 +4319,7 @@ def check_templates_file_or_dir(
             "invariant_canvas",
             "concept_matching",
         }
+        comp_map_d3 = {c.get("id"): c for c in (cta_data or {}).get("competencies", []) if isinstance(c, dict)}
         for cid in comps_to_check:
             declared_set = {d.replace("_", "-") for d in (cta_distractors_by_comp.get(cid, set()) or set())}
             referenced_set = {d.replace("_", "-") for d in (referenced_distractors_by_comp.get(cid, set()) or set())}
@@ -4314,13 +4331,20 @@ def check_templates_file_or_dir(
                 t.get("interaction_type") == "fill_in_the_blank" and bool(t.get("distractor_ids"))
                 for t in c_tpls
             )
+            _comp_meta = (comp_map_d3 or {}).get(cid) or {}
+            _contract_v2 = (
+                int((cta_data or {}).get("contract_version") or 1) >= 2
+                or bool(_comp_meta.get("recommended_modalities"))
+            )
             is_100_fib_legacy = (
-                len(c_tpls) > 0
+                not _contract_v2
+                and len(c_tpls) > 0
                 and all(t.get("interaction_type") == "fill_in_the_blank" for t in c_tpls)
                 and not referenced_set
             )
             is_legacy_pure_ms = (
-                has_ms
+                not _contract_v2
+                and has_ms
                 and not has_mc7
                 and not has_bloom_superior
                 and not has_fib_ds

@@ -1323,6 +1323,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         raise FileNotFoundError(f"No sectional CTA parts found in {parts_dir.resolve()}")
 
     combined_competencies: List[Dict[str, Any]] = []
+    max_contract_version: Optional[int] = None
     course_id = manifest_data.get("course_id") or "course_generic"
     course_title = course_id.replace("_", " ").title()
     macro_competency = f"Mastery of {course_title}"
@@ -1350,6 +1351,12 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             course_id = content.get("course_id", course_id)
             course_title = content.get("title", course_title)
             macro_competency = content.get("macro_competency", macro_competency)
+            part_cv = content.get("contract_version", content.get("CTA_CONTRACT_VERSION"))
+            if part_cv is not None:
+                try:
+                    max_contract_version = max(int(part_cv), max_contract_version or 1)
+                except (TypeError, ValueError):
+                    pass
         else:
             comps = []
 
@@ -1676,12 +1683,15 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "by_part": comp_id_map_by_part,
     }
 
-    draft_payload = {
+    draft_payload = {}
+    if max_contract_version is not None:
+        draft_payload["contract_version"] = max_contract_version
+    draft_payload.update({
         "course_id": course_id,
         "title": course_title,
         "macro_competency": macro_competency,
         "competencies": combined_competencies,
-    }
+    })
 
     outline_payload = _build_outline_payload(
         course_id=course_id,
@@ -2125,9 +2135,9 @@ def apply_harmonize(
                     "survivor_id": survivor_id,
                     "absorbed_id": absorbed_id,
                     "reason": reason,
-                    "merged_type": m_entry.get("merged_type"),
-                    "merged_name": m_entry.get("merged_name"),
-                    "merged_description_latex": m_entry.get("merged_description_latex"),
+                    "merged_type": m_entry.get("merged_type") or m_entry.get("type"),
+                    "merged_name": m_entry.get("merged_name") or m_entry.get("name"),
+                    "merged_description_latex": m_entry.get("merged_description_latex") or m_entry.get("description_latex"),
                 })
 
         # Group members by Union-Find root
@@ -2362,6 +2372,22 @@ def apply_harmonize(
                 comp_survivor["type"] = str(explicit_type).strip().lower()
             elif comp_survivor.get("type", "").lower() == "fact" and absorbed_concept_with_assumptions:
                 comp_survivor["type"] = "concept"
+
+            # Re-enforce [M20-MC7-CAP] and modality cap once the final survivor type is known
+            if comp_survivor.get("recommended_modalities"):
+                final_mods = list(dict.fromkeys(comp_survivor["recommended_modalities"]))
+                final_is_skill = (
+                    str(comp_survivor.get("type", "")).lower() == "skill"
+                    or str(comp_survivor.get("id", "")).startswith("Hab-")
+                )
+                if final_is_skill and "multiple_choice_7_options" in final_mods:
+                    final_mods = [m for m in final_mods if m != "multiple_choice_7_options"]
+                    for fallback_mod in ("fill_in_the_blank", "open_symbolic", "multiple_select"):
+                        if len(final_mods) >= 2:
+                            break
+                        if fallback_mod not in final_mods:
+                            final_mods.append(fallback_mod)
+                comp_survivor["recommended_modalities"] = final_mods[:_MAX_MODALITIES_PER_COMPETENCY]
 
             if explicit_name and str(explicit_name).strip():
                 comp_survivor["name"] = str(explicit_name).strip()
@@ -2612,6 +2638,9 @@ def render_cta_md(cta_data: Dict[str, Any]) -> str:
         lines.append(f"- **Bloom Level:** {bloom}")
         lines.append(f"- **Session:** {session}")
         lines.append(f"- **Prerequisites:** {prereqs}")
+        rec_mods_md = c.get("recommended_modalities")
+        if isinstance(rec_mods_md, list) and rec_mods_md:
+            lines.append(f"- **Recommended Modalities:** {', '.join(str(m) for m in rec_mods_md)}")
 
         if evidence:
             ev_strs = []

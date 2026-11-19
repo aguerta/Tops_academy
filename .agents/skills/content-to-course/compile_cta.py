@@ -660,7 +660,7 @@ class CtaDataLineLocator:
         if not target_range and found_cid:
             if "CTA-ASSUMPTIONS-MISSING" in err_msg:
                 target_range = self.get_range(found_cid, "assumptions") or self.get_range(found_cid)
-            elif "CTA-MODALITY-" in err_msg:
+            elif "CTA-MODALITY-" in err_msg or "M20-MC7-CAP" in err_msg:
                 target_range = self.get_range(found_cid, "recommended_modalities") or self.get_range(found_cid)
             else:
                 target_range = self.get_range(found_cid, field_match)
@@ -1186,7 +1186,7 @@ _MODALITY_ALIASES: Dict[str, str] = {
 _CANONICAL_MODALITIES = frozenset(_MODALITY_ALIASES.values())
 
 
-def _normalize_recommended_modalities(raw_mods: Any, cid: str = "") -> List[str]:
+def _normalize_recommended_modalities(raw_mods: Any, cid: str = "", strict: bool = True) -> List[str]:
     """Normalize optional CTA-Architect modality recommendations preserving order."""
     if not raw_mods:
         return []
@@ -1199,6 +1199,10 @@ def _normalize_recommended_modalities(raw_mods: Any, cid: str = "") -> List[str]
     out: List[str] = []
     for raw in items:
         norm = _MODALITY_ALIASES.get(raw.lower())
+        if (norm is None or norm not in _CANONICAL_MODALITIES) and not strict:
+            if raw not in out:
+                out.append(raw)
+            continue
         if norm is None or norm not in _CANONICAL_MODALITIES:
             raise ValueError(
                 f"[CTA-MODALITY-INVALID] Competency '{cid}': unrecognized modality '{raw}'. "
@@ -1311,7 +1315,7 @@ def compile_cta_module(
         raw_assumptions = []
         raw_rec_mods: Any = []
         if isinstance(item, dict):
-            if "assumptions" in item or item.get("_is_spliced"):
+            if "assumptions" in item or "recommended_modalities" in item or item.get("_is_spliced"):
                 raw_type = str(item.get("type", "concept")).strip().lower()
                 norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
                 user_id = str(item.get("id", "")).strip() or None
@@ -1330,8 +1334,11 @@ def compile_cta_module(
                 if isinstance(ev_list, list) and ev_list:
                     ev0 = ev_list[0]
                     if isinstance(ev0, dict):
-                        doc = str(ev0.get("doc", doc)).strip()
+                        doc = str(ev0.get("doc") or ev0.get("pdf") or doc).strip()
                         page = int(ev0.get("page", 1))
+                    elif isinstance(ev0, (list, tuple)) and len(ev0) >= 2:
+                        doc = str(ev0[0] or doc).strip()
+                        page = int(ev0[1]) if str(ev0[1]).strip().isdigit() else 1
                 prereqs = list(item.get("prerequisites", []))
                 raw_distractors = item.get("distractors", [])
                 raw_assumptions = item.get("assumptions", [])
@@ -1505,6 +1512,14 @@ def compile_cta_module(
                     prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple, set)) else []
                     raw_distractors = item[8] if len(item) > 8 else []
                     raw_assumptions = item[9] if len(item) > 9 else []
+                    if (
+                        len(item) == 10
+                        and isinstance(item[9], (list, tuple, set))
+                        and item[9]
+                        and all(isinstance(x, str) and x.strip().lower() in _MODALITY_ALIASES for x in item[9])
+                    ):
+                        raw_rec_mods = item[9]
+                        raw_assumptions = []
                     if len(item) >= 11 and item[10] is not None:
                         raw_rec_mods = item[10]
                 elif len(item) == 9:
@@ -1549,9 +1564,9 @@ def compile_cta_module(
             raw_assumptions=raw_assumptions,
             cid_clean=cid_clean,
         )
-        recommended_modalities = _normalize_recommended_modalities(raw_rec_mods, cid=raw_id)
+        recommended_modalities = _normalize_recommended_modalities(raw_rec_mods, cid=raw_id, strict=bool(eff_require_modalities))
         is_skill_comp = (norm_type == "skill") or str(raw_id).startswith("Hab-")
-        if is_skill_comp and "multiple_choice_7_options" in recommended_modalities:
+        if eff_require_modalities and is_skill_comp and "multiple_choice_7_options" in recommended_modalities:
             raise ValueError(
                 f"[M20-MC7-CAP] Competency '{raw_id}' (skill): 'multiple_choice_7_options' (MC7) is prohibited "
                 f"in Skill competencies (0 MC7 allowed; use active modalities)."
@@ -2233,7 +2248,7 @@ def compile_cta(
     except ValueError as ve:
         elapsed = (time.perf_counter() - t0) * 1000.0
         err_str = str(ve)
-        if err_str.startswith("[CTA-MODALITY-"):
+        if err_str.startswith("[CTA-MODALITY-") or err_str.startswith("[M20-MC7-CAP]"):
             return False, {}, [err_str], elapsed
         return False, {}, [f"[CTA-TUPLE-STRUCTURE] {err_str}"], elapsed
     cta_dict = heal_control_chars_in_obj(cta_dict)
@@ -2810,6 +2825,15 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
             "CTA-MODALITY-INVALID",
             detail,
             "Usar exclusivamente las 9 modalidades canónicas (o shorthands MC7, MS, FIB)",
+        )
+
+    if "M20-MC7-CAP" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[M20-MC7-CAP\]\s*")
+        return (
+            "M20-MC7-CAP: MC7 PROHIBIDO EN COMPETENCIAS SKILL",
+            "M20-MC7-CAP",
+            detail,
+            "Quitar MC7/multiple_choice_7_options de recommended_modalities en competencias skill (Hab-XX)",
         )
 
     # 4. DAG / Prerequisites & root ratio
