@@ -94,7 +94,7 @@ def summarize_course(course_entry: dict) -> dict:
     for cid, qlist in q_by_comp.items():
         comp_info = comp_map.get(cid, {})
         for q in qlist[:2]:
-            stratified_samples.append({
+            sample_item = {
                 "id": q.get("id"),
                 "competency_id": cid,
                 "competency_name": comp_info.get("name", ""),
@@ -109,7 +109,19 @@ def summarize_course(course_entry: dict) -> dict:
                 "hints": q.get("hints"),
                 "detailed_solution": q.get("detailed_solution") or q.get("solution"),
                 "misconception_warning": q.get("misconception_warning") or q.get("common_misconception_warning"),
-            })
+            }
+            for m20_key in (
+                "diagnostic_distractors",
+                "symbolic_config",
+                "proof_dag",
+                "adversarial_break",
+                "unstructured_model",
+                "invariant_canvas",
+                "concept_matching",
+            ):
+                if q.get(m20_key) is not None:
+                    sample_item[m20_key] = q[m20_key]
+            stratified_samples.append(sample_item)
 
     # 3. Select targeted anomaly samples from Risk Clusters for direct quotation
     risk_cluster_samples: dict[str, list[dict]] = {}

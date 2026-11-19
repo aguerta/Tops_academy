@@ -1260,9 +1260,19 @@ class RetrievalModalityDiversityLinter(BaseLinter):
         questions = course_data.get("questions", [])
         comp_cat = {c.get("id"): (c.get("category") or c.get("type") or "Other") for c in competencies}
 
+        bloom_sup_types = {
+            "open_symbolic",
+            "proof_dag",
+            "adversarial_break",
+            "unstructured_model",
+            "invariant_canvas",
+            "concept_matching",
+        }
         mc_count = 0
         fib_count = 0
         ms_count = 0
+        bloom_superior_count = 0
+        bloom_superior_breakdown: dict[str, int] = {k: 0 for k in sorted(bloom_sup_types)}
         other_count = 0
         q_by_comp: dict[str, list[dict]] = {}
 
@@ -1276,22 +1286,26 @@ class RetrievalModalityDiversityLinter(BaseLinter):
                 fib_count += 1
             elif "multiple_select" in qtype:
                 ms_count += 1
+            elif qtype in bloom_sup_types:
+                bloom_superior_count += 1
+                bloom_superior_breakdown[qtype] = bloom_superior_breakdown.get(qtype, 0) + 1
             else:
                 other_count += 1
 
         total_q = len(questions)
         recognition_only_skills = []
+        active_prod_types = {"fill_in_the_blank", "open_ended", "fib"} | (bloom_sup_types - {"concept_matching"})
         for cid, qlist in q_by_comp.items():
             is_skill = comp_cat.get(cid) == "Skill" or str(cid).lower().startswith("hab")
             if is_skill and len(qlist) >= 10:
-                has_fib = any(
-                    "fill_in_the_blank" in qt or "open_ended" in qt or qt == "fib"
+                has_active_prod = any(
+                    ("fill_in_the_blank" in qt or "open_ended" in qt or qt in active_prod_types)
                     for qt in (str(q.get("interaction_type") or q.get("type") or "").lower().strip() for q in qlist)
                 )
-                if not has_fib:
+                if not has_active_prod:
                     recognition_only_skills.append(cid)
 
-        if total_q >= 20 and fib_count == 0 and ms_count == 0:
+        if total_q >= 20 and fib_count == 0 and ms_count == 0 and bloom_superior_count == 0:
             issues.append(LintIssue(
                 linter=self.name,
                 dimension=self.dimension,
@@ -1300,18 +1314,22 @@ class RetrievalModalityDiversityLinter(BaseLinter):
                 competency_id=questions[0].get("competency_id", "global"),
                 message=(
                     f"Monocultivo absoluto de reconocimiento pasivo: {mc_count}/{total_q} (100%) son "
-                    f"opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select."
+                    f"opción múltiple (MC7), con 0% fill_in_the_blank, 0% multiple_select y 0% modalidades Bloom Superior."
                 ),
             ))
 
+        active_total = fib_count + ms_count + bloom_superior_count
         return {
             "mc7_count": mc_count,
             "fib_count": fib_count,
             "ms_count": ms_count,
+            "bloom_superior_count": bloom_superior_count,
+            "bloom_superior_breakdown": bloom_superior_breakdown,
             "mc7_share_pct": round((mc_count / total_q * 100.0) if total_q else 0.0, 2),
             "fib_share_pct": round((fib_count / total_q * 100.0) if total_q else 0.0, 2),
             "ms_share_pct": round((ms_count / total_q * 100.0) if total_q else 0.0, 2),
-            "active_generation_or_discrimination_pct": round(((fib_count + ms_count) / total_q * 100.0) if total_q else 0.0, 2),
+            "bloom_superior_share_pct": round((bloom_superior_count / total_q * 100.0) if total_q else 0.0, 2),
+            "active_generation_or_discrimination_pct": round((active_total / total_q * 100.0) if total_q else 0.0, 2),
             "recognition_only_skill_competencies_count": len(recognition_only_skills),
             "recognition_only_skill_competencies": recognition_only_skills[:20],
         }
@@ -2800,8 +2818,13 @@ def compute_deterministic_rubric_scores(
     d2 = max(0.0, min(5.0, round(d2, 2)))
 
     active_gen = mod.get("active_generation_or_discrimination_pct", 0.0)
+    bloom_sup_str = (
+        f", BloomSup={mod.get('bloom_superior_share_pct', 0.0)}%"
+        if mod.get("bloom_superior_count", 0) > 0
+        else ""
+    )
     d2_fb = (
-        f"Modalidad: MC7={mod.get('mc7_share_pct', 0.0)}%, FIB={mod.get('fib_share_pct', 0.0)}%, MS={mod.get('ms_share_pct', 0.0)}% "
+        f"Modalidad: MC7={mod.get('mc7_share_pct', 0.0)}%, FIB={mod.get('fib_share_pct', 0.0)}%, MS={mod.get('ms_share_pct', 0.0)}%{bloom_sup_str} "
         f"({active_gen}% evocación activa/discriminación). "
         f"Distractores: {dist.get('total_distractors_evaluated', 0)} evaluados con {cov}% cobertura de error_rationale "
         f"(imposibles por dominio={dom_cnt}, claves corruptas={corrupt_key_cnt}, sesgo MS={ms_bias.get('biased_ms_pct', 0.0)}%)."
