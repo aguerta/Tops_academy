@@ -152,26 +152,49 @@ def test_execution_example_h01_full_author_prompt():
     declared_dids = list(ns.get("RATS", {}).keys()) or list(ns.get("d_ids_h01", ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]))
 
     code_body = code_ex1.split("TEMPLATES")[0].strip()
-    gen_raw_code = f"import random, math\n{code_body}\ngenerate_params = {gen_fn_name}\ngenerate = {gen_fn_name}\n"
-    ver_src = f"import random, math\n{code_body}\nverify = {ver_fn_name}\ncross_check = {ver_fn_name}\n"
+    norm_map = {
+        "mc7": "multiple_choice_7_options",
+        "multiple_choice": "multiple_choice_7_options",
+        "multiple_choice_7_options": "multiple_choice_7_options",
+        "fib": "fill_in_the_blank",
+        "fill_in_the_blank": "fill_in_the_blank",
+        "ms": "multiple_select",
+        "multiple_select": "multiple_select",
+    }
+    norm_itype = norm_map.get(str(itype).strip().lower(), str(itype).strip())
 
-    rats_map = ns.get("RATS", {}) if "RATS" in ns else {}
-    fmt_str = h01_tuple.get("fmt") if isinstance(h01_tuple, dict) else None
-    cta_dists = [{"id": did, "rationale": rats_map.get(did, "")} for did in declared_dids]
-    gen_src = build_adapted_mc7_generator(
-        gen_raw_code,
-        cid,
-        cta_distractors=cta_dists,
-        rats_map=rats_map,
-        fmt=fmt_str,
-        strict=False,
-    )
+    gen_raw_code = f"import random, math\n{code_body}\ngenerate_params = {gen_fn_name}\ngenerate = {gen_fn_name}\n"
+    if norm_itype == "multiple_choice_7_options":
+        rats_map = ns.get("RATS", {}) if "RATS" in ns else {}
+        fmt_str = h01_tuple.get("fmt") if isinstance(h01_tuple, dict) else None
+        cta_dists = [{"id": did, "rationale": rats_map.get(did, "")} for did in declared_dids]
+        gen_src = build_adapted_mc7_generator(
+            gen_raw_code,
+            cid,
+            cta_distractors=cta_dists,
+            rats_map=rats_map,
+            fmt=fmt_str,
+            strict=False,
+        )
+        ver_src = f"import random, math\n{code_body}\nverify = {ver_fn_name}\ncross_check = {ver_fn_name}\n"
+    else:
+        gen_src = gen_raw_code
+        ver_src = f"""import random, math
+{code_body}
+_v = {ver_fn_name}
+def verify(inst):
+    try:
+        return _v(inst.get("correct", inst.get("ans", "")), inst.get("vars", {{}})) if isinstance(inst, dict) else False
+    except Exception:
+        return False
+cross_check = verify
+"""
 
     tpl_dict = {
-        "id": f"T-{cid}",
-        "template_id": f"T-{cid}",
+        "id": t_id,
+        "template_id": t_id,
         "competency_id": cid,
-        "interaction_type": "multiple_choice_7_options" if str(itype).strip().lower() in ("multiple_choice", "multiple_choice_7_options", "mc7", "mc") else itype,
+        "interaction_type": norm_itype,
         "difficulty": diff,
         "bloom": bloom,
         "stem": stems_list[0],
@@ -189,12 +212,13 @@ def test_execution_example_h01_full_author_prompt():
     assert len(instantiated) == 5, f"Expected 5 instantiated questions, got {len(instantiated)}"
 
     for q in instantiated:
-        is_valid, errs = check_instance_invariants(q, "multiple_choice_7_options")
-        assert is_valid, f"Invariant validation failed on H-01: {errs}"
-        assert len(q["options"]) == 7, "MC7 question must have exactly 7 options"
+        is_valid, errs = check_instance_invariants(q, norm_itype)
+        assert is_valid, f"Invariant validation failed on H-01 ({norm_itype}): {errs}"
         assert "@" not in q["stem"], f"Unrendered @var@ in stem: {q['stem']}"
-        for opt in q["options"]:
-            assert "@" not in opt["content"], f"Unrendered @var@ in option: {opt['content']}"
+        if norm_itype == "multiple_choice_7_options":
+            assert len(q["options"]) == 7, "MC7 question must have exactly 7 options"
+            for opt in q["options"]:
+                assert "@" not in opt["content"], f"Unrendered @var@ in option: {opt['content']}"
 
     # 2. Strict verification through check_templates.check_single_template (50 dry-run seeds)
     tpl_check_errors = check_single_template(
@@ -347,6 +371,17 @@ def test_execution_example_lean_author_prompt():
     hints_list = [str(h) for h in hints_raw] if isinstance(hints_raw, (list, tuple)) else [str(hints_raw)]
     declared_dids = list(ns.get("RATS", {}).keys()) if "RATS" in ns else ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
 
+    norm_map = {
+        "mc7": "multiple_choice_7_options",
+        "multiple_choice": "multiple_choice_7_options",
+        "multiple_choice_7_options": "multiple_choice_7_options",
+        "fib": "fill_in_the_blank",
+        "fill_in_the_blank": "fill_in_the_blank",
+        "ms": "multiple_select",
+        "multiple_select": "multiple_select",
+    }
+    norm_itype = norm_map.get(str(itype).strip().lower(), str(itype).strip())
+
     code_body = code_raw.split("TEMPLATES")[0].strip()
     gen_code_body = re.sub(r"^\s*import\s+re\b[^\n]*\n?", "", code_body, flags=re.MULTILINE)
     gen_raw_code = f"""import random, math
@@ -357,13 +392,14 @@ def generate_params(rng):
     ans = res.get("vars", {{}}).get("ans")
     if ans is not None and "ds" in res:
         new_ds = []
-        for did, val in res["ds"]:
+        for entry in res["ds"]:
+            did, val = entry[0], entry[1]
             try:
                 if abs(float(val) - float(ans)) < 1e-4:
                     val = str(round(float(val) + 0.07, 3)) if isinstance(val, str) else round(val + 0.07, 3)
             except (TypeError, ValueError):
                 pass
-            new_ds.append((did, val))
+            new_ds.append((did, val, *entry[2:]))
         res["ds"] = new_ds
     return res
 generate = generate_params
@@ -383,20 +419,23 @@ cross_check = verify
     rats_map = ns.get("RATS", {}) if "RATS" in ns else {}
     fmt_str = h01_tuple.get("fmt") if isinstance(h01_tuple, dict) else None
     cta_dists = [{"id": did, "rationale": rats_map.get(did, "")} for did in declared_dids]
-    gen_src = build_adapted_mc7_generator(
-        gen_raw_code,
-        cid,
-        cta_distractors=cta_dists,
-        rats_map=rats_map,
-        fmt=fmt_str,
-        strict=False,
-    )
+    if norm_itype == "multiple_choice_7_options":
+        gen_src = build_adapted_mc7_generator(
+            gen_raw_code,
+            cid,
+            cta_distractors=cta_dists,
+            rats_map=rats_map,
+            fmt=fmt_str,
+            strict=False,
+        )
+    else:
+        gen_src = gen_raw_code
 
     tpl_dict = {
-        "id": f"T-{cid}-LEAN",
-        "template_id": f"T-{cid}-LEAN",
+        "id": t_id,
+        "template_id": t_id,
         "competency_id": cid,
-        "interaction_type": "multiple_choice_7_options" if str(itype).strip().lower() in ("multiple_choice", "multiple_choice_7_options", "mc7", "mc") else itype,
+        "interaction_type": norm_itype,
         "difficulty": diff,
         "bloom": bloom,
         "stem": stems_list[0],
@@ -414,9 +453,10 @@ cross_check = verify
     assert len(instantiated) == 5
 
     for q in instantiated:
-        is_valid, errs = check_instance_invariants(q, "multiple_choice_7_options")
-        assert is_valid, f"Lean H-01 invariant failure: {errs}"
-        assert len(q["options"]) == 7
+        is_valid, errs = check_instance_invariants(q, norm_itype)
+        assert is_valid, f"Lean H-01 invariant failure ({norm_itype}): {errs}"
+        if norm_itype == "multiple_choice_7_options":
+            assert len(q["options"]) == 7
         assert "@" not in q["stem"]
 
     # 2. Strict verification through check_templates.check_single_template (50 dry-run seeds)
@@ -455,25 +495,17 @@ def test_compile_shard_read_prohibition_parity():
         )
 
         # Verify compile_shard.py is NOT in READ section
-        if is_lean:
-            read_section_match = re.search(r"READ:\s*(.*?)(?=Prohibido\s*\(read\):|\n\s*-?\s*WRITE|\Z)", content, re.IGNORECASE | re.DOTALL)
-        else:
-            read_section_match = re.search(r"READ permitido:\s*(.*?)(?=\n-\s*WRITE permitido:|\Z)", content, re.DOTALL | re.IGNORECASE)
+        read_section_match = re.search(
+            r"-?\s*`?READ`?:\s*(.*?)(?=Prohibido\s+(?:leer|\(read\):)|\n\s*-?\s*`?WRITE|\Z)",
+            content,
+            re.IGNORECASE | re.DOTALL,
+        )
         assert read_section_match, f"Could not find READ section in {pfile.name}"
         read_section = read_section_match.group(1)
-        if is_lean:
-            assert "compile_shard.py" not in read_section, (
-                f"compile_shard.py mistakenly declared in READ section of {pfile.name}!"
-            )
-        else:
-            assert ".agents/skills/content-to-course/compile_shard.py" not in read_section, (
-                f"compile_shard.py mistakenly declared as readable path in READ section of {pfile.name}!"
-            )
-            assert "Lectura y modificación excluidas" in content and "compile_shard.py" in content.split("Lectura y modificación excluidas")[1]
-
-        # Verification that full path is preserved for introspection policy tests
-        if not is_lean:
-            assert ".agents/skills/content-to-course/compile_shard.py" in content
+        assert "compile_shard.py" not in read_section, (
+            f"compile_shard.py mistakenly declared in READ section of {pfile.name}!"
+        )
+        assert "Prohibido leer" in content or "prohibido leer" in content.lower()
 
 
 # ==============================================================================
@@ -511,17 +543,13 @@ def test_blind_judge_harmonized_pointer_two_turn_resolution():
     ]:
         content = pfile.read_text(encoding="utf-8")
 
-        # Inline mode: 1 turn
-        if not is_lean:
-            assert "Zero-Warmup In-Prompt Payload" in content
-            assert "RESOLUCIÓN EN 1 SOLO TURNO" in content
-        else:
-            assert "Modo Inline" in content
-            assert "1 turno" in content
+        # Inline mode: 1 turn (M20 v4.3)
+        assert "Inline" in content
+        assert "1 turno" in content
 
         # Pointer mode: 2 turns
-        assert "Turno 1" in content or "Turn 1" in content or "Modo Pointer" in content
-        assert "Turno 2" in content or "Turn 2" in content or "Modo Pointer" in content
+        assert "Pointer" in content
+        assert "2 turnos" in content
         assert "send_message" in content
 
 

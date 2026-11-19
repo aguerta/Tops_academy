@@ -733,12 +733,11 @@ TEMPLATES = [
 
         # 2. Author creates shard_01_data.py with valid 9-element tuples
         shard_data = '''
-def _gen_c01(rng, arch=1):
-    tc = rng.randint(250, 350) if arch == 1 else (rng.randint(70, 180) if arch == 2 else (rng.randint(300, 400) if arch == 3 else rng.randint(200, 280)))
-    delta = rng.randint(150, 450) if arch == 1 else (rng.randint(100, 300) if arch == 2 else (rng.randint(500, 900) if arch == 3 else rng.randint(800, 1500)))
+def gen_c01_1(rng):
+    tc = rng.randint(250, 350)
+    delta = rng.randint(150, 450)
     th = tc + delta
     eff = round(1.0 - (tc / th), 3)
-
     offsets = [0.028, -0.028, 0.054, -0.054, 0.082, -0.082]
     distractors = [
         {"value": rf"$\eta = {round(eff + off, 3)}$", "distractor_id": f"D-C01-0{i}", "error_rationale": rat}
@@ -751,16 +750,28 @@ def _gen_c01(rng, arch=1):
             "Semidiferencia incorrecta al promediar los focos térmicos @th@ y @tc@.",
         ]), 1)
     ]
-    return {
-        "vars": {"th": th, "tc": tc, "ans": eff},
-        "correct": rf"$\eta = {eff}$" if arch == 1 else str(eff),
-        "distractors": distractors if arch == 1 else []
-    }
+    return {"vars": {"th": th, "tc": tc, "ans": eff}, "correct": rf"$\eta = {eff}$", "distractors": distractors}
 
-def gen_c01_1(rng): return _gen_c01(rng, 1)
-def gen_c01_2(rng): return _gen_c01(rng, 2)
-def gen_c01_3(rng): return _gen_c01(rng, 3)
-def gen_c01_4(rng): return _gen_c01(rng, 4)
+def gen_c01_2(rng):
+    tc = rng.randint(120, 260)
+    th = rng.randint(400, 750)
+    eff = round(1.0 - (tc / th), 3)
+    return {"vars": {"th": th, "tc": tc, "ans": eff}, "correct": str(eff), "distractors": []}
+
+def gen_c01_3(rng):
+    th = rng.randint(500, 900)
+    pct = rng.randint(20, 65)
+    tc = round(th * (100 - pct) / 100.0, 2)
+    ans = round((th - tc) / th, 3)
+    return {"vars": {"th": th, "tc": tc, "ans": ans}, "correct": str(ans), "distractors": []}
+
+def gen_c01_4(rng):
+    tc = rng.randint(180, 320)
+    delta = rng.randint(210, 690)
+    th = tc + delta
+    loss = tc / th
+    ans = round(1.0 - loss, 3)
+    return {"vars": {"th": th, "tc": tc, "ans": ans}, "correct": str(ans), "distractors": []}
 
 def ver_c01(res):
     c = res.get("correct", "") if isinstance(res, dict) else str(res)

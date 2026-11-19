@@ -39,9 +39,9 @@ def test_lean_prompt_repair_hardening():
     assert b"\r\n" not in raw, "prompt_repair.md must maintain pure LF line endings"
     content = raw.decode("utf-8")
 
-    # 2A: Epistemic Sweep (4/4 archetypes)
+    # 2A: Epistemic Sweep (M20 parameterized archetypes)
     assert "Epistemic Sweep" in content
-    assert "4/4" in content
+    assert "<<S4_MIN_ARCH>>" in content or "4/4" in content
 
     # 2B: Ban Unix commands on Windows PowerShell
     for cmd in ("`rg`", "`grep`", "`awk`", "`sed`"):

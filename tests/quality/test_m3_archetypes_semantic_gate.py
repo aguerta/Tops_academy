@@ -246,70 +246,139 @@ TEMPLATES = [
         code = r'''
 import random
 
-def _gen_h01(rng, arch=1):
-    if arch == 1:
-        tc = rng.randint(250, 350)
-        delta = rng.randint(150, 450)
-    elif arch == 2:
-        tc = rng.randint(70, 180)
-        delta = rng.randint(100, 300)
-    elif arch == 3:
-        tc = rng.randint(300, 400)
-        delta = rng.randint(500, 900)
-    else:
-        tc = rng.randint(200, 280)
-        delta = rng.randint(800, 1500)
-
-    th = tc + delta
+def gen_h01_1(rng):
+    tc = rng.randint(200, 340)
+    th = tc + rng.randint(120, 480)
     ans = round(1.0 - (tc / th), 3)
-    dists = [round(1.0 - (tc / (th + 50 * i + 10)), 3) for i in range(1, 7)]
-    v = {"tc": tc, "th": th, "ans": ans, **{f"d{i}": d for i, d in enumerate(dists, 1)}}
-    if arch in (3, 4):
-        # FIB format: correct is plain number string without surrounding dollar delimiters
-        return {
-            "vars": v,
-            "correct": str(ans),
-            "distractors": [],
-        }
+    d1 = round(tc / th, 3)
+    d2 = round(1.0 - (tc / (th + 75)), 3)
     return {
-        "vars": v,
-        "correct": r"$\eta = @ans@$",
-        "distractors": [
-            ("D-H-01-01", r"$\eta = @d1@$", "Calcula el cociente directo @tc@/@th@ sin restarlo de la unidad al evaluar @d1@."),
-            ("D-H-01-02", r"$\eta = @d2@$", "Suma un termino de perdidas espurio al denominador caliente @th@ antes de dividir @tc@, dando @d2@."),
-            ("D-H-01-03", r"$\eta = @d3@$", "Invierte la razon termica entre @th@ y @tc@ y trunca el resultado en @d3@."),
-            ("D-H-01-04", r"$\eta = @d4@$", "Aplica escala relativa en lugar de Kelvin absoluta a @tc@ frente a @th@, obteniendo @d4@."),
-            ("D-H-01-05", r"$\eta = @d5@$", "Duplica la correccion de entropia en el reservorio @th@ respecto a @tc@, resultando @d5@."),
-            ("D-H-01-06", r"$\eta = @d6@$", "Confunde la diferencia termica con el promedio de @th@ y @tc@ al estimar @d6@."),
+        "vars": {"tc": tc, "th": th, "ans": ans, "d1": d1, "d2": d2},
+        "correct": str(ans),
+        "ds": [
+            ("D-H-01-01", str(d1), "Calcula el cociente directo @tc@/@th@ sin restarlo de la unidad al evaluar @d1@."),
+            ("D-H-01-02", str(d2), "Suma un termino de perdidas espurio al denominador caliente @th@ antes de dividir @tc@, dando @d2@."),
         ],
     }
 
-def gen_h01_1(rng): return _gen_h01(rng, 1)
-def gen_h01_2(rng): return _gen_h01(rng, 2)
-def gen_h01_3(rng): return _gen_h01(rng, 3)
-def gen_h01_4(rng): return _gen_h01(rng, 4)
+def ver_h01_1(res):
+    v = res.get("vars", {})
+    exp = round(1.0 - (v.get("tc", 1) / v.get("th", 1)), 3)
+    return str(res.get("correct")) == str(exp) and v.get("ans") == exp
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and (res.get("correct") == r"$\eta = @ans@$" or str(res.get("vars", {}).get("ans")) == str(res.get("correct"))))
+def gen_h01_2(rng):
+    qh = rng.randint(400, 950)
+    qc = rng.randint(100, qh - 80)
+    w = qh - qc
+    d3 = qh + qc
+    d4 = qh - qc // 2
+    return {
+        "vars": {"qh": qh, "qc": qc, "w": w, "d3": d3, "d4": d4},
+        "correct": str(w),
+        "ds": [
+            ("D-H-01-03", str(d3), "Suma ambos flujos termicos @qh@ y @qc@ en vez de restarlos para obtener trabajo, dando @d3@."),
+            ("D-H-01-04", str(d4), "Reduce a la mitad el calor cedido @qc@ al equilibrar la fuente @qh@, resultando @d4@."),
+        ],
+    }
+
+def ver_h01_2(res):
+    v = res.get("vars", {})
+    exp = v.get("qh", 0) - v.get("qc", 0)
+    return str(res.get("correct")) == str(exp) and v.get("w") == exp
+
+def gen_h01_3(rng):
+    th = rng.randint(500, 900)
+    tc = rng.randint(250, th - 150)
+    pct = round(((th - tc) * 100.0) / th, 2)
+    d5 = round((tc * 100.0) / (th + tc), 2)
+    return {
+        "vars": {"tc": tc, "th": th, "pct": pct, "d5": d5},
+        "correct": str(pct),
+        "ds": [
+            ("D-H-01-05", str(d5), "Normaliza el cociente de @tc@ entre la suma de focos @th@+@tc@ en lugar de la temperatura caliente, dando @d5@."),
+        ],
+    }
+
+def ver_h01_3(res):
+    v = res.get("vars", {})
+    exp = round(((v.get("th", 1) - v.get("tc", 0)) * 100.0) / v.get("th", 1), 2)
+    return str(res.get("correct")) == str(exp) and v.get("pct") == exp
+
+def gen_h01_4(rng):
+    tc = rng.randint(200, 320)
+    ratio = rng.randint(2, 5)
+    th = tc * ratio
+    d6 = (th - tc) // 2
+    opts = [
+        {"value": "La eficiencia ideal es 1 - @tc@/@th@ usando temperaturas absolutas en Kelvin.", "is_correct": True},
+        {"value": "Al fijar la razon termica en @ratio@, la fraccion cedida al foco frio es 1/@ratio@.", "is_correct": True},
+        {
+            "value": "La eficiencia coincide con la semidiferencia @d6@ entre focos termicos.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-06",
+            "error_rationale": "Confunde la razon adimensional de Carnot con el promedio o semidiferencia @d6@ de @th@ y @tc@.",
+        },
+        {
+            "value": "La fraccion de trabajo util equivale directamente a @tc@/@th@ para todo @tc@.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-01",
+            "error_rationale": "Identifica erróneamente la fraccion rechazada @tc@/@th@ con el rendimiento neto para @tc@.",
+        },
+    ]
+    return {"vars": {"tc": tc, "th": th, "ratio": ratio, "d6": d6}, "options": opts}
+
+def ver_h01_4(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    opts = res.get("options", [])
+    if v.get("th") != v.get("tc", 0) * v.get("ratio", 0):
+        return False
+    exp_true = {
+        "La eficiencia ideal es 1 - @tc@/@th@ usando temperaturas absolutas en Kelvin.",
+        "Al fijar la razon termica en @ratio@, la fraccion cedida al foco frio es 1/@ratio@.",
+    }
+    exp_false = {
+        "La eficiencia coincide con la semidiferencia @d6@ entre focos termicos.": "D-H-01-06",
+        "La fraccion de trabajo util equivale directamente a @tc@/@th@ para todo @tc@.": "D-H-01-01",
+    }
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_true
+        and len(f_opts) == 2
+        and all(
+            o.get("value") in exp_false
+            and o.get("distractor_id") == exp_false[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 stems_1 = [
     r"Calcule la eficiencia directa de Carnot con focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"Determine el rendimiento térmico frontal entre temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"Halle la razón de eficiencia del ciclo con focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Evalúe la fracción de trabajo reversible cuando $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
 ]
 stems_2 = [
-    r"En un análisis inverso con foco frío a $T_C = @tc@\text{ K}$ y caliente a $T_H = @th@\text{ K}$, halle $\eta$:",
-    r"Deduzca el rendimiento inverso asociado a las cotas térmicas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
-    r"Calcule la eficiencia invertida para los reservorios $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Si un motor absorbe $Q_H = @qh@\text{ J}$ y cede $Q_C = @qc@\text{ J}$, halle el trabajo neto $W$:",
+    r"Determine el trabajo producido en un ciclo con calor absorbido $@qh@\text{ J}$ y cedido $@qc@\text{ J}$:",
+    r"Calcule la energía mecánica extraída entre un aporte de $@qh@\text{ J}$ y rechazo de $@qc@\text{ J}$:",
+    r"Deduzca la magnitud del trabajo neto al intercambiar $@qh@\text{ J}$ en alta y $@qc@\text{ J}$ en baja:",
 ]
 stems_3 = [
-    r"Si se aplica una perturbación térmica con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, evalúe $\eta$:",
-    r"Calcule la variación en la eficiencia bajo el régimen perturbado $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
-    r"Estime el nuevo valor de rendimiento ante perturbación con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Para reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, compute el rendimiento porcentual:",
+    r"Calcule el porcentaje de aprovechamiento térmico cuando $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Estime la eficiencia porcentual máxima entre los focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Exprese en porcentaje el rendimiento ideal del ciclo para $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
 ]
 stems_4 = [
-    r"Bajo el régimen asintótico de frontera extrema con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine el límite:",
-    r"En la cota extrema del ciclo con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, establezca la eficiencia límite $\eta$:",
-    r"Calcule el valor asintótico de la eficiencia para $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Con $T_C = @tc@\text{ K}$ y razón $T_H/T_C = @ratio@$, seleccione las propiedades válidas de Carnot:",
+    r"Indique qué afirmaciones describen el ciclo con foco frío $@tc@\text{ K}$ y múltiplo térmico $@ratio@$:",
+    r"Marque las sentencias correctas para un reservorio caliente a $@th@\text{ K}$ y frío a $@tc@\text{ K}$:",
+    r"Identifique las relaciones termodinámicas exactas cuando $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$:",
 ]
 
 hints_1 = [
@@ -318,26 +387,26 @@ hints_1 = [
     "Realice la división entre el foco frío y caliente antes de restar de la unidad.",
 ]
 hints_2 = [
-    "Verifique qué temperatura corresponde al reservorio frío y cuál al reservorio caliente.",
-    "Sustituya ambos focos térmicos en escala absoluta Kelvin dentro de la razón térmica.",
-    "Compute el complemento respecto a uno para expresar el rendimiento térmico inverso.",
+    "Aplique la primera ley de la termodinámica en un ciclo cerrado de variación de energía interna nula.",
+    "Reste el calor rechazado al reservorio frío del calor absorbido desde el reservorio caliente.",
+    "Confirme que el trabajo neto resultante sea menor que el calor total absorbido.",
 ]
 hints_3 = [
-    "Observe el desplazamiento en las temperaturas de ambos focos bajo el régimen perturbado.",
-    "Evalúe el cociente entre la temperatura fría y la temperatura caliente perturbada.",
-    "Confirme que la eficiencia resultante permanezca estrictamente entre cero y uno.",
+    "Evalúe la diferencia de temperaturas absolutas respecto de la temperatura del foco caliente.",
+    "Multiplique la razón adimensional por cien para expresarla en porcentaje.",
+    "Verifique que el resultado porcentual permanezca estrictamente entre cero y cien.",
 ]
 hints_4 = [
-    "Considere el comportamiento extremo cuando el gradiente térmico entre focos crece.",
-    "Calcule la razón límite de las temperaturas absolutas en los reservorios térmicos.",
-    "Reste el cociente obtenido de la unidad para obtener la eficiencia de frontera.",
+    "Considere el cociente adimensional de temperaturas absolutas definido por el parámetro de razón.",
+    "Contraste la fracción térmica cedida frente a la definición dimensional de semidiferencia.",
+    "Valide que todas las proposiciones elegidas cumplan la conservación reversible del ciclo.",
 ]
 
 TEMPLATES = [
-    ("T-H01-PASS-01", "H-01", "multiple_choice_7_options", gen_h01_1, ver_h01, ("easy", "Remember"), stems_1, hints_1, "Solución detallada paso a paso para eficiencia directa de Carnot entre focos térmicos."),
-    ("T-H01-PASS-02", "H-01", "multiple_choice_7_options", gen_h01_2, ver_h01, ("medium", "Apply"), stems_2, hints_2, "Solución detallada paso a paso para rendimiento inverso de Carnot en escala Kelvin."),
-    ("T-H01-PASS-03", "H-01", "fill_in_the_blank", gen_h01_3, ver_h01, ("medium", "Analyze"), stems_3, hints_3, "Solución detallada paso a paso para variación perturbada del ciclo termodinámico reversible."),
-    ("T-H01-PASS-04", "H-01", "fill_in_the_blank", gen_h01_4, ver_h01, ("hard", "Evaluate"), stems_4, hints_4, "Solución detallada paso a paso en la frontera asintótica extrema del ciclo de Carnot."),
+    ("T-H01-PASS-01", "H-01", "fill_in_the_blank", gen_h01_1, ver_h01_1, ("easy", "Apply"), stems_1, hints_1, "Solución detallada paso a paso para eficiencia directa de Carnot entre focos térmicos."),
+    ("T-H01-PASS-02", "H-01", "fill_in_the_blank", gen_h01_2, ver_h01_2, ("medium", "Analyze"), stems_2, hints_2, "Solución detallada paso a paso aplicando la primera ley para el trabajo neto del ciclo."),
+    ("T-H01-PASS-03", "H-01", "fill_in_the_blank", gen_h01_3, ver_h01_3, ("hard", "Evaluate"), stems_3, hints_3, "Solución detallada paso a paso para el rendimiento porcentual del ciclo termodinámico reversible."),
+    ("T-H01-PASS-04", "H-01", "multiple_select", gen_h01_4, ver_h01_4, ("medium", "Create"), stems_4, hints_4, "Solución detallada paso a paso contrastando propiedades adimensionales del ciclo de Carnot."),
 ]
 '''
         shard_py.write_text(code, encoding="utf-8")
@@ -483,69 +552,139 @@ TEMPLATES = [
         modular_fix_code = r'''
 import random
 
-def _gen_h01_modular(rng, arch=1):
-    if arch == 1:
-        tc = rng.randint(250, 350)
-        delta = rng.randint(150, 450)
-    elif arch == 2:
-        tc = rng.randint(70, 180)
-        delta = rng.randint(100, 300)
-    elif arch == 3:
-        tc = rng.randint(300, 400)
-        delta = rng.randint(500, 900)
-    else:
-        tc = rng.randint(200, 280)
-        delta = rng.randint(800, 1500)
-
-    th = tc + delta
+def gen_h01_1(rng):
+    tc = rng.randint(200, 340)
+    th = tc + rng.randint(120, 480)
     ans = round(1.0 - (tc / th), 3)
-    dists = [round(1.0 - (tc / (th + 50 * i + 10)), 3) for i in range(1, 7)]
-    v = {"tc": tc, "th": th, "ans": ans, **{f"d{i}": d for i, d in enumerate(dists, 1)}}
-    if arch in (3, 4):
-        return {
-            "vars": v,
-            "correct": str(ans),
-            "distractors": [],
-        }
+    d1 = round(tc / th, 3)
+    d2 = round(1.0 - (tc / (th + 75)), 3)
     return {
-        "vars": v,
-        "correct": r"$\eta = @ans@$",
-        "distractors": [
-            ("D-H-01-01", r"$\eta = @d1@$", "Calcula el cociente directo @tc@/@th@ sin restarlo de la unidad al evaluar @d1@."),
-            ("D-H-01-02", r"$\eta = @d2@$", "Suma un termino de perdidas espurio al denominador caliente @th@ antes de dividir @tc@, dando @d2@."),
-            ("D-H-01-03", r"$\eta = @d3@$", "Invierte la razon termica entre @th@ y @tc@ y trunca el resultado en @d3@."),
-            ("D-H-01-04", r"$\eta = @d4@$", "Aplica escala relativa en lugar de Kelvin absoluta a @tc@ frente a @th@, obteniendo @d4@."),
-            ("D-H-01-05", r"$\eta = @d5@$", "Duplica la correccion de entropia en el reservorio @th@ respecto a @tc@, resultando @d5@."),
-            ("D-H-01-06", r"$\eta = @d6@$", "Confunde la diferencia termica con el promedio de @th@ y @tc@ al estimar @d6@."),
+        "vars": {"tc": tc, "th": th, "ans": ans, "d1": d1, "d2": d2},
+        "correct": str(ans),
+        "ds": [
+            ("D-H-01-01", str(d1), "Calcula el cociente directo @tc@/@th@ sin restarlo de la unidad al evaluar @d1@."),
+            ("D-H-01-02", str(d2), "Suma un termino de perdidas espurio al denominador caliente @th@ antes de dividir @tc@, dando @d2@."),
         ],
     }
 
-def gen_h01_1(rng): return _gen_h01_modular(rng, 1)
-def gen_h01_2(rng): return _gen_h01_modular(rng, 2)
-def gen_h01_3(rng): return _gen_h01_modular(rng, 3)
-def gen_h01_4(rng): return _gen_h01_modular(rng, 4)
+def ver_h01_1(res):
+    v = res.get("vars", {})
+    exp = round(1.0 - (v.get("tc", 1) / v.get("th", 1)), 3)
+    return str(res.get("correct")) == str(exp) and v.get("ans") == exp
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and (res.get("correct") == r"$\eta = @ans@$" or str(res.get("vars", {}).get("ans")) == str(res.get("correct"))))
+def gen_h01_2(rng):
+    qh = rng.randint(400, 950)
+    qc = rng.randint(100, qh - 80)
+    w = qh - qc
+    d3 = qh + qc
+    d4 = qh - qc // 2
+    return {
+        "vars": {"qh": qh, "qc": qc, "w": w, "d3": d3, "d4": d4},
+        "correct": str(w),
+        "ds": [
+            ("D-H-01-03", str(d3), "Suma ambos flujos termicos @qh@ y @qc@ en vez de restarlos para obtener trabajo, dando @d3@."),
+            ("D-H-01-04", str(d4), "Reduce a la mitad el calor cedido @qc@ al equilibrar la fuente @qh@, resultando @d4@."),
+        ],
+    }
+
+def ver_h01_2(res):
+    v = res.get("vars", {})
+    exp = v.get("qh", 0) - v.get("qc", 0)
+    return str(res.get("correct")) == str(exp) and v.get("w") == exp
+
+def gen_h01_3(rng):
+    th = rng.randint(500, 900)
+    tc = rng.randint(250, th - 150)
+    pct = round(((th - tc) * 100.0) / th, 2)
+    d5 = round((tc * 100.0) / (th + tc), 2)
+    return {
+        "vars": {"tc": tc, "th": th, "pct": pct, "d5": d5},
+        "correct": str(pct),
+        "ds": [
+            ("D-H-01-05", str(d5), "Normaliza el cociente de @tc@ entre la suma de focos @th@+@tc@ en lugar de la temperatura caliente, dando @d5@."),
+        ],
+    }
+
+def ver_h01_3(res):
+    v = res.get("vars", {})
+    exp = round(((v.get("th", 1) - v.get("tc", 0)) * 100.0) / v.get("th", 1), 2)
+    return str(res.get("correct")) == str(exp) and v.get("pct") == exp
+
+def gen_h01_4(rng):
+    tc = rng.randint(200, 320)
+    ratio = rng.randint(2, 5)
+    th = tc * ratio
+    d6 = (th - tc) // 2
+    opts = [
+        {"value": "La eficiencia ideal es 1 - @tc@/@th@ usando temperaturas absolutas en Kelvin.", "is_correct": True},
+        {"value": "Al fijar la razon termica en @ratio@, la fraccion cedida al foco frio es 1/@ratio@.", "is_correct": True},
+        {
+            "value": "La eficiencia coincide con la semidiferencia @d6@ entre focos termicos.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-06",
+            "error_rationale": "Confunde la razon adimensional de Carnot con el promedio o semidiferencia @d6@ de @th@ y @tc@.",
+        },
+        {
+            "value": "La fraccion de trabajo util equivale directamente a @tc@/@th@ para todo @tc@.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-01",
+            "error_rationale": "Identifica erróneamente la fraccion rechazada @tc@/@th@ con el rendimiento neto para @tc@.",
+        },
+    ]
+    return {"vars": {"tc": tc, "th": th, "ratio": ratio, "d6": d6}, "options": opts}
+
+def ver_h01_4(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    opts = res.get("options", [])
+    if v.get("th") != v.get("tc", 0) * v.get("ratio", 0):
+        return False
+    exp_true = {
+        "La eficiencia ideal es 1 - @tc@/@th@ usando temperaturas absolutas en Kelvin.",
+        "Al fijar la razon termica en @ratio@, la fraccion cedida al foco frio es 1/@ratio@.",
+    }
+    exp_false = {
+        "La eficiencia coincide con la semidiferencia @d6@ entre focos termicos.": "D-H-01-06",
+        "La fraccion de trabajo util equivale directamente a @tc@/@th@ para todo @tc@.": "D-H-01-01",
+    }
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_true
+        and len(f_opts) == 2
+        and all(
+            o.get("value") in exp_false
+            and o.get("distractor_id") == exp_false[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 stems_1 = [
     r"Calcule la eficiencia directa con focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"Halle la razón de eficiencia con focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"Determine el rendimiento frontal con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Evalúe la fracción reversible de trabajo entre $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
 ]
 stems_2 = [
-    r"En un análisis inverso con foco frío a $T_C = @tc@\text{ K}$ y caliente a $T_H = @th@\text{ K}$, halle $\eta$:",
-    r"Deduzca el rendimiento inverso para focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
-    r"Calcule la eficiencia invertida con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Con aporte $Q_H = @qh@\text{ J}$ y cesión $Q_C = @qc@\text{ J}$, calcule el trabajo neto $W$:",
+    r"Deduzca la energía útil generada entre un calor absorbido $@qh@\text{ J}$ y cedido $@qc@\text{ J}$:",
+    r"Halle el trabajo neto del ciclo tras absorber $@qh@\text{ J}$ y rechazar $@qc@\text{ J}$:",
+    r"Determine la salida mecánica del ciclo con flujos $@qh@\text{ J}$ y $@qc@\text{ J}$:",
 ]
 stems_3 = [
-    r"Si se aplica una perturbación térmica con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, evalúe $\eta$:",
-    r"Estime el impacto perturbativo con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
-    r"Calcule la variación en la eficiencia bajo el régimen $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, calcule la eficiencia porcentual:",
+    r"Estime el porcentaje máximo de conversión cuando $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Halle el rendimiento porcentual ideal del ciclo para $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Exprese como porcentaje el límite termodinámico entre $@th@\text{ K}$ y $@tc@\text{ K}$:",
 ]
 stems_4 = [
-    r"Bajo el régimen asintótico de frontera extrema con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine el límite:",
-    r"En la cota extrema del ciclo con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, establezca la eficiencia $\eta$:",
-    r"Calcule el valor asintótico de la eficiencia para $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Bajo razón $T_H/T_C = @ratio@$ con $T_C = @tc@\text{ K}$, seleccione las afirmaciones válidas:",
+    r"Indique qué propiedades cumple el ciclo con foco frío $@tc@\text{ K}$ y factor $@ratio@$:",
+    r"Marque los enunciados correctos para foco caliente $@th@\text{ K}$ y foco frío $@tc@\text{ K}$:",
+    r"Identifique las relaciones exactas de Carnot cuando $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$:",
 ]
 
 hints_1 = [
@@ -554,26 +693,26 @@ hints_1 = [
     "Realice la división entre el foco frío y caliente antes de restar de la unidad.",
 ]
 hints_2 = [
-    "Verifique qué temperatura corresponde al reservorio frío y cuál al reservorio caliente.",
-    "Sustituya ambos focos térmicos en escala absoluta Kelvin dentro de la razón térmica.",
-    "Compute el complemento respecto a uno para expresar el rendimiento térmico inverso.",
+    "Aplique la primera ley termodinámica en un ciclo cerrado sin variación neta de energía interna.",
+    "Reste el calor rechazado al foco frío del calor absorbido desde el foco caliente.",
+    "Confirme que el trabajo neto permanezca estrictamente menor que el aporte térmico inicial.",
 ]
 hints_3 = [
-    "Observe el desplazamiento en las temperaturas de ambos focos bajo el régimen perturbado.",
-    "Evalúe el cociente entre la temperatura fría y la temperatura caliente perturbada.",
-    "Confirme que la eficiencia resultante permanezca estrictamente entre cero y uno.",
+    "Observe la razón de temperaturas respecto al reservorio caliente en escala absoluta Kelvin.",
+    "Multiplique el rendimiento adimensional obtenido por cien para reportarlo en porcentaje.",
+    "Confirme que el valor porcentual resultante pertenezca al intervalo de cero a cien.",
 ]
 hints_4 = [
-    "Considere el comportamiento extremo cuando el gradiente térmico entre focos crece.",
-    "Calcule la razón límite de las temperaturas absolutas en los reservorios térmicos.",
-    "Reste el cociente obtenido de la unidad para obtener la eficiencia de frontera.",
+    "Considere el significado adimensional de la razón entre focos absolutos.",
+    "Contraste las expresiones de rendimiento reversible frente a diferencias dimensionales espurias.",
+    "Verifique cada proposición elegida antes de validar la respuesta final.",
 ]
 
 TEMPLATES = [
-    ("T-H01-FIX-01", "H-01", "multiple_choice_7_options", gen_h01_1, ver_h01, ("easy", "Remember"), stems_1, hints_1, "Solución detallada paso a paso para eficiencia directa entre reservorios térmicos."),
-    ("T-H01-FIX-02", "H-01", "multiple_choice_7_options", gen_h01_2, ver_h01, ("medium", "Apply"), stems_2, hints_2, "Solución detallada paso a paso para rendimiento inverso en escala Kelvin absoluta."),
-    ("T-H01-FIX-03", "H-01", "fill_in_the_blank", gen_h01_3, ver_h01, ("medium", "Analyze"), stems_3, hints_3, "Solución detallada paso a paso para perturbación del ciclo termodinámico reversible."),
-    ("T-H01-FIX-04", "H-01", "fill_in_the_blank", gen_h01_4, ver_h01, ("hard", "Evaluate"), stems_4, hints_4, "Solución detallada paso a paso en la frontera extrema asintótica del ciclo térmico."),
+    ("T-H01-FIX-01", "H-01", "fill_in_the_blank", gen_h01_1, ver_h01_1, ("easy", "Apply"), stems_1, hints_1, "Solución detallada paso a paso para eficiencia directa entre reservorios térmicos."),
+    ("T-H01-FIX-02", "H-01", "fill_in_the_blank", gen_h01_2, ver_h01_2, ("medium", "Analyze"), stems_2, hints_2, "Solución detallada paso a paso aplicando la primera ley para el trabajo neto."),
+    ("T-H01-FIX-03", "H-01", "fill_in_the_blank", gen_h01_3, ver_h01_3, ("medium", "Evaluate"), stems_3, hints_3, "Solución detallada paso a paso para el rendimiento porcentual reversible."),
+    ("T-H01-FIX-04", "H-01", "multiple_select", gen_h01_4, ver_h01_4, ("hard", "Create"), stems_4, hints_4, "Solución detallada paso a paso sobre propiedades adimensionales del ciclo térmico."),
 ]
 '''
         fix_py.write_text(modular_fix_code, encoding="utf-8")
@@ -870,7 +1009,7 @@ TEMPLATES = [
         success2, errors2 = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=3)
         assert not success2
         err_str2 = "\n".join(errors2)
-        assert "Práctica activa insuficiente" in err_str2
+        assert "[M20-ACTIVE-QUOTA]" in err_str2 and "[M20-MC7-CAP]" in err_str2
 
     def test_default_min_archetypes_contract(self, tmp_path: Path):
         """Verifies default min_archetypes=3 when not passed, respecting manifest or explicit arg."""
@@ -1054,7 +1193,7 @@ TEMPLATES = [
         code = r'''
 import random
 
-# Archetype 1: FIB Easy Remember
+# Archetype 1: FIB Easy Apply
 def gen_fib1(rng):
     a = rng.randint(10, 30)
     b = rng.randint(2, 5)
@@ -1079,7 +1218,7 @@ def ver_fib2(res): return bool(res and isinstance(res.get("vars"), dict) and "an
 
 # Archetype 3: MS Medium Apply
 def gen_ms(rng):
-    k = rng.randint(2, 8)
+    k = rng.randint(10, 99)
     d1 = k + 1
     d2 = k + 2
     return {
@@ -1153,7 +1292,7 @@ hints_3 = [
 ]
 
 TEMPLATES = [
-    ("T-Hab01-01", "Hab-01", "fill_in_the_blank", gen_fib1, ver_fib1, ("easy", "Remember"), s1, hints_1, "Solución detallada paso a paso sumando los parámetros @a@ y @b@ del proceso."),
+    ("T-Hab01-01", "Hab-01", "fill_in_the_blank", gen_fib1, ver_fib1, ("easy", "Apply"), s1, hints_1, "Solución detallada paso a paso sumando los parámetros @a@ y @b@ del proceso."),
     ("T-Hab01-02", "Hab-01", "fill_in_the_blank", gen_fib2, ver_fib2, ("hard", "Evaluate"), s2, hints_2, "Solución detallada paso a paso duplicando la magnitud de escala térmica @w@."),
     ("T-Hab01-03", "Hab-01", "multiple_select", gen_ms, ver_ms, ("medium", "Apply"), s3, hints_3, "Solución detallada paso a paso discriminando proposiciones válidas según @k@."),
 ]

@@ -409,7 +409,7 @@ def test_compile_shard_rejects_debug_raise_and_accepts_legitimate_chebyshev(tmp_
     code_with_raise = r'''
 import random
 
-def _gen_h05(rng, arch=1):
+def gen_h05_1(rng):
     mu = rng.randint(20, 60)
     sigma = rng.randint(5, 12)
     varx = sigma**2
@@ -418,8 +418,6 @@ def _gen_h05(rng, arch=1):
     d1 = round(sigma / eps, 4)
     d3 = round(sigma / (eps**2), 4)
     v = {"mu": mu, "sigma": sigma, "varx": varx, "eps": eps, "ans": ans, "d1": d1, "d3": d3}
-    if arch == 2:
-        return {"vars": v, "correct": r"@ans@"}
     dists = [
         ("D-H05-01", r"$P(|X - @mu@| \ge @eps@) \le @d1@$", r"Error de exponente lineal 1/k en lugar de cuadrático para eps=@eps@ y sigma=@sigma@."),
         ("D-H05-02", r"$P(|X - @mu@| \ge @eps@) \ge @ans@$", r"Inversión de la cota de Chebyshev para dispersión eps=@eps@ y sigma=@sigma@."),
@@ -430,33 +428,70 @@ def _gen_h05(rng, arch=1):
     ]
     return {"vars": v, "correct": r"$P(|X - @mu@| \ge @eps@) \le @ans@$", "distractors": dists}
 
-def gen_h05_1(rng): return _gen_h05(rng, 1)
-def gen_h05_2(rng): return _gen_h05(rng, 2)
-def gen_h05_3(rng):
-    res = _gen_h05(rng, 3)
-    if res["vars"]["mu"] > 0:
-        raise RuntimeError("DEBUG_CRASH")
-    return res
+def ver_h05_1(res):
+    v = res.get("vars", {})
+    return bool(res.get("correct") == r"$P(|X - @mu@| \ge @eps@) \le @ans@$" and abs(v.get("ans", -1) - round(v.get("varx", 0) / (v.get("eps", 1)**2), 4)) < 1e-6)
 
-def ver_h05(res): return bool(res.get("correct") in (r"$P(|X - @mu@| \ge @eps@) \le @ans@$", r"@ans@") and abs(res["vars"]["ans"] - round(res["vars"]["varx"] / (res["vars"]["eps"]**2), 4)) < 1e-6)
+def gen_h05_2(rng):
+    k = rng.randint(2, 15)
+    ans = round(1.0 - 1.0 / (k * k), 4)
+    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+
+def ver_h05_2(res):
+    v = res.get("vars", {})
+    k = v.get("k", 1)
+    return bool(str(res.get("correct")) == str(v.get("ans")) and abs(v.get("ans", -1) - round(1.0 - 1.0 / (k * k), 4)) < 1e-6)
+
+def gen_h05_3(rng):
+    mu = rng.randint(20, 60)
+    sigma = rng.randint(5, 12)
+    varx = sigma**2
+    eps = rng.randint(sigma * 2 + 5, 80)
+    ans = round(varx / (eps**2), 4)
+    if mu > 0:
+        raise RuntimeError("DEBUG_CRASH")
+    return {"vars": {"mu": mu, "varx": varx, "eps": eps, "ans": ans}, "correct": str(ans), "distractors": []}
+
+def ver_h05_3(res):
+    v = res.get("vars", {})
+    return bool(str(res.get("correct")) == str(v.get("ans")) and abs(v.get("ans", -1) - round(v.get("varx", 0) / (v.get("eps", 1)**2), 4)) < 1e-6)
+
+def gen_h05_4(rng):
+    p_pct = rng.randint(2, 25)
+    sigma = rng.randint(4, 15)
+    varx = sigma**2
+    p = p_pct / 100.0
+    eps = round((varx / p) ** 0.5, 4)
+    return {"vars": {"varx": varx, "p_pct": p_pct, "eps": eps}, "correct": str(eps), "distractors": []}
+
+def ver_h05_4(res):
+    v = res.get("vars", {})
+    p = v.get("p_pct", 1) / 100.0
+    return bool(str(res.get("correct")) == str(v.get("eps")) and abs(v.get("eps", -1) - round((v.get("varx", 0) / p) ** 0.5, 4)) < 1e-6)
 
 s1 = [
-    r"Para una variable aleatoria $X$ con $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, halle la cota:",
-    r"Considere una distribución con media $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, determine la cota:",
-    r"Aplicando Chebyshev a una variable con centro en $\mu = @mu@$ y $\text{Var}(X) = @varx@$, determine la relación:",
-    r"A partir de los parámetros $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, determine la cota de Chebyshev:",
+    r"Para una variable aleatoria $X$ con $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, halle la cota con tolerancia $@eps@$:",
+    r"Considere una distribución con media $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, determine la cota para $@eps@$:",
+    r"Aplicando Chebyshev a una variable centrada en $\mu = @mu@$ con $\text{Var}(X) = @varx@$, halle la relación con $\varepsilon=@eps@$:",
+    r"A partir de $\mu = @mu@$, varianza $\sigma^2 = @varx@$ y desvío $\varepsilon=@eps@$, seleccione la cota de Chebyshev:",
 ]
 s2 = [
-    r"Dada una muestra teórica con media $\mu = @mu@$ y dispersión $\sigma^2 = @varx@$, calcule el valor crítico:",
-    r"En un proceso con promedio $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, obtenga el resultado de la cota:",
-    r"Calcule la cota superior del evento según Chebyshev para $\mu = @mu@$ y $\sigma^2 = @varx@$:",
-    r"Estime el límite probabilístico con parámetros $\mu = @mu@$ y $\sigma^2 = @varx@$:",
+    r"Dada una desviación de $k = @k@$ veces $\sigma$, halle la probabilidad mínima dentro del intervalo simétrico:",
+    r"En un proceso cualquiera, ¿qué fracción mínima de masa queda a menos de $k = @k@$ desviaciones típicas?:",
+    r"Calcule la cota inferior de Chebyshev $1 - 1/k^2$ para el múltiplo de escala $k = @k@$:",
+    r"Estime la probabilidad garantizada dentro del radio de $k = @k@$ desviaciones respecto a la media:",
 ]
 s3 = [
-    r"Se tiene una distribución continua con valor esperado $\mu = @mu@$ y $\sigma^2 = @varx@$. Identifique la cota:",
-    r"Evalúe la probabilidad de desviación respecto a $\mu = @mu@$ cuando la varianza es $\sigma^2 = @varx@$:",
-    r"Utilizando la regla de Chebyshev para $\mu = @mu@$ y varianza poblacional $\sigma^2 = @varx@$, halle la expresión:",
-    r"Determine la cota de Chebyshev con base en $\mu = @mu@$ y segundo momento central $\sigma^2 = @varx@$:",
+    r"Se tiene una distribución continua con $\mu = @mu@$ y $\sigma^2 = @varx@$. Calcule numéricamente la cota para $\varepsilon = @eps@$:",
+    r"Evalúe la cota máxima de desviación respecto a $\mu = @mu@$ cuando $\sigma^2 = @varx@$ y $\varepsilon = @eps@$:",
+    r"Utilizando Chebyshev con $\mu = @mu@$ y segundo momento $\sigma^2 = @varx@$, halle el valor para umbral $\varepsilon = @eps@$:",
+    r"Determine el valor numérico superior de $P(|X - @mu@| \ge @eps@)$ sabiendo que $\text{Var}(X) = @varx@$:",
+]
+s4 = [
+    r"Para una varianza $\sigma^2 = @varx@$ y probabilidad de cola $p = @p_pct@\%$, halle el radio mínimo $\varepsilon$:",
+    r"Determine la amplitud crítica $\varepsilon$ que garantiza una cola $\le @p_pct@\%$ cuando $\sigma^2 = @varx@$:",
+    r"Invirtiendo Chebyshev con $\sigma^2 = @varx@$ y cota $@p_pct@\%$, calcule el umbral de tolerancia $\varepsilon$:",
+    r"Halle la distancia mínima $\varepsilon$ desde la media si $\text{Var}(X) = @varx@$ y la cola máxima es $@p_pct@\%$:",
 ]
 hints1 = [
     "La desigualdad de Chebyshev acota colas bilaterales empleando el segundo momento central.",
@@ -464,20 +499,26 @@ hints1 = [
     "Compruebe que la cota decrezca de manera cuadrática con respecto a la amplitud permitida.",
 ]
 hints2 = [
-    "Identifique primero la desviación máxima permitida respecto de la media poblacional dada.",
-    "Sustituya la varianza y el umbral de desviación en la cota cuadrática de Chebyshev.",
-    "Verifique que el resultado numérico final pertenezca al intervalo de probabilidad válido.",
+    "Exprese el evento complementario interior a partir del múltiplo entero de desviaciones estándar.",
+    "Calcule el inverso cuadrático del factor multiplicativo antes de restarlo de la unidad.",
+    "Verifique que la fracción mínima garantizada aumente cuando crece el múltiplo de escala.",
 ]
 hints3 = [
-    "Contraste el uso de la varianza frente a la desviación estándar en el numerador de la cota.",
-    "Asegúrese de elevar al cuadrado la distancia respecto a la media en el denominador.",
-    "Valide que la interpretación corresponda al evento de cola bilateral planteado.",
+    "Identifique la varianza poblacional y eleve al cuadrado el umbral de desviación tolerado.",
+    "Divida la varianza dada entre el cuadrado de la tolerancia y redondee a cuatro decimales.",
+    "Confirme que el cociente final corresponda a un valor válido de probabilidad superior.",
 ]
-SOL_CHEBY = r"Por la desigualdad de Chebyshev, $P(|X - @mu@| \ge @eps@) \le \frac{@varx@}{@eps@^2} = @ans@$."
+hints4 = [
+    "Convierta primero el porcentaje máximo de cola a proporción decimal entre cero y uno.",
+    "Despeje el cuadrado de la tolerancia igualando el cociente entre varianza y probabilidad.",
+    "Extraiga la raíz cuadrada positiva y redondee el umbral resultante a cuatro decimales.",
+]
+SOL_CHEBY = r"Por la desigualdad de Chebyshev, la probabilidad de cola bilateral queda acotada por el cociente entre la varianza y el cuadrado de la tolerancia."
 TEMPLATES = [
-    ("T-H05-01", "H-05", "multiple_choice_7_options", gen_h05_1, ver_h05, ("easy", "Remember"), s1, hints1, SOL_CHEBY),
-    ("T-H05-02", "H-05", "fill_in_the_blank", gen_h05_2, ver_h05, ("medium", "Understand"), s2, hints2, SOL_CHEBY),
-    ("T-H05-03", "H-05", "multiple_choice_7_options", gen_h05_3, ver_h05, ("hard", "Apply"), s3, hints3, SOL_CHEBY),
+    ("T-H05-01", "H-05", "multiple_choice_7_options", gen_h05_1, ver_h05_1, ("easy", "Remember"), s1, hints1, SOL_CHEBY),
+    ("T-H05-02", "H-05", "fill_in_the_blank", gen_h05_2, ver_h05_2, ("medium", "Understand"), s2, hints2, SOL_CHEBY),
+    ("T-H05-03", "H-05", "fill_in_the_blank", gen_h05_3, ver_h05_3, ("hard", "Apply"), s3, hints3, SOL_CHEBY),
+    ("T-H05-04", "H-05", "fill_in_the_blank", gen_h05_4, ver_h05_4, ("hard", "Analyze"), s4, hints4, SOL_CHEBY),
 ]
 '''
     shard_py.write_text(code_with_raise, encoding="utf-8")
@@ -488,8 +529,8 @@ TEMPLATES = [
 
     # Part 2: Clean code without raise passes without false DIAG-MAGIC-MULT
     clean_code = code_with_raise.replace(
-        'def gen_h05_3(rng):\n    res = _gen_h05(rng, 3)\n    if res["vars"]["mu"] > 0:\n        raise RuntimeError("DEBUG_CRASH")\n    return res',
-        'def gen_h05_3(rng): return _gen_h05(rng, 3)'
+        '    if mu > 0:\n        raise RuntimeError("DEBUG_CRASH")\n',
+        ''
     )
     shard_py.write_text(clean_code, encoding="utf-8")
     ok, errors = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=3, cta_path=cta_file, seeds=50)

@@ -405,7 +405,7 @@ def ver_c02_perturbation(res):
 
 def gen_c02_boundary(rng):
     sample_rate = round(rng.uniform(0.001, 0.050), 4)
-    correct_str = rf"Bajo {sample_rate}, $k^*$ tiende a infinito al anularse la reposición"
+    correct_str = rf"Bajo {sample_rate}, k* tiende a infinito al anularse la reposición"
     distractors = [
         {"value": "La economía deja de producir bienes al alcanzarse la frontera analítica del espacio de estados posibles", "distractor_id": "D-C02-02", "error_rationale": "Confusión entre dinámica de acumulación de capital y nivel de producto con @sample_rate@"},
         {"value": "El estado estacionario resultante genera fluctuaciones y oscilaciones cíclicas explosivas no lineales", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de inestabilidad oscilatoria no lineal ante valor límite @sample_rate@"},
@@ -547,7 +547,7 @@ TEMPLATES = [
     ("T-C-02-01", "C-02", "fill_in_the_blank", gen_c02_direct, ver_c02_direct, ("easy", "Apply"), stems_c02_1, hints_c02_1, r"En estado estacionario, $s \sqrt{k} = ({denom})k \implies k^* = (s/{denom})^2 = {k_star}$."),
     ("T-C-02-02", "C-02", "fill_in_the_blank", gen_c02_inverse, ver_c02_inverse, ("medium", "Apply"), stems_c02_2, hints_c02_2, r"Despejando la tasa de equilibrio, $s = \sqrt{k^*} ({denom}) = {s}$."),
     ("T-C-02-03", "C-02", "multiple_select", gen_c02_perturbation, ver_c02_perturbation, ("hard", "Analyze"), stems_c02_3, hints_c02_3, r"Un aumento en $n$ incrementa la pendiente de la recta de reposición reduciendo $k^*$."),
-    ("T-C-02-04", "C-02", "multiple_choice", gen_c02_boundary, ver_c02_boundary, ("hard", "Evaluate"), stems_c02_4, hints_c02_4, r"Al anularse el denominador de la relación de equilibrio, $k^*$ diverge hacia infinito."),
+    ("T-C-02-04", "C-02", "fill_in_the_blank", gen_c02_boundary, ver_c02_boundary, ("hard", "Evaluate"), stems_c02_4, hints_c02_4, r"Al anularse el denominador de la relación de equilibrio, $k^*$ diverge hacia infinito."),
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_source, encoding="utf-8")

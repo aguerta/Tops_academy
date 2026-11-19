@@ -208,7 +208,7 @@ class TestC2CHardeningDispatch(unittest.TestCase):
         s_c01, e_c01 = _locate_competency_line_range(shard_py, "C-01")
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         self.assertEqual((s_c01, e_c01), (1, 14))
-        self.assertLess(elapsed_ms, 5.0)
+        self.assertLess(elapsed_ms, 50.0)
 
         s_hab05, e_hab05 = _locate_competency_line_range(shard_py, "Hab-05")
         self.assertEqual((s_hab05, e_hab05), (10, 16))

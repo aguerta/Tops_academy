@@ -299,16 +299,16 @@ def gen_hab06_1(rng):
         "d6": d6,
     }
 
-    dists = [
-        ("D-Hab06-01", r"H = @d1@", "Omite el agravamiento del sesgo tras primeras diferencias con @q@."),
-        ("D-Hab06-02", r"H = @d2@", "Confunde el ratio de fiabilidad con la proporcion de varianza @q@."),
-        ("D-Hab06-03", r"H = @d3@", "Asume que MCO supera a VI debido al sesgo con estimador @b_ls@."),
-        ("D-Hab06-04", r"H = @d4@", "Suma las varianzas en el denominador del estadistico de Hausman. Con valor @v_ls@."),
-        ("D-Hab06-05", r"H = @d5@", "Omite la varianza de MCO en el denominador con valor @v_ls@."),
-        ("D-Hab06-06", r"H = @d6@", "Aplica incorrectamente el factor de atenuacion dividiendo por @q@."),
+    opts = [
+        {"value": r"H = @ans@ usando razón cuadrática (@b_iv@ - @b_ls@)^2 / (@v_iv@ - @v_ls@)", "is_correct": True},
+        {"value": r"El contraste rechaza exogeneidad cuando H = @ans@ supera el valor crítico", "is_correct": True},
+        {"value": r"H = @d1@", "is_correct": False, "distractor_id": "D-Hab06-01", "error_rationale": "Omite el agravamiento del sesgo tras primeras diferencias con @q@ y desvía hacia @d1@."},
+        {"value": r"H = @d2@", "is_correct": False, "distractor_id": "D-Hab06-02", "error_rationale": "Confunde el ratio de fiabilidad con la proporcion de varianza @q@ generando @d2@."},
+        {"value": r"H = @d3@", "is_correct": False, "distractor_id": "D-Hab06-03", "error_rationale": "Asume que MCO supera a VI debido al sesgo con estimador @b_ls@ resultando @d3@."},
+        {"value": r"H = @d4@", "is_correct": False, "distractor_id": "D-Hab06-04", "error_rationale": "Suma las varianzas en el denominador del estadistico de Hausman. Con valor @v_ls@ obteniendo @d4@."},
     ]
 
-    return {"vars": v, "correct": r"H = @ans@", "distractors": dists}
+    return {"vars": v, "options": opts}
 
 
 def ver_hab06_1(res):
@@ -327,8 +327,32 @@ def ver_hab06_1(res):
         return False
     diff = round(b_iv - b_ls, 3)
     expected = round((diff ** 2) / denom, 3)
-    corr = str(res.get("correct", "")).strip()
-    return corr in (r"H = @ans@", f"H = {ans}", f"H = {expected}") and abs(ans - expected) < 1e-3
+    if abs(ans - expected) >= 1e-3:
+        return False
+    opts = res.get("options", [])
+    exp_t = {
+        r"H = @ans@ usando razón cuadrática (@b_iv@ - @b_ls@)^2 / (@v_iv@ - @v_ls@)",
+        r"El contraste rechaza exogeneidad cuando H = @ans@ supera el valor crítico",
+    }
+    exp_f = {
+        r"H = @d1@": "D-Hab06-01",
+        r"H = @d2@": "D-Hab06-02",
+        r"H = @d3@": "D-Hab06-03",
+        r"H = @d4@": "D-Hab06-04",
+    }
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_t
+        and len(f_opts) == 4
+        and all(
+            o.get("value") in exp_f
+            and o.get("distractor_id") == exp_f[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 
 def gen_hab06_2(rng):
@@ -336,8 +360,9 @@ def gen_hab06_2(rng):
     v_ls = round(rng.randint(10, 50) * 0.0001, 4)
     denom = round(v_iv - v_ls, 4)
     ans = denom
-    v = {"v_iv": v_iv, "v_ls": v_ls, "denom": denom, "ans": ans}
-    return {"vars": v, "correct": str(ans), "distractors": []}
+    d5 = round(v_iv + v_ls, 4)
+    v = {"v_iv": v_iv, "v_ls": v_ls, "denom": denom, "ans": ans, "d5": d5}
+    return {"vars": v, "correct": str(ans), "ds": [("D-Hab06-05", str(d5), "Suma ambas varianzas @v_iv@ y @v_ls@ en lugar de restarlas obteniendo @d5@.")]}
 
 
 def ver_hab06_2(res):
@@ -352,8 +377,9 @@ def gen_hab06_3(rng):
     b_ls = round(rng.randint(20, 120) * 0.001, 3)
     diff = round(b_iv - b_ls, 3)
     ans = round(diff ** 2, 4)
-    v = {"b_iv": b_iv, "b_ls": b_ls, "diff": diff, "ans": ans}
-    return {"vars": v, "correct": str(ans), "distractors": []}
+    d6 = round(diff, 4)
+    v = {"b_iv": b_iv, "b_ls": b_ls, "diff": diff, "ans": ans, "d6": d6}
+    return {"vars": v, "correct": str(ans), "ds": [("D-Hab06-06", str(d6), "Omite elevar al cuadrado la discrepancia entre @b_iv@ y @b_ls@ dejando @d6@.")]}
 
 
 def ver_hab06_3(res):
@@ -367,7 +393,7 @@ TEMPLATES = [
     (
         "T-Hab06-01",
         "Hab-06",
-        "multiple_choice_7_options",
+        "multiple_select",
         gen_hab06_1,
         ver_hab06_1,
         ("easy", "Apply"),
@@ -533,31 +559,51 @@ def gen_directo(rng):
     step = rng.randint(2, 8)
     ans = base * step
     v = {"base": base, "step": step, "ans": ans}
-    for i in range(1, 7):
+    for i in range(1, 5):
         v[f"d{i}"] = ans + i * 5
-    dists = [
-        ("D-HabM3-01", f"$@d1@$", "Inversión de signo en el estimador. Error aritmético al evaluar parámetro @d1@."),
-        ("D-HabM3-02", f"$@d2@$", "Omitir la covarianza entre regresores. Error estructural con el valor @d2@."),
-        ("D-HabM3-03", f"$@d3@$", "Varianza no consistente obtenida al emplear matriz homocedástica con valor @d3@."),
-        ("D-HabM3-04", f"$@d4@$", "Instrumento débil con baja correlación en la identificación usando el valor @d4@."),
-        ("D-HabM3-05", f"$@d5@$", "Sesgo de selección por truncamiento no corregido de la muestra usando valor @d5@."),
-        ("D-HabM3-06", f"$@d6@$", "Identificación exacta asumida erróneamente bajo rango deficiente con cota @d6@."),
+    opts = [
+        {"value": r"El producto directo resultante equivale a $@ans@$ para $@base@$ y $@step@$", "is_correct": True},
+        {"value": r"La escala lineal exacta de $@base@$ por $@step@$ produce $@ans@$", "is_correct": True},
+        {"value": r"$@d1@$", "is_correct": False, "distractor_id": "D-HabM3-01", "error_rationale": "Inversión de signo en el estimador. Error aritmético al evaluar parámetro @d1@."},
+        {"value": r"$@d2@$", "is_correct": False, "distractor_id": "D-HabM3-02", "error_rationale": "Omitir la covarianza entre regresores. Error estructural con el valor @d2@."},
+        {"value": r"$@d3@$", "is_correct": False, "distractor_id": "D-HabM3-03", "error_rationale": "Varianza no consistente obtenida al emplear matriz homocedástica con valor @d3@."},
+        {"value": r"$@d4@$", "is_correct": False, "distractor_id": "D-HabM3-04", "error_rationale": "Instrumento débil con baja correlación en la identificación usando el valor @d4@."},
     ]
-    return {"vars": v, "correct": "$@ans@$", "distractors": dists}
+    return {"vars": v, "options": opts}
 
 def ver_directo(res):
+    if not isinstance(res, dict):
+        return False
     v = res.get("vars", {})
-    expected = f"$@ans@$"
-    corr = str(res.get("correct", "")).strip()
-    return (corr in (expected, f"${v.get('ans')}$", str(v.get('ans')))) and v.get("ans") == v.get("base") * v.get("step")
+    if v.get("ans") != v.get("base", 0) * v.get("step", 0):
+        return False
+    opts = res.get("options", [])
+    exp_t = {
+        r"El producto directo resultante equivale a $@ans@$ para $@base@$ y $@step@$",
+        r"La escala lineal exacta de $@base@$ por $@step@$ produce $@ans@$",
+    }
+    exp_f = {f"$@d{i}@$": f"D-HabM3-0{i}" for i in range(1, 5)}
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_t
+        and len(f_opts) == 4
+        and all(
+            o.get("value") in exp_f
+            and o.get("distractor_id") == exp_f[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 def gen_inverso(rng):
     div = rng.choice([2, 4, 5, 10])
     factor = rng.randint(150, 450)
     total = factor * div
     ans = factor
-    v = {"total": total, "div": div, "ans": ans}
-    return {"vars": {"total": total, "div": div, "ans": ans}, "correct": str(ans), "distractors": []}
+    d5 = total * div
+    return {"vars": {"total": total, "div": div, "ans": ans, "d5": d5}, "correct": str(ans), "ds": [("D-HabM3-05", str(d5), "Sesgo de selección por truncamiento no corregido al multiplicar en vez de dividir, dando @d5@.")]}
 
 def ver_inverso(res):
     v = res.get("vars", {})
@@ -569,8 +615,9 @@ def gen_perturbacion(rng):
     x = rng.randint(10, 40)
     delta = rng.choice([1, 2, 3])
     ans = (x + delta) ** 2
-    v = {"x": x, "delta": delta, "ans": ans}
-    return {"vars": v, "correct": str(ans), "distractors": []}
+    d6 = x ** 2 + delta
+    v = {"x": x, "delta": delta, "ans": ans, "d6": d6}
+    return {"vars": v, "correct": str(ans), "ds": [("D-HabM3-06", str(d6), "Identificación exacta asumida erróneamente sin desarrollar el binomio de @x@ y @delta@, dando @d6@.")]}
 
 def ver_perturbacion(res):
     v = res.get("vars", {})
@@ -594,7 +641,7 @@ TEMPLATES = [
     (
         "T-HabM3-01",
         "Hab-M3",
-        "multiple_choice_7_options",
+        "multiple_select",
         gen_directo,
         ver_directo,
         ("easy", "Apply"),

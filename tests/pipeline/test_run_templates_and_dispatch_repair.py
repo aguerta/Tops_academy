@@ -301,7 +301,11 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         now = time.time()
         os.utime(shard_data_p, (now - 200, now - 200))
 
-        # Template C-05.json created at t - 100
+        # Template files for all CTA competencies (M20 requires complete templates/ matching cta.json)
+        for cid_extra in ("C-11", "H-02"):
+            extra_json = templates_dir / f"{cid_extra}.json"
+            extra_json.write_text(json.dumps([{"id": f"T-{cid_extra}-01"}]), encoding="utf-8")
+            os.utime(extra_json, (now, now))
         c05_json = templates_dir / "C-05.json"
         c05_json.write_text(json.dumps([{"id": "tpl_dummy"}]), encoding="utf-8")
         os.utime(c05_json, (now - 100, now - 100))
@@ -399,7 +403,11 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         if cta_file.is_file():
             os.utime(cta_file, (now - 200, now - 200))
 
-        # Template C-05.json newer than shard_01_data.py
+        # Template files matching all CTA competencies (M20 completeness check)
+        for cid_extra in ("C-11", "H-02"):
+            extra_json = templates_dir / f"{cid_extra}.json"
+            extra_json.write_text(json.dumps([{"id": f"T-{cid_extra}-01"}]), encoding="utf-8")
+            os.utime(extra_json, (now, now))
         c05_json = templates_dir / "C-05.json"
         c05_json.write_text(json.dumps([{"id": "tpl_dummy"}]), encoding="utf-8")
         os.utime(c05_json, (now, now))
@@ -493,6 +501,7 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
     def test_templates_fast_path_cert_verification_and_invalidation(self) -> None:
         """Fast-path cryptographic verification checks shard_XX.cert.json (< 5 ms) and invalidates on source delta."""
         import hashlib
+        import os
         from engine.interstage_schemas import ArtifactCertificate, write_certificate
 
         shards_dir = self.work_dir / "shards"
@@ -501,13 +510,25 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         shard_content = "# Shard 01 data file\nTEMPLATES = []\n"
         shard_file.write_text(shard_content, encoding="utf-8")
 
+        cta_file = self.work_dir / "cta.json"
+        single_cta = {"course_id": "test_c2c_v36", "competencies": [self.cta_data["competencies"][0]]}
+        cta_file.write_text(json.dumps(single_cta), encoding="utf-8")
+
         templates_dir = self.work_dir / "templates"
         templates_dir.mkdir(parents=True, exist_ok=True)
         tpl_file = templates_dir / "C-05.json"
         tpl_bytes = b'[{"id": "T-C05-01", "template_id": "T-C05-01"}]'
         tpl_file.write_bytes(tpl_bytes)
 
-        cta_file = self.work_dir / "cta.json"
+        base_ts = time.time()
+        os.utime(shard_file, (base_ts - 10, base_ts - 10))
+        os.utime(cta_file, (base_ts - 10, base_ts - 10))
+        os.utime(tpl_file, (base_ts - 5, base_ts - 5))
+
+        (shards_dir / "pre_shard_manifest.json").write_text(
+            json.dumps({"shards": [{"shard_id": "shard_01", "competency_ids": ["C-05"]}]}),
+            encoding="utf-8",
+        )
         cta_bytes = cta_file.read_bytes()
         cta_hash = hashlib.sha256(cta_bytes).hexdigest()
         src_hash = hashlib.sha256(shard_file.read_bytes()).hexdigest()
@@ -526,11 +547,12 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
 
         runner = PipelineRunner(work_dir=self.work_dir, strict=False)
 
-        with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
-            t0 = time.time()
-            res = runner.run_stage_templates()
-            elapsed = time.time() - t0
-            output = mock_stdout.getvalue()
+        with patch("run.check_templates_file_or_dir", return_value=(True, [])):
+            with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+                t0 = time.time()
+                res = runner.run_stage_templates()
+                elapsed = time.time() - t0
+                output = mock_stdout.getvalue()
 
         self.assertIn("Fast-path < 5 ms", output)
         self.assertLess(elapsed, 1.0)

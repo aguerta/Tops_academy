@@ -121,7 +121,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         # 4. Form-C / Form-B Multimodal contract (min_archetypes = 4) & dynamic rationales
         self.assertIn("min_archetypes = 4", prompt)
         self.assertTrue("Form-C" in prompt or "Form-B" in prompt)
-        self.assertIn("4 tuplas en `TEMPLATES`", prompt)
+        self.assertTrue("tuplas distintas en `TEMPLATES`" in prompt or "4 tuplas en `TEMPLATES`" in prompt)
         self.assertIn("easy", prompt)
         self.assertIn("medium", prompt)
         self.assertIn("hard", prompt)
@@ -194,8 +194,8 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         full_author = (self.prompts_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
         lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
 
-        # Full prompt checks
-        self.assertIn("4 arquetipos", full_author.lower())
+        # Full prompt checks (M20 v4.3)
+        self.assertTrue("<<S4_MIN_ARCH>>" in full_author or "4 arquetipos" in full_author.lower())
         self.assertIn("direct", full_author)
         self.assertIn("inverse", full_author)
         self.assertIn("perturbation", full_author)
@@ -203,9 +203,9 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("author_XX.json", full_author)
         self.assertIn("DONE:", full_author)
 
-        # Lean prompt checks
+        # Lean prompt checks (M20 v4.3)
         self.assertTrue("Form-C" in lean_author or "FORM-C" in lean_author)
-        self.assertTrue('min="4"' in lean_author or "--min-archetypes 4" in lean_author)
+        self.assertTrue("--min-archetypes" in lean_author or 'min="4"' in lean_author)
         self.assertTrue("author_XX.json" in lean_author)
         self.assertTrue("PASS->`DONE:" in lean_author or "DONE:" in lean_author)
 
@@ -230,7 +230,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("error_rationale", full_repair)
         self.assertIn("shard_fixes/<CID>.py", full_repair)
         self.assertIn("ArtifactMetadata", full_repair)
-        self.assertIn("CORTE INMEDIATO POST-PASS", full_repair)
+        self.assertIn("Post-PASS Cut", full_repair)
 
         # Lean prompt repair checks
         self.assertIn("c2c_repair", lean_repair)
@@ -566,65 +566,58 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         # 1. CTA Architect Prompts (Full + Lean)
         self.assertIn("cta_fixes/<cid>.py", full_cta)
         self.assertIn("tests/**", full_cta)
-        self.assertIn("git log", full_cta)
-        self.assertIn("Get-ChildItem -Recurse", full_cta)
-        self.assertIn("< 6", full_cta)
-        self.assertIn("1..5", full_cta)
+        self.assertTrue("< 6" in full_cta or "<6" in full_cta)
+        self.assertTrue("<= 5" in full_cta or "<=5" in full_cta)
         self.assertIn("edit_file", full_cta)
         self.assertIn("c2c_hook_guard.py", full_cta)
 
         self.assertIn("cta_fixes/<cid>.py", lean_cta)
         self.assertTrue("< 6" in lean_cta or "<6" in lean_cta)
         self.assertIn("edit_file", lean_cta)
-        # Verify lean CTA no longer forbids edit_file
         self.assertNotIn("Incremental micro-edits; write entire module in ONE atomic write_file", lean_cta)
 
         # 2. Shard Author Prompts (Full + Lean)
-        self.assertIn("tests/", full_author)
-        self.assertIn("git log", full_author)
-        self.assertIn("Get-ChildItem", full_author)
-        self.assertIn("< 6", full_author)
+        self.assertIn("engine/*", full_author)
+        self.assertIn("src/validator/**", full_author)
+        self.assertTrue("< 6" in full_author or "<6" in full_author)
         self.assertIn("edit_file", full_author)
-        self.assertIn("shard_fixes/<shard_id>/<CID>.py", full_author)
+        self.assertIn("shard_fixes/", full_author)
 
         self.assertTrue("< 6" in lean_author or "<6" in lean_author)
         self.assertIn("edit_file", lean_author)
         self.assertIn("shard_fixes/", lean_author)
-        self.assertIn("Prohibido (read):", lean_author)
+        self.assertTrue("Prohibido leer" in lean_author or "Prohibido (read):" in lean_author)
 
         # 3. Repair Prompts (Full + Lean)
-        self.assertIn("tests/**", full_repair)
-        self.assertIn("git log", full_repair)
-        self.assertIn("Get-ChildItem -Recurse", full_repair)
-        self.assertIn("< 6", full_repair)
-        self.assertIn("1..5", full_repair)
+        self.assertIn("tests/", full_repair)
+        self.assertTrue("< 6" in full_repair or "<6" in full_repair)
         self.assertIn("edit_file", full_repair)
         self.assertTrue("pre_shard_manifest.json" in full_repair or "shard_fixes" in full_repair)
-        self.assertNotIn("pre_cta_manifest.json", full_repair)
+        self.assertIn("prohibido leer", full_repair.lower())
 
         self.assertTrue("< 6" in lean_repair or "<6" in lean_repair)
         self.assertIn("edit_file", lean_repair)
         self.assertTrue("pre_shard_manifest.json" in lean_repair or "shard_fixes/" in lean_repair)
-        self.assertNotIn("pre_cta_manifest.json", lean_repair)
+        self.assertIn("prohibido leer", lean_repair.lower())
 
     # =========================================================================
     # 11. Stream 1D Improver: Milestone 3 Anti-1-Tuple Hardening & Dispatch Stamping
     # =========================================================================
     def test_stream_1d_improver_milestone3_archetypes_and_dispatch_hardening(self) -> None:
-        """Mastery Tri-Banda hardening: prompt_shard_author eliminates 1-tuple escape hatch, lean author has 3 archetypes pattern <= 5000B, dispatch stamps min_archetypes=3."""
+        """Mastery Quad-Band / M20 hardening: no 1-tuple escape hatch, [M3-ARCHETYPES], gen_1..4, dispatch stamps min_archetypes=4."""
         full_author = (self.prompts_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
         lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
 
-        # 1. Full prompt: No permissive escape hatch, documents [M3-ARCHETYPES] and _gen_h01(rng, arch)
+        # 1. Full prompt (M20 v4.3): No permissive escape hatch, documents [M3-ARCHETYPES] and gen_1..gen_4
         self.assertNotIn("o 1 tupla por competencia", full_author)
         self.assertIn("[M3-ARCHETYPES]", full_author)
-        self.assertIn("_gen_h01(rng", full_author)
-        self.assertIn("gen_h01_1", full_author)
-        self.assertIn("gen_h01_2", full_author)
-        self.assertIn("gen_h01_3", full_author)
-        self.assertIn("ver_h01_1", full_author)
+        self.assertIn("gen_1", full_author)
+        self.assertIn("gen_2", full_author)
+        self.assertIn("gen_3", full_author)
+        self.assertIn("gen_4", full_author)
+        self.assertIn("ver_1", full_author)
 
-        # 2. Lean prompt: Documents M3-ARCHETYPES, shows 4 archetypes, gen_1..4 and ver_1..4, and <= 5,000 bytes
+        # 2. Lean prompt (M20 v4.3): Documents M3-ARCHETYPES, gen_1..4 and ver_1..4
         self.assertIn("M3-ARCHETYPES", lean_author)
         self.assertIn("gen_1", lean_author)
         self.assertIn("gen_2", lean_author)

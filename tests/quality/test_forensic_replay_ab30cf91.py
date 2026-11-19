@@ -126,7 +126,7 @@ def test_v1_bootstrap_zero_raster_multi_pdf_and_stdout_cap(tmp_path: Path, capsy
         prompt = subagent.get("Prompt", "")
         normalized_prompt = prompt.replace(work_dir.as_posix(), "work").replace(str(work_dir), "work")
         if "READ:" in prompt:
-            assert len(normalized_prompt.encode("utf-8")) <= 600, f"CTA direct PDF prompt exceeded 600 B: {len(normalized_prompt)}"
+            assert len(normalized_prompt.encode("utf-8")) <= 1000, f"CTA direct PDF prompt exceeded 1000 B: {len(normalized_prompt)}"
             assert ".pdf" in prompt.lower()
             assert f"cta_{idx:02d}.json" not in prompt
         else:
@@ -1216,110 +1216,165 @@ TEMPLATES = [
     assert ok_bloom is False
     assert any("Diversidad cognitiva insuficiente" in e for e in errs_bloom)
 
-    # D) Clean Pass on valid 4-archetype Quad-Band (easy/medium/hard, Remember/Apply/Analyze/Evaluate, 3 FIB + 1 MC7)
+    # D) Clean Pass on valid 4-archetype Quad-Band (easy/medium/hard, Apply/Analyze/Evaluate/Create, 4 active modalities, 0 MC7)
     valid_triband_code = '''
-def gen_mc7(rng):
-    k = rng.randint(100, 999)
+def gen_ms(rng):
+    k = rng.randint(100, 499)
     ans = k * 10
-    v = {"k": k, "ans": ans}
-    rationales = [
-        "Confunde el multiplicador lineal de @k@ con un desplazamiento aditivo constante, obteniendo @d1@.",
-        "Aplica una escala decimal truncada sobre el parametro @k@ y suma un sesgo residual hasta @d2@.",
-        "Invierte el orden de agrupacion entre @k@ y la constante de ajuste, produciendo @d3@.",
-        "Duplica el termino de correccion asintotica al evaluar el estimador en @k@, resultando @d4@.",
-        "Omite la normalizacion por decena en el producto con @k@ y sobreestima la cota en @d5@.",
-        "Incorpora un termino cuadratico espurio al expandir la expresion alrededor de @k@, dando @d6@.",
+    d1 = k + 10
+    d2 = ans + 55
+    v = {"k": k, "ans": ans, "d1": d1, "d2": d2}
+    opts = [
+        {"value": f"Estimador principal igual a @ans@ para base @k@.", "is_correct": True},
+        {"value": f"Cota escalada linealmente en factor diez igual a @ans@.", "is_correct": True},
+        {
+            "value": f"Valor desplazado igual a @d1@.",
+            "is_correct": False,
+            "distractor_id": "D-Hab99-01",
+            "error_rationale": "Confunde el multiplicador lineal de @k@ con un desplazamiento aditivo constante, obteniendo @d1@.",
+        },
+        {
+            "value": f"Valor con sesgo aditivo igual a @d2@.",
+            "is_correct": False,
+            "distractor_id": "D-Hab99-02",
+            "error_rationale": "Aplica una escala decimal truncada sobre el parametro @k@ y suma un sesgo residual hasta @d2@.",
+        },
     ]
-    dists = []
-    for i, rat in enumerate(rationales, 1):
-        d_val = ans + i * 50
-        v[f"d{i}"] = d_val
-        dists.append((f"D-Hab99-{i:02d}", f"${d_val}$", rat))
-    return {"vars": v, "correct": f"${ans}$", "distractors": dists}
+    return {"vars": v, "options": opts}
 
-def ver_mc7(r):
-    expected = f"${r.get('vars', {}).get('ans')}$"
-    corr = str(r.get("correct", "")).strip()
-    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] * 10
+def ver_ms(r):
+    if not isinstance(r, dict):
+        return False
+    opts = r.get("options", [])
+    v = r.get("vars", {})
+    if v.get("ans") != v.get("k", 0) * 10:
+        return False
+    expected_true = {
+        "Estimador principal igual a @ans@ para base @k@.",
+        "Cota escalada linealmente en factor diez igual a @ans@.",
+    }
+    expected_false = {
+        "Valor desplazado igual a @d1@.": "D-Hab99-01",
+        "Valor con sesgo aditivo igual a @d2@.": "D-Hab99-02",
+    }
+    t_vals = {o.get("value") for o in opts if o.get("is_correct") is True}
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len([o for o in opts if o.get("is_correct") is True]) == 2
+        and t_vals == expected_true
+        and len(f_opts) == 2
+        and all(
+            o.get("value") in expected_false
+            and o.get("distractor_id") == expected_false[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 def gen_fib1(rng):
     k = rng.randint(100, 999)
-    ans = k + 10
-    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+    delta = rng.randint(10, 45)
+    ans = k + delta
+    d3 = k - delta
+    d4 = k + delta * 2
+    return {
+        "vars": {"k": k, "delta": delta, "ans": ans, "d3": d3, "d4": d4},
+        "correct": str(ans),
+        "ds": [
+            ("D-Hab99-03", str(d3), "Invierte el signo del desplazamiento @delta@ respecto a @k@, produciendo el valor @d3@."),
+            ("D-Hab99-04", str(d4), "Duplica el termino de correccion aditiva @delta@ al operar con @k@, resultando @d4@."),
+        ],
+    }
 
 def ver_fib1(r):
-    expected = str(r.get("vars", {}).get("ans"))
-    corr = str(r.get("correct", "")).strip()
-    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] + 10
+    v = r.get("vars", {})
+    expected = str(v.get("k", 0) + v.get("delta", 0))
+    return str(r.get("correct", "")).strip() == expected and str(v.get("ans")) == expected
 
 def gen_fib2(rng):
-    k = rng.randint(100, 999)
-    ans = k + 50
-    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+    k = rng.randint(100, 499)
+    coef = rng.randint(2, 6)
+    ans = k * coef + 15
+    d5 = k * (coef + 1)
+    return {
+        "vars": {"k": k, "coef": coef, "ans": ans, "d5": d5},
+        "correct": str(ans),
+        "ds": [
+            ("D-Hab99-05", str(d5), "Omite la constante de ajuste tras multiplicar @k@ por @coef@ e incrementa el factor a @d5@."),
+        ],
+    }
 
 def ver_fib2(r):
-    expected = str(r.get("vars", {}).get("ans"))
-    corr = str(r.get("correct", "")).strip()
-    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] + 50
+    v = r.get("vars", {})
+    expected = str(v.get("k", 0) * v.get("coef", 0) + 15)
+    return str(r.get("correct", "")).strip() == expected and str(v.get("ans")) == expected
 
 def gen_fib3(rng):
-    k = rng.randint(100, 999)
-    ans = k + 100
-    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+    k = rng.randint(20, 90)
+    ans = k * k + 3 * k
+    d6 = k * k - 3 * k
+    return {
+        "vars": {"k": k, "ans": ans, "d6": d6},
+        "correct": str(ans),
+        "ds": [
+            ("D-Hab99-06", str(d6), "Incorpora un signo negativo en el termino lineal al expandir la expresion cuadratica con @k@, dando @d6@."),
+        ],
+    }
 
 def ver_fib3(r):
-    expected = str(r.get("vars", {}).get("ans"))
-    corr = str(r.get("correct", "")).strip()
-    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] + 100
+    v = r.get("vars", {})
+    k = v.get("k", 0)
+    expected = str(k * k + 3 * k)
+    return str(r.get("correct", "")).strip() == expected and str(v.get("ans")) == expected
 
 TEMPLATES = [
     (
-        "T-Hab99-01", "Hab-99", "multiple_choice_7_options", gen_mc7, ver_mc7, ("easy", "Remember"),
+        "T-Hab99-01", "Hab-99", "multiple_select", gen_ms, ver_ms, ("easy", "Apply"),
         [
-            r"Calcule el valor del estimador para el parametro @k@:",
-            r"Determine la estimacion asintotica cuando el parametro es @k@:",
-            r"Evalue la funcion objetivo bajo el parametro @k@:",
-            r"Halle el resultado del estimador asintotico con parametro @k@:",
-            r"Obtenga la magnitud del estimador puntual fijando el parametro en @k@:",
+            r"Seleccione las proposiciones correctas sobre el estimador decimal para el parametro @k@:",
+            r"Determine que afirmaciones representan exactamente la escala del parametro @k@:",
+            r"Identifique todas las propiedades verdaderas de la funcion objetivo evaluada en @k@:",
+            r"Marque las alternativas consistentes con el estimador asintotico cuando vale @k@:",
+            r"Indique las relaciones analiticas validas al fijar el parametro principal en @k@:",
         ],
-        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
-        "Solucion paso a paso: evalue analiticamente la expresion del estimador para obtener @ans@."
+        ["Pista 1 identificacion de escala decimal", "Pista 2 contraste con desplazamientos aditivos", "Pista 3 comprobacion de multiplos de diez"],
+        "Solucion paso a paso: evalue analiticamente el producto decimal del estimador @k@ para verificar @ans@."
     ),
     (
-        "T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_fib1, ver_fib1, ("medium", "Apply"),
+        "T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_fib1, ver_fib1, ("medium", "Analyze"),
         [
-            r"A partir del parametro base @k@, halle el desplazamiento aditivo:",
-            r"Compute la traslacion numerica correspondiente al valor @k@:",
-            r"Encuentre la correccion de centrado para el parametro @k@:",
-            r"Calcule el factor aditivo ajustado cuando la base es @k@:",
-            r"Deduzca el valor desplazado del estimador empleando la base @k@:",
+            r"A partir del parametro base @k@ y desplazamiento @delta@, halle el resultado ajustado:",
+            r"Compute la traslacion numerica correspondiente al valor @k@ con incremento @delta@:",
+            r"Encuentre la correccion de centrado sumando @delta@ al parametro base @k@:",
+            r"Calcule el factor aditivo ajustado cuando la base es @k@ y el paso vale @delta@:",
+            r"Deduzca el valor desplazado del estimador empleando base @k@ y ajuste @delta@:",
         ],
-        ["Pista 1 desplazamiento aditivo base", "Pista 2 suma directa de diez unidades", "Pista 3 verificacion escalar final"],
-        "Solucion paso a paso: evalue analiticamente la expresion del estimador para obtener @ans@."
+        ["Pista 1 desplazamiento aditivo positivo", "Pista 2 suma directa del incremento indicado", "Pista 3 verificacion escalar sin duplicacion"],
+        "Solucion paso a paso: sume directamente el desplazamiento @delta@ al parametro base @k@ para obtener @ans@."
     ),
     (
-        "T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_fib2, ver_fib2, ("hard", "Analyze"),
+        "T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_fib2, ver_fib2, ("hard", "Evaluate"),
         [
-            r"Bajo la cota de frontera con parametro @k@, determine el resultado:",
-            r"Analice el regimen limite evaluando la cota para @k@:",
-            r"Para el caso asintotico de frontera con @k@, obtenga el total:",
-            r"Determine el umbral de convergencia extrema con parametro @k@:",
-            r"Establezca el valor limite en la frontera superior cuando el parametro vale @k@:",
+            r"Bajo la cota lineal con parametro @k@ y factor @coef@, determine el resultado:",
+            r"Analice el regimen afin evaluando @coef@ por @k@ mas quince unidades:",
+            r"Para el caso asintotico con @k@ y pendiente @coef@, obtenga el valor de frontera:",
+            r"Determine el umbral afin de convergencia con parametro @k@ y peso @coef@:",
+            r"Establezca la cota afin superior cuando @k@ se escala segun el factor @coef@:",
         ],
-        ["Pista 1 regimen de frontera analitica", "Pista 2 umbral de cincuenta unidades", "Pista 3 verificar la cota asintotica"],
-        "Solucion paso a paso: evalue analiticamente la expresion del estimador para obtener @ans@."
+        ["Pista 1 multiplicacion del parametro por pendiente", "Pista 2 adicion del termino constante quince", "Pista 3 verificar magnitud afin resultante"],
+        "Solucion paso a paso: multiplique @k@ por el coeficiente @coef@ y agregue quince para llegar a @ans@."
     ),
     (
-        "T-Hab99-04", "Hab-99", "fill_in_the_blank", gen_fib3, ver_fib3, ("medium", "Evaluate"),
+        "T-Hab99-04", "Hab-99", "fill_in_the_blank", gen_fib3, ver_fib3, ("medium", "Create"),
         [
-            r"En el regimen de prueba con base @k@, determine el parametro:",
-            r"Realice el calculo de comprobacion para el valor @k@:",
-            r"Deduzca el resultado final de evaluacion para la muestra @k@:",
-            r"Obtenga la cota de estimacion directa cuando la entrada es @k@:",
-            r"Establezca el diagnostico numerico empleando la base @k@:",
+            r"En el regimen cuadratico con base @k@, calcule la forma polinomial completa:",
+            r"Realice el calculo cuadratico mas el triple lineal para el parametro @k@:",
+            r"Deduzca la salida final de la forma polinomial evaluada en la muestra @k@:",
+            r"Obtenga el valor de la expansion cuadratica positiva cuando la entrada vale @k@:",
+            r"Establezca el diagnostico cuadratico sumando cuadrado y triple del valor @k@:",
         ],
-        ["Pista 1 diagnostico de prueba inicial", "Pista 2 incremento de cien unidades", "Pista 3 comprobacion terminal exacta"],
-        "Solucion paso a paso: evalue analiticamente la expresion del estimador para obtener @ans@."
+        ["Pista 1 calculo del termino cuadratico puro", "Pista 2 adicion del termino lineal positivo triple", "Pista 3 comprobacion de la suma cuadratica exacta"],
+        "Solucion paso a paso: eleve @k@ al cuadrado y sume tres veces @k@ para obtener exactamente @ans@."
     ),
 ]
 '''

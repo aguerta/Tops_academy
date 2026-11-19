@@ -681,10 +681,10 @@ class TestDslReferenceTriBanda:
         assert DSL_REFERENCE.get("min_archetypes") == 4
         assert "Form-B" in DSL_REFERENCE.get("description", "") or "Form-C" in DSL_REFERENCE.get("description", "")
         tpl_schema = DSL_REFERENCE.get("canonical_template_schema", "")
-        assert "tpl_id" in tpl_schema
-        assert "difficulty, bloom" in tpl_schema
-        assert "hints" in tpl_schema
-        assert "solution" in tpl_schema
+        assert ("tpl_id" in tpl_schema) or ("'id':" in tpl_schema)
+        assert ("difficulty, bloom" in tpl_schema) or ("diff, bloom" in tpl_schema)
+        assert ("hints" in tpl_schema)
+        assert ("solution" in tpl_schema) or ("'sol':" in tpl_schema)
 
         d_rules = DSL_REFERENCE.get("distractor_rules", {})
         assert d_rules.get("mc7_tuple_format") == "(did, val, rationale_con_@var@)"
@@ -694,6 +694,6 @@ class TestDslReferenceTriBanda:
         q_types = DSL_REFERENCE.get("supported_question_types", [])
         assert "fill_in_the_blank" in q_types
         assert "multiple_select" in q_types
-        assert "multiple_choice" in q_types
+        assert "multiple_choice_7_options" in q_types or "multiple_choice" in q_types
 
 

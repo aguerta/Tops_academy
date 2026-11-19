@@ -310,30 +310,39 @@ class TestPillar3DSLFormCCompressionAndCertification:
         }
         (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
 
-        # Form-C Quad-Band implementation strictly under 65 lines:
+        # Form-C Quad-Band implementation strictly under 65 lines (0 MC7 for Skill) and pruned JSON < 15 KB:
         form_c_code = '''
-RATS = {
-    "D-Hab01-01": "No invierte la matriz de covarianza al estimar el modelo con factor @k@.",
-    "D-Hab01-02": "Omite la correlacion asintotica entre regresores para la muestra @k@.",
-    "D-Hab01-03": "Usa la varianza muestral simple sin ajuste robusto para factor @k@.",
-    "D-Hab01-04": "Suma incorrectamente las varianzas asintoticas al evaluar factor @k@.",
-    "D-Hab01-05": "Divide por el tamano muestral n en lugar de raiz cuadrada con @k@.",
-    "D-Hab01-06": "Fija arbitrariamente el estimador puntual usando el parametro base @k@.",
-}
-def g1(rng): k=rng.randint(100,400); a=k*2; return {"vars":{"k":k,"ans":a},"correct":a,"ds":[(f"D-Hab01-0{i}",a+i*5) for i in range(1,7)]}
-def g2(rng): k=rng.randint(100,400); a=k+10; return {"vars":{"k":k,"ans":a},"correct":a,"distractors":[]}
-def g3(rng): k=rng.randint(100,400); a=k+20; return {"vars":{"k":k,"ans":a},"correct":a,"distractors":[]}
-def g4(rng): k=rng.randint(100,400); a=k+30; return {"vars":{"k":k,"ans":a},"correct":a,"distractors":[]}
-def ver(cand, v): return str(cand).strip() in (f"${v['ans']}$", str(v['ans']))
-
-HINTS = ["Identifica el estimador @k@.", "Aplica el calculo analitico.", "Comprueba el valor estimado."]
-C = ["Con la muestra @k@:", "Para el diseno @k@:"]
-
+def g1(rng):
+    k = rng.randint(100, 400); a = k * 2
+    opts = [
+        {"value": f"Estimador: {a}", "is_correct": True},
+        {"value": f"Doble 2*k: {a}", "is_correct": True},
+        {"value": f"Sesgo {a+5}", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": "Error sistematico al no invertir la matriz de covarianza para @k@."},
+        {"value": f"Sesgo {a+10}", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": "Omite la correlacion asintotica entre regresores al operar con @k@."},
+        {"value": f"Sesgo {a+15}", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": "Usa la varianza muestral simple sin ajuste robusto para el valor @k@."},
+    ]
+    return {"vars": {"k": k, "ans": a}, "options": opts}
+def g2(rng):
+    k = rng.randint(100, 400); p = rng.randint(2, 7); a = k * p + 10
+    return {"vars": {"k": k, "p": p, "ans": a}, "correct": a, "ds": [("D-Hab01-04", str(a + 12), "Suma de forma erronea las varianzas asintoticas al operar @k@ y @p@.")]}
+def g3(rng):
+    k = rng.randint(100, 400); d = rng.randint(5, 25); a = (k + d) * 3 - k
+    return {"vars": {"k": k, "d": d, "ans": a}, "correct": a, "ds": [("D-Hab01-05", str(a - 9), "Divide por el tamano muestral sin aplicar raiz cuadrada para @k@ y @d@.")]}
+def g4(rng):
+    k = rng.randint(20, 90); a = k * k + k // 2
+    return {"vars": {"k": k, "ans": a}, "correct": a, "ds": [("D-Hab01-06", str(a + 15), "Fija arbitrariamente el estimador puntual utilizando el parametro @k@.")]}
+def v1(r):
+    a = r.get("vars", {}).get("k", 0) * 2; opts = r.get("options", [])
+    return len([o for o in opts if o.get("is_correct")]) == 2 and {o.get("value") for o in opts if o.get("is_correct")} == {f"Estimador: {a}", f"Doble 2*k: {a}"} and all(not o.get("is_correct") and o.get("distractor_id") in {"D-Hab01-01","D-Hab01-02","D-Hab01-03"} and len(str(o.get("error_rationale",""))) >= 20 for o in opts if not o.get("is_correct"))
+def v2(r): return str(r.get("correct","")).strip() == str(r.get("vars",{}).get("k",0)*r.get("vars",{}).get("p",0)+10)
+def v3(r): v = r.get("vars",{}); return str(r.get("correct","")).strip() == str((v.get("k",0)+v.get("d",0))*3-v.get("k",0))
+def v4(r): v = r.get("vars",{}); k = v.get("k",0); return str(r.get("correct","")).strip() == str(k*k+k//2)
+H = ["Identifica el parametro base @k@.", "Aplica la operacion analitica dada.", "Comprueba el resultado final @k@."]
 TEMPLATES = [
-    {"cid": "Hab-01", "archetype": "direct", "qtype": "mc7", "gen": g1, "ver": ver, "fmt": "$@X@$", "band": ("easy", "Apply"), "hints": HINTS, "sol": "Solucion frontal paso a paso aplicando el estimador directo con resultado @ans@.", "stems": (C, ["halla el valor frontal.", "evalua el estimador directo."])},
-    {"cid": "Hab-01", "archetype": "inverse", "qtype": "fib", "gen": g2, "ver": ver, "band": ("medium", "Apply"), "hints": [h + " (enfoque inverso)" for h in HINTS], "sol": "Solucion inversa paso a paso despejando la ecuacion del estimador hacia @ans@.", "stems": (C, ["halla el valor inverso.", "evalua el reciproco."])},
-    {"cid": "Hab-01", "archetype": "perturbation", "qtype": "fib", "gen": g3, "ver": ver, "band": ("hard", "Apply"), "hints": [h + " (perturbacion)" for h in HINTS], "sol": "Solucion perturbacion paso a paso evaluando la estatica comparativa hacia @ans@.", "stems": (C, ["calcula la perturbacion.", "estima el impacto sensible."])},
-    {"cid": "Hab-01", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab01-01", "qtype": "fib", "gen": g4, "ver": ver, "band": ("medium", "Evaluate"), "hints": [h + " (caso frontera)" for h in HINTS], "sol": "Solucion frontera paso a paso comprobando la condicion limite asintotica @ans@.", "stems": (C, ["calcula el caso extremo.", "analiza la cota limite."])},
+    {"cid": "Hab-01", "archetype": "direct", "qtype": "multiple_select", "gen": g1, "ver": v1, "band": ("easy", "Apply"), "hints": H, "sol": "Solucion directa aplicando el estimador lineal para obtener el resultado @ans@.", "stems": (["Muestra @k@:", "Diseno @k@:"], ["marca propiedades validas.", "indica opciones exactas."])},
+    {"cid": "Hab-01", "archetype": "inverse", "qtype": "fib", "gen": g2, "ver": v2, "band": ("medium", "Analyze"), "hints": [x + " (inv)" for x in H], "sol": "Solucion inversa despejando la ecuacion del estimador hasta obtener @ans@.", "stems": (["Base @k@ y @p@:", "Caso @k@ con @p@:"], ["halla valor inverso.", "evalua escala inversa."])},
+    {"cid": "Hab-01", "archetype": "perturbation", "qtype": "fib", "gen": g3, "ver": v3, "band": ("hard", "Apply"), "hints": [x + " (pert)" for x in H], "sol": "Solucion perturbacion evaluando estatica comparativa hasta el valor @ans@.", "stems": (["Base @k@ y @d@:", "Caso @k@ mas @d@:"], ["calcula perturbacion.", "estima impacto."])},
+    {"cid": "Hab-01", "archetype": "boundary_or_edge_case", "assumption_id": "A-Hab01-01", "qtype": "fib", "gen": g4, "ver": v4, "band": ("medium", "Evaluate"), "hints": [x + " (lim)" for x in H], "sol": "Solucion frontera comprobando la condicion limite asintotica hacia @ans@.", "stems": (["Limite @k@:", "Frontera @k@:"], ["calcula caso cuadratico.", "analiza cota limite."])},
 ]
 '''
         source_lines = [l for l in form_c_code.strip().splitlines() if l.strip()]

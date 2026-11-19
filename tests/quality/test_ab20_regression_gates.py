@@ -433,7 +433,7 @@ TEMPLATES = [
                 "id": "Hab-01",
                 "type": "skill",
                 "name": "Competencia 1",
-                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 7)],
+                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 3)],
                 "assumptions": [{"id": "A-Hab01-01", "statement_latex": "$x > 0$", "violation_consequence": "Invalida el modelo."}],
             }
         ],
@@ -516,7 +516,7 @@ TEMPLATES = [
                 "id": "Hab-01",
                 "type": "skill",
                 "name": "Competencia 1",
-                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 7)],
+                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 3)],
                 "assumptions": [{"id": "A-Hab01-01", "statement_latex": "$x > 0$", "violation_consequence": "Invalida el modelo."}],
             }
         ],

@@ -959,29 +959,33 @@ def _gen_c06(rng, arch):
     if arch == 1:
         ans = n + 10
         v = {"n": n, "ans": ans}
-        for i in range(1, 7):
+        for i in range(1, 5):
             v[f"d{i}"] = ans + i * 2
         _rat1 = [
             "Omisión del desplazamiento aditivo respecto a @n@ al estimar @d1@.",
             "Duplicación del término independiente sobre @ans@ obteniendo @d2@.",
             "Aplicación de pendiente errónea en la muestra @n@ que produce @d3@.",
             "Desajuste de escala en el estimador @ans@ que desvía el resultado a @d4@.",
-            "Sustitución incompleta del tamaño muestral @n@ resultando en @d5@.",
-            "Sesgo de truncamiento asintótico alrededor de @ans@ evaluado en @d6@.",
         ]
-        dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", _rat1[i - 1])
-            for i in range(1, 7)
+        opts = [
+            {"value": r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.", "is_correct": True},
+            {"value": r"El desplazamiento asintótico exacto suma diez unidades sobre @n@ hasta @ans@.", "is_correct": True},
         ]
-        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
+        opts += [
+            {"value": f"$@d{i}@$", "is_correct": False, "distractor_id": f"D-C06-0{i}", "error_rationale": _rat1[i - 1]}
+            for i in range(1, 5)
+        ]
+        return {"vars": v, "options": opts}
     elif arch == 2:
         ans = n * 2
-        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
+        d5 = n * 3
+        return {"vars": {"n": n, "ans": ans, "d5": d5}, "correct": str(ans), "ds": [("D-C06-05", str(d5), "Sustitución incompleta del tamaño muestral @n@ resultando en @d5@.")]}
     elif arch == 3:
         ans = n + 5
-        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
+        d6 = n + 15
+        return {"vars": {"n": n, "ans": ans, "d6": d6}, "correct": str(ans), "ds": [("D-C06-06", str(d6), "Sesgo de truncamiento asintótico alrededor de @n@ evaluado en @d6@.")]}
     else:  # arch == 4 (frontera)
-        ans = n * 3
+        ans = n * n + 1
         return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
 
 # 4 Thin Wrappers
@@ -991,9 +995,30 @@ def gen_c06_3(rng): return _gen_c06(rng, 3)
 def gen_c06_4(rng): return _gen_c06(rng, 4)
 
 def ver_c06_1(res):
-    expected = f"$@ans@$"
-    corr = str(res.get("correct", "")).strip()
-    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] + 10
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    if v.get("ans") != v.get("n", 0) + 10:
+        return False
+    opts = res.get("options", [])
+    exp_t = {
+        r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.",
+        r"El desplazamiento asintótico exacto suma diez unidades sobre @n@ hasta @ans@.",
+    }
+    exp_f = {f"$@d{i}@$": f"D-C06-0{i}" for i in range(1, 5)}
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_t
+        and len(f_opts) == 4
+        and all(
+            o.get("value") in exp_f
+            and o.get("distractor_id") == exp_f[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 def ver_c06_2(res):
     expected = str(res.get("vars", {}).get("ans"))
@@ -1008,12 +1033,13 @@ def ver_c06_3(res):
 def ver_c06_4(res):
     expected = str(res.get("vars", {}).get("ans"))
     corr = str(res.get("correct", "")).strip()
-    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] * 3
+    n_val = res["vars"]["n"]
+    return corr == expected and res["vars"]["ans"] == n_val * n_val + 1
 
 # 4 Form-B 9-element tuples: covering easy, medium, hard and active modalities
 TEMPLATES = [
     (
-        "T-C06-01", "C-06", "multiple_choice_7_options",
+        "T-C06-01", "C-06", "multiple_select",
         gen_c06_1, ver_c06_1, ("easy", "Apply"),
         [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
@@ -1027,7 +1053,7 @@ TEMPLATES = [
             r"Recuerde que el cálculo directo conserva la escala del parámetro.",
             r"Verifique el producto escalar resultante sustituyendo el tamaño muestral."
         ],
-        r"La varianza asintótica frontal se calcula multiplicando por el parámetro de escala: $@ans@$."
+        r"La varianza asintótica frontal se calcula sumando diez al parámetro de escala: $@ans@$."
     ),
     (
         "T-C06-02", "C-06", "fill_in_the_blank",
@@ -1067,18 +1093,18 @@ TEMPLATES = [
         "T-C06-04", "C-06", "fill_in_the_blank",
         gen_c06_4, ver_c06_4, ("hard", "Analyze"),
         [
-            r"Arquetipo 4: Frontera: Evalúe el comportamiento en el régimen límite con $n = @n@$:",
-            r"Arquetipo 4 Variante B: Caso extremo de cota asintótica para $n = @n@$:",
-            r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión:",
-            r"Arquetipo 4 Variante D: Analice la cota asintótica terminal cuando la muestra es $n = @n@$:",
-            r"Arquetipo 4 Variante E: Verifique el límite extremo de la distribución con $n = @n@$:",
+            r"Arquetipo 4: Frontera: Evalúe el comportamiento cuadrático límite con $n = @n@$:",
+            r"Arquetipo 4 Variante B: Caso extremo de cota cuadrática asintótica para $n = @n@$:",
+            r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión cuadrática:",
+            r"Arquetipo 4 Variante D: Analice la cota asintótica cuadrática terminal cuando la muestra es $n = @n@$:",
+            r"Arquetipo 4 Variante E: Verifique el límite cuadrático extremo de la distribución con $n = @n@$:",
         ],
         [
-            r"Multiplique el tamaño muestral n por el factor tres de frontera.",
-            r"Examine el comportamiento de la dispersión en el régimen extremo.",
-            r"En la frontera del soporte paramétrico verifique la multiplicación por el factor tres."
+            r"Eleve al cuadrado el tamaño muestral n en el régimen extremo.",
+            r"Sume la unidad al término cuadrático de la cota de frontera.",
+            r"En la frontera del soporte paramétrico verifique el resultado cuadrático más uno."
         ],
-        r"En la frontera del soporte paramétrico, al multiplicar el tamaño de muestra por tres se obtiene @ans@."
+        r"En la frontera del soporte paramétrico, al elevar al cuadrado el tamaño de muestra y sumar uno se obtiene @ans@."
     ),
 ]
 '''
@@ -1196,29 +1222,33 @@ def _gen_c06(rng, arch):
     if arch == 1:
         ans = n + 10
         v = {"n": n, "ans": ans}
-        for i in range(1, 7):
+        for i in range(1, 5):
             v[f"d{i}"] = ans + i * 2
         _rat1 = [
             "Omisión del desplazamiento aditivo respecto a @n@ al estimar @d1@.",
             "Duplicación del término independiente sobre @ans@ obteniendo @d2@.",
             "Aplicación de pendiente errónea en la muestra @n@ que produce @d3@.",
             "Desajuste de escala en el estimador @ans@ que desvía el resultado a @d4@.",
-            "Sustitución incompleta del tamaño muestral @n@ resultando en @d5@.",
-            "Sesgo de truncamiento asintótico alrededor de @ans@ evaluado en @d6@.",
         ]
-        dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", _rat1[i - 1])
-            for i in range(1, 7)
+        opts = [
+            {"value": r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.", "is_correct": True},
+            {"value": r"El desplazamiento asintótico exacto suma diez unidades sobre @n@ hasta @ans@.", "is_correct": True},
         ]
-        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
+        opts += [
+            {"value": f"$@d{i}@$", "is_correct": False, "distractor_id": f"D-C06-0{i}", "error_rationale": _rat1[i - 1]}
+            for i in range(1, 5)
+        ]
+        return {"vars": v, "options": opts}
     elif arch == 2:
         ans = n * 2
-        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
+        d5 = n * 3
+        return {"vars": {"n": n, "ans": ans, "d5": d5}, "correct": str(ans), "ds": [("D-C06-05", str(d5), "Sustitución incompleta del tamaño muestral @n@ resultando en @d5@.")]}
     elif arch == 3:
         ans = n + 5
-        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
+        d6 = n + 15
+        return {"vars": {"n": n, "ans": ans, "d6": d6}, "correct": str(ans), "ds": [("D-C06-06", str(d6), "Sesgo de truncamiento asintótico alrededor de @n@ evaluado en @d6@.")]}
     else:  # arch == 4 (frontera)
-        ans = n * 3
+        ans = n * n + 1
         return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
 
 def gen_c06_1(rng): return _gen_c06(rng, 1)
@@ -1227,9 +1257,30 @@ def gen_c06_3(rng): return _gen_c06(rng, 3)
 def gen_c06_4(rng): return _gen_c06(rng, 4)
 
 def ver_c06_1(res):
-    expected = f"$@ans@$"
-    corr = str(res.get("correct", "")).strip()
-    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] + 10
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    if v.get("ans") != v.get("n", 0) + 10:
+        return False
+    opts = res.get("options", [])
+    exp_t = {
+        r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.",
+        r"El desplazamiento asintótico exacto suma diez unidades sobre @n@ hasta @ans@.",
+    }
+    exp_f = {f"$@d{i}@$": f"D-C06-0{i}" for i in range(1, 5)}
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_t
+        and len(f_opts) == 4
+        and all(
+            o.get("value") in exp_f
+            and o.get("distractor_id") == exp_f[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
 def ver_c06_2(res):
     expected = str(res.get("vars", {}).get("ans"))
@@ -1244,11 +1295,12 @@ def ver_c06_3(res):
 def ver_c06_4(res):
     expected = str(res.get("vars", {}).get("ans"))
     corr = str(res.get("correct", "")).strip()
-    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] * 3
+    n_val = res["vars"]["n"]
+    return corr == expected and res["vars"]["ans"] == n_val * n_val + 1
 
 TEMPLATES = [
     (
-        "T-C06-01", "C-06", "multiple_choice_7_options",
+        "T-C06-01", "C-06", "multiple_select",
         gen_c06_1, ver_c06_1, ("easy", "Apply"),
         [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
@@ -1262,7 +1314,7 @@ TEMPLATES = [
             r"Recuerde que el cálculo directo conserva la escala del parámetro.",
             r"Verifique el producto escalar resultante sustituyendo el tamaño muestral."
         ],
-        r"La varianza asintótica frontal se calcula multiplicando por el parámetro de escala: $@ans@$."
+        r"La varianza asintótica frontal se calcula sumando diez al parámetro de escala: $@ans@$."
     ),
     (
         "T-C06-02", "C-06", "fill_in_the_blank",
@@ -1302,18 +1354,18 @@ TEMPLATES = [
         "T-C06-04", "C-06", "fill_in_the_blank",
         gen_c06_4, ver_c06_4, ("hard", "Analyze"),
         [
-            r"Arquetipo 4: Frontera: Evalúe el comportamiento en el régimen límite con $n = @n@$:",
-            r"Arquetipo 4 Variante B: Caso extremo de cota asintótica para $n = @n@$:",
-            r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión:",
-            r"Arquetipo 4 Variante D: Analice la cota asintótica terminal cuando la muestra es $n = @n@$:",
-            r"Arquetipo 4 Variante E: Verifique el límite extremo de la distribución con $n = @n@$:",
+            r"Arquetipo 4: Frontera: Evalúe el comportamiento cuadrático límite con $n = @n@$:",
+            r"Arquetipo 4 Variante B: Caso extremo de cota cuadrática asintótica para $n = @n@$:",
+            r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión cuadrática:",
+            r"Arquetipo 4 Variante D: Analice la cota asintótica cuadrática terminal cuando la muestra es $n = @n@$:",
+            r"Arquetipo 4 Variante E: Verifique el límite cuadrático extremo de la distribución con $n = @n@$:",
         ],
         [
-            r"Multiplique el tamaño muestral n por el factor tres de frontera.",
-            r"Examine el comportamiento de la dispersión en el régimen extremo.",
-            r"En la frontera del soporte paramétrico verifique la multiplicación por el factor tres."
+            r"Eleve al cuadrado el tamaño muestral n en el régimen extremo.",
+            r"Sume la unidad al término cuadrático de la cota de frontera.",
+            r"En la frontera del soporte paramétrico verifique el resultado cuadrático más uno."
         ],
-        r"En la frontera del soporte paramétrico, al multiplicar el tamaño de muestra por tres se obtiene @ans@."
+        r"En la frontera del soporte paramétrico, al elevar al cuadrado el tamaño de muestra y sumar uno se obtiene @ans@."
     ),
 ]
 '''
