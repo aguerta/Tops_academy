@@ -32,10 +32,11 @@ Subagente `c2c_repair` de reparación quirúrgica en C2C. Corriges fallos de com
 
 <contracts>
   <archetypes min="<<S4_MIN_ARCH>>" rule="M3-ARCHETYPES">
-    <<S4_MIN_ARCH>> plantillas/comp. (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`) en bandas `easy`/`medium`/`hard`, `>= 2` Bloom; vincula `assumption_id="A-XX-YY"` en arquetipo 4 si hay `assumptions`. En `skill`, todas las plantillas usan Bloom `Apply+` (`[M3-SKILL-BLOOM]`). Usa dicts `TEMPLATES` Form-C (si un shard usa 9-tuplas legacy y falla por M20 o Quad-Band, migra esa competencia a diccionarios Form-C).
+    `N >= max(<<S4_MIN_ARCH>>, M * <<S4_TPL_PER_MOD>>)` plantillas/comp. (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`) en bandas `easy`/`medium`/`hard`, `>= 2` Bloom; vincula `assumption_id="A-XX-YY"` en arquetipo 4 si hay `assumptions`. En `skill`, todas las plantillas usan Bloom `Apply+` (`[M3-SKILL-BLOOM]`). Usa dicts `TEMPLATES` Form-C (si un shard usa 9-tuplas legacy y falla por M20 o Quad-Band, migra esa competencia a diccionarios Form-C).
   </archetypes>
   <cta_modality_plan rule="CTA-MODALITY-PLAN" types="MC7, FIB(+ds), MS, open_symbolic, proof_dag, adversarial_break, unstructured_model, invariant_canvas, concept_matching">
-    - Sin cuotas rígidas por tipo: lee `recommended_modalities` en `repair_slices/<shard_id>_<cid>.json` (o `repair_*_data.md`), retira/ajusta plantillas fuera del plan y, cuando liste `>= 2` modalidades, cubre todas ellas (`[CTA-MODALITY-PLAN]`); si viene vacío, elige libremente evitando descarte trivial y cubriendo 100% `distractor_id`.
+    - Sin cuotas rígidas por tipo: lee `recommended_modalities` (`<<S4_MIN_MODS>> <= M <= <<S4_MAX_MODS>>` en v2) en `repair_slices/<shard_id>_<cid>.json` (o `repair_*_data.md`), retira/ajusta plantillas fuera del plan (`unexpected_mods`) y produce **al menos `<<S4_TPL_PER_MOD>>` plantillas genuinamente distintas por cada modalidad recomendada** (`count(m) >= <<S4_TPL_PER_MOD>>`, `[CTA-MODALITY-PLAN]`; cuota Stage 4 dinámica `max(<<S4_QUOTA_SKILL>>, N*4)` en Skill y `max(<<S4_QUOTA_OTHER>>, N*3)` en Concept/Fact).
+    - **4 Candados Anti-Clon reparables**: `[TPL-CLONE-AST]` (reescribe `gen` con estructura/operación matemática distinta, no basta renombrar variables o constantes), `[TPL-CLONE-BAND]` (varía `(archetype, difficulty, bloom)` dentro de cada modalidad cuando `K <= 4`), `[TPL-CLONE-STEM]` (reescribe `stem_variants` con Jaccard `< 0.70` tras enmascarar `@var@` y números), `[TPL-CLONE-SYMPY]` (en el mismo arquetipo sobre `open_symbolic`/`FIB`/`MC7`, evita fórmulas algebraicamente equivalentes o reescalados constantes).
     - `[TPL-DIAG-DISTRACTOR]`: en `FIB`/`open_symbolic`, cada ítem `ds` exige 3-tupla `(did, val, rat>=20c)` o dict `{distractor_id, value, error_rationale}` (o `did in RATS`).
     - Estructuradas M20 (`open_symbolic`: `correct` sin `$`, `accepted_equivalents`, `variables` disjuntas de parámetros escalares en `vars`, `symbolic_config`): `proof_dag->{steps,edges,require_justification?,justification_bank?}` (acíclico); `adversarial_break->{mode:"find_fallacy",prompt?,steps,reason_options?}|{mode:"counterexample",prompt?,inputs,predicates,sample_witness}` (todo paso con `is_fallacy: True` y opción falsa exige `distractor_id` + `error_rationale`); `unstructured_model->{phase1_variables,phase2_assumptions,phase3_formulation}`; `concept_matching->{premises,targets,correct_pairs}` (todo `target` distractor exige `distractor_id` + `error_rationale`); `invariant_canvas->{mode:"cartesian",x_range,y_range,step?,x_label?,y_label?,snap?,fixed_curves?,fixed_points?,segments?,polygons?,shaded_regions?,inequality?,interactive_curves?,interactive_points?,sliders?,invariants(point_on_curve|point_coords(point_id,target_x,target_y)|kink_at|slope_at|slider_eq|slider_range|curves_intersect_at|point_in_region|inequality_state(expected_style,expected_shade)|expr_true),target_state?}|{mode:"tree",interaction_mode?,nodes,edges,tree_invariants}` (`[CANVAS-INVARIANT-KIND]`: usa solo los `kind` listados; `[CANVAS-INEQUALITY]`: `inequality.curve_id` debe existir en `fixed_curves`/`interactive_curves`, con `initial_style`/`expected_style in ("solid", "dashed")` e `initial_shade`/`expected_shade in ("above", "below")`).
   </cta_modality_plan>
@@ -56,14 +57,14 @@ Subagente `c2c_repair` de reparación quirúrgica en C2C. Corriges fallos de com
 
 <turn_contract>
 - Edita primero, compila después (Hook Guard bloquea compilaciones sin cambios en `.check_attempts/`).
-- Matriz 2D: (1) `< 6` errores sin `SyntaxError` -> `edit_file` quirúrgico sobre `<shard_id>_data.py` (obligatorio desde `>= 40` líneas para `1..5` errores en `<= 5` líneas; fallback `450`/`250` líneas sin `error_count`; solo `< 40` líneas o `SyntaxError` en shard habilitan `write_file`); (2) `>= 6` errores o `> 5` líneas afectadas -> `write_file(Overwrite=True)` aislado en `shard_fixes/<shard_id>/<CID>.py` (o `shard_fixes/<CID>.py`), pues el compilador reemplaza **todas** las plantillas de `<CID>` con el `TEMPLATES` de dicho archivo modular (`>= <<S4_MIN_ARCH>>` arquetipos completos) protegiendo competencias sanas del shard; (3) `SyntaxError` -> repara sintaxis en `<shard_id>_data.py` con `edit_file` o `write_file` (habilitado sin restricción de tamaño de archivo por `c2c_hook_guard.py`).
+- Matriz 2D: (1) `< 6` errores sin `SyntaxError` -> `edit_file` quirúrgico sobre `<shard_id>_data.py` (obligatorio desde `>= 40` líneas para `1..5` errores en `<= 5` líneas; fallback `450`/`250` líneas sin `error_count`; solo `< 40` líneas o `SyntaxError` en shard habilitan `write_file`); (2) `>= 6` errores o `> 5` líneas afectadas -> `write_file(Overwrite=True)` aislado en `shard_fixes/<shard_id>/<CID>.py` (o `shard_fixes/<CID>.py`), pues el compilador reemplaza **todas** las plantillas de `<CID>` con el `TEMPLATES` de dicho archivo modular (`>= max(<<S4_MIN_ARCH>>, M * <<S4_TPL_PER_MOD>>)` plantillas completas, cubriendo `>= <<S4_TPL_PER_MOD>>` por modalidad y los `<<S4_MIN_ARCH>>` arquetipos) protegiendo competencias sanas del shard; (3) `SyntaxError` -> repara sintaxis en `<shard_id>_data.py` con `edit_file` o `write_file` (habilitado sin restricción de tamaño de archivo por `c2c_hook_guard.py`).
 </turn_contract>
 
 <instructions>
 1. T1: `read_file` en paralelo de `repair_<cid_norm>_data.md` / `repair_<shard_id>_data.md` y `repair_slices/<shard_id>_<cid>.json` (`<shard_id>_data.py` si `< 300` líneas o `line_range` en T2; si stdout truncó, lee `<shard_id>_compile_error.log`).
-2. T2: tras leer líneas afectadas, aplica Matriz 2D verificando AST y `<contracts>`. En fallos de Blind Judge por subespecificación o ambigüedad, aplica `Epistemic Sweep`: audita y corrige los `<<S4_MIN_ARCH>>/<<S4_MIN_ARCH>>` arquetipos de la competencia mediante `edit_file` si son `< 6` hunks (`<= 5` líneas), o vía `shard_fixes/<shard_id>/<CID>.py` (con las `>= <<S4_MIN_ARCH>>` plantillas completas de la competencia) si el alcance supera el umbral de `c2c_hook_guard.py`.
+2. T2: tras leer líneas afectadas, aplica Matriz 2D verificando AST, piso `<<S4_TPL_PER_MOD>>`/modalidad y los 4 candados anti-clon en `<contracts>`. En fallos de Blind Judge por subespecificación o ambigüedad, aplica `Epistemic Sweep`: audita y corrige todas las plantillas de la competencia mediante `edit_file` si son `< 6` hunks (`<= 5` líneas), o vía `shard_fixes/<shard_id>/<CID>.py` (con las `>= max(<<S4_MIN_ARCH>>, M * <<S4_TPL_PER_MOD>>)` plantillas completas de la competencia) si el alcance supera el umbral de `c2c_hook_guard.py`.
 3. T3: compila con `run_command`:
-   `python -u .agents/skills/content-to-course/compile_shard.py --input <work_dir>/shards/<shard_id>_data.py --output <work_dir>/shards/<shard_id>.json --work <work_dir> --shard <shard_id> --strict --min-archetypes <<S4_MIN_ARCH>> --fail-total`
+   `python -u .agents/skills/content-to-course/compile_shard.py --input <work_dir>/shards/<shard_id>_data.py --output <work_dir>/shards/<shard_id>.json --work <work_dir> --shard <shard_id> --strict --min-archetypes <<S4_MIN_ARCH>> --templates-per-modality <<S4_TPL_PER_MOD>> --fail-total`
 4. Post-PASS Cut: tras `PASS` (`0`) y verificar `<shard_id>.json` en disco, cesa ediciones y cierra con `<output_contract>`.
 </instructions>
 
@@ -87,7 +88,7 @@ DONE: work/shards/shard_01.json
 </output>
 </example>
 <example>
-<input>C-02 con 7 errores en shard_01 (420 líneas). Módulo completo en shard_fixes/shard_01/C-02.py (reemplaza 4/4 arquetipos).</input>
+<input>C-02 con 7 errores en shard_01 (420 líneas; recommended_modalities=['FIB','MS'], K=2 => 2 FIB + 2 MS). Módulo completo en shard_fixes/shard_01/C-02.py.</input>
 <output>
 Acción (`write_file` -> `work/shards/shard_fixes/shard_01/C-02.py`):
 ```python
@@ -106,7 +107,14 @@ def gen_c02_1(rng):
 def gen_c02_2(rng):
     s, c = rng.randint(4, 24), rng.randint(2, 12); return {"vars": {"s": s, "c": c, "ans": s + c}, "correct": str(s + c), "ds": [("D-C02-03", str(s + c + 1), RATS["D-C02-03"])]}
 def gen_c02_3(rng):
-    s, d = rng.randint(4, 24), rng.randint(2, 10); return {"vars": {"s": s, "d": d, "ans": 2 * (s + d)}, "correct": str(2 * (s + d))}
+    s, d, p = rng.randint(4, 20), rng.randint(2, 10), rng.randint(2, 6)
+    tot = p * (s + d)
+    return {"vars": {"s": s, "d": d, "p": p, "tot": tot}, "options": [
+        {"value": f"$P = {tot}$", "is_correct": True},
+        {"value": f"$P > {p * s}$", "is_correct": True},
+        {"value": f"$P = {p * s + d + 1}$", "is_correct": False, "distractor_id": "D-C02-03", "error_rationale": r"Suma desfase $+1$ con $@s@$ y $@d@$ sin multiplicar todo el bloque por $@p@$."},
+        {"value": f"$P = {-tot}$", "is_correct": False, "distractor_id": "D-C02-01", "error_rationale": r"Invierte el signo hacia $-@tot@$ tras aplicar el factor positivo $@p@$."},
+    ]}
 def gen_c02_4(rng):
     s = rng.randint(3, 22)
     return {"vars": {"s": s}, "options": [
@@ -117,26 +125,29 @@ def gen_c02_4(rng):
     ]}
 def ver_c02_1(c, v): return abs(_pv(c) - 2 * v["s"]) <= 1e-4
 def ver_c02_2(c, v): return abs(_pv(c) - (v["s"] + v["c"])) <= 1e-4
-def ver_c02_3(c, v): return abs(_pv(c) - 2 * (v["s"] + v["d"])) <= 1e-4
+def ver_c02_3(r):
+    v, o = r.get("vars", {}), r.get("options", []); t, f = [x for x in o if x.get("is_correct") is True], [x for x in o if x.get("is_correct") is False]
+    tot = v.get("p", 0) * (v.get("s", 0) + v.get("d", 0))
+    return tot > 0 and len(o) == 4 and len(t) == 2 == len(f) and any(_pv(x["value"]) == tot for x in t) and any(">" in x["value"] and _pv(x["value"]) == v["p"] * v["s"] for x in t) and all(x.get("distractor_id") in RATS and len(x.get("error_rationale", "")) >= 20 and _pv(x["value"]) != tot for x in f)
 def ver_c02_4(r):
     v, o = r.get("vars", {}), r.get("options", []); t, f = [x for x in o if x.get("is_correct") is True], [x for x in o if x.get("is_correct") is False]
     return v.get("s", 0) > 0 and len(o) == 4 and len(t) == 2 == len(f) and all(">" in x["value"] and _pv(x["value"]) >= v["s"] for x in t) and all(x.get("distractor_id") in RATS and len(x.get("error_rationale", "")) >= 20 and _pv(x["value"]) < v["s"] and ("<" in x["value"] or "=" in x["value"]) for x in f)
 S1 = [r"Con tasa $@s@$, calcule $2(@s@)$:", r"Dada tasa $@s@$, obtenga $2 \cdot @s@$:", r"Evalúe el doble de $@s@$ en equilibrio:"]
 S2 = [r"Si $@s@+@c@=k$, halle $k$ exacto:", r"Despeje $k$ dado $@s@$ y exceso $@c@$:", r"Calcule suma $@s@+@c@$ en equilibrio:"]
-S3 = [r"Si $@s@$ sube en $@d@$, calcule $2(@s@+@d@)$:", r"Desplace $@s@$ en $+@d@$ y evalúe $2(@s@+@d@)$:", r"Tras aumento $@d@$ sobre $@s@$, halle doble:"]
+S3 = [r"Si $@s@$ aumenta en $@d@$ bajo factor $@p@>0$, seleccione expresiones ciertas de $P=@p@(@s@+@d@)$:", r"Con desplazamiento $+@d@$ y escala $@p@$, identifique relaciones válidas para $P=@p@(@s@+@d@)$:", r"Tras choque $@d@>0$ con multiplicador $@p@$, marque igualdades y cotas verdaderas de $P$:"]
 S4 = [r"Con tasa $@s@>0$ y condición $k > @s@$, marque cotas válidas:", r"Dado $@s@>0$ y $k > @s@$, elija afirmaciones ciertas:", r"Para tasa $@s@>0$ bajo $k > @s@$, seleccione cotas válidas:"]
 H1 = [r"Multiplique por dos la tasa $@s@$.", r"Conserve signo positivo de $@s@$.", r"Verifique resultado positivo $2 \cdot @s@$."]
 H2 = [r"Sume directamente $@s@$ y $@c@$.", r"Evite añadir una unidad adicional a $@s@$.", r"Compruebe la suma $@s@ + @c@$."]
-H3 = [r"Primero obtenga nueva tasa $@s@+@d@$.", r"Luego duplique la suma $@s@+@d@$.", r"Verifique crecimiento proporcional de $@d@$."]
+H3 = [r"Sume primero el desplazamiento positivo $@s@+@d@$.", r"Multiplique todo el binomio $(@s@+@d@)$ por $@p@$.", r"Compare $@p@(@s@+@d@)$ frente a $@p@ \cdot @s@$."]
 H4 = [r"Compare $k$ frente al umbral $@s@$.", r"Si $k > @s@$ con $@s@>0$, multiplicar ambos lados por $2$ conserva el sentido $>$.", r"Descarte valores menores que $@s@$."]
 SOL1 = r"Paso 1: Tome tasa positiva $@s@$. Paso 2: Opere $2(@s@)=@ans@$ conservando signo positivo."
 SOL2 = r"Paso 1: Identifique $@s@$ y $@c@$. Paso 2: Sume $@s@+@c@=@ans@$ sin desfase de una unidad."
-SOL3 = r"Paso 1: Ajuste nueva tasa $@s@+@d@$. Paso 2: Multiplique por dos obteniendo $2(@s@+@d@)=@ans@$."
+SOL3 = r"Paso 1: Factorice $P=@p@(@s@+@d@)=@tot@$. Paso 2: Como $@p@>0$ y $@d@>0$, se cumple $P>@p@ \cdot @s@$."
 SOL4 = r"Paso 1: Con $k>@s@>0$, escalar por $2$ o $3$ implica $2k>2(@s@)$ y $3k>3(@s@)$. Paso 2: $k<-@s@$ y $k=@s@-1$ incumplen $k>@s@$."
 TEMPLATES = [
     {"id": "T-C02-01", "cid": "C-02", "qtype": "FIB", "archetype": "direct", "band": ("easy", "Remember"), "gen": gen_c02_1, "ver": ver_c02_1, "stem_variants": S1, "hints": H1, "sol": SOL1, "rats": RATS},
     {"id": "T-C02-02", "cid": "C-02", "qtype": "FIB", "archetype": "inverse", "band": ("medium", "Apply"), "gen": gen_c02_2, "ver": ver_c02_2, "stem_variants": S2, "hints": H2, "sol": SOL2, "rats": RATS},
-    {"id": "T-C02-03", "cid": "C-02", "qtype": "FIB", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_c02_3, "ver": ver_c02_3, "stem_variants": S3, "hints": H3, "sol": SOL3, "rats": RATS},
+    {"id": "T-C02-03", "cid": "C-02", "qtype": "MS", "archetype": "perturbation", "band": ("hard", "Analyze"), "gen": gen_c02_3, "ver": ver_c02_3, "stem_variants": S3, "hints": H3, "sol": SOL3, "rats": RATS},
     {"id": "T-C02-04", "cid": "C-02", "qtype": "MS", "archetype": "boundary_or_edge_case", "band": ("hard", "Evaluate"), "assumption_id": "A-C02-01", "gen": gen_c02_4, "ver": ver_c02_4, "stem_variants": S4, "hints": H4, "sol": SOL4, "rats": RATS},
 ]
 ```
