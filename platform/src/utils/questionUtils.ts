@@ -1,4 +1,22 @@
-import { Question, QuestionOption } from '../types';
+import { Question, QuestionOption, QuestionType } from '../types';
+
+const BLANK_FIRST_CURTAIN_TYPES: ReadonlySet<QuestionType> = new Set<QuestionType>([
+  'multiple_choice_7_options',
+  'multiple_select',
+  'concept_matching',
+  'proof_dag',
+]);
+
+/**
+ * Milestone 6 / Milestone 20 Smart Blank-First Curtain Rule:
+ * Active ONLY for option-selection / assembly modalities where visible alternatives
+ * could cue recognition prematurely; automatically bypassed for open construction modalities.
+ */
+export function requiresBlankFirstCurtain(question: Question | null | undefined): boolean {
+  if (!question) return false;
+  const qType = (question.type || question.interaction_type || 'multiple_choice_7_options') as QuestionType;
+  return BLANK_FIRST_CURTAIN_TYPES.has(qType);
+}
 
 /**
  * Checks whether an option (by its optId) in the given question is correct.
@@ -100,9 +118,13 @@ export function normalizeQuestion(question: Question): Question {
 
   const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
 
+  const resolvedType = (question.type || question.interaction_type || 'multiple_choice_7_options') as QuestionType;
+
   if (!question.options || question.options.length === 0) {
     return {
       ...question,
+      type: resolvedType,
+      options: question.options || [],
       solution: normalizedSolution,
       detailed_solution: question.detailed_solution || normalizedSolution,
       ...(normalizedMisconception

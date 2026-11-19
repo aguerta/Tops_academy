@@ -1,8 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Question } from '../types';
+import { Question, StructuredUserAnswer } from '../types';
 import { MathText } from './MathText';
 import { CoordinatePlane } from './CoordinatePlane';
-import { isOptionCorrect } from '../utils/questionUtils';
+import { SymbolicInput } from './SymbolicInput';
+import { ProofDAG } from './ProofDAG';
+import { AdversarialArena, AdversarialAnswerState } from './AdversarialArena';
+import { Stage0Modeler, Stage0AnswerState } from './Stage0Modeler';
+import { InvariantCanvas, InvariantCanvasAnswerState } from './InvariantCanvas';
+import { ConceptMatching } from './ConceptMatching';
+import { MathKeypadPopover } from './MathKeypadPopover';
+import { isOptionCorrect, requiresBlankFirstCurtain } from '../utils/questionUtils';
 import { buildSocraticPrompt } from '../utils/socraticPrompt';
 
 interface QuestionCardProps {
@@ -10,11 +17,16 @@ interface QuestionCardProps {
   selectedOption: string | null;
   selectedMultiOptions: string[];
   fillBlankValue: string;
+  structuredAnswer?: StructuredUserAnswer | null;
+  matchedDiagnosticRationale?: string | null;
+  stage0Phase?: 1 | 2 | 3;
+  stage0PhaseNotice?: string | null;
   isChecked: boolean;
   isCorrect: boolean | null;
   onSelectOption: (id: string) => void;
   onToggleMultiOption: (id: string) => void;
   onChangeFillBlank: (val: string) => void;
+  onChangeStructuredAnswer?: (next: StructuredUserAnswer) => void;
   hintsRevealed: number;
   onRevealHint: () => void;
   isExhausted?: boolean;
@@ -34,11 +46,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   selectedOption,
   selectedMultiOptions,
   fillBlankValue,
+  structuredAnswer = null,
+  matchedDiagnosticRationale = null,
+  stage0Phase = 1,
+  stage0PhaseNotice = null,
   isChecked,
   isCorrect,
   onSelectOption,
   onToggleMultiOption,
   onChangeFillBlank,
+  onChangeStructuredAnswer,
   hintsRevealed,
   onRevealHint,
   isExhausted = false,
@@ -54,9 +71,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   const fillInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const showCurtain = blankFirstEnabled && !isCurtainLifted && requiresBlankFirstCurtain(question);
     if (
       question.type === 'fill_in_the_blank' &&
-      (!blankFirstEnabled || isCurtainLifted) &&
+      !showCurtain &&
       !isChecked &&
       !isExhausted
     ) {
@@ -87,13 +105,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           .join('; ') || question.misconception_warning;
     } else if (question.type === 'fill_in_the_blank' && fillBlankValue) {
       selectedContent = fillBlankValue;
-      errorRationale = question.misconception_warning;
+      errorRationale = matchedDiagnosticRationale || question.misconception_warning;
+    } else if (matchedDiagnosticRationale) {
+      errorRationale = matchedDiagnosticRationale;
     }
 
     const promptText = buildSocraticPrompt({
       courseTitle,
       question,
       selectedOptionContent: selectedContent,
+      structuredAnswer,
       errorRationale: errorRationale || question.misconception_warning,
       hintsRevealed,
     });
@@ -148,8 +169,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
       )}
 
-      {/* Milestone 6: Blank-First Curtain (Free Recall) */}
-      {blankFirstEnabled && !isCurtainLifted ? (
+      {/* Milestone 6 / 20 Smart Blank-First Curtain (Free Recall for option-based / DAG / matching items only) */}
+      {blankFirstEnabled && !isCurtainLifted && requiresBlankFirstCurtain(question) ? (
         <div
           data-testid="blank-first-curtain"
           className="my-3 sm:my-4 p-5 sm:p-6 bg-gradient-to-b from-blue-50/70 via-indigo-50/40 to-slate-50/80 border border-blue-200/80 rounded-xl text-center shadow-sm animate-in fade-in duration-200"
@@ -185,6 +206,15 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               (question.stem.includes('alpha') || question.stem.includes('sigma')
                 ? 'Enter your answer (in terms of alpha, n, sigma; L = ...):'
                 : 'Enter your answer:')}
+            {question.type === 'open_symbolic' && 'Formula la expresión matemática o científica equivalente:'}
+            {question.type === 'proof_dag' && 'Construye la demostración lógica omitiendo pasos falaces:'}
+            {question.type === 'adversarial_break' &&
+              (question.adversarial_break?.mode === 'counterexample'
+                ? 'Propón un contraejemplo numérico explícito:'
+                : 'Identifica la falacia escondida en la derivación:')}
+            {question.type === 'unstructured_model' && 'Resuelve secuencialmente las 3 fases de modelado formal:'}
+            {question.type === 'invariant_canvas' && 'Configura el sistema gráfico hasta satisfacer todos los invariantes:'}
+            {question.type === 'concept_matching' && 'Asocia cada premisa con su consecuencia correcta:'}
           </div>
 
       {/* Type 1: MCQ with 7 options */}
@@ -345,25 +375,72 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Type 3: Fill in the blank */}
       {question.type === 'fill_in_the_blank' && (
         <div className="space-y-3">
-          <input
-            ref={fillInputRef}
-            type="text"
-            data-testid="fill-blank-input"
-            aria-label="Your answer"
-            value={fillBlankValue}
-            disabled={(isChecked && isCorrect === true) || isExhausted}
-            onChange={(e) => onChangeFillBlank(e.target.value)}
-            placeholder="Type your answer or mathematical expression..."
-            className={`w-full max-w-md p-3 text-sm sm:text-base border-2 rounded-lg outline-none transition-all ${
-              isExhausted
-                ? 'border-red-400 bg-slate-100 text-slate-600 cursor-not-allowed'
-                : isChecked
-                ? isCorrect
-                  ? 'border-ka-green-border bg-emerald-50/40 text-ka-green-text'
-                  : 'border-red-500 bg-red-50/40 text-red-800'
-                : 'border-slate-300 focus:border-ka-blue focus:ring-2 focus:ring-blue-100'
-            }`}
-          />
+          <div className="relative max-w-md">
+            <input
+              ref={fillInputRef}
+              type="text"
+              data-testid="fill-blank-input"
+              aria-label="Your answer"
+              value={fillBlankValue}
+              disabled={(isChecked && isCorrect === true) || isExhausted}
+              onChange={(e) => onChangeFillBlank(e.target.value)}
+              placeholder="Type your answer or mathematical expression..."
+              className={`w-full p-3 pr-12 text-sm sm:text-base border-2 rounded-lg outline-none transition-all ${
+                isExhausted
+                  ? 'border-red-400 bg-slate-100 text-slate-600 cursor-not-allowed'
+                  : isChecked
+                  ? isCorrect
+                    ? 'border-ka-green-border bg-emerald-50/40 text-ka-green-text'
+                    : 'border-red-500 bg-red-50/40 text-red-800'
+                  : 'border-slate-300 focus:border-ka-blue focus:ring-2 focus:ring-blue-100'
+              }`}
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <MathKeypadPopover
+                disabled={(isChecked && isCorrect === true) || isExhausted}
+                onInsert={(token, cursorOffsetBack = 0) => {
+                  const el = fillInputRef.current;
+                  if (!el) {
+                    onChangeFillBlank(`${fillBlankValue}${token}`);
+                    return;
+                  }
+                  const start = el.selectionStart ?? fillBlankValue.length;
+                  const end = el.selectionEnd ?? fillBlankValue.length;
+                  const next = `${fillBlankValue.slice(0, start)}${token}${fillBlankValue.slice(end)}`;
+                  onChangeFillBlank(next);
+                  requestAnimationFrame(() => {
+                    el.focus();
+                    const pos = Math.max(0, start + token.length - cursorOffsetBack);
+                    el.setSelectionRange(pos, pos);
+                  });
+                }}
+                onBackspace={() => {
+                  if (!fillBlankValue) return;
+                  const el = fillInputRef.current;
+                  if (!el) {
+                    onChangeFillBlank(fillBlankValue.slice(0, -1));
+                    return;
+                  }
+                  const start = el.selectionStart ?? fillBlankValue.length;
+                  const end = el.selectionEnd ?? fillBlankValue.length;
+                  let next = fillBlankValue;
+                  let nextPos = start;
+                  if (start !== end) {
+                    next = `${fillBlankValue.slice(0, start)}${fillBlankValue.slice(end)}`;
+                    nextPos = start;
+                  } else if (start > 0) {
+                    next = `${fillBlankValue.slice(0, start - 1)}${fillBlankValue.slice(end)}`;
+                    nextPos = start - 1;
+                  }
+                  onChangeFillBlank(next);
+                  requestAnimationFrame(() => {
+                    el.focus();
+                    el.setSelectionRange(nextPos, nextPos);
+                  });
+                }}
+              />
+            </div>
+          </div>
 
           {/* Live KaTeX Preview */}
           {fillBlankValue.trim() && (
@@ -375,6 +452,156 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* Type 4: Open Symbolic */}
+      {question.type === 'open_symbolic' && (
+        <SymbolicInput
+          value={structuredAnswer?.kind === 'open_symbolic' ? structuredAnswer.expression : ''}
+          config={question.symbolic_config}
+          disabled={(isChecked && isCorrect === true) || isExhausted}
+          isChecked={isChecked}
+          isCorrect={isCorrect}
+          onChange={(expr) =>
+            onChangeStructuredAnswer?.({ kind: 'open_symbolic', expression: expr })
+          }
+        />
+      )}
+
+      {/* Type 5: ProofDAG */}
+      {question.type === 'proof_dag' && question.proof_dag && (
+        <ProofDAG
+          spec={question.proof_dag}
+          orderedStepIds={
+            structuredAnswer?.kind === 'proof_dag' ? structuredAnswer.orderedStepIds : []
+          }
+          justifications={
+            structuredAnswer?.kind === 'proof_dag' ? structuredAnswer.justifications : {}
+          }
+          disabled={(isChecked && isCorrect === true) || isExhausted}
+          onChange={(orderedStepIds, justifications) =>
+            onChangeStructuredAnswer?.({
+              kind: 'proof_dag',
+              orderedStepIds,
+              justifications,
+            })
+          }
+        />
+      )}
+
+      {/* Type 6: Adversarial Break */}
+      {question.type === 'adversarial_break' && question.adversarial_break && (
+        <AdversarialArena
+          spec={question.adversarial_break}
+          value={
+            structuredAnswer?.kind === 'adversarial_break'
+              ? {
+                  selectedStepId: structuredAnswer.selectedStepId,
+                  selectedReasonId: structuredAnswer.selectedReasonId,
+                  witnessValues: structuredAnswer.witnessValues,
+                }
+              : { selectedStepId: null, selectedReasonId: null, witnessValues: {} }
+          }
+          disabled={(isChecked && isCorrect === true) || isExhausted}
+          onChange={(next: AdversarialAnswerState) =>
+            onChangeStructuredAnswer?.({
+              kind: 'adversarial_break',
+              ...next,
+            })
+          }
+        />
+      )}
+
+      {/* Type 7: Unstructured Model (Stage 0) */}
+      {question.type === 'unstructured_model' && question.unstructured_model && (
+        <div className="space-y-2.5">
+          {stage0PhaseNotice && (
+            <div
+              data-testid="stage0-phase-notice"
+              className="px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold"
+            >
+              {stage0PhaseNotice}
+            </div>
+          )}
+          <Stage0Modeler
+            spec={question.unstructured_model}
+            activePhase={stage0Phase}
+            value={
+              structuredAnswer?.kind === 'unstructured_model'
+                ? {
+                    phase1Roles: structuredAnswer.phase1Roles,
+                    phase2SelectedIds: structuredAnswer.phase2SelectedIds,
+                    phase3SelectedId: structuredAnswer.phase3SelectedId,
+                    phase3Expression: structuredAnswer.phase3Expression,
+                  }
+                : {
+                    phase1Roles: {},
+                    phase2SelectedIds: [],
+                    phase3SelectedId: null,
+                    phase3Expression: '',
+                  }
+            }
+            disabled={(isChecked && isCorrect === true) || isExhausted}
+            isChecked={isChecked}
+            isCorrect={isCorrect}
+            onChange={(next: Stage0AnswerState) =>
+              onChangeStructuredAnswer?.({
+                kind: 'unstructured_model',
+                ...next,
+              })
+            }
+          />
+        </div>
+      )}
+
+      {/* Type 8: Invariant Canvas */}
+      {question.type === 'invariant_canvas' && question.invariant_canvas && (
+        <InvariantCanvas
+          spec={question.invariant_canvas}
+          value={
+            structuredAnswer?.kind === 'invariant_canvas'
+              ? {
+                  sliderValues: structuredAnswer.sliderValues,
+                  pointPositions: structuredAnswer.pointPositions,
+                  selectedEdgeIds: structuredAnswer.selectedEdgeIds,
+                  infoSets: structuredAnswer.infoSets,
+                  inequalityStyle: structuredAnswer.inequalityStyle,
+                  inequalityShade: structuredAnswer.inequalityShade,
+                }
+              : {
+                  sliderValues: {},
+                  pointPositions: {},
+                  selectedEdgeIds: [],
+                  infoSets: [],
+                  inequalityStyle: question.invariant_canvas.inequality?.initial_style ?? 'solid',
+                  inequalityShade: question.invariant_canvas.inequality?.initial_shade ?? 'above',
+                }
+          }
+          disabled={(isChecked && isCorrect === true) || isExhausted}
+          onChange={(next: InvariantCanvasAnswerState) =>
+            onChangeStructuredAnswer?.({
+              kind: 'invariant_canvas',
+              ...next,
+            })
+          }
+        />
+      )}
+
+      {/* Type 9: Concept Matching */}
+      {question.type === 'concept_matching' && question.concept_matching && (
+        <ConceptMatching
+          spec={question.concept_matching}
+          pairs={
+            structuredAnswer?.kind === 'concept_matching' ? structuredAnswer.pairs : {}
+          }
+          disabled={(isChecked && isCorrect === true) || isExhausted}
+          onChange={(pairs) =>
+            onChangeStructuredAnswer?.({
+              kind: 'concept_matching',
+              pairs,
+            })
+          }
+        />
       )}
 
       {/* Progressive Hints Section: Compact single-line toggle always visible below options */}

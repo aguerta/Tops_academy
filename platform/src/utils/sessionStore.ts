@@ -1,4 +1,4 @@
-import { Question, QuestionTelemetry } from '../types';
+import { Question, QuestionTelemetry, StructuredUserAnswer } from '../types';
 
 export const ACTIVE_SESSION_STORAGE_KEY = 'tops_active_session_v1';
 
@@ -20,6 +20,9 @@ export interface ActiveSessionSnapshot {
   selectedOption: string | null;
   selectedMultiOptions: string[];
   fillBlankValue: string;
+  structuredAnswer?: StructuredUserAnswer | null;
+  matchedDiagnosticRationale?: string | null;
+  stage0Phase?: 1 | 2 | 3;
   hintsRevealed: number;
   wrongAttemptsCount: number;
   isExhausted: boolean;

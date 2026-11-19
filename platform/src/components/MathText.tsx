@@ -100,6 +100,41 @@ export function splitMathAndProse(latex: string): Array<{ type: 'inline-math' | 
   return result;
 }
 
+/**
+ * Renders inline backtick code spans and **bold** spans within plain-text segments
+ * outside of KaTeX delimiters ($...$ / $$...$$), without using dangerouslySetInnerHTML.
+ */
+function renderInlineMarkdown(text: string): React.ReactNode {
+  if (!text.includes('`') && !text.includes('**')) {
+    return text;
+  }
+  const tokens = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+  if (tokens.length === 1) {
+    return text;
+  }
+  return tokens.map((tok, i) => {
+    if (!tok) return null;
+    if (tok.startsWith('`') && tok.endsWith('`') && tok.length >= 3) {
+      return (
+        <code
+          key={i}
+          className="px-1 py-0.5 mx-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[0.9em] text-slate-800"
+        >
+          {tok.slice(1, -1)}
+        </code>
+      );
+    }
+    if (tok.startsWith('**') && tok.endsWith('**') && tok.length >= 5) {
+      return (
+        <strong key={i} className="font-semibold">
+          {tok.slice(2, -2)}
+        </strong>
+      );
+    }
+    return tok;
+  });
+}
+
 export const MathText: React.FC<MathTextProps> = ({ text, className = '', inline = false }) => {
   const renderedContent = useMemo(() => {
     if (!text) return '';
@@ -154,7 +189,7 @@ export const MathText: React.FC<MathTextProps> = ({ text, className = '', inline
       if (part.type === 'text') {
         return (
           <span key={index} className="inline break-words">
-            {part.content}
+            {renderInlineMarkdown(part.content)}
           </span>
         );
       }

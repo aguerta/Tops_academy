@@ -1,7 +1,13 @@
 export type QuestionType =
   | 'multiple_choice_7_options'
   | 'multiple_select'
-  | 'fill_in_the_blank';
+  | 'fill_in_the_blank'
+  | 'open_symbolic'
+  | 'proof_dag'
+  | 'adversarial_break'
+  | 'unstructured_model'
+  | 'invariant_canvas'
+  | 'concept_matching';
 
 export type CompetencyCategory = 'Skill' | 'Concept' | 'Fact';
 
@@ -128,17 +134,354 @@ export interface FillBlankAnswer {
   min_decimals?: number;
 }
 
-export type CorrectAnswer = string | number | string[] | FillBlankAnswer;
+export interface DiagnosticDistractor {
+  distractor_id?: string;
+  expression?: string;
+  value?: string | number;
+  accepted_equivalents?: string[];
+  tolerance?: number;
+  match_type?: 'symbolic' | 'numeric' | 'exact' | 'regex';
+  error_rationale: string;
+}
+
+export interface SymbolicConfig {
+  variables?: string[];
+  palette?: string[];
+  placeholder?: string;
+}
+
+export interface ProofStep {
+  id: string;
+  content: string;
+  is_fallacy: boolean;
+  justification?: string;
+  distractor_id?: string;
+  error_rationale?: string;
+}
+
+export interface ProofDagSpec {
+  goal?: string;
+  steps: ProofStep[];
+  edges: [string, string][];
+  require_justification: boolean;
+  justification_bank?: string[];
+}
+
+export interface AdversarialStep {
+  id: string;
+  label?: string;
+  content: string;
+  is_fallacy: boolean;
+  distractor_id?: string;
+  error_rationale?: string;
+  valid_explanation?: string;
+}
+
+export interface AdversarialReasonOption {
+  id: string;
+  content: string;
+  is_correct: boolean;
+  distractor_id?: string;
+  error_rationale?: string;
+}
+
+export interface AdversarialInputField {
+  id: string;
+  name?: string;
+  label: string;
+  placeholder?: string;
+  type?: 'integer' | 'number';
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export interface AdversarialPredicate {
+  id?: string;
+  expr: string;
+  failure_rationale: string;
+  distractor_id?: string;
+}
+
+export interface AdversarialBreakSpec {
+  mode: 'find_fallacy' | 'counterexample';
+  prompt?: string;
+  steps?: AdversarialStep[];
+  reason_options?: AdversarialReasonOption[];
+  inputs?: AdversarialInputField[];
+  predicates?: AdversarialPredicate[];
+  sample_witness?: Record<string, number>;
+}
+
+export interface Stage0VariableItem {
+  id: string;
+  label: string;
+  correct_role: string;
+  error_rationale?: string;
+  distractor_id?: string;
+}
+
+export interface Stage0AssumptionOption {
+  id: string;
+  content: string;
+  is_required: boolean;
+  error_rationale?: string;
+  distractor_id?: string;
+}
+
+export interface Stage0FormulationOption {
+  id: string;
+  content: string;
+  is_correct: boolean;
+  error_rationale?: string;
+  distractor_id?: string;
+}
+
+export interface UnstructuredModelSpec {
+  phase1_variables: {
+    prompt: string;
+    roles: string[];
+    items: Stage0VariableItem[];
+  };
+  phase2_assumptions: {
+    prompt: string;
+    options: Stage0AssumptionOption[];
+  };
+  phase3_formulation: {
+    prompt: string;
+    input_mode: 'select' | 'symbolic';
+    options?: Stage0FormulationOption[];
+    correct_expression?: FillBlankAnswer;
+    diagnostic_distractors?: DiagnosticDistractor[];
+  };
+}
+
+export interface CanvasSlider {
+  id: string;
+  label?: string;
+  min: number;
+  max: number;
+  step?: number;
+  initial?: number;
+  unit?: string;
+}
+
+export interface CanvasCurve {
+  id?: string;
+  label?: string;
+  color?: string;
+  expression?: string;
+  fn?: string;
+  domain?: [number, number];
+  style?: 'solid' | 'dashed';
+}
+
+export interface CanvasPoint {
+  id: string;
+  label?: string;
+  x: number;
+  y: number;
+  color?: string;
+  snap?: number;
+  lock_x?: boolean;
+  lock_y?: boolean;
+  min_x?: number;
+  max_x?: number;
+  min_y?: number;
+  max_y?: number;
+}
+
+export interface CanvasFixedPoint {
+  id?: string;
+  x: number | string;
+  y: number | string;
+  label?: string;
+  color?: string;
+  style?: 'closed' | 'open';
+}
+
+export interface CanvasSegment {
+  id?: string;
+  from: [number | string, number | string];
+  to: [number | string, number | string];
+  color?: string;
+  style?: 'solid' | 'dashed';
+  label?: string;
+}
+
+export interface CanvasPolygon {
+  id?: string;
+  vertices: Array<[number | string, number | string]>;
+  fill?: string;
+  stroke?: string;
+  label?: string;
+}
+
+export interface CanvasShadedRegion {
+  id?: string;
+  curve_top?: string;
+  curve_bottom?: string;
+  y_top?: number | string;
+  y_bottom?: number | string;
+  domain?: [number | string, number | string];
+  fill?: string;
+  label?: string;
+}
+
+export interface CanvasInequalityConfig {
+  curve_id: string;
+  initial_style?: 'solid' | 'dashed';
+  initial_shade?: 'above' | 'below' | 'none';
+  color?: string;
+}
+
+export interface CanvasInvariant {
+  id?: string;
+  kind:
+    | 'point_on_curve'
+    | 'point_coords'
+    | 'slider_eq'
+    | 'slider_range'
+    | 'expr_true'
+    | 'curves_intersect_at'
+    | 'slope_at'
+    | 'kink_at'
+    | 'point_in_region'
+    | 'inequality_state';
+  point_id?: string;
+  curve_id?: string;
+  slider_id?: string;
+  curve_a?: string;
+  curve_b?: string;
+  expr?: string;
+  x?: number | string;
+  target_x?: number | string;
+  target_y?: number | string;
+  target?: number;
+  min?: number;
+  max?: number;
+  tolerance?: number;
+  expected_style?: 'solid' | 'dashed';
+  expected_shade?: 'above' | 'below';
+  distractor_id?: string;
+  error_rationale?: string;
+}
+
+export interface TreeNodeSpec {
+  id: string;
+  label?: string;
+  x: number;
+  y: number;
+  player?: string;
+  payoff?: string;
+  terminal?: boolean;
+}
+
+export interface TreeEdgeSpec {
+  id: string;
+  from: string;
+  to: string;
+  label?: string;
+  action?: string;
+}
+
+export interface TreeInvariantsSpec {
+  required_edges?: string[];
+  required_info_sets?: string[][];
+  distractor_id?: string;
+  edge_error_rationale?: string;
+  info_set_error_rationale?: string;
+}
+
+export interface InvariantCanvasSpec {
+  mode: 'cartesian' | 'tree';
+  x_range?: [number, number];
+  y_range?: [number, number];
+  step?: number;
+  snap?: number;
+  x_label?: string;
+  y_label?: string;
+  width?: number;
+  height?: number;
+  sliders?: CanvasSlider[];
+  fixed_curves?: CanvasCurve[];
+  interactive_curves?: CanvasCurve[];
+  interactive_points?: CanvasPoint[];
+  fixed_points?: CanvasFixedPoint[];
+  segments?: CanvasSegment[];
+  polygons?: CanvasPolygon[];
+  shaded_regions?: CanvasShadedRegion[];
+  inequality?: CanvasInequalityConfig;
+  invariants?: CanvasInvariant[];
+  interaction_mode?: 'edges' | 'info_sets' | 'both';
+  nodes?: TreeNodeSpec[];
+  edges?: TreeEdgeSpec[];
+  tree_invariants?: TreeInvariantsSpec;
+}
+
+export interface MatchingItem {
+  id: string;
+  content: string;
+  is_distractor?: boolean;
+  distractor_id?: string;
+  error_rationale?: string;
+}
+
+export interface ConceptMatchingSpec {
+  left_title?: string;
+  right_title?: string;
+  premises: MatchingItem[];
+  targets: MatchingItem[];
+  correct_pairs: Record<string, string>;
+  pair_rationales?: Record<string, string>;
+}
+
+export type StructuredUserAnswer =
+  | { kind: 'open_symbolic'; expression: string }
+  | { kind: 'proof_dag'; orderedStepIds: string[]; justifications: Record<string, string> }
+  | {
+      kind: 'adversarial_break';
+      selectedStepId: string | null;
+      selectedReasonId: string | null;
+      witnessValues: Record<string, string>;
+    }
+  | {
+      kind: 'unstructured_model';
+      phase1Roles: Record<string, string>;
+      phase2SelectedIds: string[];
+      phase3SelectedId: string | null;
+      phase3Expression: string;
+    }
+  | {
+      kind: 'invariant_canvas';
+      sliderValues: Record<string, number>;
+      pointPositions: Record<string, { x: number; y: number }>;
+      selectedEdgeIds: string[];
+      infoSets: string[][];
+      inequalityStyle?: 'solid' | 'dashed';
+      inequalityShade?: 'above' | 'below' | 'none';
+    }
+  | { kind: 'concept_matching'; pairs: Record<string, string> };
+
+export type CorrectAnswer = string | number | string[] | FillBlankAnswer | Record<string, unknown>;
 
 export interface Question {
   id: string;
   competency_id: string;
   type: QuestionType;
+  interaction_type?: QuestionType;
   difficulty?: 'easy' | 'medium' | 'hard';
   stem: string;
   graph?: GraphSpec;
   options: QuestionOption[];
   correct_answer: CorrectAnswer;
+  diagnostic_distractors?: DiagnosticDistractor[];
+  symbolic_config?: SymbolicConfig;
+  proof_dag?: ProofDagSpec;
+  adversarial_break?: AdversarialBreakSpec;
+  unstructured_model?: UnstructuredModelSpec;
+  invariant_canvas?: InvariantCanvasSpec;
+  concept_matching?: ConceptMatchingSpec;
   hints: string[];
   solution: string;
   detailed_solution?: string;

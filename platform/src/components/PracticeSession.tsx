@@ -1,11 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Question, QuestionTelemetry } from '../types';
+import { Question, QuestionTelemetry, StructuredUserAnswer } from '../types';
 import { QuestionCard } from './QuestionCard';
 import { FeedbackToast } from './FeedbackToast';
 import { MathText } from './MathText';
+import {
+  ScratchBgMode,
+  SCRATCHPAD_GRID_BG_STYLE,
+  ScratchpadOverlay,
+} from './ScratchpadOverlay';
 import { checkMathEquivalence } from '../utils/mathEquivalence';
-import { isOptionCorrect, getCorrectOptionIds } from '../utils/questionUtils';
+import {
+  isOptionCorrect,
+  getCorrectOptionIds,
+  requiresBlankFirstCurtain,
+} from '../utils/questionUtils';
+import {
+  validateAdversarialSubmission,
+  validateConceptMatchingSubmission,
+  validateProofDagSubmission,
+  validateStage0Phase,
+  validateSymbolicAnswer,
+} from '../services/symbolicValidator';
+import {
+  validateCartesianInvariants,
+  validateTreeInvariants,
+} from './canvas/TopologyValidator';
 import {
   saveActiveSession,
   clearActiveSession,
@@ -38,8 +58,62 @@ interface QuestionResult {
 
 const isTypingTarget = (t: EventTarget | null): boolean => {
   const el = t as HTMLElement | null;
-  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+  return (
+    !!el &&
+    (el.tagName === 'INPUT' ||
+      el.tagName === 'TEXTAREA' ||
+      el.tagName === 'SELECT' ||
+      el.isContentEditable)
+  );
 };
+
+function createInitialStructuredAnswer(q: Question | undefined): StructuredUserAnswer | null {
+  if (!q) return null;
+  switch (q.type) {
+    case 'open_symbolic':
+      return { kind: 'open_symbolic', expression: '' };
+    case 'proof_dag':
+      return { kind: 'proof_dag', orderedStepIds: [], justifications: {} };
+    case 'adversarial_break':
+      return {
+        kind: 'adversarial_break',
+        selectedStepId: null,
+        selectedReasonId: null,
+        witnessValues: {},
+      };
+    case 'unstructured_model':
+      return {
+        kind: 'unstructured_model',
+        phase1Roles: {},
+        phase2SelectedIds: [],
+        phase3SelectedId: null,
+        phase3Expression: '',
+      };
+    case 'invariant_canvas': {
+      const sliderValues: Record<string, number> = {};
+      for (const sl of q.invariant_canvas?.sliders || []) {
+        sliderValues[sl.id] = sl.initial ?? (sl.min + sl.max) / 2;
+      }
+      const pointPositions: Record<string, { x: number; y: number }> = {};
+      for (const pt of q.invariant_canvas?.interactive_points || []) {
+        pointPositions[pt.id] = { x: pt.x, y: pt.y };
+      }
+      return {
+        kind: 'invariant_canvas',
+        sliderValues,
+        pointPositions,
+        selectedEdgeIds: [],
+        infoSets: [],
+        inequalityStyle: q.invariant_canvas?.inequality?.initial_style ?? 'solid',
+        inequalityShade: q.invariant_canvas?.inequality?.initial_shade ?? 'above',
+      };
+    }
+    case 'concept_matching':
+      return { kind: 'concept_matching', pairs: {} };
+    default:
+      return null;
+  }
+}
 
 export const PracticeSession: React.FC<PracticeSessionProps> = ({
   sessionTitle,
@@ -57,6 +131,18 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [selectedOption, setSelectedOption] = useState<string | null>(() => initialSnapshot?.selectedOption ?? null);
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>(() => initialSnapshot?.selectedMultiOptions ?? []);
   const [fillBlankValue, setFillBlankValue] = useState<string>(() => initialSnapshot?.fillBlankValue ?? '');
+  const [structuredAnswer, setStructuredAnswer] = useState<StructuredUserAnswer | null>(
+    () =>
+      initialSnapshot?.structuredAnswer ??
+      createInitialStructuredAnswer(questions[initialSnapshot?.currentIndex ?? 0])
+  );
+  const [matchedDiagnosticRationale, setMatchedDiagnosticRationale] = useState<string | null>(
+    () => initialSnapshot?.matchedDiagnosticRationale ?? null
+  );
+  const [stage0Phase, setStage0Phase] = useState<1 | 2 | 3>(
+    () => initialSnapshot?.stage0Phase ?? 1
+  );
+  const [stage0PhaseNotice, setStage0PhaseNotice] = useState<string | null>(null);
   const [hintsRevealed, setHintsRevealed] = useState(() => initialSnapshot?.hintsRevealed ?? 0);
 
   const [wrongAttemptsCount, setWrongAttemptsCount] = useState<number>(() => initialSnapshot?.wrongAttemptsCount ?? 0);
@@ -71,6 +157,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     }
   });
   const [isCurtainLifted, setIsCurtainLifted] = useState<boolean>(() => initialSnapshot?.isCurtainLifted ?? false);
+  const [scratchpadOpen, setScratchpadOpen] = useState<boolean>(false);
+  const [scratchpadBgMode, setScratchpadBgMode] = useState<ScratchBgMode>('transparent');
 
   const handleToggleBlankFirst = () => {
     setBlankFirstEnabled((prev) => {
@@ -128,6 +216,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       selectedOption,
       selectedMultiOptions,
       fillBlankValue,
+      structuredAnswer,
+      matchedDiagnosticRationale,
+      stage0Phase,
       hintsRevealed,
       wrongAttemptsCount,
       isExhausted,
@@ -150,6 +241,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     selectedOption,
     selectedMultiOptions,
     fillBlankValue,
+    structuredAnswer,
+    matchedDiagnosticRationale,
+    stage0Phase,
     hintsRevealed,
     wrongAttemptsCount,
     isExhausted,
@@ -194,13 +288,87 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     );
   }
 
+  const effectiveCurtainActive =
+    blankFirstEnabled && !isCurtainLifted && requiresBlankFirstCurtain(currentQuestion);
+
   // Determine if student has input an answer to enable Check button
-  const hasAnswer =
-    currentQuestion.type === 'multiple_choice_7_options'
-      ? selectedOption !== null
-      : currentQuestion.type === 'multiple_select'
-      ? selectedMultiOptions.length > 0
-      : fillBlankValue.trim().length > 0;
+  const hasAnswer = (() => {
+    switch (currentQuestion.type) {
+      case 'multiple_choice_7_options':
+        return selectedOption !== null;
+      case 'multiple_select':
+        return selectedMultiOptions.length > 0;
+      case 'fill_in_the_blank':
+        return fillBlankValue.trim().length > 0;
+      case 'open_symbolic':
+        return (
+          structuredAnswer?.kind === 'open_symbolic' &&
+          structuredAnswer.expression.trim().length > 0
+        );
+      case 'proof_dag':
+        return (
+          structuredAnswer?.kind === 'proof_dag' &&
+          structuredAnswer.orderedStepIds.length > 0 &&
+          (!currentQuestion.proof_dag?.require_justification ||
+            structuredAnswer.orderedStepIds.every(
+              (sid) => Boolean(structuredAnswer.justifications[sid])
+            ))
+        );
+      case 'adversarial_break': {
+        if (structuredAnswer?.kind !== 'adversarial_break') return false;
+        const spec = currentQuestion.adversarial_break;
+        if (!spec) return false;
+        if (spec.mode === 'find_fallacy') {
+          const hasStep = structuredAnswer.selectedStepId !== null;
+          const needsReason = (spec.reason_options || []).length > 0;
+          return hasStep && (!needsReason || structuredAnswer.selectedReasonId !== null);
+        }
+        return (spec.inputs || []).every((inp) => {
+          const iid = inp.id || inp.name || '';
+          return Boolean((structuredAnswer.witnessValues[iid] || '').trim());
+        });
+      }
+      case 'unstructured_model': {
+        if (structuredAnswer?.kind !== 'unstructured_model') return false;
+        const spec = currentQuestion.unstructured_model;
+        if (!spec) return false;
+        if (stage0Phase === 1) {
+          return spec.phase1_variables.items.every(
+            (it) => Boolean(structuredAnswer.phase1Roles[it.id])
+          );
+        }
+        if (stage0Phase === 2) {
+          return structuredAnswer.phase2SelectedIds.length > 0;
+        }
+        return spec.phase3_formulation.input_mode === 'select'
+          ? structuredAnswer.phase3SelectedId !== null
+          : structuredAnswer.phase3Expression.trim().length > 0;
+      }
+      case 'invariant_canvas':
+        return structuredAnswer?.kind === 'invariant_canvas';
+      case 'concept_matching': {
+        if (structuredAnswer?.kind !== 'concept_matching') return false;
+        const premises = currentQuestion.concept_matching?.premises || [];
+        return (
+          premises.length > 0 &&
+          premises.every((pr) => Boolean(structuredAnswer.pairs[pr.id]))
+        );
+      }
+      default:
+        return false;
+    }
+  })();
+
+  const handleChangeStructuredAnswer = (next: StructuredUserAnswer) => {
+    if (isExhausted || (isChecked && isCorrect === true)) return;
+    setStructuredAnswer(next);
+    setStage0PhaseNotice(null);
+    if (isChecked && !isCorrect) {
+      setIsChecked(false);
+      setIsCorrect(null);
+      setMatchedDiagnosticRationale(null);
+    }
+  };
 
   const handleSelectOption = (id: string) => {
     if (isExhausted || (isChecked && isCorrect === true)) return;
@@ -237,6 +405,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     if (!hasAnswer || isChecked || isExhausted) return;
 
     let correct = false;
+    let diagRationale: string | null = null;
+    setStage0PhaseNotice(null);
 
     if (currentQuestion.type === 'multiple_choice_7_options') {
       correct = selectedOption !== null && isOptionCorrect(currentQuestion, selectedOption);
@@ -250,8 +420,113 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         sSorted.every((val, idx) => val === correctIds[idx]);
     } else if (currentQuestion.type === 'fill_in_the_blank') {
       correct = checkMathEquivalence(fillBlankValue, currentQuestion.correct_answer as any);
+      if (!correct && currentQuestion.diagnostic_distractors?.length) {
+        const res = validateSymbolicAnswer(
+          fillBlankValue,
+          currentQuestion.correct_answer,
+          currentQuestion.diagnostic_distractors,
+          currentQuestion.symbolic_config
+        );
+        diagRationale = res.diagnosticRationale || null;
+      }
+    } else if (currentQuestion.type === 'open_symbolic') {
+      const expr = structuredAnswer?.kind === 'open_symbolic' ? structuredAnswer.expression : '';
+      const res = validateSymbolicAnswer(
+        expr,
+        currentQuestion.correct_answer,
+        currentQuestion.diagnostic_distractors,
+        currentQuestion.symbolic_config
+      );
+      correct = res.isCorrect;
+      diagRationale = res.diagnosticRationale || res.syntaxError || null;
+    } else if (currentQuestion.type === 'proof_dag' && currentQuestion.proof_dag) {
+      const sVal =
+        structuredAnswer?.kind === 'proof_dag'
+          ? structuredAnswer
+          : { orderedStepIds: [], justifications: {} };
+      const res = validateProofDagSubmission(
+        sVal.orderedStepIds,
+        sVal.justifications,
+        currentQuestion.proof_dag
+      );
+      correct = res.isCorrect;
+      diagRationale = res.diagnosticRationale || null;
+    } else if (
+      currentQuestion.type === 'adversarial_break' &&
+      currentQuestion.adversarial_break
+    ) {
+      const aVal =
+        structuredAnswer?.kind === 'adversarial_break'
+          ? structuredAnswer
+          : { selectedStepId: null, selectedReasonId: null, witnessValues: {} };
+      const res = validateAdversarialSubmission(aVal, currentQuestion.adversarial_break);
+      correct = res.isCorrect;
+      diagRationale = res.diagnosticRationale || null;
+    } else if (
+      currentQuestion.type === 'unstructured_model' &&
+      currentQuestion.unstructured_model
+    ) {
+      const uVal =
+        structuredAnswer?.kind === 'unstructured_model'
+          ? structuredAnswer
+          : {
+              phase1Roles: {},
+              phase2SelectedIds: [],
+              phase3SelectedId: null,
+              phase3Expression: '',
+            };
+      const res = validateStage0Phase(stage0Phase, uVal, currentQuestion.unstructured_model);
+      if (res.isCorrect && stage0Phase < 3) {
+        const nextPhase = (stage0Phase + 1) as 1 | 2 | 3;
+        setStage0Phase(nextPhase);
+        setStage0PhaseNotice(`✓ Fase ${stage0Phase} completada — Fase ${nextPhase} desbloqueada`);
+        setMatchedDiagnosticRationale(null);
+        setIsChecked(false);
+        setIsCorrect(null);
+        return;
+      }
+      correct = res.isCorrect;
+      diagRationale = res.diagnosticRationale || null;
+    } else if (
+      currentQuestion.type === 'invariant_canvas' &&
+      currentQuestion.invariant_canvas
+    ) {
+      const cVal =
+        structuredAnswer?.kind === 'invariant_canvas'
+          ? structuredAnswer
+          : {
+              sliderValues: {},
+              pointPositions: {},
+              selectedEdgeIds: [],
+              infoSets: [],
+              inequalityStyle: currentQuestion.invariant_canvas.inequality?.initial_style ?? 'solid',
+              inequalityShade: currentQuestion.invariant_canvas.inequality?.initial_shade ?? 'above',
+            };
+      const res =
+        currentQuestion.invariant_canvas.mode === 'tree'
+          ? validateTreeInvariants(
+              { selectedEdgeIds: cVal.selectedEdgeIds, infoSets: cVal.infoSets },
+              currentQuestion.invariant_canvas
+            )
+          : validateCartesianInvariants(
+              {
+                sliderValues: cVal.sliderValues,
+                pointPositions: cVal.pointPositions,
+                inequalityStyle: cVal.inequalityStyle,
+                inequalityShade: cVal.inequalityShade,
+              },
+              currentQuestion.invariant_canvas
+            );
+      correct = res.isCorrect;
+      diagRationale = res.diagnosticRationale || null;
+    } else if (currentQuestion.type === 'concept_matching' && currentQuestion.concept_matching) {
+      const pVal = structuredAnswer?.kind === 'concept_matching' ? structuredAnswer.pairs : {};
+      const res = validateConceptMatchingSubmission(pVal, currentQuestion.concept_matching);
+      correct = res.isCorrect;
+      diagRationale = res.diagnosticRationale || null;
     }
 
+    setMatchedDiagnosticRationale(diagRationale);
     setIsChecked(true);
     setIsCorrect(correct);
 
@@ -308,6 +583,11 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     setSelectedOption(null);
     setSelectedMultiOptions([]);
     setFillBlankValue('');
+    setMatchedDiagnosticRationale(null);
+    setStage0PhaseNotice(null);
+    if (currentQuestion.type !== 'unstructured_model') {
+      setStructuredAnswer(createInitialStructuredAnswer(currentQuestion));
+    }
     setIsChecked(false);
     setIsCorrect(null);
     resetScroll();
@@ -318,6 +598,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     clearAutoAdvanceTimer();
     setIsChecked(false);
     setIsCorrect(null);
+    setMatchedDiagnosticRationale(null);
     if (currentQuestion.type === 'multiple_choice_7_options') {
       setSelectedOption(null);
     }
@@ -375,10 +656,15 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const totalSessionSeconds = telemetryRef.current.reduce((acc, t) => acc + t.seconds_spent, 0);
       onComplete(finalScore, total, [...telemetryRef.current], totalSessionSeconds);
     } else {
+      const nextQ = questions[currentIndex + 1];
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
       setSelectedMultiOptions([]);
       setFillBlankValue('');
+      setStructuredAnswer(createInitialStructuredAnswer(nextQ));
+      setMatchedDiagnosticRationale(null);
+      setStage0Phase(1);
+      setStage0PhaseNotice(null);
       setHintsRevealed(0);
       setIsChecked(false);
       setIsCorrect(null);
@@ -428,10 +714,15 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const totalSessionSeconds = telemetryRef.current.reduce((acc, t) => acc + t.seconds_spent, 0);
       onComplete(finalScore, total, [...telemetryRef.current], totalSessionSeconds);
     } else {
+      const nextQ = questions[currentIndex + 1];
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
       setSelectedMultiOptions([]);
       setFillBlankValue('');
+      setStructuredAnswer(createInitialStructuredAnswer(nextQ));
+      setMatchedDiagnosticRationale(null);
+      setStage0Phase(1);
+      setStage0PhaseNotice(null);
       setHintsRevealed(0);
       setIsChecked(false);
       setIsCorrect(null);
@@ -449,6 +740,18 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const typing = isTypingTarget(e.target);
 
       if (
+        !typing &&
+        !e.altKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        e.key.toLowerCase() === 'p'
+      ) {
+        e.preventDefault();
+        setScratchpadOpen((prev) => !prev);
+        return;
+      }
+
+      if (
         (e.key === 's' || e.key === 'S') &&
         !e.altKey &&
         (e.ctrlKey || e.metaKey)
@@ -461,10 +764,13 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       }
 
       if (e.key === 'Enter') {
+        if (scratchpadOpen) return;
+        const targetEl = e.target as HTMLElement | null;
+        if (targetEl?.tagName === 'SELECT') return;
         e.preventDefault();
 
-        // Milestone 6: If Blank-First curtain is active, Enter lifts the curtain
-        if (blankFirstEnabled && !isCurtainLifted) {
+        // Milestone 6 / 20: If Smart Blank-First curtain is active, Enter lifts the curtain
+        if (effectiveCurtainActive) {
           setIsCurtainLifted(true);
           return;
         }
@@ -487,7 +793,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       }
 
       // Mouseless hotkeys for option selection (A-I and 1-9)
-      if (!typing && !e.altKey && !e.ctrlKey && !e.metaKey && !isChecked && (!blankFirstEnabled || isCurtainLifted)) {
+      if (!typing && !scratchpadOpen && !e.altKey && !e.ctrlKey && !e.metaKey && !isChecked && !effectiveCurtainActive) {
         const OPTION_KEYS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
         const NUMBER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
@@ -532,6 +838,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     wrongAttemptsCount,
     blankFirstEnabled,
     isCurtainLifted,
+    scratchpadOpen,
   ]);
 
   return (
@@ -546,6 +853,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           onClick={() => {
             clearAutoAdvanceTimer();
             clearActiveSession();
+            setScratchpadOpen(false);
             onQuit();
           }}
           className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-ka-text-secondary text-base transition-colors shrink-0"
@@ -558,6 +866,24 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           <MathText text={sessionTitle} inline />
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            data-testid="toggle-scratchpad-btn"
+            onClick={() => setScratchpadOpen((prev) => !prev)}
+            aria-pressed={scratchpadOpen}
+            title="Activar pizarra de apuntes (P)"
+            className={`text-xs font-semibold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
+              scratchpadOpen
+                ? 'bg-emerald-50 border-emerald-400 text-emerald-800 hover:bg-emerald-100 shadow-xs'
+                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <span aria-hidden="true">✏️</span>
+            <span className="hidden sm:inline text-[11px]">
+              {scratchpadOpen ? 'Pizarra: ON' : 'Pizarra'}
+            </span>
+          </button>
+
           <button
             type="button"
             data-testid="toggle-blank-first-btn"
@@ -585,6 +911,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
               onClick={() => {
                 clearAutoAdvanceTimer();
                 clearActiveSession();
+                setScratchpadOpen(false);
                 resetScroll();
                 onRestart();
               }}
@@ -602,32 +929,52 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         </div>
       </header>
 
-      {/* Main Question Surface */}
-      <main
-        ref={mainRef}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+      {/* Main Question Surface + Khan Academy Scratchpad Workspace */}
+      <div
+        data-testid="practice-workspace"
+        className="flex-1 min-h-0 relative flex flex-col overflow-hidden transition-[background] duration-150"
+        style={scratchpadOpen && scratchpadBgMode === 'grid' ? SCRATCHPAD_GRID_BG_STYLE : undefined}
       >
-        <QuestionCard
-          question={currentQuestion}
-          selectedOption={selectedOption}
-          selectedMultiOptions={selectedMultiOptions}
-          fillBlankValue={fillBlankValue}
-          isChecked={isChecked}
-          isCorrect={isCorrect}
-          isExhausted={isExhausted}
-          onSelectOption={handleSelectOption}
-          onToggleMultiOption={handleToggleMultiOption}
-          onChangeFillBlank={handleChangeFillBlank}
-          hintsRevealed={hintsRevealed}
-          onRevealHint={() => setHintsRevealed((prev) => prev + 1)}
-          blankFirstEnabled={blankFirstEnabled}
-          isCurtainLifted={isCurtainLifted}
-          onLiftCurtain={() => setIsCurtainLifted(true)}
-          courseTitle={sessionTitle}
-          wrongAttemptsCount={wrongAttemptsCount}
-          isPracticeMode={true}
+        <main
+          ref={mainRef}
+          className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden ${
+            scratchpadOpen ? 'pb-24' : ''
+          }`}
+        >
+          <QuestionCard
+            question={currentQuestion}
+            selectedOption={selectedOption}
+            selectedMultiOptions={selectedMultiOptions}
+            fillBlankValue={fillBlankValue}
+            structuredAnswer={structuredAnswer}
+            matchedDiagnosticRationale={matchedDiagnosticRationale}
+            stage0Phase={stage0Phase}
+            stage0PhaseNotice={stage0PhaseNotice}
+            isChecked={isChecked}
+            isCorrect={isCorrect}
+            isExhausted={isExhausted}
+            onSelectOption={handleSelectOption}
+            onToggleMultiOption={handleToggleMultiOption}
+            onChangeFillBlank={handleChangeFillBlank}
+            onChangeStructuredAnswer={handleChangeStructuredAnswer}
+            hintsRevealed={hintsRevealed}
+            onRevealHint={() => setHintsRevealed((prev) => prev + 1)}
+            blankFirstEnabled={blankFirstEnabled}
+            isCurtainLifted={isCurtainLifted}
+            onLiftCurtain={() => setIsCurtainLifted(true)}
+            courseTitle={sessionTitle}
+            wrongAttemptsCount={wrongAttemptsCount}
+            isPracticeMode={true}
+          />
+        </main>
+        <ScratchpadOverlay
+          isOpen={scratchpadOpen}
+          questionId={currentQuestion.id}
+          bgMode={scratchpadBgMode}
+          onChangeBgMode={setScratchpadBgMode}
+          onClose={() => setScratchpadOpen(false)}
         />
-      </main>
+      </div>
 
       {/* Floating Feedback Toast */}
       {isChecked && isCorrect !== null && (
@@ -636,6 +983,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           question={currentQuestion}
           selectedOption={selectedOption}
           selectedMultiOptions={selectedMultiOptions}
+          matchedDiagnosticRationale={matchedDiagnosticRationale}
           onRedo={handleRedo}
           isExhausted={isExhausted}
           wrongAttemptsCount={wrongAttemptsCount}
@@ -793,23 +1141,35 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           ) : (
             <button
               data-testid="check-btn"
-              disabled={blankFirstEnabled && !isCurtainLifted ? false : !hasAnswer}
+              disabled={effectiveCurtainActive ? false : !hasAnswer}
               onClick={() => {
-                if (blankFirstEnabled && !isCurtainLifted) {
+                if (effectiveCurtainActive) {
                   setIsCurtainLifted(true);
                 } else {
                   handleCheck(true);
                 }
               }}
-              aria-label={blankFirstEnabled && !isCurtainLifted ? 'Reveal options' : 'Check answer'}
+              aria-label={
+                effectiveCurtainActive
+                  ? 'Reveal options'
+                  : currentQuestion.type === 'unstructured_model' && stage0Phase < 3
+                  ? `Verify phase ${stage0Phase}`
+                  : 'Check answer'
+              }
               className={`px-4 sm:px-6 py-1.5 sm:py-2 [@media(min-height:851px)]:sm:py-2.5 text-sm font-bold rounded transition-colors flex items-center gap-2 ${
-                (blankFirstEnabled && !isCurtainLifted) || hasAnswer
+                effectiveCurtainActive || hasAnswer
                   ? 'bg-ka-blue hover:bg-ka-blue-hover text-white cursor-pointer shadow-md'
                   : 'bg-slate-300 text-white cursor-not-allowed'
               }`}
             >
-              <span>{blankFirstEnabled && !isCurtainLifted ? 'Reveal options' : 'Check'}</span>
-              {((blankFirstEnabled && !isCurtainLifted) || hasAnswer) && (
+              <span>
+                {effectiveCurtainActive
+                  ? 'Reveal options'
+                  : currentQuestion.type === 'unstructured_model' && stage0Phase < 3
+                  ? `Verify phase ${stage0Phase}`
+                  : 'Check'}
+              </span>
+              {(effectiveCurtainActive || hasAnswer) && (
                 <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-blue-700/60 text-white rounded font-mono border border-blue-400/30" aria-hidden="true">↵ Enter</kbd>
               )}
             </button>

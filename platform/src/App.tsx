@@ -193,7 +193,8 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (viewMode !== 'practice') return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.isComposing || e.repeat) return;
+      if (e.key !== 'Escape' || e.isComposing || e.repeat || e.defaultPrevented) return;
+      if (!showQuitConfirm && document.querySelector('[role="dialog"]')) return;
       e.preventDefault();
       if (showQuitConfirm) {
         handleQuitSession();

@@ -1,11 +1,36 @@
-import { Question } from '../types';
+import { Question, StructuredUserAnswer } from '../types';
 
 export interface SocraticPromptContext {
   courseTitle: string;
   question: Question;
   selectedOptionContent?: string;
+  structuredAnswer?: StructuredUserAnswer | null;
   errorRationale?: string;
   hintsRevealed: number;
+}
+
+function summarizeStructuredAnswer(ans: StructuredUserAnswer | null | undefined): string {
+  if (!ans) return '';
+  switch (ans.kind) {
+    case 'open_symbolic':
+      return ans.expression ? `Expresión simbólica: ${ans.expression}` : '';
+    case 'proof_dag':
+      return ans.orderedStepIds.length > 0
+        ? `Secuencia propuesta de pasos: ${ans.orderedStepIds.join(' -> ')}`
+        : '';
+    case 'adversarial_break':
+      if (ans.selectedStepId) return `Paso falaz seleccionado: ${ans.selectedStepId}`;
+      if (Object.keys(ans.witnessValues).length > 0) {
+        return `Testigo propuesto: ${JSON.stringify(ans.witnessValues)}`;
+      }
+      return '';
+    case 'unstructured_model':
+      return `Modelado Stage 0: Fase 1=${JSON.stringify(ans.phase1Roles)}, Fase 2=${ans.phase2SelectedIds.join(', ')}, Fase 3=${ans.phase3SelectedId || ans.phase3Expression}`;
+    case 'invariant_canvas':
+      return `Estado Canvas: sliders=${JSON.stringify(ans.sliderValues)}, puntos=${JSON.stringify(ans.pointPositions)}, aristas=${ans.selectedEdgeIds.join(',')}`;
+    case 'concept_matching':
+      return `Emparejamientos propuestos: ${JSON.stringify(ans.pairs)}`;
+  }
 }
 
 /**
@@ -21,8 +46,9 @@ export function buildSocraticPrompt(ctx: SocraticPromptContext): string {
           .join('\n')
       : '   (Ninguna pista previa consultada)';
 
-  const selectedOptText = ctx.selectedOptionContent
-    ? `\nMI RESPUESTA INCORRECTA SELECCIONADA:\n"${ctx.selectedOptionContent}"\n`
+  const rawSelected = ctx.selectedOptionContent || summarizeStructuredAnswer(ctx.structuredAnswer);
+  const selectedOptText = rawSelected
+    ? `\nMI RESPUESTA INCORRECTA SELECCIONADA:\n"${rawSelected}"\n`
     : '';
 
   const rationaleText = ctx.errorRationale
