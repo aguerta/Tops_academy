@@ -836,6 +836,11 @@ def _validate_competencies_rules(
                         f"[CTA-MODALITY-INVALID]{line_tag_rm} Competency '{cid}' has invalid recommended_modality '{rm}'. "
                         f"Allowed: {sorted(_VALID_RECOMMENDED_MODALITIES)}"
                     )
+            if not invalid_rm and (ctype == "skill" or str(cid).startswith("Hab-")) and "multiple_choice_7_options" in rec_mods:
+                errors.append(
+                    f"[M20-MC7-CAP]{line_tag_rm} Competency '{cid}' (skill) cannot include 'multiple_choice_7_options' (MC7) "
+                    f"in recommended_modalities (0 MC7 allowed in Skill competencies)."
+                )
             if require_modalities and not invalid_rm:
                 unique_rm_count = len(set(m for m in rec_mods if isinstance(m, str)))
                 if unique_rm_count != len(rec_mods):

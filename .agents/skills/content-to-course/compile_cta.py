@@ -1550,6 +1550,12 @@ def compile_cta_module(
             cid_clean=cid_clean,
         )
         recommended_modalities = _normalize_recommended_modalities(raw_rec_mods, cid=raw_id)
+        is_skill_comp = (norm_type == "skill") or str(raw_id).startswith("Hab-")
+        if is_skill_comp and "multiple_choice_7_options" in recommended_modalities:
+            raise ValueError(
+                f"[M20-MC7-CAP] Competency '{raw_id}' (skill): 'multiple_choice_7_options' (MC7) is prohibited "
+                f"in Skill competencies (0 MC7 allowed; use active modalities)."
+            )
         if eff_require_modalities:
             if len(recommended_modalities) == 0:
                 raise ValueError(

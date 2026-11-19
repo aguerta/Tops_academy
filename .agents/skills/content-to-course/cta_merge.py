@@ -2268,6 +2268,17 @@ def apply_harmonize(
                         list(comp_survivor.get("recommended_modalities") or [])
                         + list(comp_absorbed.get("recommended_modalities") or [])
                     ))
+                    surv_is_skill = (
+                        str(comp_survivor.get("type", "")).lower() == "skill"
+                        or str(comp_survivor.get("id", "")).startswith("Hab-")
+                    )
+                    if surv_is_skill and "multiple_choice_7_options" in merged_mods:
+                        merged_mods = [m for m in merged_mods if m != "multiple_choice_7_options"]
+                        for fallback_mod in ("fill_in_the_blank", "open_symbolic", "multiple_select"):
+                            if len(merged_mods) >= 2:
+                                break
+                            if fallback_mod not in merged_mods:
+                                merged_mods.append(fallback_mod)
                     if len(merged_mods) > _MAX_MODALITIES_PER_COMPETENCY:
                         dropped_mods = merged_mods[_MAX_MODALITIES_PER_COMPETENCY:]
                         merged_mods = merged_mods[:_MAX_MODALITIES_PER_COMPETENCY]

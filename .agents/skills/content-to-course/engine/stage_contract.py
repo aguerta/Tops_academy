@@ -46,12 +46,24 @@ def required_templates_for_competency(
     num_modalities: int,
     templates_per_modality: int = DEFAULT_TEMPLATES_PER_MODALITY,
     min_archetypes: int = MIN_ARCHETYPES,
+    has_mc7: bool = False,
 ) -> int:
-    """Minimum distinct templates required for a competency given M modalities and K per modality."""
+    """Minimum distinct templates required for a competency given M modalities and K per modality.
+
+    Under [M20-MC7-CAP] and [M20-ACTIVE-QUOTA]:
+    - Skill competencies prohibit MC7 (0 MC7).
+    - Non-Skill competencies allow at most 1 MC7 template (count(MC7) == 1 when recommended),
+      while every active modality requires >= K templates and total active share must be >= 80%
+      when K >= 2 (requiring >= 4 active templates alongside 1 MC7 => total >= 5).
+    """
     eff_min_arch = max(1, int(min_archetypes))
     eff_k = max(1, int(templates_per_modality))
     eff_m = int(num_modalities) if num_modalities else 0
     if eff_m > 0:
+        if has_mc7:
+            if eff_k >= 2:
+                return max(eff_min_arch, 5, 1 + max(0, eff_m - 1) * eff_k)
+            return max(eff_min_arch, eff_m)
         return max(eff_min_arch, eff_m * eff_k)
     return eff_min_arch
 
@@ -73,16 +85,19 @@ def competency_contract(
     comp_type: str,
     num_modalities: int = 0,
     templates_per_modality: Optional[int] = None,
+    has_mc7: bool = False,
 ) -> Dict[str, Any]:
     eff_k = (
         DEFAULT_TEMPLATES_PER_MODALITY
         if templates_per_modality is None
         else max(1, int(templates_per_modality))
     )
+    eff_has_mc7 = bool(has_mc7) and not is_skill_type(comp_type)
     min_tpls = required_templates_for_competency(
         num_modalities=num_modalities,
         templates_per_modality=eff_k,
         min_archetypes=MIN_ARCHETYPES,
+        has_mc7=eff_has_mc7,
     )
     quota = quota_for_competency(comp_type, min_tpls)
     return {
@@ -95,6 +110,8 @@ def competency_contract(
         "min_templates_required": min_tpls,
         "min_modalities": MIN_MODALITIES_PER_COMPETENCY,
         "max_modalities": MAX_MODALITIES_PER_COMPETENCY,
+        "max_mc7_templates": 0 if is_skill_type(comp_type) else 1,
+        "min_active_ratio": 0.75 if (min_tpls <= 4 and eff_k == 1) else 0.80,
     }
 
 

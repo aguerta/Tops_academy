@@ -5011,7 +5011,7 @@ cross_check=verify
                             f"competencia Concept."
                         )
 
-                # CTA-Architect-driven modality plan enforcement (2 <= M <= 4 mandatory in v2, >= eff_k per modality)
+                # CTA-Architect-driven modality plan enforcement (2 <= M <= 4 mandatory in v2, >= eff_k per active modality, [M20-MC7-CAP] & [M20-ACTIVE-QUOTA])
                 raw_rec_mods = cta_c.get("recommended_modalities")
                 allowed_mods_list: List[str] = []
                 if isinstance(raw_rec_mods, list):
@@ -5023,6 +5023,46 @@ cross_check=verify
                         if rm_norm and rm_norm not in allowed_mods_list:
                             allowed_mods_list.append(rm_norm)
 
+                actual_mods_seq = [
+                    _QTYPE_TO_INTERACTION.get(
+                        str(t.get("interaction_type") or t.get("question_type") or "").strip().lower(),
+                        str(t.get("interaction_type") or t.get("question_type") or "").strip().lower(),
+                    )
+                    for t in tpls
+                ]
+
+                # [M20-MC7-CAP]: 0 MC7 in Skill competencies; <= 1 MC7 in Concept/Fact/Prerequisite competencies
+                mc7_count = sum(1 for m in actual_mods_seq if m == "multiple_choice_7_options")
+                if is_skill and "multiple_choice_7_options" in allowed_mods_list:
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M20-MC7-CAP] Competencia de habilidad '{cid}' incluye "
+                        f"'multiple_choice_7_options' en cta.json['recommended_modalities'], pero MC7 está prohibido "
+                        f"en competencias Skill (máximo 0 MC7 permitido)."
+                    )
+                if is_skill and mc7_count > 0:
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M20-MC7-CAP] Competencia de habilidad '{cid}' define "
+                        f"{mc7_count} plantilla(s) 'multiple_choice_7_options' (MC7), pero MC7 está prohibido "
+                        f"en competencias Skill (máximo 0 MC7 permitido; usa modalidades activas)."
+                    )
+                elif (not is_skill) and mc7_count > 1:
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M20-MC7-CAP] Competencia '{cid}' define {mc7_count} plantillas "
+                        f"'multiple_choice_7_options' (MC7), excediendo el tope máximo de 1 plantilla MC7 por competencia."
+                    )
+
+                # [M20-ACTIVE-QUOTA]: >= 80% active modalities (>= 75% only when N <= 4 and K == 1)
+                if len(tpls) >= eff_min_arch:
+                    active_count = sum(1 for m in actual_mods_seq if m in ACTIVE_INTERACTION_TYPES)
+                    active_ratio = active_count / float(len(tpls)) if len(tpls) > 0 else 0.0
+                    min_active_ratio = 0.75 if (len(tpls) <= 4 and eff_k == 1) else 0.80
+                    if active_ratio + 1e-9 < min_active_ratio:
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [M20-ACTIVE-QUOTA] Competencia '{cid}' tiene solo "
+                            f"{active_count}/{len(tpls)} ({active_ratio * 100:.1f}%) plantillas en modalidades activas, "
+                            f"por debajo del mínimo requerido de {min_active_ratio * 100:.0f}% (>= 80% activo con <= 1 MC7)."
+                        )
+
                 if cta_contract_version >= 2 and eff_k >= 2:
                     if len(allowed_mods_list) == 0 or not (_S4_MIN_MODS <= len(allowed_mods_list) <= _S4_MAX_MODS):
                         m3_errors.append(
@@ -5033,13 +5073,6 @@ cross_check=verify
 
                 if allowed_mods_list:
                     allowed_mods = set(allowed_mods_list)
-                    actual_mods_seq = [
-                        _QTYPE_TO_INTERACTION.get(
-                            str(t.get("interaction_type") or t.get("question_type") or "").strip().lower(),
-                            str(t.get("interaction_type") or t.get("question_type") or "").strip().lower(),
-                        )
-                        for t in tpls
-                    ]
                     unexpected_mods = sorted({m for m in actual_mods_seq if m and m not in allowed_mods})
                     if unexpected_mods:
                         m3_errors.append(
@@ -5047,26 +5080,29 @@ cross_check=verify
                             f"no autorizada(s) por el CTA Architect ({unexpected_mods}). "
                             f"Modalidades permitidas en cta.json para '{cid}': {allowed_mods_list}."
                         )
+                    has_mc7_plan = ("multiple_choice_7_options" in allowed_mods) and not is_skill
                     eff_min_tpls = _s4_required_templates(
                         len(allowed_mods_list),
                         templates_per_modality=eff_k,
                         min_archetypes=eff_min_arch,
+                        has_mc7=has_mc7_plan,
                     )
                     if len(tpls) < eff_min_tpls:
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' requiere mínimo "
-                            f"{eff_min_tpls} plantillas (max({eff_min_arch}, {len(allowed_mods_list)} modalidades * {eff_k}/modalidad)), "
-                            f"pero solo declara {len(tpls)}."
+                            f"{eff_min_tpls} plantillas para cubrir {allowed_mods_list} con K={eff_k}/modalidad activa "
+                            f"(<= 1 MC7 y >= 80% activo), pero solo declara {len(tpls)}."
                         )
                     if eff_k >= 2:
                         mod_counts = collections.Counter(m for m in actual_mods_seq if m)
                         for m_req in allowed_mods_list:
+                            req_k_for_m = 1 if m_req == "multiple_choice_7_options" else eff_k
                             cnt = int(mod_counts.get(m_req, 0))
-                            if cnt < eff_k:
+                            if cnt < req_k_for_m:
                                 m3_errors.append(
                                     f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' requiere "
-                                    f"al menos {eff_k} plantillas por cada modalidad recomendada ({allowed_mods_list}), "
-                                    f"pero '{m_req}' solo tiene {cnt}/{eff_k}."
+                                    f"al menos {req_k_for_m} plantilla(s) para la modalidad recomendada '{m_req}' "
+                                    f"(plan: {allowed_mods_list}), pero '{m_req}' solo tiene {cnt}/{req_k_for_m}."
                                 )
                     elif len(tpls) >= len(allowed_mods) and len(allowed_mods) >= 2:
                         missing_rec = sorted(allowed_mods - set(actual_mods_seq))

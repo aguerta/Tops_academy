@@ -847,11 +847,14 @@ def plan_shards(
         s4_by_cid = {}
         for cid_s4 in shard["competency_ids"]:
             rec_mods_s4 = cta_rec_mods_by_cid.get(cid_s4) or []
-            num_mods_s4 = len(dict.fromkeys(str(m).strip() for m in rec_mods_s4 if str(m).strip()))
+            norm_mods_s4 = list(dict.fromkeys(str(m).strip().lower() for m in rec_mods_s4 if str(m).strip()))
+            num_mods_s4 = len(norm_mods_s4)
+            has_mc7_s4 = any(m in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options") for m in norm_mods_s4)
             s4_by_cid[cid_s4] = competency_contract(
                 cta_type_by_cid.get(cid_s4, "concept"),
                 num_modalities=num_mods_s4,
                 templates_per_modality=eff_tpl_per_mod,
+                has_mc7=has_mc7_s4,
             )
         shard_entry = {
             "shard_id": s_id,

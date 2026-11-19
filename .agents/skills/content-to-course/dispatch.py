@@ -101,11 +101,11 @@ def _clean_str(val: Any) -> str:
 
 
 def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> str:
-    """Loads a system prompt markdown file.
-    
-    When lean=True (or C2C_LEAN_PROMPTS=1 env var is set), loads the lean static
-    system prompt (<= 5 KB) containing role and hard rules from system_prompts/lean/.
-    Otherwise loads the uncompressed prompt.
+    """Loads a system prompt markdown file and renders live Stage 4 contract tokens.
+
+    When lean=True (or C2C_LEAN_PROMPTS=1 env var is set), loads the prompt from
+    system_prompts/lean/ (synced with the M20 v4.3 full prompt, < 46,080 bytes).
+    Otherwise loads directly from system_prompts/.
     """
     use_lean = lean or os.getenv("C2C_LEAN_PROMPTS", "").lower() in ("1", "true", "yes")
     p = Path(name_or_path)
@@ -132,8 +132,8 @@ def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> st
 
 def get_type_definitions(lean: bool = True) -> List[Dict[str, Any]]:
     """Returns subagent type definitions for define_subagent registration.
-    
-    When lean=True (default), loads lean static system prompts strictly under 5 KB.
+
+    Loads M20 v4.3 system prompts (< 46,080 bytes) with rendered Stage 4 tokens.
     """
     repair_prompt = "prompt_repair.md"
     return [
@@ -1541,8 +1541,10 @@ def dispatch_authors(
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             t = str(c_obj.get("type", "knowledge")).lower()
             rec_m = c_obj.get("recommended_modalities") or []
-            n_m = len(dict.fromkeys(str(m).strip() for m in rec_m if str(m).strip()))
-            n_t = required_templates_for_competency(n_m, eff_tpl_per_mod)
+            norm_m = list(dict.fromkeys(str(m).strip().lower() for m in rec_m if str(m).strip()))
+            n_m = len(norm_m)
+            has_mc7_m = any(m in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options") for m in norm_m) and not is_skill_type(t)
+            n_t = required_templates_for_competency(n_m, eff_tpl_per_mod, has_mc7=has_mc7_m)
             w += quota_for_competency(t, n_t)
         return w if w > 0 else (len(c_ids) * 20)
 
@@ -1584,16 +1586,19 @@ def dispatch_authors(
             c_name = _clean_str(c_obj.get("name")) or cid
             raw_type = str(c_obj.get("type", "knowledge")).lower()
             raw_rec_mods = c_obj.get("recommended_modalities") or []
-            num_mods = len(dict.fromkeys(str(m).strip() for m in raw_rec_mods if str(m).strip()))
+            norm_rec_mods = list(dict.fromkeys(str(m).strip().lower() for m in raw_rec_mods if str(m).strip()))
+            num_mods = len(norm_rec_mods)
+            has_mc7_comp = any(m in ("mc7", "mc", "multiple_choice", "multiple_choice_7_options") for m in norm_rec_mods) and not (is_skill_type(raw_type) or cid.startswith("Hab-"))
             _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(
                 raw_type,
                 num_modalities=num_mods,
                 templates_per_modality=eff_tpl_per_mod,
+                has_mc7=has_mc7_comp,
             )
             comp_k = max(1, int(_s4c.get("templates_per_modality") or eff_tpl_per_mod))
             min_tpls = int(
                 _s4c.get("min_templates_required")
-                or required_templates_for_competency(num_mods, comp_k, _s4c.get("min_archetypes", 4))
+                or required_templates_for_competency(num_mods, comp_k, _s4c.get("min_archetypes", 4), has_mc7=has_mc7_comp)
             )
             quota = int(_s4c["quota"])
             comp_type = "skill" if is_skill_type(raw_type) else "knowledge"
