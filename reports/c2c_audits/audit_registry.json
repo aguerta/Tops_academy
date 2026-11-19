@@ -3532,8 +3532,70 @@
     "bottlenecks_count": 3
   },
   {
-    "run_id": "20261118_182859_estadistica_3_pre_pc2_v7_192cd54a",
-    "timestamp": "2026-11-18T23:28:59.746568+00:00",
+    "run_id": "20261119_005934_mateco_4_optimizacion_plus_619cb6cf",
+    "timestamp": "2026-11-19T05:59:34.983695+00:00",
+    "course_id": "mateco_4_optimizacion_plus",
+    "course_title": "Mateco 4 Optimizacion Plus",
+    "conversation_id": "619cb6cf-7cb2-4dfe-a559-5b7064a904e8",
+    "workload": {
+      "source_files_count": 5,
+      "pages_or_slides": 65,
+      "input_mb": 3.47,
+      "competencies": 30,
+      "questions": 730,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1530.0,
+      "agent_compute_seconds": 6785.0,
+      "speedup": 4.43,
+      "total_tokens": 14505951,
+      "total_active_tokens": 3467268,
+      "input_tokens": 2202826,
+      "output_tokens": 914241,
+      "cache_read_tokens": 11038683,
+      "total_turns": 324,
+      "subagents_count": 44,
+      "tool_errors": 22,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 269.0,
+      "stage_3_max_wall": 330.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 12 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 12 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 223168.5,
+      "active_tokens_per_page": 53342.6,
+      "tokens_per_input_kb": 4086.1,
+      "tokens_per_competency": 483531.7,
+      "active_tokens_per_competency": 115575.6,
+      "author_tokens_per_competency": 49937.1,
+      "tokens_per_question": 19871.2,
+      "active_tokens_per_question": 4749.7,
+      "seconds_per_page": 23.54,
+      "seconds_per_question": 2.1,
+      "questions_per_minute": 28.63,
+      "agent_seconds_per_question": 9.29,
+      "output_tokens_per_question": 1293.5
+    },
+    "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261119_005937_estadistica_3_pre_pc2_v7_192cd54a",
+    "timestamp": "2026-11-19T05:59:37.073750+00:00",
     "course_id": "estadistica_3_pre_pc2_v7",
     "course_title": "Estadistica 3 Pre Pc2 V7",
     "conversation_id": "192cd54a-f06a-4a16-80ac-f1e7314629e4",
@@ -3568,9 +3630,9 @@
         "initial_errors_count": 0,
         "repair_iterations": 0,
         "supervisor_interventions_count": 0,
-        "summary_desc": "La Ronda 1 de Blind Judges registró 0 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "summary_desc": "La Ronda 1 de Blind Judges registró 5 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
         "actions_taken": [
-          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 0 discrepancia(s) detectada(s).",
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 5 discrepancia(s) detectada(s).",
           "2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).",
           "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos)."
         ]
@@ -3592,67 +3654,5 @@
       "output_tokens_per_question": 826.2
     },
     "bottlenecks_count": 2
-  },
-  {
-    "run_id": "20261118_204923_mateco_4_optimizacion_plus_619cb6cf",
-    "timestamp": "2026-11-19T01:49:23.533067+00:00",
-    "course_id": "mateco_4_optimizacion_plus",
-    "course_title": "Mateco 4 Optimizacion Plus",
-    "conversation_id": "619cb6cf-7cb2-4dfe-a559-5b7064a904e8",
-    "workload": {
-      "source_files_count": 5,
-      "pages_or_slides": 65,
-      "input_mb": 3.47,
-      "competencies": 30,
-      "questions": 730,
-      "handouts": 0
-    },
-    "metrics": {
-      "wall_clock_seconds": 1525.0,
-      "agent_compute_seconds": 3301.0,
-      "speedup": 2.16,
-      "total_tokens": 7703820,
-      "total_active_tokens": 1585474,
-      "input_tokens": 976737,
-      "output_tokens": 264684,
-      "cache_read_tokens": 6118346,
-      "total_turns": 173,
-      "subagents_count": 21,
-      "tool_errors": 13,
-      "stage_1a_max_wall": 0.0,
-      "stage_1b_total_wall": 269.0,
-      "stage_3_max_wall": 0.0,
-      "orchestrator_interventions": 0,
-      "blind_judges": {
-        "passed_first_attempt": false,
-        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (120/120 REACTIVOS)",
-        "batch_items_count": 120,
-        "initial_errors_count": 0,
-        "repair_iterations": 0,
-        "supervisor_interventions_count": 0,
-        "summary_desc": "La Ronda 1 de Blind Judges registró 0 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
-        "actions_taken": [
-          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 0 discrepancia(s) detectada(s).",
-          "2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).",
-          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos)."
-        ]
-      }
-    },
-    "unit_economics": {
-      "tokens_per_page": 118520.3,
-      "active_tokens_per_page": 24391.9,
-      "tokens_per_input_kb": 2170.0,
-      "tokens_per_competency": 256794.0,
-      "active_tokens_per_competency": 52849.1,
-      "author_tokens_per_competency": 0.0,
-      "tokens_per_question": 10553.2,
-      "active_tokens_per_question": 2171.9,
-      "seconds_per_page": 23.46,
-      "seconds_per_question": 2.09,
-      "questions_per_minute": 28.72,
-      "agent_seconds_per_question": 4.52,
-      "output_tokens_per_question": 400.4
-    },
-    "bottlenecks_count": 0
   }
 ]
