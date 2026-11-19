@@ -1293,17 +1293,75 @@ class RetrievalModalityDiversityLinter(BaseLinter):
                 other_count += 1
 
         total_q = len(questions)
+        is_m20_course = (
+            bloom_superior_count > 0
+            or course_data.get("contract_version") == 2
+            or (isinstance(course_data.get("metadata"), dict) and course_data["metadata"].get("contract_version") == 2)
+            or any(bool(c.get("recommended_modalities")) for c in competencies if isinstance(c, dict))
+        )
         recognition_only_skills = []
+        skill_mc7_violations = []
+        low_active_quota_competencies = []
         active_prod_types = {"fill_in_the_blank", "open_ended", "fib"} | (bloom_sup_types - {"concept_matching"})
+        all_active_types = {"fill_in_the_blank", "open_ended", "fib", "multiple_select"} | bloom_sup_types
+
         for cid, qlist in q_by_comp.items():
-            is_skill = comp_cat.get(cid) == "Skill" or str(cid).lower().startswith("hab")
+            is_skill = str(comp_cat.get(cid) or "").lower() == "skill" or str(cid).lower().startswith("hab")
+            qtypes_c = [str(q.get("interaction_type") or q.get("type") or "").lower().strip() for q in qlist]
             if is_skill and len(qlist) >= 10:
                 has_active_prod = any(
                     ("fill_in_the_blank" in qt or "open_ended" in qt or qt in active_prod_types)
-                    for qt in (str(q.get("interaction_type") or q.get("type") or "").lower().strip() for q in qlist)
+                    for qt in qtypes_c
                 )
                 if not has_active_prod:
                     recognition_only_skills.append(cid)
+
+            c_total = len(qlist)
+            c_mc7 = sum(1 for qt in qtypes_c if "multiple_choice" in qt or qt in ("mc", "mc7"))
+            c_active = sum(
+                1 for qt in qtypes_c
+                if ("fill_in_the_blank" in qt or "open_ended" in qt or "multiple_select" in qt or qt in all_active_types)
+            )
+            c_active_pct = round((c_active / c_total * 100.0) if c_total else 0.0, 2)
+
+            if is_skill and c_mc7 > 0:
+                skill_mc7_violations.append(cid)
+                if is_m20_course:
+                    first_mc7_id = next(
+                        (
+                            q.get("id", cid)
+                            for q, qt in zip(qlist, qtypes_c)
+                            if "multiple_choice" in qt or qt in ("mc", "mc7")
+                        ),
+                        cid,
+                    )
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="critical",
+                        item_id=first_mc7_id,
+                        competency_id=cid,
+                        message=(
+                            f"[M20-MC7-CAP] Competencia Skill '{cid}' contiene {c_mc7}/{c_total} reactivos "
+                            f"de opción múltiple (MC7); M20 exige estrictamente 0 MC7 en competencias Skill."
+                        ),
+                    ))
+
+            below_active_quota = (c_total >= 5 and c_active_pct < 80.0) or (c_total == 4 and c_active_pct < 75.0)
+            if below_active_quota:
+                low_active_quota_competencies.append(cid)
+                if is_m20_course:
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="warning",
+                        item_id=qlist[0].get("id", cid) if qlist else cid,
+                        competency_id=cid,
+                        message=(
+                            f"[M20-ACTIVE-QUOTA] Competencia '{cid}' alcanza solo {c_active}/{c_total} "
+                            f"({c_active_pct:.1f}%) en modalidades activas (mínimo requerido >= 80% en M20)."
+                        ),
+                    ))
 
         if total_q >= 20 and fib_count == 0 and ms_count == 0 and bloom_superior_count == 0:
             issues.append(LintIssue(
@@ -1332,6 +1390,11 @@ class RetrievalModalityDiversityLinter(BaseLinter):
             "active_generation_or_discrimination_pct": round((active_total / total_q * 100.0) if total_q else 0.0, 2),
             "recognition_only_skill_competencies_count": len(recognition_only_skills),
             "recognition_only_skill_competencies": recognition_only_skills[:20],
+            "m20_contract_active": is_m20_course,
+            "skill_mc7_violations_count": len(skill_mc7_violations),
+            "skill_mc7_violations": skill_mc7_violations[:20],
+            "low_active_quota_competencies_count": len(low_active_quota_competencies),
+            "low_active_quota_competencies": low_active_quota_competencies[:20],
         }
 
 

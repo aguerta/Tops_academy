@@ -326,9 +326,15 @@ def _sanitize_m20_judge_item(
                     if isinstance(r, dict)
                 ]
         else:
-            for key in ("inputs", "predicates", "claim", "computed_readouts"):
+            for key in ("inputs", "claim", "computed_readouts"):
                 if key in adv:
                     blind_adv[key] = adv[key]
+            if isinstance(adv.get("predicates"), list):
+                blind_adv["predicates"] = [
+                    {pk: pr[pk] for pk in ("id", "expr", "description") if pk in pr}
+                    for pr in adv["predicates"]
+                    if isinstance(pr, dict)
+                ]
             for g_key in ("inputs", "predicates", "trap_predicates"):
                 if g_key in adv:
                     gt_record[g_key] = adv[g_key]
@@ -1528,11 +1534,14 @@ def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tu
                 for inp in (gt.get("inputs") or []):
                     if not isinstance(inp, dict):
                         continue
-                    iname = str(inp.get("name") or "")
-                    if iname not in u_w:
+                    iname = str(inp.get("id") or inp.get("name") or "")
+                    if not iname or iname not in u_w or isinstance(u_w[iname], bool):
                         bounds_ok = False
                         break
                     val_f = float(u_w[iname])
+                    if str(inp.get("type") or "").strip().lower() == "integer" and abs(val_f - round(val_f)) > 1e-6:
+                        bounds_ok = False
+                        break
                     if inp.get("min") is not None and val_f < float(inp["min"]) - 1e-6:
                         bounds_ok = False
                         break
@@ -1602,10 +1611,8 @@ def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tu
             if u_sets != gt_sets:
                 return False, "invariant_canvas tree required_info_sets mismatch"
             return True, ""
-        u_ts = dict(ans.get("target_state") if isinstance(ans.get("target_state"), dict) else ans)
-        gt_ts = dict(ca.get("target_state") if isinstance(ca.get("target_state"), dict) else {})
-        # Bidirectional alias normalization so style/shade and inequalityStyle/inequalityShade match seamlessly
-        for d_obj in (u_ts, gt_ts):
+        def _norm_cart_state(d_raw: Dict[str, Any]) -> Dict[str, Any]:
+            d_obj = dict(d_raw)
             if "style" in d_obj and "inequalityStyle" not in d_obj:
                 d_obj["inequalityStyle"] = d_obj["style"]
             elif "inequalityStyle" in d_obj and "style" not in d_obj:
@@ -1614,12 +1621,36 @@ def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tu
                 d_obj["inequalityShade"] = d_obj["shade"]
             elif "inequalityShade" in d_obj and "shade" not in d_obj:
                 d_obj["shade"] = d_obj["inequalityShade"]
+            reserved = {
+                "points",
+                "sliders",
+                "inequalityStyle",
+                "inequalityShade",
+                "style",
+                "shade",
+                "mode",
+                "invariants_count",
+            }
+            pts = dict(d_obj["points"]) if isinstance(d_obj.get("points"), dict) else {}
+            flat_keys = [
+                k for k, v in d_obj.items()
+                if k not in reserved and isinstance(v, dict) and ("x" in v or "y" in v)
+            ]
+            if flat_keys or "points" in d_obj:
+                for fk in flat_keys:
+                    pts[fk] = d_obj.pop(fk)
+                d_obj["points"] = pts
+            return d_obj
+
+        u_ts = _norm_cart_state(ans.get("target_state") if isinstance(ans.get("target_state"), dict) else ans)
+        gt_ts = _norm_cart_state(ca.get("target_state") if isinstance(ca.get("target_state"), dict) else {})
+        invs = gt.get("invariants") if isinstance(gt.get("invariants"), list) else []
         if gt_ts and "invariants_count" not in gt_ts:
             if _values_approx_equal(u_ts, gt_ts, tol=0.05):
                 return True, ""
-            return False, f"invariant_canvas target_state mismatch: got {u_ts}, expected {gt_ts}"
-        # Fallback check against extracted cartesian invariants when explicit target_state was omitted
-        invs = gt.get("invariants") if isinstance(gt.get("invariants"), list) else []
+            if not invs:
+                return False, f"invariant_canvas target_state mismatch: got {u_ts}, expected {gt_ts}"
+        # Fallback check against extracted cartesian invariants when explicit target_state was omitted or differed
         for inv in invs:
             if not isinstance(inv, dict):
                 continue
@@ -1630,14 +1661,34 @@ def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tu
                     return False, f"Expected inequalityStyle={inv['expected_style']}"
                 if inv.get("expected_shade") and _normalize_str(u_ts.get("inequalityShade")) != _normalize_str(inv["expected_shade"]):
                     return False, f"Expected inequalityShade={inv['expected_shade']}"
-            elif kind in ("point_coords", "kink_at"):
-                pid = str(inv.get("target") or inv.get("point_id") or "")
+            elif kind == "point_coords":
+                pid = str(inv.get("point_id") or inv.get("target") or "")
                 tx = inv.get("target_x") if inv.get("target_x") is not None else inv.get("x")
                 ty = inv.get("target_y") if inv.get("target_y") is not None else inv.get("y")
                 pts_map = u_ts.get("points") if isinstance(u_ts.get("points"), dict) else {}
                 u_pt = pts_map.get(pid) if pid in pts_map else (next(iter(pts_map.values())) if len(pts_map) == 1 else None)
-                if not (isinstance(u_pt, dict) and _values_approx_equal(u_pt, {"x": tx, "y": ty}, tol=tol_inv)):
+                if not isinstance(u_pt, dict):
                     return False, f"Expected point '{pid}' at ({tx}, {ty})"
+                if tx is not None and not _values_approx_equal(u_pt.get("x"), tx, tol=tol_inv):
+                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
+                if ty is not None and not _values_approx_equal(u_pt.get("y"), ty, tol=tol_inv):
+                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
+            elif kind == "kink_at":
+                pts_map = u_ts.get("points") if isinstance(u_ts.get("points"), dict) else {}
+                raw_pid = inv.get("point_id")
+                if not raw_pid and isinstance(inv.get("target"), str) and inv["target"] in pts_map:
+                    raw_pid = inv["target"]
+                if raw_pid:
+                    pid = str(raw_pid)
+                    tx = inv.get("target_x") if inv.get("target_x") is not None else inv.get("x")
+                    ty = inv.get("target_y") if inv.get("target_y") is not None else inv.get("y")
+                    u_pt = pts_map.get(pid) if pid in pts_map else (next(iter(pts_map.values())) if len(pts_map) == 1 else None)
+                    if not isinstance(u_pt, dict):
+                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
+                    if tx is not None and not _values_approx_equal(u_pt.get("x"), tx, tol=tol_inv):
+                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
+                    if ty is not None and not _values_approx_equal(u_pt.get("y"), ty, tol=tol_inv):
+                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
             elif kind == "slider_eq":
                 sid = str(inv.get("slider_id") or "")
                 t_val = inv.get("target") if inv.get("target") is not None else (inv.get("target_value") if inv.get("target_value") is not None else inv.get("expected"))

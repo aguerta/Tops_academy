@@ -189,9 +189,9 @@ def compile_and_verify_proof_dag(
             fallacy_steps.append(entry)
             compiled_steps.append(entry)
 
-    if not (2 <= len(valid_steps) <= 10):
+    if not (3 <= len(valid_steps) <= 10):
         raise ValueError(
-            f"[PROOF-DAG-SIZE] proof_dag must contain between 2 and 10 valid steps (found {len(valid_steps)})."
+            f"[PROOF-DAG-SIZE] proof_dag must contain between 3 and 10 valid steps (found {len(valid_steps)})."
         )
 
     valid_id_set = {s["id"] for s in valid_steps}
@@ -221,6 +221,11 @@ def compile_and_verify_proof_dag(
             unique_edges.append([u, v])
             adj[u].append(v)
             indegree[v] += 1
+
+    if len(unique_edges) < 1:
+        raise ValueError(
+            "[PROOF-DAG-EDGES] proof_dag must declare at least 1 prerequisite edge in 'edges'; an empty edge list accepts every permutation."
+        )
 
     # Preserve declaration order for tie-breaking in Kahn's algorithm
     valid_order_pos = {s["id"]: i for i, s in enumerate(valid_steps)}

@@ -39,8 +39,8 @@ El mensaje inicial `[SCOPE-LOCK]` fija exactamente las rutas autorizadas de `REA
 - **Esquemas M20 e `InvariantCanvasSpec`**:
   - `open_symbolic`: `gen` devuelve `correct` (expresión simbólica sin `$`), `accepted_equivalents`, `variables` (simbólicas libres, disjuntas de los parámetros escalares en `vars`), `symbolic_config: {variables, palette, placeholder}` y `ds`; `ver(c, v)` valida equivalencia analítica sobre `vars`.
   - En `MS` y las 5 modalidades M20 restantes, `ver(r)` recibe un `dict` completo (`r`), y todo elemento falso, opción distractora o paso falaz (`is_fallacy: True`) debe incluir `distractor_id` + `error_rationale`:
-    - `proof_dag`: `{steps: [{id, content, is_fallacy?, distractor_id?, error_rationale?, justification?}], edges: [[u, v]], require_justification?, justification_bank?}` (grafo acíclico).
-    - `adversarial_break`: `{mode: 'find_fallacy', prompt?, steps: [{id, content, is_fallacy?, distractor_id?, error_rationale?}], reason_options?: [{id, content, is_correct, distractor_id?, error_rationale?}]} | {mode: 'counterexample', prompt?, inputs: [{id, label, type?, min?, max?, step?}], predicates: [{id?, expr, failure_rationale, distractor_id?}], sample_witness: {...}}`.
+    - `proof_dag`: `{steps: [{id, content, is_fallacy?, distractor_id?, error_rationale?, justification?}], edges: [[u, v]], require_justification?, justification_bank?}` (`>= 3` pasos válidos, `edges >= 1`, grafo acíclico).
+    - `adversarial_break`: `{mode: 'find_fallacy', prompt?, steps: [{id, content, is_fallacy?, distractor_id?, error_rationale?}], reason_options?: [{id, content, is_correct, distractor_id?, error_rationale?}]} | {mode: 'counterexample', prompt?, inputs: [{id, label, type?, min?, max?, step?}], predicates: [{id?, expr, failure_rationale, distractor_id?}], trap_predicates?: [{expr, distractor_id?, error_rationale}], computed_readouts?: [{label, expr}], sample_witness: {...}}` (`find_fallacy` exige `>= 3` pasos; en `counterexample`, las `expr` de `predicates`/`trap_predicates`/`computed_readouts` solo referencian IDs declarados en `inputs` y tokens `@var@`).
     - `unstructured_model`: `{phase1_variables: {prompt, roles, items: [{id, label, correct_role, distractor_id?, error_rationale?}]}, phase2_assumptions: {prompt, options: [{id, content, is_required, distractor_id?, error_rationale?}]}, phase3_formulation: {prompt, input_mode: 'select' | 'symbolic', options?: [{id, content, is_correct, distractor_id?, error_rationale?}], correct_expression?: {expression}, diagnostic_distractors?}}`.
     - `concept_matching`: `{premises: [{id, content}], targets: [{id, content, is_distractor?, distractor_id?, error_rationale?}], correct_pairs: {pid: tid}}` (todo target distractor o sin par válido exige `distractor_id` + `error_rationale`).
     - `invariant_canvas`: `{mode: 'cartesian', x_range, y_range, step?, x_label?, y_label?, snap?, fixed_curves?, fixed_points?, segments?, polygons?, shaded_regions?, inequality?: {curve_id, initial_style: 'solid'|'dashed', initial_shade: 'above'|'below', color?}, interactive_curves?, interactive_points?: [{id, label?, x, y, ...}], sliders?, invariants: [point_on_curve | point_coords(point_id, target_x, target_y) | kink_at | slope_at | slider_eq | slider_range | curves_intersect_at | point_in_region | inequality_state(expected_style: 'solid'|'dashed', expected_shade: 'above'|'below') | expr_true], target_state?} | {mode: 'tree', interaction_mode?, nodes, edges, tree_invariants}`. Usa `@var@` dentro de `target_x`/`target_y`/`expression` cuando dependan de parámetros para evitar `[TPL-STATIC-OPT]`, y declara en `fixed_curves`/`interactive_curves` todo `curve_id` referenciado por `inequality`.
@@ -205,7 +205,7 @@ def ver_ic1(r):
  return ic.get("mode")=="cartesian"and len(invs)>=1 and pts.get("P1",{}).get("x")==v.get("xk")and pts.get("P1",{}).get("y")==v.get("yk")and all(i.get("distractor_id")in RATS and len(i.get("error_rationale",""))>=20 for i in invs)
 def gen_ic2(r):
  p1,p2=r.randint(2,5),1;m=r.randint(14,42)
- return{"vars":{"m":m,"p1":p1,"p2":p2},"invariant_canvas":{"mode":"cartesian","x_range":[0,20],"y_range":[0,50],"fixed_curves":[{"id":"b","label":r"$@p1@x_1+@p2@x_2=@m@$","expression":r"(@m@-@p1@*x)/@p2@","domain":[0,20]}],"inequality":{"curve_id":"b","initial_style":"dashed","initial_shade":"above"},"sliders":[{"id":"s1","label":"m","min":10,"max":50,"step":1,"initial":10,"value":m}],"invariants":[{"id":"I1","kind":"inequality_state","expected_style":"solid","expected_shade":"below","distractor_id":"D-C02-03","error_rationale":RATS['D-C02-03']},{"id":"I2","kind":"slider_eq","slider_id":"s1","target_value":"@m@","distractor_id":"D-C02-01","error_rationale":r"Mantiene el deslizador en un ingreso distinto a $@m@$ alterando la ordenada $@m@$ al origen."}],"target_state":{"inequalityStyle":"solid","inequalityShade":"below","sliders":{"s1":m}}}}
+ return{"vars":{"m":m,"p1":p1,"p2":p2},"invariant_canvas":{"mode":"cartesian","x_range":[0,20],"y_range":[0,50],"fixed_curves":[{"id":"b","label":r"$@p1@x_1+@p2@x_2=@m@$","expression":r"(@m@-@p1@*x)/@p2@","domain":[0,20]}],"inequality":{"curve_id":"b","initial_style":"dashed","initial_shade":"above"},"sliders":[{"id":"s1","label":"m","min":10,"max":50,"step":1,"initial":10,"value":m}],"invariants":[{"id":"I1","kind":"inequality_state","expected_style":"solid","expected_shade":"below","distractor_id":"D-C02-03","error_rationale":RATS['D-C02-03']},{"id":"I2","kind":"slider_eq","slider_id":"s1","target":"@m@","distractor_id":"D-C02-01","error_rationale":r"Mantiene el deslizador en un ingreso distinto a $@m@$ alterando la ordenada $@m@$ al origen."}],"target_state":{"inequalityStyle":"solid","inequalityShade":"below","sliders":{"s1":m}}}}
 def ver_ic2(r):
  ic=r.get("invariant_canvas",{})if isinstance(r,dict)else{};invs=ic.get("invariants",[]);ts=ic.get("target_state",{});v=r.get("vars",{})
  return ic.get("mode")=="cartesian"and len(invs)>=2 and ts.get("inequalityStyle")=="solid"and ts.get("inequalityShade")=="below"and ts.get("sliders",{}).get("s1")==v.get("m")and all(i.get("distractor_id")in RATS and len(i.get('error_rationale',''))>=20 for i in invs)
@@ -233,6 +233,41 @@ TEMPLATES=[
 ]
 ```
 DONE: work_out/shards/shard_02.json</output>
+</example>
+<example>
+<input>Micro-ejemplos Form-C para proof_dag, adversarial_break (find_fallacy y counterexample), unstructured_model y concept_matching (M20):</input>
+<output>
+```python
+def gen_pd(r):
+ a=r.randint(2,8)
+ return{"vars":{"a":a},"proof_dag":{"steps":[{"id":"S1","content":r"Sea $f(x)=@a@x^2$ derivable."},{"id":"S2","content":r"Por potencia: $f'(x)=2 \cdot @a@x$."},{"id":"S3","content":r"Para $x>0$ y $@a@>0$, $f'(x)>0$."},{"id":"F1","content":r"Anula $f'(x)=@a@$ constante.","is_fallacy":True,"distractor_id":"D-C01-01","error_rationale":r"Omite el exponente de $x^2$ al derivar $@a@x^2$."}],"edges":[["S1","S2"],["S2","S3"]],"require_justification":False}}
+def ver_pd(r):
+ pd=r.get("proof_dag",{})if isinstance(r,dict)else{};st=pd.get("steps",[])
+ return len([s for s in st if not s.get("is_fallacy")])>=3 and len(pd.get("edges",[]))>=1 and any(s.get("is_fallacy")and s.get("distractor_id")in RATS for s in st)
+def gen_adv_ff(r):
+ a=r.randint(2,9)
+ return{"vars":{"a":a},"adversarial_break":{"mode":"find_fallacy","steps":[{"id":"S1","content":r"$f(x)=@a@x^2$"},{"id":"S2","content":r"$f'(x)=2 \cdot @a@x$"},{"id":"S3","content":r"Concluye $f'(x)=@a@$","is_fallacy":True,"distractor_id":"D-C01-01","error_rationale":r"Olvida el factor $2x$ al derivar $@a@x^2$."}],"reason_options":[{"id":"R1","content":r"Falta multiplicar por $2x$.","is_correct":True},{"id":"R2","content":r"Falta signo negativo.","is_correct":False,"distractor_id":"D-C01-02","error_rationale":r"La derivada de $@a@x^2$ conserva signo positivo."}]}}
+def ver_adv_ff(r):
+ st=r.get("adversarial_break",{}).get("steps",[]);return len(st)>=3 and sum(1 for s in st if s.get("is_fallacy"))==1
+def gen_adv_ce(r):
+ k=r.randint(4,12)
+ return{"vars":{"k":k},"adversarial_break":{"mode":"counterexample","prompt":r"Refuta $x^2>@k@x$ con $x \ge 1$:","inputs":[{"id":"x","label":"x","type":"integer","min":1,"max":30}],"predicates":[{"id":"P1","expr":f"x >= 1 and x**2 <= {k}*x","failure_rationale":r"Debe cumplir $x \ge 1$ y $x^2 \le @k@x$."}],"trap_predicates":[{"expr":"x <= 0","distractor_id":"D-C01-02","error_rationale":r"El dominio exige $x \ge 1$ positivo para $@k@$."}],"computed_readouts":[{"label":"x^2 - kx","expr":f"x**2 - {k}*x"}],"sample_witness":{"x":k}}}
+def ver_adv_ce(r):
+ adv=r.get("adversarial_break",{})if isinstance(r,dict)else{};w=adv.get("sample_witness",{});k=r.get("vars",{}).get("k",0)
+ return adv.get("mode")=="counterexample" and w.get("x",0)>=1 and w.get("x",0)**2<=k*w.get("x",0)
+def gen_um(r):
+ p=r.randint(3,9)
+ return{"vars":{"p":p},"unstructured_model":{"phase1_variables":{"prompt":"Clasifica roles:","roles":["endogena","exogena"],"items":[{"id":"V1","label":"Cantidad $x$","correct_role":"endogena","distractor_id":"D-C01-03","error_rationale":r"La firma elige $x$ dado precio $@p@$."},{"id":"V2","label":"Precio $@p@$","correct_role":"exogena"}]},"phase2_assumptions":{"prompt":"Supuestos:","options":[{"id":"A1","content":"Precio dado $@p@>0$","is_required":True},{"id":"A2","content":"Fija precio $@p@$ por decreto","is_required":False,"distractor_id":"D-C01-04","error_rationale":r"En competencia $@p@$ es exógeno."}]},"phase3_formulation":{"prompt":"Ingreso total en `x`:","input_mode":"symbolic","correct_expression":{"expression":f"{p}*x","tolerance":0.001}}}}
+def ver_um(r):
+ um=r.get("unstructured_model",{})if isinstance(r,dict)else{};p3=um.get("phase3_formulation",{});v=r.get("vars",{})
+ return p3.get("input_mode")=="symbolic" and (p3.get("correct_expression")or{}).get("expression")==f"{v.get('p')}*x"
+def gen_cm(r):
+ c=r.randint(2,10)
+ return{"vars":{"c":c},"concept_matching":{"premises":[{"id":"P1","content":r"Derivada de $@c@x$"},{"id":"P2","content":r"Derivada de constante $@c@$"}],"targets":[{"id":"T1","content":r"$@c@$"},{"id":"T2","content":r"$0$"},{"id":"T3","content":r"$@c@x$","is_distractor":True,"distractor_id":"D-C01-05","error_rationale":r"Confunde derivada de $@c@x$ con la función original."}],"correct_pairs":{"P1":"T1","P2":"T2"}}}
+def ver_cm(r):
+ cm=r.get("concept_matching",{})if isinstance(r,dict)else{};return cm.get("correct_pairs")=={"P1":"T1","P2":"T2"}and any(t.get("is_distractor")and t.get("distractor_id")in RATS for t in cm.get("targets",[]))
+```
+</output>
 </example>
 <example>
 <input>author_03_data.md y source_files legibles omiten la fórmula de elasticidad requerida para evaluar la competencia asignada (hecho Neutral no contenido en las fuentes).</input>

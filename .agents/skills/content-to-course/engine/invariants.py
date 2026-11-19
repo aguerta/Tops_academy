@@ -1303,7 +1303,7 @@ def check_instance_invariants(
 
         if corr_expr_str and isinstance(stem, str):
             clean_cand_fib = corr_expr_str.strip().strip("$").strip()
-            if clean_cand_fib:
+            if clean_cand_fib and len(clean_cand_fib) > 1 and not clean_cand_fib.isdigit():
                 leak_pat_fib = re.compile(
                     rf"(?:=\s*|\bes\s+(?:igual\s+a\s+)?)\$?{re.escape(clean_cand_fib)}\$?(?=[^0-9a-zA-Z]|$)",
                     re.IGNORECASE,
@@ -1417,9 +1417,12 @@ def check_instance_invariants(
                         valid_ids.add(sid)
                         if req_just and not str(st.get("justification") or "").strip():
                             errors.append(f"proof_dag step '{sid}' missing required 'justification'.")
-                if not (2 <= len(valid_ids) <= 10):
-                    errors.append(f"proof_dag must have 2 to 10 valid steps (found {len(valid_ids)}).")
-                for e_idx, edge in enumerate(dag.get("edges") or []):
+                if not (3 <= len(valid_ids) <= 10):
+                    errors.append(f"proof_dag must have 3 to 10 valid steps (found {len(valid_ids)}).")
+                raw_dag_edges = dag.get("edges") or []
+                if not isinstance(raw_dag_edges, list) or len(raw_dag_edges) < 1:
+                    errors.append("proof_dag.edges must declare at least 1 prerequisite edge.")
+                for e_idx, edge in enumerate(raw_dag_edges):
                     if not isinstance(edge, (list, tuple)) or len(edge) != 2:
                         errors.append(f"proof_dag.edges[{e_idx}] must be a 2-element pair.")
                     elif str(edge[0]) not in valid_ids or str(edge[1]) not in valid_ids:
@@ -1434,8 +1437,8 @@ def check_instance_invariants(
             mode = adv.get("mode")
             if mode == "find_fallacy":
                 steps = adv.get("steps") or []
-                if len(steps) < 2:
-                    errors.append("adversarial_break find_fallacy requires >= 2 steps.")
+                if len(steps) < 3:
+                    errors.append("adversarial_break find_fallacy requires >= 3 steps.")
                 fallacy_cnt = 0
                 for s_idx, st in enumerate(steps):
                     if not isinstance(st, dict):

@@ -246,8 +246,8 @@ def compile_and_verify_adversarial(
 
     if mode == "find_fallacy":
         raw_steps = raw_adv.get("steps")
-        if not isinstance(raw_steps, list) or len(raw_steps) < 2:
-            raise ValueError("[ADV-STEPS] find_fallacy mode requires at least 2 derivation steps.")
+        if not isinstance(raw_steps, list) or len(raw_steps) < 3:
+            raise ValueError("[ADV-STEPS] find_fallacy mode requires at least 3 derivation steps.")
 
         compiled_steps: List[Dict[str, Any]] = []
         fallacy_ids: List[str] = []
@@ -403,9 +403,6 @@ def compile_and_verify_adversarial(
 
     compiled_inputs: List[Dict[str, Any]] = []
     witness_scope: Dict[str, float] = {}
-    for k, v in vars_dict.items():
-        if isinstance(v, (int, float)) and not isinstance(v, bool):
-            witness_scope[str(k)] = float(v)
 
     for idx, inp in enumerate(raw_inputs):
         if not isinstance(inp, dict):
@@ -422,6 +419,8 @@ def compile_and_verify_adversarial(
             raise ValueError(f"[ADV-WITNESS-TYPE] sample_witness['{iid}'] must be numeric.") from exc
         if not math.isfinite(w_val):
             raise ValueError(f"[ADV-WITNESS-FINITE] sample_witness['{iid}'] must be finite.")
+        if str(inp.get("type") or "").strip().lower() == "integer" and abs(w_val - round(w_val)) > 1e-6:
+            raise ValueError(f"[ADV-WITNESS-TYPE] sample_witness['{iid}'] must be an integer.")
 
         inp_min = _coerce_num(inp.get("min"), vars_dict, format_fn)
         inp_max = _coerce_num(inp.get("max"), vars_dict, format_fn)
@@ -435,6 +434,8 @@ def compile_and_verify_adversarial(
             "id": iid,
             "label": _format_text(inp.get("label") or iid, vars_dict, format_fn, sanitize_fn),
         }
+        if inp.get("type") in ("integer", "number"):
+            c_inp["type"] = inp["type"]
         if inp.get("placeholder") is not None:
             c_inp["placeholder"] = _format_text(inp.get("placeholder"), vars_dict, format_fn, sanitize_fn)
         if inp_min is not None:
