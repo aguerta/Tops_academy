@@ -62,7 +62,7 @@ def _render_katex_raw(math_content: str, is_display: bool) -> Tuple[bool, Option
             formatted_err = clean_msg
         return False, formatted_err
 
-    strict_mode = getattr(pykatex, "STRICT_IGNORE", "ignore")
+    strict_mode = getattr(pykatex, "STRICT_ERROR", "error")
     with _KATEX_LOCK:
         try:
             pykatex.renderToString(math_content, is_display, strict=strict_mode)

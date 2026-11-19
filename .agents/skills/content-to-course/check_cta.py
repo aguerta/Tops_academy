@@ -47,8 +47,9 @@ def _validate_pykatex_math_span(span: str, is_display: bool = False) -> Optional
     """Render math span using pykatex, safely sanitizing combining characters on ParseError."""
     if not pykatex or not span:
         return None
+    strict_mode = getattr(pykatex, "STRICT_ERROR", "error")
     try:
-        pykatex.renderToString(span, is_display)
+        pykatex.renderToString(span, is_display, strict=strict_mode)
         return None
     except Exception as exc:
         # 1. Non-ASCII accented Latin characters inside \text{}, \textrm{}, \mathrm{} are supported by web KaTeX
@@ -57,7 +58,7 @@ def _validate_pykatex_math_span(span: str, is_display: bool = False) -> Optional
                 ch for ch in unicodedata.normalize("NFD", span) if unicodedata.category(ch) != "Mn"
             )
             try:
-                pykatex.renderToString(ascii_span, is_display)
+                pykatex.renderToString(ascii_span, is_display, strict=strict_mode)
                 return None
             except Exception:
                 pass
@@ -65,7 +66,7 @@ def _validate_pykatex_math_span(span: str, is_display: bool = False) -> Optional
         if re.search(r"(?<![a-zA-Z\\])\{[a-zA-Z0-9_]{1,6}\}", span):
             fallback_span = re.sub(r"(?<![a-zA-Z\\])\{([a-zA-Z0-9_]{1,6})\}", r"\1", span)
             try:
-                pykatex.renderToString(fallback_span, is_display)
+                pykatex.renderToString(fallback_span, is_display, strict=strict_mode)
                 return None
             except Exception:
                 pass

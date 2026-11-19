@@ -34,8 +34,9 @@ def _is_valid_katex_span(span: str, is_display: bool = False) -> bool:
     """Validates math span with pykatex if available, replacing unicode combining characters."""
     if pykatex is None:
         return True
+    strict_mode = getattr(pykatex, "STRICT_ERROR", "error")
     try:
-        pykatex.renderToString(span, is_display)
+        pykatex.renderToString(span, is_display, strict=strict_mode)
         return True
     except Exception:
         if re.search(r"[^\x00-\x7F]", span):
@@ -43,7 +44,7 @@ def _is_valid_katex_span(span: str, is_display: bool = False) -> bool:
                 ch for ch in unicodedata.normalize("NFD", span) if unicodedata.category(ch) != "Mn"
             )
             try:
-                pykatex.renderToString(ascii_span, is_display)
+                pykatex.renderToString(ascii_span, is_display, strict=strict_mode)
                 return True
             except Exception:
                 pass
