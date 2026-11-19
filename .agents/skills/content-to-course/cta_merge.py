@@ -66,6 +66,14 @@ except ImportError:
         def record_patch(*args: Any, **kwargs: Any) -> Any:
             pass
 
+try:
+    from .engine.stage_contract import MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY
+except ImportError:
+    try:
+        from engine.stage_contract import MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY
+    except ImportError:
+        _MAX_MODALITIES_PER_COMPETENCY = 4
+
 
 logger = logging.getLogger("cta_merge")
 
@@ -2254,12 +2262,23 @@ def apply_harmonize(
                     ))
                     comp_survivor["source_examples"] = merged_examples
 
-                # Unify CTA Architect recommended_modalities if present
+                # Unify CTA Architect recommended_modalities if present (preserving survivor order, capped at <= MAX)
                 if comp_survivor.get("recommended_modalities") or comp_absorbed.get("recommended_modalities"):
                     merged_mods = list(dict.fromkeys(
                         list(comp_survivor.get("recommended_modalities") or [])
                         + list(comp_absorbed.get("recommended_modalities") or [])
                     ))
+                    if len(merged_mods) > _MAX_MODALITIES_PER_COMPETENCY:
+                        dropped_mods = merged_mods[_MAX_MODALITIES_PER_COMPETENCY:]
+                        merged_mods = merged_mods[:_MAX_MODALITIES_PER_COMPETENCY]
+                        logger.info(
+                            "Truncating merged recommended_modalities for survivor '%s' (absorbed '%s') to %d entries: kept=%s, dropped=%s",
+                            root,
+                            absorbed_id,
+                            _MAX_MODALITIES_PER_COMPETENCY,
+                            merged_mods,
+                            dropped_mods,
+                        )
                     if merged_mods:
                         comp_survivor["recommended_modalities"] = merged_mods
 

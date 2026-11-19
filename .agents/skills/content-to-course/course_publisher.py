@@ -338,8 +338,8 @@ def _resolve_linter_remediation(
             f"ZPD-TRI-BAND / {linter_name}",
             f"Cobertura incompleta de bandas ZPD (`easy`, `medium`, `hard`), arquetipos estructurales (< 3), niveles de Bloom o modalidades activas en `{cid}` ({file_label}).",
             (
-                f"En `{file_label}` ({line_range_label}), define al menos 3 tuplas ortogonales en `TEMPLATES` para `{cid}` cubriendo "
-                f"`('easy', ...)`, `('medium', ...)`, `('hard', ...)` con >= 2 niveles de Bloom, enunciados estructuralmente distintos y la cuota de `fill_in_the_blank` / `multiple_select`."
+                f"En `{file_label}` ({line_range_label}), define al menos 4 tuplas ortogonales en `TEMPLATES` para `{cid}` cubriendo "
+                f"`('easy', ...)`, `('medium', ...)`, `('hard', ...)` con >= 2 niveles de Bloom, enunciados estructuralmente distintos y las modalidades recomendadas por el CTA (M20 / FIB / MS / MC7)."
             ),
         )
 

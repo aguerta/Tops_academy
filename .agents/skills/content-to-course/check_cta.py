@@ -24,6 +24,14 @@ if str(_skills_root) not in sys.path:
     sys.path.insert(0, str(_skills_root))
 
 from engine.invariants import validate_katex_syntax
+try:
+    from engine.stage_contract import (
+        MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+        MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+    )
+except ImportError:
+    _MIN_MODALITIES_PER_COMPETENCY = 2
+    _MAX_MODALITIES_PER_COMPETENCY = 4
 
 try:
     import pykatex
@@ -706,6 +714,19 @@ def check_cta_katex(
     return list(dict.fromkeys(errors))
 
 
+_VALID_RECOMMENDED_MODALITIES = frozenset({
+    "multiple_choice_7_options",
+    "multiple_select",
+    "fill_in_the_blank",
+    "open_symbolic",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+})
+
+
 def _validate_competencies_rules(
     competencies: List[Dict[str, Any]],
     manifest_data: Optional[Dict[str, Any]] = None,
@@ -713,6 +734,7 @@ def _validate_competencies_rules(
     is_part: bool = False,
     locator: Optional[JsonLineLocator] = None,
     require_assumptions: bool = False,
+    require_modalities: bool = True,
     warnings: Optional[List[str]] = None,
 ) -> List[str]:
     errors: List[str] = []
@@ -782,6 +804,49 @@ def _validate_competencies_rules(
                 if valid_cnt == 0 and not any("[CTA-ASSUMPTIONS-MISSING]" in e and cid in e for e in errors):
                     errors.append(
                         f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' ({ctype}) requires at least 1 valid assumption (len >= 10)."
+                    )
+
+        rec_mods = comp.get("recommended_modalities")
+        line_no_rm = locator.get_line(cid, "recommended_modalities") if locator else None
+        if not line_no_rm and locator:
+            line_no_rm = locator.get_line(cid)
+        line_tag_rm = f" [Línea {line_no_rm}]" if line_no_rm else ""
+        if rec_mods is None:
+            if require_modalities:
+                errors.append(
+                    f"[CTA-MODALITY-MISSING]{line_tag_rm} Competency '{cid}' requires "
+                    f"{_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} canonical recommended_modalities in contract v2."
+                )
+        elif not isinstance(rec_mods, list):
+            errors.append(
+                f"[CTA-MODALITY-INVALID]{line_tag_rm} Competency '{cid}' recommended_modalities must be a list of canonical modality strings."
+            )
+        elif len(rec_mods) == 0:
+            if require_modalities:
+                errors.append(
+                    f"[CTA-MODALITY-MISSING]{line_tag_rm} Competency '{cid}' has empty recommended_modalities; "
+                    f"contract v2 requires {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} canonical modalities."
+                )
+        else:
+            invalid_rm = False
+            for rm in rec_mods:
+                if not isinstance(rm, str) or rm not in _VALID_RECOMMENDED_MODALITIES:
+                    invalid_rm = True
+                    errors.append(
+                        f"[CTA-MODALITY-INVALID]{line_tag_rm} Competency '{cid}' has invalid recommended_modality '{rm}'. "
+                        f"Allowed: {sorted(_VALID_RECOMMENDED_MODALITIES)}"
+                    )
+            if require_modalities and not invalid_rm:
+                unique_rm_count = len(set(m for m in rec_mods if isinstance(m, str)))
+                if unique_rm_count != len(rec_mods):
+                    errors.append(
+                        f"[CTA-MODALITY-RANGE]{line_tag_rm} Competency '{cid}' has duplicate entries in recommended_modalities ({rec_mods}). "
+                        f"Must declare {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} unique canonical modalities."
+                    )
+                if not (_MIN_MODALITIES_PER_COMPETENCY <= len(rec_mods) <= _MAX_MODALITIES_PER_COMPETENCY):
+                    errors.append(
+                        f"[CTA-MODALITY-RANGE]{line_tag_rm} Competency '{cid}' declares {len(rec_mods)} recommended_modalities; "
+                        f"required range is {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY}."
                     )
 
         # Calibrated competency warnings (no hard-fail):
@@ -940,6 +1005,7 @@ def check_cta_part(
     file_path: Optional[Union[str, Path]] = None,
     locator: Optional[JsonLineLocator] = None,
     require_assumptions: bool = False,
+    require_modalities: Optional[bool] = None,
     warnings_out: Optional[List[str]] = None,
 ) -> ValidationResult:
     """Validate sectional CTA part (cta_part_XX.json).
@@ -951,10 +1017,9 @@ def check_cta_part(
     if locator is None:
         locator = JsonLineLocator(file_path)
 
-    eff_require_assumptions = bool(
-        require_assumptions
-        or (isinstance(data, dict) and int(data.get("contract_version", data.get("CTA_CONTRACT_VERSION", 1))) >= 2)
-    )
+    raw_cv = int(data.get("contract_version", data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(data, dict) else 1
+    eff_require_assumptions = bool(require_assumptions or raw_cv >= 2)
+    eff_require_modalities = (raw_cv >= 2) if require_modalities is None else bool(require_modalities)
 
     if isinstance(data, list):
         competencies = data
@@ -983,6 +1048,7 @@ def check_cta_part(
         is_part=True,
         locator=locator,
         require_assumptions=eff_require_assumptions,
+        require_modalities=eff_require_modalities,
         warnings=part_warnings,
     )
     errors.extend(part_errors)
@@ -1004,6 +1070,7 @@ def validate_cta_rules(
     locator: Optional[JsonLineLocator] = None,
     allowed_prereq_ids: Optional[Set[str]] = None,
     require_assumptions: bool = False,
+    require_modalities: Optional[bool] = None,
     warnings_out: Optional[List[str]] = None,
 ) -> ValidationResult:
     """Validate all cognitive and psychometric rules on cta.json."""
@@ -1011,10 +1078,9 @@ def validate_cta_rules(
     if locator is None:
         locator = JsonLineLocator(file_path)
 
-    eff_require_assumptions = bool(
-        require_assumptions
-        or int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) >= 2
-    )
+    raw_cv = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(cta_data, dict) else 1
+    eff_require_assumptions = bool(require_assumptions or raw_cv >= 2)
+    eff_require_modalities = (raw_cv >= 2) if require_modalities is None else bool(require_modalities)
 
     # 1. JSON Schema validation
     schema_errs = validate_cta_schema(cta_data, locator=locator)
@@ -1033,6 +1099,7 @@ def validate_cta_rules(
         is_part=False,
         locator=locator,
         require_assumptions=eff_require_assumptions,
+        require_modalities=eff_require_modalities,
         warnings=comp_warnings,
     )
     errors.extend(comp_errors)
@@ -1077,6 +1144,12 @@ def main():
         default=False,
         help="Require assumptions for Skill and Concept competencies (auto-activated if contract_version >= 2)",
     )
+    parser.add_argument(
+        "--no-require-modalities",
+        action="store_true",
+        default=False,
+        help="Allow omitting recommended_modalities in contract v2 (legacy v1 compatibility)",
+    )
     args = parser.parse_args()
 
     cta_file = Path(args.cta_path).resolve()
@@ -1116,6 +1189,7 @@ def main():
 
     contract_ver = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(cta_data, dict) else 1
     eff_req_assumptions = bool(args.require_assumptions or contract_ver >= 2)
+    eff_req_modalities: Optional[bool] = False if args.no_require_modalities else None
 
     if args.part:
         res = check_cta_part(
@@ -1124,6 +1198,7 @@ def main():
             file_path=cta_file,
             locator=locator,
             require_assumptions=eff_req_assumptions,
+            require_modalities=eff_req_modalities,
         )
         valid, errors = res[0], res[1]
         for w in getattr(res, "warnings", []):
@@ -1142,6 +1217,7 @@ def main():
         file_path=cta_file,
         locator=locator,
         require_assumptions=eff_req_assumptions,
+        require_modalities=eff_req_modalities,
     )
     valid, errors = res[0], res[1]
     for w in getattr(res, "warnings", []):

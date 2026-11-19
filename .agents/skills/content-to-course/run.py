@@ -77,7 +77,16 @@ from dispatch import (
 )
 from engine.assemble import check_course_giveaway_distribution
 from engine.diversity import evaluate_competency_diversity
-from engine.stage_contract import MIN_DIVERSITY_RATIO, is_skill_type, quota_for_type, required_unique_stems, stems_advice, stems_advice_text
+from engine.stage_contract import (
+    DEFAULT_TEMPLATES_PER_MODALITY,
+    MIN_DIVERSITY_RATIO,
+    is_skill_type,
+    quota_for_competency,
+    quota_for_type,
+    required_unique_stems,
+    stems_advice,
+    stems_advice_text,
+)
 from engine.instantiate import instantiate_competency
 from engine.invariants import check_instance_invariants
 from ingest import ingest_course
@@ -381,7 +390,8 @@ class PipelineRunner:
         vision: str = "auto",
         legacy_transcribe: bool = False,
         shards_k: Optional[int] = None,
-        comps_per_shard: int = DEFAULT_COMPS_PER_SHARD,
+        comps_per_shard: Optional[int] = None,
+        templates_per_modality: Optional[int] = None,
         order: Optional[Union[str, List[str]]] = None,
         no_handouts: bool = False,
         cta_mode: str = "auto",
@@ -424,6 +434,7 @@ class PipelineRunner:
         self.legacy_transcribe = legacy_transcribe
         self.shards_k = shards_k
         self.comps_per_shard = comps_per_shard
+        self.templates_per_modality = templates_per_modality
         self.order = order
         self.no_handouts = no_handouts
         if str(cta_mode).strip().lower() in ("multiple", "multi", "map-reduce", "map_reduce"):
@@ -835,7 +846,13 @@ class PipelineRunner:
 
         shards_dir = self.work_dir / "shards"
         shards_dir.mkdir(parents=True, exist_ok=True)
-        res = plan_shards(cta_file, shards_dir, k=self.shards_k, max_comps=self.comps_per_shard)
+        res = plan_shards(
+            cta_file,
+            shards_dir,
+            k=self.shards_k,
+            max_comps=self.comps_per_shard,
+            templates_per_modality=self.templates_per_modality,
+        )
 
         # Verificar que exista work/shards/pre_shard_manifest.json (cero fallbacks)
         pre_shard_file = wait_for_file_resilient(shards_dir / "pre_shard_manifest.json")
@@ -922,9 +939,13 @@ class PipelineRunner:
             pre_shard_manifest_p = self.work_dir / "pre_shard_manifest.json"
 
         shard_to_cids: Dict[str, List[str]] = {}
+        manifest_k: Optional[int] = None
         if pre_shard_manifest_p.is_file():
             try:
                 sm_data = json.loads(pre_shard_manifest_p.read_text(encoding="utf-8"))
+                raw_mk = (sm_data.get("stage4_contract") or {}).get("templates_per_modality") or sm_data.get("templates_per_modality")
+                if raw_mk is not None:
+                    manifest_k = max(1, int(raw_mk))
                 shards_info = sm_data.get("shards", [])
                 if isinstance(shards_info, list):
                     for s in shards_info:
@@ -998,14 +1019,25 @@ class PipelineRunner:
                         print(f"  [i] Skipping compilation for {s_data_p.name} (templates up-to-date).")
                         continue
 
+                eff_k = (
+                    max(1, int(self.templates_per_modality))
+                    if self.templates_per_modality is not None
+                    else (manifest_k if manifest_k is not None else DEFAULT_TEMPLATES_PER_MODALITY)
+                )
                 if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
-                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True, min_archetypes=4)
+                    ok, errs = compile_shard_mod.compile_shard(
+                        self.work_dir,
+                        shard_id=shard_id,
+                        strict=True,
+                        min_archetypes=4,
+                        templates_per_modality=eff_k,
+                    )
                     if not ok:
                         logger.warning("Compilation for %s reported issues: %s", shard_id, errs[:3] if errs else "unknown")
                 elif compile_shard_script.is_file():
                     import subprocess
                     subprocess.run(
-                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "4"],
+                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "4", "--templates-per-modality", str(eff_k)],
                         check=False,
                     )
 
@@ -1320,7 +1352,7 @@ class PipelineRunner:
             course_comp_dict, comp_questions, div_res = comp_results_map[cid]
             course_competencies_output.append(course_comp_dict)
 
-            quota = quota_for_type(cat)
+            quota = quota_for_competency(cat, len(templates_by_comp.get(cid, [])))
             div_ratio = div_res["diversity_ratio"]
             unique_c = div_res["unique_masked"]
             total_c = div_res["total"]
@@ -1678,7 +1710,7 @@ class PipelineRunner:
         lines.append(f"    • Sintaxis KaTeX:           {katex_errs} errores críticos (100% limpio y renderizable)")
         lines.append(f"    • Pistas Socráticas:        {soc_l.get('genuine_socratic_hints_pct', 100.0)}% genuinas (0% boilerplate, 0% envenenadas)")
         lines.append(f"    • Cobertura de Rationales:  {dist_l.get('rationale_coverage_pct', 100.0)}% ({diag_l.get('rationale_uniqueness_pct', 100.0)}% únicos)")
-        lines.append(f"    • Modalidad de Reactivos:   MC7={mod_l.get('mc7_share_pct', 0.0)}%, FIB={mod_l.get('fib_share_pct', 0.0)}%, MS={mod_l.get('ms_share_pct', 0.0)}% ({mod_l.get('active_generation_or_discrimination_pct', 0.0)}% evocación activa)")
+        lines.append(f"    • Modalidad de Reactivos:   MC7={mod_l.get('mc7_share_pct', 0.0)}%, FIB={mod_l.get('fib_share_pct', 0.0)}%, MS={mod_l.get('ms_share_pct', 0.0)}%, M20={mod_l.get('bloom_superior_share_pct', 0.0)}% ({mod_l.get('active_generation_or_discrimination_pct', 0.0)}% evocación activa)")
         lines.append(f"    • Progresión ZPD:           {zpd_l.get('three_band_competencies_count', 0)}/{total_comps} competencias con 3 bandas ('easy', 'medium', 'hard')")
         lines.append(f"    • Bloom Superior en Skills: {zpd_l.get('skill_higher_bloom_pct', 100.0)}% en Apply+")
 
@@ -3293,8 +3325,14 @@ def main() -> None:
     parser.add_argument(
         "--comps-per-shard",
         type=int,
-        default=DEFAULT_COMPS_PER_SHARD,
-        help="Max non-skill competencies per shard (default 3; skills are capped at 2 per shard).",
+        default=None,
+        help="Max non-skill competencies per shard (default 3, or 2 when templates-per-modality >= 3; skills capped at 2 or 1).",
+    )
+    parser.add_argument(
+        "--templates-per-modality",
+        type=int,
+        default=None,
+        help=f"Minimum distinct non-clone templates per recommended modality (default: {DEFAULT_TEMPLATES_PER_MODALITY}).",
     )
     parser.add_argument(
         "--order",
@@ -3376,6 +3414,7 @@ def main() -> None:
         random_seed=args.seed,
         shards_k=args.shards,
         comps_per_shard=args.comps_per_shard,
+        templates_per_modality=args.templates_per_modality,
         order=order_arg,
         cta_mode=args.cta_mode,
         granularity=args.granularity,

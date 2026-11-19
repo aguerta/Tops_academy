@@ -28,7 +28,15 @@ try:
     MIN_ARCHETYPES = _SC_MIN_ARCHETYPES if _SC_MIN_ARCHETYPES >= 4 else 4
 except Exception:
     MIN_ARCHETYPES = 4
-from engine.stage_contract import competency_contract, global_contract, render_contract_tokens  # noqa: E402
+from engine.stage_contract import (  # noqa: E402
+    DEFAULT_TEMPLATES_PER_MODALITY,
+    MAX_MODALITIES_PER_COMPETENCY,
+    MIN_MODALITIES_PER_COMPETENCY,
+    competency_contract,
+    global_contract,
+    render_contract_tokens,
+    required_templates_for_competency,
+)
 
 # =============================================================================
 # SHARD & TEMPLATE SCALING CONFIGURATION
@@ -71,7 +79,10 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
 # Self-contained reference for shard authors so they never read engine code
 DSL_REFERENCE: Dict[str, Any] = {
     "min_archetypes": MIN_ARCHETYPES,
-    "description": "Form-C Quad-Band dicts in TEMPLATES (or 9-tupla legacy) with min_archetypes = 4 (direct, inverse, perturbation, boundary_or_edge_case)",
+    "templates_per_modality": DEFAULT_TEMPLATES_PER_MODALITY,
+    "min_modalities": MIN_MODALITIES_PER_COMPETENCY,
+    "max_modalities": MAX_MODALITIES_PER_COMPETENCY,
+    "description": "Form-C Quad-Band dicts in TEMPLATES (or 9-tupla legacy) with min_archetypes = 4 (direct, inverse, perturbation, boundary_or_edge_case) and N_min = max(4, M * K)",
     "canonical_template_schema": "{'id': '^T-...', 'cid': '...', 'qtype': '...', 'archetype': '...', 'band': (diff, bloom), 'gen': gen_fn, 'ver': ver_fn, 'stem_variants': [...], 'hints': [...], 'sol': '...', 'rats': RATS}",
     "supported_question_types": [
         "multiple_choice_7_options",
@@ -111,18 +122,26 @@ DSL_REFERENCE: Dict[str, Any] = {
             "Toda la información necesaria está embebida en tu archivo de shard asignado."
         ),
         "validation_command": (
-            "python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
+            f"python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4 --templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}"
         ),
         "quotas": (
-            "Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de 4 plantillas paramétricas disjuntas "
-            "(1 por arquetipo bajo contrato Form-C / Form-B, min_archetypes = 4: 'direct', 'inverse', 'perturbation', "
-            "'boundary_or_edge_case', cubriendo >= 2 niveles Bloom). Las modalidades concretas se rigen por las "
-            "'recommended_modalities' decididas por el CTA Architect para cada competencia (o libre criterio epistémico "
-            "del catálogo activo —FIB con 'ds', open_symbolic, MS, MC7, proof_dag, adversarial_break, unstructured_model, "
-            "invariant_canvas, concept_matching— sin cuotas fijas rígidas por tipo de pregunta). "
-            "Si una competencia declara en cta.json más distractores de los que caben en una sola plantilla, "
-            "cubre 100% de distractor_ids mediante 'ds' diagnósticos en FIB/open_symbolic, MS, modalidades Bloom Superior "
-            "o MC7 si forma parte del plan del CTA Architect."
+            f"Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de N_min = max(4, M * K) plantillas paramétricas "
+            f"disjuntas (con K = {DEFAULT_TEMPLATES_PER_MODALITY} por defecto vía --templates-per-modality K, M = len(recommended_modalities) "
+            f"en [{MIN_MODALITIES_PER_COMPETENCY}..{MAX_MODALITIES_PER_COMPETENCY}], cubriendo >= K plantillas distintas por cada modalidad recomendada, "
+            f"los 4 arquetipos Form-C 'direct', 'inverse', 'perturbation', 'boundary_or_edge_case', las 3 bandas easy/medium/hard y >= 2 niveles Bloom). "
+            f"Las modalidades concretas se rigen por las 'recommended_modalities' decididas por el CTA Architect para cada competencia "
+            f"(catálogo activo: FIB con 'ds', open_symbolic, MS, MC7, proof_dag, adversarial_break, unstructured_model, "
+            f"invariant_canvas, concept_matching; sin cuotas fijas rígidas por tipo). "
+            f"Si una competencia declara en cta.json más distractores de los que caben en una sola plantilla, "
+            f"cubre 100% de distractor_ids mediante 'ds' diagnósticos en FIB/open_symbolic, MS, modalidades Bloom Superior "
+            f"o MC7 si forma parte del plan del CTA Architect."
+        ),
+        "anti_clone": (
+            "4 Candados Deterministas Anti-Clon intra-competencia en compile_shard.py: "
+            "(1) [TPL-CLONE-AST]: AST normalizado de 'gen' estrictamente distinto dentro de la misma modalidad o arquetipo; "
+            "(2) [TPL-CLONE-BAND]: tupla (archetype, difficulty, bloom) única dentro de cada modalidad cuando K <= 4; "
+            "(3) [TPL-CLONE-STEM]: similitud léxica Jaccard < 0.70 en stem_variants entre plantillas de igual modalidad o arquetipo; "
+            "(4) [TPL-CLONE-SYMPY]: expresiones algebraicas no equivalentes bajo SymPy dentro del mismo arquetipo."
         ),
         "form_b_triband": (
             "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla o dict Form-C "
@@ -140,7 +159,7 @@ DSL_REFERENCE: Dict[str, Any] = {
             "'error_rationale' interpolando @var@. Prohibido omitir rationale."
         ),
         "fib_naked_contract": (
-            "[FIB-NAKED]: En fill_in_the_blank, el valor numérico o algebraico esperado en 'correct' y 'answer_contract' "
+            "[TPL-FIB-KATEX]: En fill_in_the_blank, el valor numérico o algebraico esperado en 'correct' y 'answer_contract' "
             "no debe incluir signos de dólar externos '$...$'."
         ),
         "katex_prose_overflow": (
@@ -185,7 +204,7 @@ DSL_REFERENCE: Dict[str, Any] = {
         "shard_isolated_script": (
             "SCRIPT INDEPENDIENTE: Cada shard escribe exclusivamente su propio script work/shards/<shard_id>_data.py. "
             "Valida únicamente tu shard asignado: python .agents/skills/content-to-course/compile_shard.py "
-            "--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
+            f"--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4 --templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}"
         ),
         "modular_per_comp_overrides": (
             "SOPORTE MODULAR DE CORRECCIONES POR COMPETENCIA: Si una competencia específica requiere corrección "
@@ -636,12 +655,29 @@ def plan_shards(
     cta_path: Union[str, Path],
     output_dir: Union[str, Path],
     k: Optional[int] = None,
-    max_comps: Optional[int] = DEFAULT_COMPS_PER_SHARD,
+    max_comps: Optional[int] = None,
     max_wave_size: int = DEFAULT_MAX_WAVE_SIZE,
     isolate_skills: bool = True,
-    max_skills: int = MAX_SKILLS_PER_SHARD,
+    max_skills: Optional[int] = None,
+    templates_per_modality: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Execute sharding on cta.json and write pre_shard_manifest.json (v3.3 canonical)."""
+    eff_tpl_per_mod = (
+        DEFAULT_TEMPLATES_PER_MODALITY
+        if templates_per_modality is None
+        else max(1, int(templates_per_modality))
+    )
+    eff_max_skills = (
+        (1 if eff_tpl_per_mod >= 3 else MAX_SKILLS_PER_SHARD)
+        if max_skills is None
+        else max(1, int(max_skills))
+    )
+    eff_max_comps = (
+        (2 if eff_tpl_per_mod >= 3 else DEFAULT_COMPS_PER_SHARD)
+        if max_comps is None
+        else max(1, int(max_comps))
+    )
+
     cta_file = Path(cta_path).resolve()
     if not cta_file.is_file():
         raise FileNotFoundError(f"CTA file does not exist: {cta_file}")
@@ -708,7 +744,7 @@ def plan_shards(
     # Partitioning Strategy Selection
     if k is not None or not isolate_skills:
         # Legacy explicit K partitioning
-        shard_count = determine_shard_count(competencies, requested_k=k, max_comps_per_shard=max_comps)
+        shard_count = determine_shard_count(competencies, requested_k=k, max_comps_per_shard=eff_max_comps)
         shards = partition_competencies_into_shards(competencies, shard_count)
         total_shards = len(shards)
         total_waves = math.ceil(total_shards / max_wave_size) if total_shards > 0 else 1
@@ -721,8 +757,8 @@ def plan_shards(
         # Milestone 7.4 Weighted Cognitive Sharding & Anti-Straggler SLA
         raw_shards = partition_competencies_weighted(
             competencies,
-            max_comps=max_comps,
-            max_skills=max_skills,
+            max_comps=eff_max_comps,
+            max_skills=eff_max_skills,
         )
         # Heaviest-First Ordering:
         # Sort descending by weight (breaking ties deterministically by curriculum index).
@@ -751,6 +787,11 @@ def plan_shards(
     # Stage 4 authority: type is read exactly as run.py --stage build reads it (comp["type"]).
     cta_type_by_cid = {
         str(c.get("id")): str(c.get("type", "concept"))
+        for c in competencies
+        if isinstance(c, dict) and c.get("id")
+    }
+    cta_rec_mods_by_cid = {
+        str(c.get("id")): list(c.get("recommended_modalities") or [])
         for c in competencies
         if isinstance(c, dict) and c.get("id")
     }
@@ -803,12 +844,18 @@ def plan_shards(
                 matched_sources.append(doc)
 
         wave_idx = shard.get("wave_index", (idx // max_wave_size) + 1)
-        s4_by_cid = {
-            cid_s4: competency_contract(cta_type_by_cid.get(cid_s4, "concept"))
-            for cid_s4 in shard["competency_ids"]
-        }
+        s4_by_cid = {}
+        for cid_s4 in shard["competency_ids"]:
+            rec_mods_s4 = cta_rec_mods_by_cid.get(cid_s4) or []
+            num_mods_s4 = len(dict.fromkeys(str(m).strip() for m in rec_mods_s4 if str(m).strip()))
+            s4_by_cid[cid_s4] = competency_contract(
+                cta_type_by_cid.get(cid_s4, "concept"),
+                num_modalities=num_mods_s4,
+                templates_per_modality=eff_tpl_per_mod,
+            )
         shard_entry = {
             "shard_id": s_id,
+            "templates_per_modality": eff_tpl_per_mod,
             "stage4_contract": s4_by_cid,
             "shard_index": idx,
             "wave_index": wave_idx,
@@ -833,6 +880,7 @@ def plan_shards(
             "total_shards": len(shards),
             "total_waves": shard.get("total_waves", math.ceil(len(shards) / max_wave_size)),
             "max_wave_size": max_wave_size,
+            "templates_per_modality": eff_tpl_per_mod,
             "weight": shard["weight"],
             "estimated_weight": shard.get("estimated_weight", shard["weight"]),
             "competency_ids": shard["competency_ids"],
@@ -844,7 +892,7 @@ def plan_shards(
             "templates_dir": templates_dir_abs,
             "source_files": matched_sources,
             "dsl_reference": DSL_REFERENCE,
-            "stage4_contract": {"global": global_contract(), "per_competency": s4_by_cid},
+            "stage4_contract": {"global": global_contract(templates_per_modality=eff_tpl_per_mod), "per_competency": s4_by_cid},
         }
         if distractor_guidance:
             shard_payload["distractor_guidance"] = distractor_guidance
@@ -867,7 +915,10 @@ def plan_shards(
         "total_waves": total_waves,
         "max_wave_size": max_wave_size,
         "min_archetypes": MIN_ARCHETYPES,
-        "stage4_contract": global_contract(),
+        "templates_per_modality": eff_tpl_per_mod,
+        "max_skills_per_shard": eff_max_skills,
+        "comps_per_shard": eff_max_comps,
+        "stage4_contract": global_contract(templates_per_modality=eff_tpl_per_mod),
         "waves": waves_summary,
         "shards": manifest_shards,
     }
@@ -892,8 +943,9 @@ def main():
     parser.add_argument("--cta", required=True, help="Path to cta.json")
     parser.add_argument("--output-dir", required=True, help="Output directory for shards (e.g. work/shards)")
     parser.add_argument("--k", type=int, default=None, help="Force specific shard count K")
-    parser.add_argument("--comps-per-shard", type=int, default=DEFAULT_COMPS_PER_SHARD, help="Target max non-skill competencies per shard (default: 3; MAX_SKILLS_PER_SHARD = 2)")
-    parser.add_argument("--max-skills-per-shard", type=int, default=MAX_SKILLS_PER_SHARD, help="Max skill competencies per shard (default: 2)")
+    parser.add_argument("--comps-per-shard", type=int, default=None, help="Target max non-skill competencies per shard (default: 3, or 2 when templates-per-modality >= 3)")
+    parser.add_argument("--max-skills-per-shard", type=int, default=None, help="Max skill competencies per shard (default: 2, or 1 when templates-per-modality >= 3)")
+    parser.add_argument("--templates-per-modality", type=int, default=DEFAULT_TEMPLATES_PER_MODALITY, help=f"Minimum distinct templates per recommended modality (default: {DEFAULT_TEMPLATES_PER_MODALITY})")
     parser.add_argument("--max-wave-size", type=int, default=DEFAULT_MAX_WAVE_SIZE, help="Maximum number of author shards dispatched per wave (default: 100)")
     parser.add_argument("--no-isolate-skills", action="store_true", default=False, help="Disable 1-Skill-per-shard isolation rule")
     args = parser.parse_args()
@@ -907,6 +959,7 @@ def main():
             max_wave_size=args.max_wave_size,
             isolate_skills=not args.no_isolate_skills,
             max_skills=args.max_skills_per_shard,
+            templates_per_modality=args.templates_per_modality,
         )
     except FileNotFoundError as ex:
         if "BLOCKER::" in str(ex):

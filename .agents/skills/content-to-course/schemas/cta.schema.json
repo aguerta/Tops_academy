@@ -169,6 +169,9 @@
         },
         "recommended_modalities": {
           "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "enum": [

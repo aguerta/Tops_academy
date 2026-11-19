@@ -2793,6 +2793,16 @@ def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
             elif q_type == "invariant_canvas":
                 sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
                 sig_obj["invariants"] = payload.get("invariants")
+                sig_obj["inequality"] = payload.get("inequality")
+                sig_obj["geometry"] = {
+                    "fixed_points": payload.get("fixed_points"),
+                    "interactive_points": payload.get("interactive_points"),
+                    "segments": payload.get("segments"),
+                    "polygons": payload.get("polygons"),
+                    "shaded_regions": payload.get("shaded_regions"),
+                    "sliders": payload.get("sliders"),
+                }
+                sig_obj["target_state"] = payload.get("target_state")
                 sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
             elif q_type == "concept_matching":
                 sig_obj["premises"] = [

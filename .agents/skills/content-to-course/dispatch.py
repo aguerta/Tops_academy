@@ -26,11 +26,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union, Set
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine.stage_contract import (  # noqa: E402
+    DEFAULT_TEMPLATES_PER_MODALITY,
     competency_contract,
     contract_tokens as _s4_tokens,
     is_skill_type,
+    quota_for_competency,
     quota_for_type,
     render_contract_tokens,
+    required_templates_for_competency,
 )
 
 _S4 = _s4_tokens()
@@ -936,7 +939,7 @@ def dispatch_cta(
                 f"> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`{s_p}..{e_p}` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
                 "",
                 "## 3. DIRECTIVAS DE OPERACIÓN",
-                f"1. Lee `{doc_path}` con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 10..11 elementos —11.º opcional `recommended_modalities`—, `CTA_CONTRACT_VERSION = 2`) en `{out_py}`.",
+                f"1. Lee `{doc_path}` con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 11 elementos —11.º obligatorio `recommended_modalities` con 2..4 modalidades canónicas—, `CTA_CONTRACT_VERSION = 2`) en `{out_py}`.",
                 f"2. Compila deterministamente: `{compile_cmd}`",
                 f"3. Con < 6 errores (1..5 errores), corrige con edit_file (replace_file_content) sobre `{out_py}` (PROHIBIDO write_file completo cuando hay < 6 errores); con >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
                 f"4. Cierre al aprobar: `{json_target}` (señal terminal DONE).",
@@ -982,7 +985,7 @@ def dispatch_cta(
                     delta_hint = f" Delta: {next_ids_by_prefix}." if delta_info else ""
                     pointer_prompt = (
                         f"You are CTA Architect {subpart_id}. [SCOPE-LOCK] "
-                        f"READ: `{abs_slice}`. Rango: `1..{total_p}` (orig `{s_p}..{e_p}`). "
+                        f"READ: `{abs_slice}`. Doc: `{doc_name}`. Rango: `1..{total_p}` (orig `{s_p}..{e_p}`). "
                         f"WRITE: `{abs_out_py}`. COMPILE: `{compile_cmd}`.{delta_hint} "
                         f"DONE: `{json_target}`."
                     )
@@ -990,7 +993,7 @@ def dispatch_cta(
                         short_compile_cmd = compile_cmd.replace(f"{cmd_prefix} ", "python ", 1)
                         pointer_prompt = (
                             f"You are CTA Architect {subpart_id}. [SCOPE-LOCK] "
-                            f"READ: `{abs_slice}`. Rango: `1..{total_p}`. "
+                            f"READ: `{abs_slice}`. Doc: `{doc_name}`. Rango: `1..{total_p}`. "
                             f"WRITE: `{abs_out_py}`. COMPILE: `{short_compile_cmd}`. "
                             f"DONE: `{json_target}`."
                         )
@@ -1119,7 +1122,7 @@ def dispatch_cta(
             "> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`1..N` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
             "",
             "## 3. DIRECTIVAS DE OPERACIÓN",
-            f"1. Lee el material fuente asignado con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 10..11 elementos —11.º opcional `recommended_modalities`—, `CTA_CONTRACT_VERSION = 2`) en `{out_target}`.",
+            f"1. Lee el material fuente asignado con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 11 elementos —11.º obligatorio `recommended_modalities` con 2..4 modalidades canónicas—, `CTA_CONTRACT_VERSION = 2`) en `{out_target}`.",
             f"2. Compila deterministamente: `{compile_cmd}`",
             f"3. Con < 6 errores (1..5 errores), corrige con edit_file (replace_file_content) sobre `{out_target}` (PROHIBIDO write_file completo cuando hay < 6 errores); con >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
             f"4. Cierre al aprobar: `{json_target}` (señal terminal DONE).",
@@ -1455,6 +1458,14 @@ def dispatch_authors(
                 doc_paths_by_name[dn] = dp
 
     shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+    eff_tpl_per_mod = max(
+        1,
+        int(
+            (shard_manifest_data.get("stage4_contract") or {}).get("templates_per_modality")
+            or shard_manifest_data.get("templates_per_modality")
+            or DEFAULT_TEMPLATES_PER_MODALITY
+        ),
+    )
     manifest_dirty = False
     if isinstance(shard_manifest_data, dict):
         if "min_archetypes" not in shard_manifest_data or shard_manifest_data.get("min_archetypes") != 4:
@@ -1529,7 +1540,10 @@ def dispatch_authors(
         for cid in c_ids:
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             t = str(c_obj.get("type", "knowledge")).lower()
-            w += quota_for_type(t)
+            rec_m = c_obj.get("recommended_modalities") or []
+            n_m = len(dict.fromkeys(str(m).strip() for m in rec_m if str(m).strip()))
+            n_t = required_templates_for_competency(n_m, eff_tpl_per_mod)
+            w += quota_for_competency(t, n_t)
         return w if w > 0 else (len(c_ids) * 20)
 
     shard_list = sorted(shard_list, key=_shard_weight, reverse=True)
@@ -1569,11 +1583,22 @@ def dispatch_authors(
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             c_name = _clean_str(c_obj.get("name")) or cid
             raw_type = str(c_obj.get("type", "knowledge")).lower()
-            _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(raw_type)
-            quota = _s4c["quota"]
+            raw_rec_mods = c_obj.get("recommended_modalities") or []
+            num_mods = len(dict.fromkeys(str(m).strip() for m in raw_rec_mods if str(m).strip()))
+            _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(
+                raw_type,
+                num_modalities=num_mods,
+                templates_per_modality=eff_tpl_per_mod,
+            )
+            comp_k = max(1, int(_s4c.get("templates_per_modality") or eff_tpl_per_mod))
+            min_tpls = int(
+                _s4c.get("min_templates_required")
+                or required_templates_for_competency(num_mods, comp_k, _s4c.get("min_archetypes", 4))
+            )
+            quota = int(_s4c["quota"])
             comp_type = "skill" if is_skill_type(raw_type) else "knowledge"
-            req_uniq = _s4c["required_unique_stems"]
-            per_tpl = -(-req_uniq // _s4c["min_archetypes"])
+            req_uniq = int(_s4c["required_unique_stems"])
+            per_tpl = -(-req_uniq // max(1, min_tpls))
 
             desc_latex = _clean_str(c_obj.get("description_latex") or c_obj.get("description")) or "(Definición pedagógica según fuentes del curso)"
 
@@ -1654,19 +1679,19 @@ def dispatch_authors(
                 logger.warning(warn_msg)
 
             cb_line = f"- **Modelo/Fórmula Correcta Canónica (correct_belief):** {correct_belief}\n" if correct_belief else ""
-            raw_rec_mods = c_obj.get("recommended_modalities") or []
             rec_mods_line = (
-                f"- **Modalidades decididas por CTA Architect (obligatorio respetar):** "
+                f"- **Modalidades decididas por CTA Architect (M={num_mods}, obligatorio >= {comp_k} plantillas distintas por modalidad => mínimo {min_tpls} plantillas):** "
                 f"{', '.join(str(m) for m in raw_rec_mods)}\n"
                 if raw_rec_mods
-                else "- **Modalidades decididas por CTA Architect:** Libre criterio epistémico dentro de modalidades válidas del contrato (sin cuotas rígidas por tipo).\n"
+                else f"- **Modalidades decididas por CTA Architect (mínimo {min_tpls} plantillas):** Libre criterio epistémico dentro de modalidades válidas del contrato (sin cuotas rígidas por tipo).\n"
             )
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
                 f"{rec_mods_line}"
                 f"- **Umbrales Stage 4 (contrato exacto, se auditan al construir):** cuota **{quota}**; "
-                f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla x {_s4c['min_archetypes']} arquetipos); "
+                f"mínimo **{min_tpls} plantillas** ({comp_k}/modalidad, >= {_s4c['min_archetypes']} arquetipos); "
+                f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla); "
                 f"ratio de diversidad >= {_s4c['min_diversity_ratio']:.2f}\n"
                 f"- **Nombre:** {c_name}\n"
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
@@ -1700,7 +1725,7 @@ def dispatch_authors(
             done_signal=disk_done_signal,
         )
 
-        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4 --fail-total"
+        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4 --templates-per-modality {eff_tpl_per_mod} --fail-total"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -1725,7 +1750,7 @@ def dispatch_authors(
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
             f"1. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 contiene el 100% de competencias y distractores; NO abras ni leas los documentos fuente de content/ en Turno 1 y empieza directamente escribiendo {s_id}_data.py (`{out_py}`, <= 80-110 líneas por competencia, <= 180-220 líneas totales por shard).",
-            f"2. **Contrato Form-C (`min_archetypes = 4`, `[M3-ARCHETYPES]`):** Define 4 tuplas en `TEMPLATES` por competencia en bandas `'easy'`, `'medium'`, `'hard'` respetando las `'Modalidades decididas por CTA Architect'` cuando figuren en la Sección 2 (`[CTA-MODALITY-PLAN]`; sin cuotas rígidas fijas por tipo) según tu SystemPrompt (`[TPL-DYNAMIC-RATIONALE]`: 1 `error_rationale` diagnóstico por slot `distractor_id` con `@var@`; `[KATEX-PROSE-OVERFLOW]`: `\\text{{}}` <= 45c; FIB sin `$`).",
+            f"2. **Contrato Form-C (`min_archetypes = 4`, `[M3-ARCHETYPES]`, `K={eff_tpl_per_mod}`/modalidad):** Define `>= max(4, M * {eff_tpl_per_mod})` tuplas distintas en `TEMPLATES` por competencia (al menos `{eff_tpl_per_mod}` plantillas no-clon por cada modalidad en `'Modalidades decididas por CTA Architect'` —candados `[TPL-CLONE-AST]`, `[TPL-CLONE-BAND]`, `[TPL-CLONE-STEM]`, `[TPL-CLONE-SYMPY]`—) en bandas `'easy'`, `'medium'`, `'hard'` según tu SystemPrompt (`[TPL-DYNAMIC-RATIONALE]`, `[KATEX-TEXT-PROSE]`/`[KATEX-PROSE-OVERFLOW]`, FIB sin `$`).",
             f"3. **Compilación determinista:** `{compile_cmd}`",
             f"4. **Reparación (Matriz 2D):** Con < 6 errores (1..5 errores) usa `edit_file` quirúrgico (en >= 300 líneas NO reescribas todo el archivo desde cero con `write_file`); con >= 6 errores usa `{work_rel}/shards/shard_fixes/<CID>.py`.",
             f"5. **[Corte Inmediato Post-PASS]:** Cierre al aprobar: `{target_json}` (señal terminal DONE).",
@@ -1752,6 +1777,7 @@ def dispatch_authors(
             "compile_cmd": compile_cmd,
             "compile_command": compile_cmd,
             "min_archetypes": 4,
+            "templates_per_modality": eff_tpl_per_mod,
             "prompt_sha256": prompt_sha256,
         }
         if missing_assumptions_cids:
@@ -1768,6 +1794,7 @@ def dispatch_authors(
             "compile_command": compile_cmd,
             "compile_cmd": compile_cmd,
             "min_archetypes": 4,
+            "templates_per_modality": eff_tpl_per_mod,
             "Prompt": prompt_full,
             "work_order": work_order_meta,
         }
@@ -1783,6 +1810,7 @@ def dispatch_authors(
             f"- **shard_id:** `{s_id}`\n"
             f"- **output_python:** `{out_py}`\n"
             f"- **output_json:** `{target_json}`\n"
+            f"- **templates_per_modality:** `{eff_tpl_per_mod}`\n"
             f"- **compile_command:** `{compile_cmd}`\n\n"
             f"## 2. ESPECIFICACIÓN TURN-0 COMPLETA DE COMPETENCIAS Y DISTRACTORES\n"
             + "\n\n".join(comp_blocks)
@@ -2351,12 +2379,21 @@ def build_dispatch(
         # 1. Build comp_to_shard and shard_to_comps mapping FIRST
         shard_map: Dict[str, str] = {}
         shard_to_comps: Dict[str, List[str]] = {}
+        eff_repair_k = DEFAULT_TEMPLATES_PER_MODALITY
         pre_shard_manifest = work / "shards" / "pre_shard_manifest.json"
         if not pre_shard_manifest.is_file():
             pre_shard_manifest = work / "pre_shard_manifest.json"
         if pre_shard_manifest.is_file():
             try:
                 sm_data = json.loads(pre_shard_manifest.read_text(encoding="utf-8"))
+                eff_repair_k = max(
+                    1,
+                    int(
+                        (sm_data.get("stage4_contract") or {}).get("templates_per_modality")
+                        or sm_data.get("templates_per_modality")
+                        or DEFAULT_TEMPLATES_PER_MODALITY
+                    ),
+                )
                 shards_info = sm_data.get("shards", [])
                 if isinstance(shards_info, list):
                     for s in shards_info:
@@ -2861,7 +2898,7 @@ def build_dispatch(
             shard_fix_path = f"{work_rel}/shards/shard_fixes/{shard_id}/{cid}.py"
             compile_cmd = (
                 f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py "
-                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4 --fail-total"
+                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4 --templates-per-modality {eff_repair_k} --fail-total"
             )
 
             # Generate compact Competence Slice (< 2 KB) for isolated Turn-0 repair

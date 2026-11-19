@@ -122,7 +122,7 @@ def precheck_source(source: str) -> List[str]:
                 args = node.args
                 n_req = len(args.args) - len(args.defaults)
                 if len(args.args) == 2 and n_req == 1:
-                    out.append(f"L{node.lineno} [VER-SIGNATURE] '{node.name}(res, v=None)': usa ver(c, v) (MC/FIB) o ver(res) (MS), sin parametros opcionales.")
+                    out.append(f"L{node.lineno} [VER-SIGNATURE] '{node.name}(res, v=None)': usa ver(c, v) (MC/FIB/open_symbolic) o ver(res) (MS/M20 estructurado), sin parametros opcionales.")
                 if isinstance(node.body[-1], ast.Return) and isinstance(node.body[-1].value, ast.Constant) and node.body[-1].value.value is True and len(node.body) == 1:
                     out.append(f"L{node.lineno} [TPL-VERIFIER] '{node.name}' trivial (return True).")
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) and node.value.id.startswith("ver_"):

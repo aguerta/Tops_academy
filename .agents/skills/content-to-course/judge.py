@@ -1281,7 +1281,7 @@ def emit_judge_redispatch(
                 "Model": "inherit",
                 "Prompt": (
                     f"You are Blind Judge {j_num} for Re-dispatch Batch {b_idx:02d}. "
-                    f"Your work order is `{b_path.as_posix()}`. Read it first with `view_file`. "
+                    f"Your work order is `{b_path.as_posix()}`. Read it first with `read_file`. "
                     f"Finalize strictly with: `DONE: verification/judge_responses_redispatch_{b_idx:02d}_{j_num}.json`."
                 ),
             })

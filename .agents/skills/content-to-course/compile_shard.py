@@ -15,6 +15,7 @@ import argparse
 import ast
 import collections
 from collections import defaultdict, Counter
+import copy
 import hashlib
 import importlib.util
 import inspect
@@ -47,11 +48,17 @@ if str(_skill_root) not in sys.path:
 
 from engine.invariants import validate_katex_syntax
 from engine.stage_contract import (
+    DEFAULT_TEMPLATES_PER_MODALITY as _S4_DEFAULT_TPL_PER_MOD,
     MIN_ARCHETYPES as _S4_MIN_ARCHETYPES,
+    MIN_MODALITIES_PER_COMPETENCY as _S4_MIN_MODS,
+    MAX_MODALITIES_PER_COMPETENCY as _S4_MAX_MODS,
     ARCHETYPE_KINDS as _S4_ARCHETYPE_KINDS,
     competency_contract as _s4_competency_contract,
     contract_drift as _s4_contract_drift,
     is_skill_type as _s4_is_skill_type,
+    quota_for_competency as _s4_quota_for_competency,
+    required_templates_for_competency as _s4_required_templates,
+    required_unique_stems as _s4_required_unique_stems,
     stems_advice as _s4_stems_advice,
 )
 
@@ -1981,6 +1988,795 @@ def infer_work_dir(
     return target
 
 
+_CLONE_STEM_STOPWORDS: Set[str] = {
+    "con", "del", "las", "los", "una", "uno", "por", "para", "que", "como",
+    "sea", "dado", "dada", "the", "and", "for", "with",
+}
+_SYMPY_CLONE_CHECK_MODS: Set[str] = {
+    "open_symbolic",
+    "fill_in_the_blank",
+    "multiple_choice_7_options",
+}
+
+
+def _extract_const_literal(node: Optional[ast.AST]) -> Tuple[bool, Any]:
+    """Return (True, value) if AST node is a pure literal constant or simple negation/tuple."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float, str, bool, type(None))):
+        return True, node.value
+    if (
+        isinstance(node, ast.UnaryOp)
+        and isinstance(node.op, ast.USub)
+        and isinstance(node.operand, ast.Constant)
+        and isinstance(node.operand.value, (int, float))
+        and not isinstance(node.operand.value, bool)
+    ):
+        return True, -node.operand.value
+    if isinstance(node, (ast.Tuple, ast.List)):
+        items: List[Any] = []
+        for elt in node.elts:
+            ok, val = _extract_const_literal(elt)
+            if not ok:
+                return False, None
+            items.append(val)
+        return True, tuple(items) if isinstance(node, ast.Tuple) else items
+    return False, None
+
+
+def _const_value_to_ast(val: Any) -> Optional[ast.AST]:
+    if isinstance(val, (int, float)) and not isinstance(val, bool) and val < 0:
+        return ast.UnaryOp(op=ast.USub(), operand=ast.Constant(value=-val))
+    if isinstance(val, (int, float, str, bool, type(None))):
+        return ast.Constant(value=val)
+    if isinstance(val, tuple):
+        elts = [_const_value_to_ast(v) for v in val]
+        if all(e is not None for e in elts):
+            return ast.Tuple(elts=[e for e in elts if e is not None], ctx=ast.Load())
+    if isinstance(val, list):
+        elts = [_const_value_to_ast(v) for v in val]
+        if all(e is not None for e in elts):
+            return ast.List(elts=[e for e in elts if e is not None], ctx=ast.Load())
+    return None
+
+
+def _eval_const_if_test(test: ast.AST) -> Optional[bool]:
+    ok, val = _extract_const_literal(test)
+    if ok:
+        return bool(val)
+    if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
+        inner = _eval_const_if_test(test.operand)
+        return (not inner) if inner is not None else None
+    if isinstance(test, ast.BoolOp):
+        vals = [_eval_const_if_test(v) for v in test.values]
+        if isinstance(test.op, ast.And):
+            if any(v is False for v in vals):
+                return False
+            if all(v is True for v in vals):
+                return True
+        elif isinstance(test.op, ast.Or):
+            if any(v is True for v in vals):
+                return True
+            if all(v is False for v in vals):
+                return False
+        return None
+    if isinstance(test, ast.Compare) and len(test.ops) == 1 and len(test.comparators) == 1:
+        ok_l, l_val = _extract_const_literal(test.left)
+        ok_r, r_val = _extract_const_literal(test.comparators[0])
+        if not (ok_l and ok_r):
+            return None
+        op = test.ops[0]
+        try:
+            if isinstance(op, ast.Eq):
+                return l_val == r_val
+            if isinstance(op, ast.NotEq):
+                return l_val != r_val
+            if isinstance(op, ast.Lt):
+                return l_val < r_val
+            if isinstance(op, ast.LtE):
+                return l_val <= r_val
+            if isinstance(op, ast.Gt):
+                return l_val > r_val
+            if isinstance(op, ast.GtE):
+                return l_val >= r_val
+            if isinstance(op, ast.In):
+                return l_val in r_val
+            if isinstance(op, ast.NotIn):
+                return l_val not in r_val
+        except Exception:
+            return None
+    return None
+
+
+class _ConstBindingSubstitutor(ast.NodeTransformer):
+    def __init__(self, bindings: Dict[str, ast.AST]):
+        self.bindings = bindings
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if isinstance(node.ctx, ast.Load) and node.id in self.bindings:
+            return copy.deepcopy(self.bindings[node.id])
+        return node
+
+
+def _prune_const_if_stmts(stmts: List[ast.stmt]) -> List[ast.stmt]:
+    out: List[ast.stmt] = []
+    for stmt in stmts:
+        if isinstance(stmt, ast.If):
+            branch_val = _eval_const_if_test(stmt.test)
+            if branch_val is True:
+                pruned = _prune_const_if_stmts(stmt.body)
+                out.extend(pruned)
+                if pruned and isinstance(pruned[-1], ast.Return):
+                    break
+                continue
+            if branch_val is False:
+                pruned = _prune_const_if_stmts(stmt.orelse)
+                out.extend(pruned)
+                if pruned and isinstance(pruned[-1], ast.Return):
+                    break
+                continue
+            stmt_c = copy.copy(stmt)
+            stmt_c.body = _prune_const_if_stmts(stmt.body)
+            stmt_c.orelse = _prune_const_if_stmts(stmt.orelse)
+            out.append(stmt_c)
+        elif isinstance(stmt, (ast.For, ast.AsyncFor, ast.While)):
+            stmt_c = copy.copy(stmt)
+            stmt_c.body = _prune_const_if_stmts(stmt.body)
+            stmt_c.orelse = _prune_const_if_stmts(stmt.orelse)
+            out.append(stmt_c)
+        elif isinstance(stmt, (ast.With, ast.AsyncWith)):
+            stmt_c = copy.copy(stmt)
+            stmt_c.body = _prune_const_if_stmts(stmt.body)
+            out.append(stmt_c)
+        else:
+            out.append(stmt)
+            if isinstance(stmt, ast.Return):
+                break
+    return out
+
+
+def _specialize_gen_ast(
+    fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef],
+    ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]],
+    max_depth: int = 3,
+) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
+    """Inline single-return helper wrappers (e.g. `def gen_2(r): return _g(r, 2)`) and prune constant branches."""
+    cur = copy.deepcopy(fn_node)
+    for _ in range(max_depth):
+        body = list(cur.body)
+        if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+            body = body[1:]
+        if (
+            len(body) != 1
+            or not isinstance(body[0], ast.Return)
+            or not isinstance(body[0].value, ast.Call)
+            or not isinstance(body[0].value.func, ast.Name)
+        ):
+            break
+        call = body[0].value
+        helper_name = call.func.id
+        if helper_name == cur.name or helper_name not in ast_funcs:
+            break
+        if any(isinstance(a, ast.Starred) for a in call.args) or any(kw.arg is None for kw in call.keywords):
+            break
+
+        helper = copy.deepcopy(ast_funcs[helper_name])
+        pos_params = [a.arg for a in getattr(helper.args, "posonlyargs", []) + helper.args.args]
+        kwonly_params = [a.arg for a in getattr(helper.args, "kwonlyargs", [])]
+        bound_exprs: Dict[str, ast.AST] = {}
+        for idx_p, arg_node in enumerate(call.args):
+            if idx_p < len(pos_params):
+                bound_exprs[pos_params[idx_p]] = arg_node
+        for kw in call.keywords:
+            if kw.arg in pos_params or kw.arg in kwonly_params:
+                bound_exprs[kw.arg] = kw.value
+
+        defaults = list(helper.args.defaults or [])
+        if defaults:
+            for p_name, d_node in zip(pos_params[len(pos_params) - len(defaults):], defaults):
+                if p_name not in bound_exprs:
+                    bound_exprs[p_name] = d_node
+        kw_defaults = list(getattr(helper.args, "kw_defaults", []) or [])
+        for p_name, d_node in zip(kwonly_params, kw_defaults):
+            if p_name not in bound_exprs and d_node is not None:
+                bound_exprs[p_name] = d_node
+
+        assigned_names = {
+            sub.id
+            for sub in ast.walk(helper)
+            if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Store)
+        }
+        const_ast_bindings: Dict[str, ast.AST] = {}
+        bound_const_params: Set[str] = set()
+        for p_name, val_node in bound_exprs.items():
+            if p_name in assigned_names:
+                continue
+            ok_c, c_val = _extract_const_literal(val_node)
+            if ok_c:
+                c_ast = _const_value_to_ast(c_val)
+                if c_ast is not None:
+                    const_ast_bindings[p_name] = c_ast
+                    bound_const_params.add(p_name)
+
+        if not const_ast_bindings:
+            break
+
+        helper = _ConstBindingSubstitutor(const_ast_bindings).visit(helper)
+        helper.body = _prune_const_if_stmts(helper.body)
+        helper.args.posonlyargs = [a for a in helper.args.posonlyargs if a.arg not in bound_const_params]
+        helper.args.args = [a for a in helper.args.args if a.arg not in bound_const_params]
+        helper.args.kwonlyargs = [a for a in helper.args.kwonlyargs if a.arg not in bound_const_params]
+        helper.args.defaults = []
+        helper.args.kw_defaults = []
+        ast.fix_missing_locations(helper)
+        cur = helper
+
+    if cur.body and isinstance(cur.body[0], ast.Expr) and isinstance(cur.body[0].value, ast.Constant) and isinstance(cur.body[0].value.value, str):
+        cur.body = cur.body[1:]
+    return cur
+
+
+class _CanonicalGenASTNormalizer(ast.NodeTransformer):
+    """Normalizes generator ASTs: renames args/locals and masks numeric literals."""
+
+    def __init__(self, fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]):
+        self.param_map: Dict[str, str] = {}
+        self.local_map: Dict[str, str] = {}
+
+        all_params = (
+            list(getattr(fn_node.args, "posonlyargs", []))
+            + list(fn_node.args.args)
+            + list(getattr(fn_node.args, "kwonlyargs", []))
+        )
+        for p in all_params:
+            if p.arg not in self.param_map:
+                self.param_map[p.arg] = f"arg{len(self.param_map)}"
+        if fn_node.args.vararg and fn_node.args.vararg.arg not in self.param_map:
+            self.param_map[fn_node.args.vararg.arg] = f"arg{len(self.param_map)}"
+        if fn_node.args.kwarg and fn_node.args.kwarg.arg not in self.param_map:
+            self.param_map[fn_node.args.kwarg.arg] = f"arg{len(self.param_map)}"
+
+        self._collect_locals(fn_node.body)
+
+    def _register_local(self, name: Optional[str]) -> None:
+        if name and name not in self.param_map and name not in self.local_map:
+            self.local_map[name] = f"v{len(self.local_map)}"
+
+    def _collect_target(self, node: Optional[ast.AST]) -> None:
+        if node is None:
+            return
+        if isinstance(node, ast.Name):
+            self._register_local(node.id)
+        elif isinstance(node, (ast.Tuple, ast.List)):
+            for elt in node.elts:
+                self._collect_target(elt)
+        elif isinstance(node, ast.Starred):
+            self._collect_target(node.value)
+
+    def _collect_locals(self, node: Any) -> None:
+        if node is None:
+            return
+        if isinstance(node, list):
+            for item in node:
+                self._collect_locals(item)
+            return
+        if not isinstance(node, ast.AST):
+            return
+        if isinstance(node, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+            for gen in node.generators:
+                self._collect_target(gen.target)
+                self._collect_locals(gen.iter)
+                self._collect_locals(gen.ifs)
+            self._collect_locals(node.elt)
+            return
+        if isinstance(node, ast.DictComp):
+            for gen in node.generators:
+                self._collect_target(gen.target)
+                self._collect_locals(gen.iter)
+                self._collect_locals(gen.ifs)
+            self._collect_locals(node.key)
+            self._collect_locals(node.value)
+            return
+        if isinstance(node, ast.Assign):
+            for tgt in node.targets:
+                self._collect_target(tgt)
+            self._collect_locals(node.value)
+            return
+        if isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+            self._collect_target(node.target)
+            self._collect_locals(node.value)
+            return
+        if isinstance(node, (ast.For, ast.AsyncFor)):
+            self._collect_target(node.target)
+            self._collect_locals(node.iter)
+            self._collect_locals(node.body)
+            self._collect_locals(node.orelse)
+            return
+        if isinstance(node, ast.NamedExpr):
+            self._collect_target(node.target)
+            self._collect_locals(node.value)
+            return
+        if isinstance(node, ast.ExceptHandler):
+            self._register_local(node.name)
+            self._collect_locals(node.body)
+            return
+        if isinstance(node, ast.withitem):
+            self._collect_target(node.optional_vars)
+            self._collect_locals(node.context_expr)
+            return
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            self._register_local(node.id)
+        for child in ast.iter_child_nodes(node):
+            self._collect_locals(child)
+
+    def normalize(self, fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> ast.AST:
+        cloned = copy.deepcopy(fn_node)
+        return ast.fix_missing_locations(self.visit(cloned))
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.AST:
+        node.name = "_gen_fn"
+        node.decorator_list = []
+        node.returns = None
+        node.type_comment = None
+        self.generic_visit(node)
+        return node
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AST:
+        node.name = "_gen_fn"
+        node.decorator_list = []
+        node.returns = None
+        node.type_comment = None
+        self.generic_visit(node)
+        return node
+
+    def visit_arg(self, node: ast.arg) -> ast.AST:
+        node.arg = self.param_map.get(node.arg, node.arg)
+        node.annotation = None
+        node.type_comment = None
+        return node
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.AST:
+        if node.name and node.name in self.local_map:
+            node.name = self.local_map[node.name]
+        self.generic_visit(node)
+        return node
+
+    def visit_Name(self, node: ast.Name) -> ast.AST:
+        if node.id in self.param_map:
+            node.id = self.param_map[node.id]
+        elif node.id in self.local_map:
+            node.id = self.local_map[node.id]
+        return node
+
+    def visit_Constant(self, node: ast.Constant) -> ast.AST:
+        if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+            return ast.Constant(value="__NUM__")
+        if isinstance(node.value, str) and re.fullmatch(r"D-[A-Za-z0-9]+-\d+", node.value):
+            return ast.Constant(value="__DID__")
+        return node
+
+    def visit_Dict(self, node: ast.Dict) -> ast.AST:
+        new_keys: List[Optional[ast.expr]] = []
+        new_vals: List[ast.expr] = []
+        for k_node, v_node in zip(node.keys, node.values):
+            norm_k = self.visit(k_node) if k_node is not None else None
+            if (
+                isinstance(k_node, ast.Constant)
+                and k_node.value == "vars"
+                and isinstance(v_node, ast.Dict)
+            ):
+                vars_keys: List[Optional[ast.expr]] = []
+                vars_vals: List[ast.expr] = []
+                for vk, vv in zip(v_node.keys, v_node.values):
+                    if (
+                        isinstance(vk, ast.Constant)
+                        and isinstance(vk.value, str)
+                        and vk.value != "ans"
+                        and vk.value in self.local_map
+                    ):
+                        vars_keys.append(ast.Constant(value=self.local_map[vk.value]))
+                    else:
+                        vars_keys.append(self.visit(vk) if vk is not None else None)
+                    vars_vals.append(self.visit(vv))
+                norm_v: ast.expr = ast.Dict(keys=vars_keys, values=vars_vals)
+            elif (
+                isinstance(k_node, ast.Constant)
+                and k_node.value in ("ds", "distractors")
+                and isinstance(v_node, (ast.List, ast.Tuple))
+            ):
+                norm_elts: List[ast.expr] = []
+                for elt in v_node.elts:
+                    if isinstance(elt, (ast.Tuple, ast.List)) and len(elt.elts) == 3:
+                        elt.elts = [
+                            self.visit(elt.elts[0]),
+                            self.visit(elt.elts[1]),
+                            ast.Constant(value="__RAT__"),
+                        ]
+                        norm_elts.append(elt)
+                    else:
+                        norm_elts.append(self.visit(elt))
+                v_node.elts = norm_elts
+                norm_v = v_node
+            else:
+                norm_v = self.visit(v_node)
+            new_keys.append(norm_k)
+            new_vals.append(norm_v)
+        node.keys = new_keys
+        node.values = new_vals
+        return node
+
+
+def _extract_pure_sympy_expr(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> Any:
+    """Safely extract a pure SymPy algebraic expression for 'correct'/'ans' from a branchless generator AST."""
+    try:
+        import sympy
+    except Exception:
+        return None
+
+    env: Dict[str, Any] = {}
+    sampled_syms: List[Any] = []
+
+    def _new_sym() -> Any:
+        sym = sympy.Symbol(f"_p{len(sampled_syms)}", real=True)
+        sampled_syms.append(sym)
+        return sym
+
+    def _eval_expr(node: Optional[ast.AST]) -> Any:
+        if node is None:
+            return None
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+                return sympy.Rational(str(node.value)) if isinstance(node.value, float) else sympy.Integer(node.value)
+            return None
+        if isinstance(node, ast.Name):
+            return env.get(node.id)
+        if isinstance(node, ast.UnaryOp):
+            operand = _eval_expr(node.operand)
+            if operand is None:
+                return None
+            if isinstance(node.op, ast.USub):
+                return -operand
+            if isinstance(node.op, ast.UAdd):
+                return operand
+            return None
+        if isinstance(node, ast.BinOp):
+            left = _eval_expr(node.left)
+            right = _eval_expr(node.right)
+            if left is None or right is None:
+                return None
+            if isinstance(node.op, ast.Add):
+                return left + right
+            if isinstance(node.op, ast.Sub):
+                return left - right
+            if isinstance(node.op, ast.Mult):
+                return left * right
+            if isinstance(node.op, (ast.Div, ast.FloorDiv)):
+                if right == 0:
+                    return None
+                return left / right
+            if isinstance(node.op, ast.Pow):
+                return left ** right
+            return None
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Attribute) and node.func.attr in (
+                "randint", "randrange", "uniform", "choice", "randbelow"
+            ):
+                return _new_sym()
+            if isinstance(node.func, ast.Name) and node.func.id in ("str", "fmt", "round", "int", "float"):
+                if node.args:
+                    return _eval_expr(node.args[0])
+                return None
+            if (
+                (isinstance(node.func, ast.Attribute) and node.func.attr == "sqrt")
+                or (isinstance(node.func, ast.Name) and node.func.id == "sqrt")
+            ) and len(node.args) == 1:
+                inner = _eval_expr(node.args[0])
+                return sympy.sqrt(inner) if inner is not None else None
+            return None
+        return None
+
+    def _assign_target(tgt: ast.AST, val_node: ast.AST) -> bool:
+        if isinstance(tgt, ast.Name):
+            expr_val = _eval_expr(val_node)
+            if expr_val is not None:
+                env[tgt.id] = expr_val
+            return True
+        if isinstance(tgt, (ast.Tuple, ast.List)) and isinstance(val_node, (ast.Tuple, ast.List)):
+            if len(tgt.elts) != len(val_node.elts):
+                return False
+            for sub_t, sub_v in zip(tgt.elts, val_node.elts):
+                if not _assign_target(sub_t, sub_v):
+                    return False
+            return True
+        return False
+
+    for stmt in fn_node.body:
+        if isinstance(stmt, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try)):
+            return None
+        if isinstance(stmt, ast.Assign):
+            if len(stmt.targets) != 1:
+                return None
+            if not _assign_target(stmt.targets[0], stmt.value):
+                return None
+        elif isinstance(stmt, ast.Return) and isinstance(stmt.value, ast.Dict):
+            dict_map: Dict[str, ast.expr] = {}
+            for k_n, v_n in zip(stmt.value.keys, stmt.value.values):
+                if isinstance(k_n, ast.Constant) and isinstance(k_n.value, str):
+                    dict_map[k_n.value] = v_n
+            if "correct" in dict_map:
+                c_expr = _eval_expr(dict_map["correct"])
+                if c_expr is not None:
+                    return c_expr
+            vars_node = dict_map.get("vars")
+            if isinstance(vars_node, ast.Dict):
+                for vk_n, vv_n in zip(vars_node.keys, vars_node.values):
+                    if isinstance(vk_n, ast.Constant) and vk_n.value == "ans":
+                        return _eval_expr(vv_n)
+            return None
+    return None
+
+
+def _check_intra_competency_anti_clone(
+    cid: str,
+    source_name: str,
+    tpls: List[Dict[str, Any]],
+    gen_callables: List[Any],
+    cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]],
+    eff_k: int,
+    norm_shard_id: str,
+) -> List[str]:
+    """Enforce the 4 deterministic anti-clone gates within a competency."""
+    if len(tpls) < 2:
+        return []
+
+    errors: List[str] = []
+
+    def _norm_mod(t: Dict[str, Any]) -> str:
+        raw_m = str(t.get("interaction_type") or t.get("question_type") or "").strip().lower()
+        return _QTYPE_TO_INTERACTION.get(raw_m, raw_m)
+
+    def _tpl_id(t: Dict[str, Any], idx: int) -> str:
+        return str(t.get("id") or t.get("template_id") or f"T-{cid}-{idx + 1:02d}")
+
+    def _resolve_gen_ast(t: Dict[str, Any]) -> Optional[Union[ast.FunctionDef, ast.AsyncFunctionDef]]:
+        g_name = t.get("gen_fn_name")
+        if g_name and g_name in cid_ast_funcs:
+            return cid_ast_funcs[g_name]
+        gen_src = t.get("generator_code") or t.get("generate_py") or ""
+        if not gen_src:
+            return None
+        try:
+            tree = ast.parse(textwrap.dedent(str(gen_src).strip()))
+            for node in tree.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if node.name == "generate_params":
+                        return node
+            for node in tree.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    return node
+        except Exception:
+            return None
+        return None
+
+    def _stem_tokens(t: Dict[str, Any]) -> Set[str]:
+        svs = t.get("stem_variants") or ([t.get("stem_es")] if t.get("stem_es") else [])
+        combined = " ".join(str(s) for s in svs if s)
+        cleaned = re.sub(r"@[A-Za-z0-9_]+(?::[^@]+)?@", " ", combined)
+        cleaned = re.sub(r"\{[A-Za-z0-9_]+\}", " ", cleaned)
+        cleaned = re.sub(r"\\[A-Za-z]+", " ", cleaned)
+        cleaned = re.sub(r"\d+(?:\.\d+)?", " ", cleaned)
+        words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]{3,}", cleaned.lower())
+        return {w for w in words if w not in _CLONE_STEM_STOPWORDS}
+
+    # Gate 2: [TPL-CLONE-BAND] unique (archetype, difficulty, bloom) per modality when eff_k <= 4
+    if eff_k <= 4:
+        by_mod: Dict[str, List[Tuple[int, Dict[str, Any]]]] = defaultdict(list)
+        for idx_t, t_item in enumerate(tpls):
+            mod_name = _norm_mod(t_item)
+            if mod_name:
+                by_mod[mod_name].append((idx_t, t_item))
+        for mod_name, group in by_mod.items():
+            if len(group) > 4:
+                continue
+            seen_bands: Dict[Tuple[str, str, str], str] = {}
+            for idx_t, t_item in group:
+                tid = _tpl_id(t_item, idx_t)
+                arch = str(t_item.get("archetype") or "").strip().lower()
+                diff = str(t_item.get("difficulty") or "").strip().lower()
+                blm = str(t_item.get("bloom") or "").strip().lower()
+                if not (arch and diff and blm):
+                    continue
+                band_key = (arch, diff, blm)
+                if band_key in seen_bands:
+                    prev_tid = seen_bands[band_key]
+                    errors.append(
+                        f"{cid}.json ({source_name}): [TPL-CLONE-BAND] Plantillas '{prev_tid}' y '{tid}' "
+                        f"en '{cid}' ({mod_name}) repiten exactamente la tupla (archetype={arch!r}, "
+                        f"difficulty={diff!r}, bloom={blm!r}). Diferencia al menos arquetipo, dificultad o Bloom."
+                    )
+                else:
+                    seen_bands[band_key] = tid
+
+    # Precompute normalized ASTs, stem token sets, and pure SymPy expressions
+    norm_ast_dumps: List[Optional[str]] = []
+    sympy_ast_exprs: List[Any] = []
+    stem_token_sets: List[Set[str]] = []
+    mods: List[str] = []
+    archs: List[str] = []
+    tids: List[str] = []
+
+    for idx_t, t_item in enumerate(tpls):
+        mods.append(_norm_mod(t_item))
+        archs.append(str(t_item.get("archetype") or "").strip().lower())
+        tids.append(_tpl_id(t_item, idx_t))
+        stem_token_sets.append(_stem_tokens(t_item))
+
+        raw_fn = _resolve_gen_ast(t_item)
+        if raw_fn is not None:
+            try:
+                spec_fn = _specialize_gen_ast(raw_fn, cid_ast_funcs)
+                norm_fn = _CanonicalGenASTNormalizer(spec_fn).normalize(spec_fn)
+                norm_ast_dumps.append(ast.dump(norm_fn))
+                sympy_ast_exprs.append(_extract_pure_sympy_expr(spec_fn))
+            except Exception:
+                norm_ast_dumps.append(None)
+                sympy_ast_exprs.append(None)
+        else:
+            norm_ast_dumps.append(None)
+            sympy_ast_exprs.append(None)
+
+    eval_cache: Dict[Tuple[int, int], Optional[Dict[str, Any]]] = {}
+
+    def _eval_tpl_seed(t_idx: int, seed_val: int) -> Optional[Dict[str, Any]]:
+        key = (t_idx, seed_val)
+        if key in eval_cache:
+            return eval_cache[key]
+        res_out: Optional[Dict[str, Any]] = None
+        c_call = gen_callables[t_idx] if t_idx < len(gen_callables) else None
+        if callable(c_call):
+            try:
+                import random
+                from engine.sandbox import call_with_timeout, _LazyNPRNG
+                EvaluationContext.set(
+                    template_id=tids[t_idx],
+                    gen_fn=tpls[t_idx].get("gen_fn_name") or "gen_fn",
+                    archetype=t_idx + 1,
+                    seed=seed_val,
+                )
+                rng = random.Random(seed_val)
+                try:
+                    rng.np = _LazyNPRNG(seed_val)
+                except Exception:
+                    pass
+                r_val = call_with_timeout(c_call, args=(rng,), timeout=0.4, seed=seed_val)
+                if isinstance(r_val, dict):
+                    res_out = r_val
+            except Exception:
+                res_out = None
+            finally:
+                EvaluationContext.reset(norm_shard_id)
+        if res_out is None:
+            gen_c = tpls[t_idx].get("generator_code") or tpls[t_idx].get("generate_py") or ""
+            if gen_c:
+                try:
+                    from engine.sandbox import run_code_in_env
+                    r_val = run_code_in_env(gen_c, "generate", seed=seed_val, timeout=0.5)
+                    if isinstance(r_val, dict):
+                        res_out = r_val
+                except Exception:
+                    res_out = None
+        eval_cache[key] = res_out
+        return res_out
+
+    def _sympy_expr_equiv_from_strings(s1: str, s2: str) -> Optional[bool]:
+        c1 = s1.strip().strip("$").strip()
+        c2 = s2.strip().strip("$").strip()
+        if not c1 or not c2 or len(c1) > 120 or len(c2) > 120:
+            return None
+        try:
+            import sympy
+            from sympy.parsing.sympy_parser import (
+                convert_xor,
+                implicit_multiplication_application,
+                parse_expr,
+                standard_transformations,
+            )
+            trans = standard_transformations + (implicit_multiplication_application, convert_xor)
+            e1 = parse_expr(c1, transformations=trans)
+            e2 = parse_expr(c2, transformations=trans)
+            if not (getattr(e1, "free_symbols", None) or getattr(e2, "free_symbols", None)):
+                return None
+            syms1 = sorted(e1.free_symbols, key=lambda s: s.name)
+            syms2 = sorted(e2.free_symbols, key=lambda s: s.name)
+            if len(syms1) != len(syms2):
+                return False
+            canon_syms = [sympy.Symbol(f"x{k}") for k in range(len(syms1))]
+            e1_c = e1.subs(list(zip(syms1, canon_syms)))
+            e2_c = e2.subs(list(zip(syms2, canon_syms)))
+            return sympy.simplify(e1_c - e2_c) == 0
+        except Exception:
+            return None
+
+    for i in range(len(tpls)):
+        for j in range(i + 1, len(tpls)):
+            same_mod = bool(mods[i] and mods[i] == mods[j])
+            same_arch = bool(archs[i] and archs[i] == archs[j])
+            if not (same_mod or same_arch):
+                continue
+
+            # Gate 1: [TPL-CLONE-AST]
+            if norm_ast_dumps[i] is not None and norm_ast_dumps[i] == norm_ast_dumps[j]:
+                errors.append(
+                    f"{cid}.json ({source_name}): [TPL-CLONE-AST] Plantillas '{tids[i]}' y '{tids[j]}' "
+                    f"en '{cid}' tienen AST normalizado idéntico en 'gen' (posible clon por renombre de variables o constantes). "
+                    f"Implementa lógica o formulación matemática distinta."
+                )
+
+            # Gate 3: [TPL-CLONE-STEM]
+            ti, tj = stem_token_sets[i], stem_token_sets[j]
+            if ti and tj:
+                jacc = len(ti & tj) / float(len(ti | tj))
+                if jacc >= 0.70:
+                    errors.append(
+                        f"{cid}.json ({source_name}): [TPL-CLONE-STEM] Plantillas '{tids[i]}' y '{tids[j]}' "
+                        f"en '{cid}' presentan stem_variants casi idénticos (Jaccard={jacc:.3f} >= 0.70). "
+                        f"Reescribe la redacción y estructura sintáctica de los enunciados."
+                    )
+
+            # Gate 4: [TPL-CLONE-SYMPY] intra-archetype symbolic/algebraic equivalence
+            if same_arch and mods[i] in _SYMPY_CLONE_CHECK_MODS and mods[j] in _SYMPY_CLONE_CHECK_MODS:
+                sympy_clone_detected = False
+                if "open_symbolic" in (mods[i], mods[j]):
+                    eq_42 = None
+                    eq_43 = None
+                    r42_i = _eval_tpl_seed(i, 42)
+                    r42_j = _eval_tpl_seed(j, 42)
+                    if r42_i and r42_j:
+                        eq_42 = _sympy_expr_equiv_from_strings(str(r42_i.get("correct", "")), str(r42_j.get("correct", "")))
+                    if eq_42 is True:
+                        r43_i = _eval_tpl_seed(i, 43)
+                        r43_j = _eval_tpl_seed(j, 43)
+                        if r43_i and r43_j:
+                            eq_43 = _sympy_expr_equiv_from_strings(str(r43_i.get("correct", "")), str(r43_j.get("correct", "")))
+                    if eq_42 is True and eq_43 is True:
+                        sympy_clone_detected = True
+                        errors.append(
+                            f"{cid}.json ({source_name}): [TPL-CLONE-SYMPY] Plantillas '{tids[i]}' y '{tids[j]}' "
+                            f"en '{cid}' (arquetipo '{archs[i]}') producen expresiones simbólicas equivalentes "
+                            f"en SymPy (seeds 42 y 43). Usa expresiones genuinamente distintas."
+                        )
+
+                if (
+                    not sympy_clone_detected
+                    and mods[i] in ("fill_in_the_blank", "multiple_choice_7_options")
+                    and mods[j] in ("fill_in_the_blank", "multiple_choice_7_options")
+                ):
+                    s_expr_i = sympy_ast_exprs[i]
+                    s_expr_j = sympy_ast_exprs[j]
+                    if (
+                        s_expr_i is not None
+                        and s_expr_j is not None
+                        and getattr(s_expr_i, "free_symbols", None)
+                        and getattr(s_expr_j, "free_symbols", None)
+                        and len(s_expr_i.free_symbols) == len(s_expr_j.free_symbols)
+                    ):
+                        try:
+                            import sympy
+                            is_equiv = (sympy.simplify(s_expr_i - s_expr_j) == 0)
+                            if not is_equiv and s_expr_j != 0:
+                                ratio = sympy.simplify(s_expr_i / s_expr_j)
+                                if getattr(ratio, "is_number", False) and not getattr(ratio, "free_symbols", set()):
+                                    is_equiv = True
+                            if is_equiv:
+                                errors.append(
+                                    f"{cid}.json ({source_name}): [TPL-CLONE-SYMPY] Plantillas '{tids[i]}' y '{tids[j]}' "
+                                    f"en '{cid}' (arquetipo '{archs[i]}') reducen a fórmulas algebraicas equivalentes "
+                                    f"o reescaladas trivialmente en SymPy ({s_expr_i} vs {s_expr_j})."
+                                )
+                        except Exception:
+                            pass
+
+    return errors
+
+
 def compile_shard(
     work_dir_or_path: Union[str, Path],
     shard_id: Optional[str] = None,
@@ -1992,6 +2788,7 @@ def compile_shard(
     manifest_path: Optional[Union[str, Path]] = None,
     min_archetypes: Optional[int] = None,
     fail_total: bool = False,
+    templates_per_modality: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Compiles shard data into canonical template JSON files with strict verification.
@@ -2004,6 +2801,8 @@ def compile_shard(
     cta_path = cta_path or kwargs.get("cta")
     manifest_path = manifest_path or kwargs.get("manifest")
     min_archetypes = min_archetypes if min_archetypes is not None else kwargs.get("min_archetypes")
+    if templates_per_modality is None and "templates_per_modality" in kwargs:
+        templates_per_modality = kwargs.get("templates_per_modality")
 
     target_p = Path(work_dir_or_path).resolve()
     # In-memory inference when default "work" does not have manifest
@@ -2090,6 +2889,7 @@ def compile_shard(
             manifest_path=manifest_path,
             min_archetypes=min_archetypes,
             fail_total=fail_total,
+            templates_per_modality=templates_per_modality,
             **kwargs,
         )
     finally:
@@ -2112,6 +2912,7 @@ def _compile_shard_body(
     manifest_path: Optional[Union[str, Path]],
     min_archetypes: Optional[int],
     fail_total: bool = False,
+    templates_per_modality: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
 
@@ -2216,6 +3017,17 @@ def _compile_shard_body(
     elif isinstance(manifest_data, dict) and manifest_data.get("min_archetypes"):
         eff_min_arch = int(manifest_data["min_archetypes"])
 
+    if templates_per_modality is not None:
+        eff_k = max(1, int(templates_per_modality))
+    elif isinstance(manifest_data, dict) and isinstance(manifest_data.get("stage4_contract"), dict) and manifest_data["stage4_contract"].get("templates_per_modality") is not None:
+        eff_k = max(1, int(manifest_data["stage4_contract"]["templates_per_modality"]))
+    elif isinstance(shard_entry, dict) and shard_entry.get("templates_per_modality") is not None:
+        eff_k = max(1, int(shard_entry["templates_per_modality"]))
+    elif isinstance(manifest_data, dict) and manifest_data.get("templates_per_modality") is not None:
+        eff_k = max(1, int(manifest_data["templates_per_modality"]))
+    else:
+        eff_k = _S4_DEFAULT_TPL_PER_MOD
+
     # Locate shard_fixes directory: prioritize shard-isolated directory (shard_fixes/<shard_id>/)
     shard_fixes_dir = shards_dir / "shard_fixes" / norm_shard_id
     if not shard_fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes" / norm_shard_id).is_dir():
@@ -2267,7 +3079,7 @@ def _compile_shard_body(
         hasher.update(cta_p.read_bytes())
     hasher.update(b"\n--MANIFEST_ENTRY--\n")
     hasher.update(json.dumps(shard_entry, sort_keys=True, ensure_ascii=False).encode("utf-8"))
-    hasher.update(f"\n--FLAGS:{bool(strict)}:{int(seeds)}:{int(eff_min_arch)}:{bool(fail_total)}--\n".encode("utf-8"))
+    hasher.update(f"\n--FLAGS:{bool(strict)}:{int(seeds)}:{int(eff_min_arch)}:{int(eff_k)}:{bool(fail_total)}--\n".encode("utf-8"))
     source_sha256 = hasher.hexdigest()
 
     # Bounded compilation counter & unified stateful circuit breaker (.check_attempts/compile_{norm_shard_id}.json)
@@ -2685,9 +3497,12 @@ def _compile_shard_body(
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
 
     cta_comp_map = {c["id"]: c for c in shard_entry.get("competencies", []) if isinstance(c, dict) and "id" in c}
+    cta_contract_version = 1
     if cta_p and cta_p.is_file():
         try:
             cta_data = json.loads(cta_p.read_text(encoding="utf-8"))
+            if isinstance(cta_data, dict):
+                cta_contract_version = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1)))
             for c in cta_data.get("competencies", []):
                 if isinstance(c, dict) and "id" in c:
                     cid_key = c["id"]
@@ -2698,6 +3513,8 @@ def _compile_shard_body(
                             cta_comp_map[cid_key]["distractors"] = c["distractors"]
                         if "assumptions" in c and not cta_comp_map[cid_key].get("assumptions"):
                             cta_comp_map[cid_key]["assumptions"] = c["assumptions"]
+                        if c.get("recommended_modalities") and not cta_comp_map[cid_key].get("recommended_modalities"):
+                            cta_comp_map[cid_key]["recommended_modalities"] = c["recommended_modalities"]
         except Exception:
             pass
 
@@ -4194,10 +5011,10 @@ cross_check=verify
                             f"competencia Concept."
                         )
 
-                # CTA-Architect-driven modality plan enforcement (replaces rigid per-type quotas)
+                # CTA-Architect-driven modality plan enforcement (2 <= M <= 4 mandatory in v2, >= eff_k per modality)
                 raw_rec_mods = cta_c.get("recommended_modalities")
-                if isinstance(raw_rec_mods, list) and len(raw_rec_mods) > 0:
-                    allowed_mods_list: List[str] = []
+                allowed_mods_list: List[str] = []
+                if isinstance(raw_rec_mods, list):
                     for rm in raw_rec_mods:
                         rm_norm = _QTYPE_TO_INTERACTION.get(
                             str(rm).strip().lower(),
@@ -4205,6 +5022,16 @@ cross_check=verify
                         )
                         if rm_norm and rm_norm not in allowed_mods_list:
                             allowed_mods_list.append(rm_norm)
+
+                if cta_contract_version >= 2 and eff_k >= 2:
+                    if len(allowed_mods_list) == 0 or not (_S4_MIN_MODS <= len(allowed_mods_list) <= _S4_MAX_MODS):
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' en contrato v2 "
+                            f"debe declarar entre {_S4_MIN_MODS} y {_S4_MAX_MODS} modalidades canónicas en "
+                            f"cta.json['recommended_modalities'] (encontradas {len(allowed_mods_list)}: {allowed_mods_list})."
+                        )
+
+                if allowed_mods_list:
                     allowed_mods = set(allowed_mods_list)
                     actual_mods_seq = [
                         _QTYPE_TO_INTERACTION.get(
@@ -4220,7 +5047,28 @@ cross_check=verify
                             f"no autorizada(s) por el CTA Architect ({unexpected_mods}). "
                             f"Modalidades permitidas en cta.json para '{cid}': {allowed_mods_list}."
                         )
-                    if len(tpls) >= len(allowed_mods) and len(allowed_mods) >= 2:
+                    eff_min_tpls = _s4_required_templates(
+                        len(allowed_mods_list),
+                        templates_per_modality=eff_k,
+                        min_archetypes=eff_min_arch,
+                    )
+                    if len(tpls) < eff_min_tpls:
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' requiere mínimo "
+                            f"{eff_min_tpls} plantillas (max({eff_min_arch}, {len(allowed_mods_list)} modalidades * {eff_k}/modalidad)), "
+                            f"pero solo declara {len(tpls)}."
+                        )
+                    if eff_k >= 2:
+                        mod_counts = collections.Counter(m for m in actual_mods_seq if m)
+                        for m_req in allowed_mods_list:
+                            cnt = int(mod_counts.get(m_req, 0))
+                            if cnt < eff_k:
+                                m3_errors.append(
+                                    f"{cid}.json ({source_name}): [CTA-MODALITY-PLAN] Competencia '{cid}' requiere "
+                                    f"al menos {eff_k} plantillas por cada modalidad recomendada ({allowed_mods_list}), "
+                                    f"pero '{m_req}' solo tiene {cnt}/{eff_k}."
+                                )
+                    elif len(tpls) >= len(allowed_mods) and len(allowed_mods) >= 2:
                         missing_rec = sorted(allowed_mods - set(actual_mods_seq))
                         if missing_rec:
                             m3_errors.append(
@@ -4251,6 +5099,19 @@ cross_check=verify
                     m3_errors.append(
                         f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo generador)."
                     )
+
+                # 4 Candados Deterministas Anti-Clon intra-competencia
+                m3_errors.extend(
+                    _check_intra_competency_anti_clone(
+                        cid=cid,
+                        source_name=source_name,
+                        tpls=tpls,
+                        gen_callables=gen_callables,
+                        cid_ast_funcs=cid_ast_funcs,
+                        eff_k=eff_k,
+                        norm_shard_id=norm_shard_id,
+                    )
+                )
 
                 # Verificación 2 — AST analysis de la fuente efectiva de esta competencia
                 cid_clean = cid.lower().replace("-", "_")
@@ -4816,8 +5677,11 @@ cross_check=verify
                         _legacy_skill = cid.startswith("Hab-") or _legacy_type in ("skill", "habilidad")
                         _s4c = _s4_competency_contract("skill" if _legacy_skill else "concept")
                     is_true_skill = _s4_is_skill_type(_s4c.get("type", ""))
-                    quota_build = int(_s4c["quota"])
-                    req_unique_stems = int(_s4c["required_unique_stems"])
+                    quota_build = max(
+                        int(_s4c["quota"]),
+                        _s4_quota_for_competency(_s4c.get("type", "concept"), len(tpls)),
+                    )
+                    req_unique_stems = _s4_required_unique_stems(quota_build)
                     all_masked_stems: Set[str] = set()
                     stem_line_ranges: List[str] = []
                     eff_loc_s = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
@@ -4860,7 +5724,11 @@ cross_check=verify
 
                     if len(all_masked_stems) < req_unique_stems:
                         cat_label = "skills" if is_true_skill else "concepts/facts"
-                        _adv = _s4_stems_advice("skill" if is_true_skill else "concept")
+                        _adv = _s4_stems_advice(
+                            "skill" if is_true_skill else "concept",
+                            min_archetypes=max(len(tpls), eff_min_arch),
+                            quota=quota_build,
+                        )
                         req_per_tpl = _adv["per_tpl"]
                         tot_rec = _adv["total"]
                         lines_ctx = f" [{', '.join(stem_line_ranges)} en {source_name}]" if stem_line_ranges else ""
@@ -5085,6 +5953,7 @@ def compile_shard_file(
     strict: bool = True,
     seeds: int = 50,
     min_archetypes: Optional[int] = None,
+    templates_per_modality: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Helper for run.py pipeline stage 3 compatibility."""
@@ -5095,6 +5964,7 @@ def compile_shard_file(
         seeds=seeds,
         output_dir=output_dir,
         min_archetypes=min_archetypes if min_archetypes is not None else kwargs.get("min_archetypes"),
+        templates_per_modality=templates_per_modality if templates_per_modality is not None else kwargs.get("templates_per_modality"),
         **kwargs,
     )
 
@@ -5113,6 +5983,7 @@ def main():
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
     parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (default: 4)")
+    parser.add_argument("--templates-per-modality", dest="templates_per_modality", type=int, default=None, help="Minimum distinct non-clone templates required per recommended modality (default: 2)")
     parser.add_argument("--watchdog-timeout", type=float, default=90.0, help="Watchdog global process timeout budget in seconds (default: 90.0)")
     parser.add_argument("--fail-total", dest="fail_total", action="store_true", default=True, help="Accumulate all template/tuple validation diagnostics across the shard instead of aborting on the first failure (default)")
     parser.add_argument("--fail-fast", dest="fail_total", action="store_false", help="Abort on first Step 4/5 tuple validation error")
@@ -5143,6 +6014,7 @@ def main():
         cta_path=args.cta,
         manifest_path=args.manifest,
         min_archetypes=args.min_archetypes,
+        templates_per_modality=args.templates_per_modality,
         watchdog_timeout=args.watchdog_timeout,
         fail_total=args.fail_total,
     )

@@ -1810,7 +1810,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                                     "Para menos de 6 errores está prohibido reescribir todo el archivo desde cero con write_file: "
                                                     "usa edit_file quirúrgico (replace_file_content) sobre las líneas reportadas "
                                                     "(ej. para actualizar tuplas en TEMPLATES al nuevo contrato Form-C / Form-B Tri-Banda: --min-archetypes 4, bandas easy/medium/hard, "
-                                                    ">= 2 Bloom, FIB/MS obligatorio y 3-tuplas (did, val, error_rationale_@var@) como en [M3-ARCHETYPES]), "
+                                                    ">= 2 Bloom, modalidades alineadas al plan del CTA (M20 / FIB / MS / MC7) y 3-tuplas (did, val, error_rationale_@var@) como en [M3-ARCHETYPES]), "
                                                     f"o escribe un parche modular aislado en {fix_target}."
                                                 ),
                                             }
