@@ -557,24 +557,13 @@ def gen_inverso(rng):
     total = factor * div
     ans = factor
     v = {"total": total, "div": div, "ans": ans}
-    offsets = [-42, -22, -12, 14, 26, 48]
-    for i, off in enumerate(offsets, start=1):
-        v[f"d{i}"] = ans + off
-    dists = [
-        ("D-HabM3-01", f"$@d1@$", "Inversión de signo en el estimador. Error aritmético al evaluar parámetro @d1@."),
-        ("D-HabM3-02", f"$@d2@$", "Omitir la covarianza entre regresores. Error estructural con el valor @d2@."),
-        ("D-HabM3-03", f"$@d3@$", "Varianza no consistente obtenida al emplear matriz homocedástica con valor @d3@."),
-        ("D-HabM3-04", f"$@d4@$", "Instrumento débil con baja correlación en la identificación usando el valor @d4@."),
-        ("D-HabM3-05", f"$@d5@$", "Sesgo de selección por truncamiento no corregido de la muestra usando valor @d5@."),
-        ("D-HabM3-06", f"$@d6@$", "Identificación exacta asumida erróneamente bajo rango deficiente con cota @d6@."),
-    ]
-    return {"vars": v, "correct": "$@ans@$", "distractors": dists}
+    return {"vars": {"total": total, "div": div, "ans": ans}, "correct": str(ans), "distractors": []}
 
 def ver_inverso(res):
     v = res.get("vars", {})
-    expected = f"$@ans@$"
+    expected = str(v.get("ans"))
     corr = str(res.get("correct", "")).strip()
-    return (corr in (expected, f"${v.get('ans')}$", str(v.get('ans')))) and v.get("total") == v.get("ans") * v.get("div")
+    return corr == expected and v.get("total") == v.get("ans") * v.get("div")
 
 def gen_perturbacion(rng):
     x = rng.randint(10, 40)
@@ -625,7 +614,7 @@ TEMPLATES = [
     (
         "T-HabM3-02",
         "Hab-M3",
-        "multiple_choice_7_options",
+        "fill_in_the_blank",
         gen_inverso,
         ver_inverso,
         ("medium", "Analyze"),

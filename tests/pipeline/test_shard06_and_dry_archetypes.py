@@ -168,22 +168,13 @@ def gen_inverso(rng):
     return {
         "vars": {
             "target": target, "factor": factor, "ans": ans,
-            "d1": ans - 1, "d2": ans + 1, "d3": ans + 2,
-            "d4": ans + 3, "d5": ans + 4, "d6": ans + 5,
         },
-        "correct": r"$@ans@$",
-        "distractors": [
-            ("D-Hab06-01", r"$@d1@$", "Inversión errónea al operar con el valor objetivo @target@ observado."),
-            ("D-Hab06-02", r"$@d2@$", "Fallo sistemático en la escala del factor @factor@ al efectuar la división."),
-            ("D-Hab06-03", r"$@d3@$", "Desvío positivo en el cálculo del objetivo @target@ del modelo estructural."),
-            ("D-Hab06-04", r"$@d4@$", "Sesgo positivo acumulado usando el factor @factor@ del estimador inverso."),
-            ("D-Hab06-05", r"$@d5@$", "Error aditivo injustificado sobre el valor objetivo @target@ observado."),
-            ("D-Hab06-06", r"$@d6@$", "Desplazamiento numérico de orden superior con el factor @factor@ aplicado."),
-        ],
+        "correct": str(ans),
+        "distractors": [],
     }
 
 def ver_inverso(res):
-    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
+    return bool(res and isinstance(res.get("vars"), dict) and str(res.get("vars", {}).get("ans")) == str(res.get("correct")))
 
 # Archetype 3: Perturbacion (FIB, medium, Analyze)
 def gen_perturbacion(rng):
@@ -251,7 +242,7 @@ TEMPLATES = [
         "Resolucion directa formal: el estimador es ans = base + 3*step = {ans}."
     ),
     (
-        "T-Hab06-02", "Hab-06", "multiple_choice_7_options",
+        "T-Hab06-02", "Hab-06", "fill_in_the_blank",
         gen_inverso, ver_inverso, ("medium", "Apply"),
         [
             "Deduzca el parametro invertido sabiendo que el producto objetivo es {target} con factor {factor}.",
@@ -1263,18 +1254,9 @@ def _gen_c01(rng, arch):
         }
     elif arch == 2:
         ans = n * 2
-        distractors = [
-            ("D-C01-01", "$@d1@$", "Calculo multiplicativo fallido con parametro @n@ en el paso inicial."),
-            ("D-C01-02", "$@d2@$", "Desplazamiento inverso erroneo al evaluar el valor base @n@ analizado."),
-            ("D-C01-03", "$@d3@$", "Error de proporcion acumulada sobre parametro @n@ del modelo lineal."),
-            ("D-C01-04", "$@d4@$", "Ajuste de factor equivocado aplicado sobre parametro @n@ evaluado."),
-            ("D-C01-05", "$@d5@$", "Sesgo sistematico en la razon inversa para parametro @n@ analizado."),
-            ("D-C01-06", "$@d6@$", "Inversion indebida de factores al computar con parametro base @n@."),
-        ]
         return {
-            "vars": {"n": n, "ans": ans, "d1": ans - 5, "d2": ans + 5, "d3": ans + 10, "d4": ans + 15, "d5": ans + 20, "d6": ans + 25},
-            "correct": "$@ans@$",
-            "distractors": distractors,
+            "vars": {"n": n, "ans": ans},
+            "correct": str(ans),
         }
     elif arch == 3:
         ans = n + 5
@@ -1295,7 +1277,7 @@ def gen_c01_3(rng): return _gen_c01(rng, 3)
 def gen_c01_4(rng): return _gen_c01(rng, 4)
 
 def ver_c01_1(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@ans@$" and res["vars"]["ans"] == res["vars"]["n"] + 10)
-def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@ans@$" and res["vars"]["ans"] == res["vars"]["n"] * 2)
+def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] * 2)
 def ver_c01_3(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] + 5)
 def ver_c01_4(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] * 3)
 
@@ -1357,7 +1339,7 @@ TEMPLATES = [
         "Resolucion directa formal: el estimador es ans = n + 10 = @ans@."
     ),
     (
-        "T-C01-02", "C-01", "multiple_choice_7_options",
+        "T-C01-02", "C-01", "fill_in_the_blank",
         gen_c01_2, ver_c01_2, ("medium", "Apply"),
         stem_c01_2, hints_2,
         "Resolucion inversa formal: el parametro es ans = n * 2 = @ans@."

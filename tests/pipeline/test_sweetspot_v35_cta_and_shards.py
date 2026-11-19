@@ -976,22 +976,7 @@ def _gen_c06(rng, arch):
         return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
     elif arch == 2:
         ans = n * 2
-        v = {"n": n, "ans": ans}
-        for i in range(1, 7):
-            v[f"d{i}"] = ans + i * 5
-        _rat2 = [
-            "Cálculo lineal simple sobre @n@ en lugar del factor doble, dando @d1@.",
-            "Exceso de ponderación en el coeficiente de @ans@ que arroja @d2@.",
-            "Error de signo en la corrección de segundo orden para @n@ hacia @d3@.",
-            "Confusión entre varianza asintótica y media muestral @ans@ en @d4@.",
-            "Aproximación por defecto del multiplicador de @n@ produciendo @d5@.",
-            "Desviación acumulada por redondeo prematuro de @ans@ hasta @d6@.",
-        ]
-        dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", _rat2[i - 1])
-            for i in range(1, 7)
-        ]
-        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
+        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
     elif arch == 3:
         ans = n + 5
         return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
@@ -1011,9 +996,9 @@ def ver_c06_1(res):
     return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] + 10
 
 def ver_c06_2(res):
-    expected = f"$@ans@$"
+    expected = str(res.get("vars", {}).get("ans"))
     corr = str(res.get("correct", "")).strip()
-    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] * 2
+    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] * 2
 
 def ver_c06_3(res):
     expected = str(res.get("vars", {}).get("ans"))
@@ -1045,7 +1030,7 @@ TEMPLATES = [
         r"La varianza asintótica frontal se calcula multiplicando por el parámetro de escala: $@ans@$."
     ),
     (
-        "T-C06-02", "C-06", "multiple_choice_7_options",
+        "T-C06-02", "C-06", "fill_in_the_blank",
         gen_c06_2, ver_c06_2, ("medium", "Apply"),
         [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
@@ -1228,22 +1213,7 @@ def _gen_c06(rng, arch):
         return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
     elif arch == 2:
         ans = n * 2
-        v = {"n": n, "ans": ans}
-        for i in range(1, 7):
-            v[f"d{i}"] = ans + i * 5
-        _rat2 = [
-            "Cálculo lineal simple sobre @n@ en lugar del factor doble, dando @d1@.",
-            "Exceso de ponderación en el coeficiente de @ans@ que arroja @d2@.",
-            "Error de signo en la corrección de segundo orden para @n@ hacia @d3@.",
-            "Confusión entre varianza asintótica y media muestral @ans@ en @d4@.",
-            "Aproximación por defecto del multiplicador de @n@ produciendo @d5@.",
-            "Desviación acumulada por redondeo prematuro de @ans@ hasta @d6@.",
-        ]
-        dists = [
-            (f"D-C06-0{i}", f"$@d{i}@$", _rat2[i - 1])
-            for i in range(1, 7)
-        ]
-        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
+        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
     elif arch == 3:
         ans = n + 5
         return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
@@ -1262,9 +1232,9 @@ def ver_c06_1(res):
     return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] + 10
 
 def ver_c06_2(res):
-    expected = f"$@ans@$"
+    expected = str(res.get("vars", {}).get("ans"))
     corr = str(res.get("correct", "")).strip()
-    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] * 2
+    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] * 2
 
 def ver_c06_3(res):
     expected = str(res.get("vars", {}).get("ans"))
@@ -1295,7 +1265,7 @@ TEMPLATES = [
         r"La varianza asintótica frontal se calcula multiplicando por el parámetro de escala: $@ans@$."
     ),
     (
-        "T-C06-02", "C-06", "multiple_choice_7_options",
+        "T-C06-02", "C-06", "fill_in_the_blank",
         gen_c06_2, ver_c06_2, ("medium", "Apply"),
         [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",

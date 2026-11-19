@@ -753,8 +753,8 @@ def _gen_c01(rng, arch=1):
     ]
     return {
         "vars": {"th": th, "tc": tc, "ans": eff},
-        "correct": str(eff) if arch == 2 else rf"$\eta = {eff}$",
-        "distractors": distractors
+        "correct": rf"$\eta = {eff}$" if arch == 1 else str(eff),
+        "distractors": distractors if arch == 1 else []
     }
 
 def gen_c01_1(rng): return _gen_c01(rng, 1)
@@ -825,7 +825,7 @@ TEMPLATES = [
     (
         "T-C01-03",
         "C-01",
-        "multiple_choice",
+        "fill_in_the_blank",
         gen_c01_3,
         ver_c01,
         ("hard", "Apply"),
@@ -836,7 +836,7 @@ TEMPLATES = [
     (
         "T-C01-04",
         "C-01",
-        "multiple_choice",
+        "fill_in_the_blank",
         gen_c01_4,
         ver_c01,
         ("hard", "Analyze"),
