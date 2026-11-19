@@ -217,8 +217,12 @@ class TranscriptParser:
         return records
 
     @staticmethod
-    def discover_all_subagents(records: List[Dict[str, Any]], brain_dir: Path) -> List[Dict[str, Any]]:
-        """Deep scan across all records to extract all spawned conversationIds and inspect step 0."""
+    def discover_all_subagents(
+        records: List[Dict[str, Any]],
+        brain_dir: Path,
+        root_conv_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Deep scan across all records (and workflow task logs) to extract all spawned conversationIds and inspect step 0."""
         seen_cids = set()
         subagents = []
 
@@ -279,7 +283,39 @@ class TranscriptParser:
                     except Exception:
                         pass
 
+        # Collect workflow task logs (.system_generated/tasks/task-*.log) because failed/truncated
+        # run_workflow steps omit intermediate [agent:...] lines from transcript.jsonl/transcript_full.jsonl.
+        scan_entries: List[Dict[str, Any]] = list(records)
+        task_step_meta: Dict[str, Dict[str, Any]] = {}
+        seen_task_logs: set = set()
         for rec in records:
+            c_txt = rec.get("content", "") or ""
+            for m_tid in re.findall(r"(task-\d+)\.log", c_txt):
+                task_step_meta.setdefault(m_tid, {
+                    "step_index": rec.get("step_index"),
+                    "created_at": rec.get("created_at"),
+                })
+
+        if root_conv_id:
+            t_dir = brain_dir / root_conv_id / ".system_generated" / "tasks"
+            if t_dir.is_dir():
+                for log_p in sorted(t_dir.glob("task-*.log")):
+                    if log_p in seen_task_logs:
+                        continue
+                    seen_task_logs.add(log_p)
+                    try:
+                        log_txt = log_p.read_text(encoding="utf-8", errors="ignore")
+                    except Exception:
+                        continue
+                    if "[agent:" in log_txt:
+                        meta = task_step_meta.get(log_p.stem, {})
+                        scan_entries.append({
+                            "content": log_txt,
+                            "step_index": meta.get("step_index"),
+                            "created_at": meta.get("created_at"),
+                        })
+
+        for rec in scan_entries:
             content = rec.get("content", "")
             if "Created the following subagent" in content or "conversationId" in content or "[agent:" in content:
                 # Find all UUIDs in content
@@ -1045,8 +1081,10 @@ class ExecutionAuditor:
         interventions = self._extract_orchestrator_interventions(self.root_records)
         orch_time_decomp = self._decompose_orchestrator_time(self.root_records, interventions)
 
-        # 3. Discover ALL subagents across transcript
-        discovered_subs = TranscriptParser.discover_all_subagents(self.root_records, self.brain_dir)
+        # 3. Discover ALL subagents across transcript & workflow task logs
+        discovered_subs = TranscriptParser.discover_all_subagents(
+            self.root_records, self.brain_dir, root_conv_id=self.root_conv_id
+        )
 
         # Populate any missing shard mapping dynamically from author subagent prompts (never from unverified root work/)
         author_subs_meta = [s for s in discovered_subs if s.get("category") == "author"]
