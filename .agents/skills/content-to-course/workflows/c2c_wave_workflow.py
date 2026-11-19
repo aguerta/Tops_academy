@@ -10,7 +10,7 @@ Usage via `run_workflow`:
         Description="Execute C2C wave or post-CTA pipeline",
         Args={
             "work_dir": "courses/<course_id>/work",
-            "mode": "post_cta_pipeline",  # or "cta" | "authors" | "judges" | "repair"
+            "mode": "post_cta_pipeline",  # or "cta" | "authors" | "judges" | "repair" | "repair_and_rejudge"
             "output_dir": "courses",
             "python_exe": ".venv/Scripts/python.exe",
         },
@@ -23,7 +23,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 _WF_ARGS: Dict[str, Any] = globals().get("args", {}) or {}
 
@@ -56,18 +56,105 @@ def _build_python_cmd(python_exe: str, script: str, *cli_args: str) -> str:
     return f"& {joined}" if os.name == "nt" else joined
 
 
-async def run_cli(cmd: str, summary: str) -> str:
+def _read_json_field(path: Path, field: str) -> str:
+    """Read a stripped string field from a JSON object file, returning '' if unavailable."""
+    if not path.is_file():
+        return ""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    return str(data.get(field) or "").strip()
+
+
+def _resolve_director_id(work_path: Path) -> str:
+    """Resolve the Director conversation ID from workflow args, lockfile, or state.json."""
+    arg_id = str(_WF_ARGS.get("director_id") or "").strip()
+    if arg_id:
+        return arg_id
+    lock_id = _read_json_field(work_path / ".c2c_subagent_lock.json", "director_conversation_id")
+    if lock_id:
+        return lock_id
+    return _read_json_field(work_path / "state.json", "conversation_id")
+
+
+def _build_run_py_cmd(python_exe: str, run_py: str, director_id: str, *cli_args: str) -> str:
+    """Build a `run.py` CLI command, appending `--director-id` when available."""
+    extra_args = ["--director-id", director_id] if director_id else []
+    return _build_python_cmd(python_exe, run_py, *cli_args, *extra_args)
+
+
+def _parse_ids(raw_ids: Any) -> List[str]:
+    """Normalize explicit competency IDs from a sequence or comma/whitespace-delimited string."""
+    if not raw_ids:
+        return []
+    if isinstance(raw_ids, str):
+        tokens = [tok.strip() for tok in re.split(r"[\s,]+", raw_ids) if tok.strip()]
+    elif isinstance(raw_ids, (list, tuple, set)):
+        tokens = [str(tok).strip() for tok in raw_ids if str(tok).strip()]
+    else:
+        return []
+    deduped: List[str] = []
+    seen = set()
+    for tok in tokens:
+        if tok not in seen:
+            seen.add(tok)
+            deduped.append(tok)
+    return deduped
+
+
+def _build_subprocess_env(env_extra: Optional[Dict[str, str]] = None) -> Optional[Dict[str, str]]:
+    """Build subprocess environment propagating director_id and any explicit env_extra."""
+    merged: Dict[str, str] = {}
+    if env_extra:
+        for key, val in env_extra.items():
+            if val is not None:
+                merged[str(key)] = str(val)
+
+    director_id = (
+        merged.get("C2C_DIRECTOR_ID")
+        or merged.get("ANTIGRAVITY_CONVERSATION_ID")
+        or ""
+    ).strip()
+    if not director_id:
+        work_dir_raw = str(_WF_ARGS.get("work_dir") or "").strip()
+        if work_dir_raw:
+            director_id = _resolve_director_id(Path(work_dir_raw))
+        else:
+            director_id = str(_WF_ARGS.get("director_id") or "").strip()
+
+    if director_id:
+        merged.setdefault("ANTIGRAVITY_CONVERSATION_ID", director_id)
+        merged.setdefault("C2C_DIRECTOR_ID", director_id)
+
+    if not merged:
+        return None
+    proc_env = os.environ.copy()
+    proc_env.update(merged)
+    return proc_env
+
+
+async def run_cli(
+    cmd: str,
+    summary: str,
+    env_extra: Optional[Dict[str, str]] = None,
+) -> str:
     """Execute a deterministic C2C CLI stage as a local subprocess (no `call_tool` dependency) and enforce exit_code == 0."""
     log(f"[CLI] {summary}: {cmd}")
     if os.name == "nt":
         argv = ["powershell", "-NoProfile", "-NonInteractive", "-Command", cmd]
     else:
         argv = ["bash", "-lc", cmd]
-    proc = await asyncio.create_subprocess_exec(
-        *argv,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
+    proc_env = _build_subprocess_env(env_extra)
+    exec_kwargs: Dict[str, Any] = {
+        "stdout": asyncio.subprocess.PIPE,
+        "stderr": asyncio.subprocess.STDOUT,
+    }
+    if proc_env is not None:
+        exec_kwargs["env"] = proc_env
+    proc = await asyncio.create_subprocess_exec(*argv, **exec_kwargs)
     try:
         raw, _ = await asyncio.wait_for(proc.communicate(), timeout=300)
     except asyncio.TimeoutError:
@@ -181,8 +268,89 @@ def _collect_failing_competencies(
     return failing
 
 
+async def _execute_repair_and_rejudge_cycle(
+    work_path: Path,
+    work_dir_arg: str,
+    python_exe: str,
+    run_py: str,
+    dispatch_py: str,
+    director_id: str,
+    cli_env: Optional[Dict[str, str]],
+    target_ids: List[str],
+    repair_wave_label: str,
+    rejudge_wave_label: str,
+) -> Tuple[List[str], List[str]]:
+    """Execute one atomic repair -> templates -> build -> surgical rejudge -> rejudge-compare -> gates cycle."""
+    dispatch_dir = work_path / "dispatch"
+    repair_manifest = dispatch_dir / "repair.json"
+    _unlink_if_exists(repair_manifest)
+    repair_args = ["dispatch-repair", "--work-dir", work_dir_arg]
+    if target_ids:
+        repair_args.extend(["--ids", *target_ids])
+    repair_dispatch_start = time.time()
+    await run_cli(
+        _build_python_cmd(python_exe, dispatch_py, *repair_args),
+        "C2C dispatch repair",
+        env_extra=cli_env,
+    )
+
+    repair_results: List[str] = []
+    rejudge_results: List[str] = []
+    if _is_fresh_file(repair_manifest, repair_dispatch_start):
+        repair_results = await run_wave_from_manifest(
+            str(repair_manifest),
+            repair_wave_label,
+        )
+        await run_cli(
+            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "templates", "--work-dir", work_dir_arg),
+            "C2C post-repair stage templates",
+            env_extra=cli_env,
+        )
+        await run_cli(
+            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "build", "--work-dir", work_dir_arg),
+            "C2C post-repair stage build",
+            env_extra=cli_env,
+        )
+        if target_ids:
+            rejudge_manifest = dispatch_dir / "judges.json"
+            _unlink_if_exists(rejudge_manifest)
+            rejudge_start = time.time()
+            await run_cli(
+                _build_run_py_cmd(
+                    python_exe,
+                    run_py,
+                    director_id,
+                    "--stage",
+                    "rejudge",
+                    "--ids",
+                    *target_ids,
+                    "--work-dir",
+                    work_dir_arg,
+                ),
+                "C2C stage surgical rejudge",
+                env_extra=cli_env,
+            )
+            if _is_fresh_file(rejudge_manifest, rejudge_start):
+                rejudge_results = await run_wave_from_manifest(
+                    str(rejudge_manifest),
+                    rejudge_wave_label,
+                )
+            await run_cli(
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "rejudge-compare", "--work-dir", work_dir_arg),
+                "C2C stage rejudge-compare",
+                env_extra=cli_env,
+            )
+        await run_cli(
+            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
+            "C2C post-repair stage gates",
+            env_extra=cli_env,
+        )
+
+    return repair_results, rejudge_results
+
+
 async def run_c2c_workflow() -> Dict[str, Any]:
-    """Entry point for C2C wave or post-CTA pipeline execution."""
+    """Entry point for C2C wave, repair_and_rejudge, or post-CTA pipeline execution."""
     work_dir_raw = str(_WF_ARGS.get("work_dir") or "").strip()
     if not work_dir_raw:
         raise ValueError("Missing required workflow arg: 'work_dir' (e.g. 'courses/<course_id>/work')")
@@ -196,6 +364,13 @@ async def run_c2c_workflow() -> Dict[str, Any]:
     run_py = ".agents/skills/content-to-course/run.py"
     dispatch_py = ".agents/skills/content-to-course/dispatch.py"
 
+    director_id = _resolve_director_id(work_path)
+    cli_env: Optional[Dict[str, str]] = (
+        {"ANTIGRAVITY_CONVERSATION_ID": director_id, "C2C_DIRECTOR_ID": director_id}
+        if director_id
+        else None
+    )
+
     # Single-wave execution modes: "cta", "authors", "judges", "repair" (or default "wave" -> manifest_name arg)
     if mode in MANIFEST_BY_MODE or mode == "wave":
         manifest_file = str(_WF_ARGS.get("manifest") or MANIFEST_BY_MODE.get(mode, "authors.json")).strip()
@@ -206,23 +381,76 @@ async def run_c2c_workflow() -> Dict[str, Any]:
         print(json.dumps(summary, ensure_ascii=False))
         return summary
 
+    if mode == "repair_and_rejudge":
+        phase("Atomic Repair & Surgical Rejudge")
+        explicit_ids = _parse_ids(_WF_ARGS.get("ids"))
+        if explicit_ids:
+            target_ids = explicit_ids
+        else:
+            _unlink_if_exists(work_path / "repair_matrix.json")
+            _unlink_if_exists(dispatch_dir / "repair_matrix.json")
+            repair_matrix_start = time.time()
+            await run_cli(
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "repair-matrix", "--work-dir", work_dir_arg),
+                "C2C stage repair-matrix",
+                env_extra=cli_env,
+            )
+            target_ids = _collect_failing_competencies(
+                work_path,
+                matrix_min_mtime=repair_matrix_start,
+            )
+            if not target_ids:
+                summary = {
+                    "mode": mode,
+                    "work_dir": str(work_path),
+                    "ids": [],
+                    "repairs_completed": 0,
+                    "rejudges_completed": 0,
+                }
+                print(json.dumps(summary, ensure_ascii=False))
+                return summary
+
+        repair_results, rejudge_results = await _execute_repair_and_rejudge_cycle(
+            work_path=work_path,
+            work_dir_arg=work_dir_arg,
+            python_exe=python_exe,
+            run_py=run_py,
+            dispatch_py=dispatch_py,
+            director_id=director_id,
+            cli_env=cli_env,
+            target_ids=target_ids,
+            repair_wave_label="Atomic Repair Wave",
+            rejudge_wave_label="Atomic Surgical Rejudge Wave",
+        )
+        summary = {
+            "mode": mode,
+            "work_dir": str(work_path),
+            "ids": target_ids,
+            "repairs_completed": len(repair_results),
+            "rejudges_completed": len(rejudge_results),
+        }
+        print(json.dumps(summary, ensure_ascii=False))
+        return summary
+
     if mode != "post_cta_pipeline":
         raise ValueError(
-            f"Unsupported mode '{mode}'. Expected one of: 'cta', 'authors', 'judges', 'repair', 'post_cta_pipeline'."
+            f"Unsupported mode '{mode}'. Expected one of: 'cta', 'authors', 'judges', 'repair', 'repair_and_rejudge', 'post_cta_pipeline'."
         )
 
     # Automated post-CTA pipeline:
     # shard -> dispatch-authors -> parallel(authors) -> templates -> build -> dispatch-judges -> parallel(judges) -> judge-compare -> gates
     phase("Stage 2: Sharding")
     await run_cli(
-        _build_python_cmd(python_exe, run_py, "--stage", "shard", "--work-dir", work_dir_arg),
+        _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "shard", "--work-dir", work_dir_arg),
         "C2C stage shard",
+        env_extra=cli_env,
     )
 
     phase("Stage 3: Dispatch & Run Authors")
     await run_cli(
         _build_python_cmd(python_exe, dispatch_py, "dispatch-authors", "--work-dir", work_dir_arg),
         "C2C dispatch authors",
+        env_extra=cli_env,
     )
     author_results = await run_wave_from_manifest(
         str(dispatch_dir / "authors.json"),
@@ -231,12 +459,14 @@ async def run_c2c_workflow() -> Dict[str, Any]:
 
     phase("Stage 4: Templates & Build")
     await run_cli(
-        _build_python_cmd(python_exe, run_py, "--stage", "templates", "--work-dir", work_dir_arg),
+        _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "templates", "--work-dir", work_dir_arg),
         "C2C stage templates",
+        env_extra=cli_env,
     )
     await run_cli(
-        _build_python_cmd(python_exe, run_py, "--stage", "build", "--work-dir", work_dir_arg),
+        _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "build", "--work-dir", work_dir_arg),
         "C2C stage build",
+        env_extra=cli_env,
     )
 
     phase("Stage 5: Blind Epistemic Judges")
@@ -246,6 +476,7 @@ async def run_c2c_workflow() -> Dict[str, Any]:
     await run_cli(
         _build_python_cmd(python_exe, dispatch_py, "dispatch-judges", "--work-dir", work_dir_arg),
         "C2C dispatch judges",
+        env_extra=cli_env,
     )
     if not _is_fresh_file(judges_manifest, stage5_start):
         raise FileNotFoundError(f"Fresh judges manifest not generated by dispatch-judges: {judges_manifest}")
@@ -254,8 +485,9 @@ async def run_c2c_workflow() -> Dict[str, Any]:
         "Stage 5: Blind Judges Wave",
     )
     await run_cli(
-        _build_python_cmd(python_exe, run_py, "--stage", "judge-compare", "--work-dir", work_dir_arg),
+        _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "judge-compare", "--work-dir", work_dir_arg),
         "C2C stage judge-compare",
+        env_extra=cli_env,
     )
 
     phase("Stage 6: Quality Gates")
@@ -263,8 +495,9 @@ async def run_c2c_workflow() -> Dict[str, Any]:
     _unlink_if_exists(dispatch_dir / "repair_matrix.json")
     gates_start = time.time()
     gates_out = await run_cli(
-        _build_python_cmd(python_exe, run_py, "--stage", "gates", "--work-dir", work_dir_arg),
+        _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
         "C2C stage gates",
+        env_extra=cli_env,
     )
 
     # Check if at most 1 consolidated shard-level repair + surgical rejudge pass is needed
@@ -280,59 +513,27 @@ async def run_c2c_workflow() -> Dict[str, Any]:
         _unlink_if_exists(dispatch_dir / "repair_matrix.json")
         repair_matrix_start = time.time()
         await run_cli(
-            _build_python_cmd(python_exe, run_py, "--stage", "repair-matrix", "--work-dir", work_dir_arg),
+            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "repair-matrix", "--work-dir", work_dir_arg),
             "C2C stage repair-matrix",
+            env_extra=cli_env,
         )
         failing_cids = _collect_failing_competencies(
             work_path,
             matrix_min_mtime=repair_matrix_start,
             judge_min_mtime=stage5_start,
         )
-        repair_manifest = dispatch_dir / "repair.json"
-        _unlink_if_exists(repair_manifest)
-        repair_args = ["dispatch-repair", "--work-dir", work_dir_arg]
-        if failing_cids:
-            repair_args.extend(["--ids", *failing_cids])
-        repair_dispatch_start = time.time()
-        await run_cli(
-            _build_python_cmd(python_exe, dispatch_py, *repair_args),
-            "C2C dispatch repair",
+        repair_results, _ = await _execute_repair_and_rejudge_cycle(
+            work_path=work_path,
+            work_dir_arg=work_dir_arg,
+            python_exe=python_exe,
+            run_py=run_py,
+            dispatch_py=dispatch_py,
+            director_id=director_id,
+            cli_env=cli_env,
+            target_ids=failing_cids,
+            repair_wave_label="Stage 6B: Consolidated Repair Wave",
+            rejudge_wave_label="Stage 6B: Surgical Rejudge Wave",
         )
-
-        if _is_fresh_file(repair_manifest, repair_dispatch_start):
-            repair_results = await run_wave_from_manifest(
-                str(repair_manifest),
-                "Stage 6B: Consolidated Repair Wave",
-            )
-            await run_cli(
-                _build_python_cmd(python_exe, run_py, "--stage", "templates", "--work-dir", work_dir_arg),
-                "C2C post-repair stage templates",
-            )
-            await run_cli(
-                _build_python_cmd(python_exe, run_py, "--stage", "build", "--work-dir", work_dir_arg),
-                "C2C post-repair stage build",
-            )
-            if failing_cids:
-                rejudge_manifest = dispatch_dir / "judges.json"
-                _unlink_if_exists(rejudge_manifest)
-                rejudge_start = time.time()
-                await run_cli(
-                    _build_python_cmd(python_exe, run_py, "--stage", "rejudge", "--ids", *failing_cids, "--work-dir", work_dir_arg),
-                    "C2C stage surgical rejudge",
-                )
-                if _is_fresh_file(rejudge_manifest, rejudge_start):
-                    await run_wave_from_manifest(
-                        str(rejudge_manifest),
-                        "Stage 6B: Surgical Rejudge Wave",
-                    )
-                await run_cli(
-                    _build_python_cmd(python_exe, run_py, "--stage", "rejudge-compare", "--work-dir", work_dir_arg),
-                    "C2C stage rejudge-compare",
-                )
-            await run_cli(
-                _build_python_cmd(python_exe, run_py, "--stage", "gates", "--work-dir", work_dir_arg),
-                "C2C post-repair stage gates",
-            )
 
     summary = {
         "mode": mode,

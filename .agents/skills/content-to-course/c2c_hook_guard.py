@@ -902,7 +902,7 @@ def _find_pending_wave_subagents(active_lock: Dict[str, Any]) -> List[str]:
 
 
 def _find_pending_director_stage_tasks(active_lock: Dict[str, Any]) -> List[str]:
-    """Identifies in-flight background tasks (task-XX) running run.py stages in the Director transcript."""
+    """Identifies in-flight background tasks (task-XX) running run.py stages or run_workflow in the Director transcript."""
     director_id = str(active_lock.get("director_conversation_id") or "").strip()
     if not director_id:
         return []
@@ -921,6 +921,11 @@ def _find_pending_director_stage_tasks(active_lock: Dict[str, Any]) -> List[str]
 
     lock_start_ts = _parse_iso_timestamp(active_lock.get("started_at") or active_lock.get("created_at"))
     active_stage_tasks: Dict[str, str] = {}
+    queued_task_labels: List[str] = []
+    stage_or_workflow_re = re.compile(
+        r"(?:run\.py\b[^;|&\n]*--stage(?:\s+|=)[\"']?(gates|judge-compare|rejudge-compare|verify|build|templates|repair-matrix)[\"']?|\brun_workflow\b|\bc2c_wave_workflow\.py\b)",
+        re.IGNORECASE,
+    )
     try:
         lines = t_path.read_text(encoding="utf-8", errors="ignore").splitlines()
     except OSError:
@@ -937,25 +942,60 @@ def _find_pending_director_stage_tasks(active_lock: Dict[str, Any]) -> List[str]
             step_ts = _parse_iso_timestamp(obj.get("created_at"))
             if step_ts is not None and step_ts < (lock_start_ts - 5.0):
                 continue
+        step_type = obj.get("type")
         content = str(obj.get("content") or "")
+
+        if step_type == "PLANNER_RESPONSE":
+            for tc in obj.get("tool_calls") or []:
+                if not isinstance(tc, dict):
+                    continue
+                tname = str(tc.get("name") or tc.get("tool_name") or "").strip()
+                targs = tc.get("args") if isinstance(tc.get("args"), dict) else tc.get("arguments")
+                if tname == "run_workflow":
+                    queued_task_labels.append("run_workflow")
+                elif isinstance(targs, dict):
+                    cmd_arg = str(
+                        targs.get("CommandLine") or targs.get("commandLine") or targs.get("command") or ""
+                    )
+                    if stage_or_workflow_re.search(cmd_arg) or stage_or_workflow_re.search(
+                        json.dumps(targs, ensure_ascii=False)
+                    ):
+                        queued_task_labels.append(cmd_arg or tname)
+        elif step_type in ("GENERIC", "TOOL_RESULT", "TOOL_RESPONSE") and str(obj.get("status") or "").upper() == "ERROR":
+            lower_c = content.lower()
+            if queued_task_labels and any(
+                k in lower_c for k in ("run_workflow", "c2c_wave_workflow", "run.py", "command")
+            ):
+                queued_task_labels.pop(0)
+
         m_start = re.search(
-            r"Tool is running as a background task with task id:\s*([^\s\r\n]+/task-\d+).*?Task Description:\s*([^\r\n]+)",
+            r"Tool is running as a background task with task id:\s*((?:[^\s\r\n]+/)?task-\d+)(?:.*?Task Description:\s*([^\r\n]+))?",
             content,
             re.DOTALL,
         )
         if m_start:
-            tid, tdesc = m_start.group(1).strip(), m_start.group(2).strip()
-            if re.search(
-                r"run\.py\b[^;|&\n]*--stage(?:\s+|=)[\"']?(gates|judge-compare|rejudge-compare|verify|build|templates|repair-matrix)[\"']?",
-                tdesc,
-                re.IGNORECASE,
+            tid = m_start.group(1).strip()
+            tdesc = (m_start.group(2) or "").strip()
+            queued_lbl = queued_task_labels.pop(0) if queued_task_labels else ""
+            if (
+                stage_or_workflow_re.search(tdesc)
+                or stage_or_workflow_re.search(content)
+                or stage_or_workflow_re.search(queued_lbl)
             ):
-                active_stage_tasks[tid] = tdesc
+                active_stage_tasks[tid] = tdesc or queued_lbl or tid
+
         for m_done in re.finditer(
-            r'Task(?: id)?\s+"([^"]+/task-\d+)"\s+(?:finished|cancelled)',
+            r'Task(?: id)?\s+"((?:[^"]+/)?task-\d+)"\s+(?:finished|cancelled|canceled|failed|errored|completed|timed\s+out)',
             content,
+            re.IGNORECASE,
         ):
-            active_stage_tasks.pop(m_done.group(1).strip(), None)
+            done_tid = m_done.group(1).strip()
+            active_stage_tasks.pop(done_tid, None)
+            if "/" not in done_tid:
+                for k in [k for k in active_stage_tasks if k.endswith(f"/{done_tid}")]:
+                    active_stage_tasks.pop(k, None)
+            else:
+                active_stage_tasks.pop(done_tid.rsplit("/", 1)[-1], None)
 
     return list(active_stage_tasks.keys())
 

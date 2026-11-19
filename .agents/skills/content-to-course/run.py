@@ -319,6 +319,8 @@ def format_compact_json_stdout(
         "stage_log": log_rel,
         "_notice": f"Ultra-compact summary for {total_subagents} subagents. Inspect {orders_rel} with view_file.",
     }
+    if "workflow_script_path" in summary_dict:
+        minimal["workflow_script_path"] = summary_dict["workflow_script_path"]
     return json.dumps(minimal, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -600,7 +602,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "prepare", elapsed)
-        record_stage_telemetry(self.work_dir, "00", "prepare", status="completed", metadata={"duration_seconds": elapsed})
+        record_stage_telemetry(self.work_dir, "00", "prepare", status="completed", metadata={"duration_seconds": elapsed}, conv_id=self._resolve_conversation_id())
         print("  [+] Stage 0 (prepare) completed successfully.")
         return prep_res
 
@@ -725,7 +727,7 @@ class PipelineRunner:
                 print(json.dumps(reduce_res, indent=2, ensure_ascii=False))
                 elapsed = time.time() - t0
                 record_stage_timing(self.work_dir, "cta", elapsed)
-                record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "needs_harmonize": True})
+                record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "needs_harmonize": True}, conv_id=self._resolve_conversation_id())
                 return {
                     "paused_for_review": False,
                     "needs_harmonize": True,
@@ -789,7 +791,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "cta", elapsed)
-        record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "competencies": len(comps)})
+        record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "competencies": len(comps)}, conv_id=self._resolve_conversation_id())
 
         if self.review_cta:
             print("\n" + "*" * 70)
@@ -846,7 +848,7 @@ class PipelineRunner:
             print(f"      * [{s['shard_id']}] {s['competency_count']} competencies (weight={s['weight']}): {', '.join(s['competency_ids'])}")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "shard", elapsed)
-        record_stage_telemetry(self.work_dir, "02", "shard", status="completed", metadata={"duration_seconds": elapsed, "shards": res.get("total_shards")})
+        record_stage_telemetry(self.work_dir, "02", "shard", status="completed", metadata={"duration_seconds": elapsed, "shards": res.get("total_shards")}, conv_id=self._resolve_conversation_id())
         print("  [+] Stage 2 (shard) completed successfully.")
         return res
 
@@ -1202,7 +1204,7 @@ class PipelineRunner:
         print("  [+] AST whitelist, 50-seed dry-run, invariants, and TPL-D1..D4 passed.")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "templates", elapsed)
-        record_stage_telemetry(self.work_dir, "03", "templates", status="completed", metadata={"duration_seconds": elapsed, "count": len(template_files)})
+        record_stage_telemetry(self.work_dir, "03", "templates", status="completed", metadata={"duration_seconds": elapsed, "count": len(template_files)}, conv_id=self._resolve_conversation_id())
         print("  [+] Stage 3 (templates) completed successfully.")
         return {"status": "PASS", "templates_dir": str(templates_dir.resolve()), "count": len(template_files)}
 
@@ -1508,7 +1510,7 @@ class PipelineRunner:
         course_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "build", elapsed)
-        record_stage_telemetry(self.work_dir, "04", "build", status="completed", metadata={"duration_seconds": elapsed, "total_questions": len(all_questions)})
+        record_stage_telemetry(self.work_dir, "04", "build", status="completed", metadata={"duration_seconds": elapsed, "total_questions": len(all_questions)}, conv_id=self._resolve_conversation_id())
         print(f"  [+] Successfully built course bank with {len(all_questions)} questions: {course_file}")
         print("  [+] Stage 4 (build) completed successfully.")
         return {"course_file": str(course_file.resolve()), "total_questions": len(all_questions)}
@@ -1586,7 +1588,7 @@ class PipelineRunner:
         verified_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "verify", elapsed)
-        record_stage_telemetry(self.work_dir, "05", "verify", status="completed", metadata={"duration_seconds": elapsed, "verified_course_path": str(verified_file.resolve())})
+        record_stage_telemetry(self.work_dir, "05", "verify", status="completed", metadata={"duration_seconds": elapsed, "verified_course_path": str(verified_file.resolve())}, conv_id=self._resolve_conversation_id())
         print(f"  [+] Verified course written to: {verified_file}")
         print("  [+] Stage 5 (verify) completed successfully.")
         return {"verified_course_path": str(verified_file.resolve())}
@@ -2015,7 +2017,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "publish", elapsed)
-        record_stage_telemetry(self.work_dir, "06", "publish", status="completed", metadata={"duration_seconds": elapsed, "published_json": str(pub_result.published_json_path)})
+        record_stage_telemetry(self.work_dir, "06", "publish", status="completed", metadata={"duration_seconds": elapsed, "published_json": str(pub_result.published_json_path)}, conv_id=self._resolve_conversation_id())
 
         print("\n" + "=" * 70)
         print("[SUCCESS] COURSE PUBLISHED TO PLATFORM!")
@@ -2285,7 +2287,7 @@ class PipelineRunner:
         res = compare_judge_responses(work_dir=self.work_dir)
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "judge_compare", elapsed)
-        record_stage_telemetry(self.work_dir, "05b", "judge_compare", status="completed", metadata={"duration_seconds": elapsed, "passed": res.get("passed", False)})
+        record_stage_telemetry(self.work_dir, "05b", "judge_compare", status="completed", metadata={"duration_seconds": elapsed, "passed": res.get("passed", False)}, conv_id=self._resolve_conversation_id())
         passed = res.get("passed", False)
         print(f"  [+] Judge comparison finished with status: {'PASSED' if passed else 'DISCORDANCES'}")
         print(f"  [+] Agreement rate: {res.get('agreement_rate', 0.0) * 100:.1f}% ({res.get('agreed_items', 0)}/{res.get('total_items', 0)})")
@@ -2822,13 +2824,14 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "bootstrap", elapsed)
-        record_stage_telemetry(self.work_dir, "00b", "bootstrap", status="completed", metadata={"duration_seconds": elapsed, "lock_file": str(lock_file.resolve())})
+        record_stage_telemetry(self.work_dir, "00b", "bootstrap", status="completed", metadata={"duration_seconds": elapsed, "lock_file": str(lock_file.resolve())}, conv_id=self._resolve_conversation_id())
 
         summary = {
             "status": "ready_for_cta",
             "course_id": self.course_id,
             "work_dir": self.work_dir.resolve().as_posix(),
             "lock_file": lock_file.resolve().as_posix(),
+            "workflow_script_path": str((Path(__file__).resolve().parent / "workflows" / "c2c_wave_workflow.py").resolve()),
             "type_spec_files": [Path(p).resolve().as_posix() for p in type_files],
             "cta_unit_count": len(cta_subagents),
             "Subagents": cta_subagents,

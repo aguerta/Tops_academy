@@ -168,8 +168,8 @@ class TestPointerPromptProtocol(unittest.TestCase):
             prompt_bytes = len(sub["Prompt"].encode("utf-8"))
             self.assertLessEqual(
                 prompt_bytes,
-                300,
-                f"Author pointer prompt exceeds 300 B: {prompt_bytes} bytes",
+                650,
+                f"Author pointer prompt exceeds 650 B: {prompt_bytes} bytes",
             )
             self.assertIn("work/dispatch/items/author_", sub["Prompt"])
 

@@ -32,13 +32,67 @@ def get_brain_dir() -> Path:
     return Path(os.path.expanduser("~")) / ".gemini" / "antigravity" / "brain"
 
 
-def find_conversation_id_for_work_dir(work_dir: Path) -> Optional[str]:
-    """Auto-detect conversation ID whose transcript references this work directory."""
-    # 1. Environment variable if set
-    env_conv = os.environ.get("ANTIGRAVITY_CONVERSATION_ID")
-    if env_conv:
-        return env_conv.strip()
+_WORKER_HEADER_MARKERS = (
+    "[scope-lock]",
+    "you are shard author",
+    "you are cta architect",
+    "you are repair engineer",
+    "you are blind judge",
+)
 
+
+def _is_worker_transcript_head(head_lower: str) -> bool:
+    """Return True if the transcript header belongs to a C2C worker subagent."""
+    if any(marker in head_lower for marker in _WORKER_HEADER_MARKERS):
+        return True
+    if "work order:" in head_lower and "run.py --stage bootstrap" not in head_lower:
+        return True
+    return False
+
+
+def find_conversation_id_for_work_dir(work_dir: Path) -> Optional[str]:
+    """Auto-detect director conversation ID for this work directory.
+
+    Precedence:
+      1. Environment variables: ANTIGRAVITY_CONVERSATION_ID or C2C_DIRECTOR_ID
+      2. Lockfile: work_dir/.c2c_subagent_lock.json -> director_conversation_id
+      3. State file: work_dir/state.json -> conversation_id
+      4. Brain transcript fallback (excluding worker subagent transcripts)
+    """
+    work_dir = Path(work_dir)
+
+    # 1. Environment variable if set
+    env_conv = (
+        os.environ.get("ANTIGRAVITY_CONVERSATION_ID")
+        or os.environ.get("C2C_DIRECTOR_ID")
+        or ""
+    ).strip()
+    if env_conv:
+        return env_conv
+
+    # 2. Subagent lockfile
+    lock_file = work_dir / ".c2c_subagent_lock.json"
+    if lock_file.is_file():
+        try:
+            lock_data = json.loads(lock_file.read_text(encoding="utf-8"))
+            cid = str(lock_data.get("director_conversation_id") or "").strip()
+            if cid:
+                return cid
+        except Exception:
+            pass
+
+    # 3. Master state.json
+    state_file = work_dir / "state.json"
+    if state_file.is_file():
+        try:
+            state_data = json.loads(state_file.read_text(encoding="utf-8"))
+            cid = str(state_data.get("conversation_id") or "").strip()
+            if cid:
+                return cid
+        except Exception:
+            pass
+
+    # 4. Brain transcript fallback
     brain_dir = get_brain_dir()
     if not brain_dir.exists():
         return None
@@ -65,6 +119,8 @@ def find_conversation_id_for_work_dir(work_dir: Path) -> Optional[str]:
         try:
             with open(t_file, "r", encoding="utf-8", errors="ignore") as f:
                 head = "".join(f.readline() for _ in range(60)).replace("\\", "/").lower()
+                if _is_worker_transcript_head(head):
+                    continue
                 if norm_work in head or (work_dir.name.lower() == "work" and f"/courses/{course_name}/work" in head):
                     return conv_id
         except Exception:

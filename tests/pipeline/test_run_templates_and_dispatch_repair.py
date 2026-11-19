@@ -821,8 +821,9 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         }), encoding="utf-8")
         cta_res = dispatch_cta(self.work_dir, mode="mapreduce", pointer=True)
         cta_prompt = cta_res["Subagents"][0]["Prompt"]
-        self.assertLessEqual(len(cta_prompt.encode("utf-8")), 600)
-        self.assertIn("READ: `work/slices/part_01/doc_p1_10.pdf`", cta_prompt)
+        self.assertLessEqual(len(cta_prompt.encode("utf-8")), 650)
+        expected_slice_abs = (self.work_dir / "slices" / "part_01" / "doc_p1_10.pdf").resolve().as_posix()
+        self.assertIn(f"READ: `{expected_slice_abs}`", cta_prompt)
         self.assertIn("Rango: `1..10`", cta_prompt)
         self.assertIn("WRITE:", cta_prompt)
         self.assertIn("COMPILE:", cta_prompt)
@@ -849,7 +850,7 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         # 3. Shard Author: pure-data author_01_data.md
         auth_res = dispatch_authors(self.work_dir, pointer=True)
         auth_prompt = next(s["Prompt"] for s in auth_res["Subagents"] if "shard_01" in s["Role"])
-        self.assertLessEqual(len(auth_prompt.encode("utf-8")), 300)
+        self.assertLessEqual(len(auth_prompt.encode("utf-8")), 650)
         self.assertIn("author_01_data.md", auth_prompt)
         auth_data_md = (self.work_dir / "dispatch" / "items" / "author_01_data.md").read_text(encoding="utf-8")
         self.assertIn("## 2. ESPECIFICACIÓN TURN-0 COMPLETA DE COMPETENCIAS Y DISTRACTORES", auth_data_md)
@@ -874,7 +875,7 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         # 5. Repair Engineer: pure-data repair_c05_data.md
         rep_res = dispatch_repair(self.work_dir, ids=["C-05"], pointer=True)
         rep_prompt = rep_res["Subagents"][0]["Prompt"]
-        self.assertLessEqual(len(rep_prompt.encode("utf-8")), 600)
+        self.assertLessEqual(len(rep_prompt.encode("utf-8")), 650)
         self.assertIn("repair_c05_data.md", rep_prompt)
         rep_data_md = (self.work_dir / "prompts" / "repair" / "repair_c05_data.md").read_text(encoding="utf-8")
         self.assertIn("## 2. DIAGNÓSTICO DEL FALLO & COMPETENCE SLICE", rep_data_md)

@@ -1647,6 +1647,9 @@ class ExecutionAuditor:
             )
             if isinstance(disc_list, list):
                 return len(disc_list)
+            if "failed" in report and report["failed"] is not None:
+                val = report["failed"]
+                return len(val) if isinstance(val, list) else int(val)
             if "discrepancies_count" in report:
                 return int(report["discrepancies_count"])
             if "failed_items" in report:
@@ -1692,20 +1695,49 @@ class ExecutionAuditor:
                 except Exception:
                     pass
 
-        round_1_discrepancies_count = _extract_disc_count(round_1_data) if round_1_data else 0
-        round_1_agreement_rate: Optional[float] = None
-        round_1_passed: Optional[bool] = None
-        if round_1_data:
-            if "agreement_rate" in round_1_data and round_1_data["agreement_rate"] is not None:
-                round_1_agreement_rate = float(round_1_data["agreement_rate"])
-            if "passed" in round_1_data:
-                round_1_passed = bool(round_1_data["passed"])
+        r1_entry: Optional[Dict[str, Any]] = None
+        if rounds_history:
+            r1_entry = next(
+                (r for r in rounds_history if r.get("round") == 1),
+                rounds_history[0],
+            )
+
+        if r1_entry is not None:
+            if r1_entry.get("failed") is not None:
+                val = r1_entry["failed"]
+                round_1_discrepancies_count = len(val) if isinstance(val, list) else int(val)
+            elif isinstance(r1_entry.get("disagreements"), list):
+                round_1_discrepancies_count = len(r1_entry.get("disagreements") or [])
             else:
-                round_1_passed = (round_1_discrepancies_count == 0)
-            if round_1_discrepancies_count > 0:
-                round_1_passed = False
+                round_1_discrepancies_count = _extract_disc_count(r1_entry)
+
+            round_1_passed = bool(r1_entry.get("passed", False)) and round_1_discrepancies_count == 0
+            round_1_agreement_rate: Optional[float] = (
+                float(r1_entry["agreement_rate"])
+                if r1_entry.get("agreement_rate") is not None
+                else (
+                    float(round_1_data["agreement_rate"])
+                    if round_1_data and round_1_data.get("agreement_rate") is not None
+                    else None
+                )
+            )
             if round_1_passed is False or round_1_discrepancies_count > 0:
                 has_rejudge = True
+        else:
+            round_1_discrepancies_count = _extract_disc_count(round_1_data) if round_1_data else 0
+            round_1_agreement_rate = None
+            round_1_passed = None
+            if round_1_data:
+                if "agreement_rate" in round_1_data and round_1_data["agreement_rate"] is not None:
+                    round_1_agreement_rate = float(round_1_data["agreement_rate"])
+                if "passed" in round_1_data:
+                    round_1_passed = bool(round_1_data["passed"])
+                else:
+                    round_1_passed = (round_1_discrepancies_count == 0)
+                if round_1_discrepancies_count > 0:
+                    round_1_passed = False
+                if round_1_passed is False or round_1_discrepancies_count > 0:
+                    has_rejudge = True
 
         if agreement_rate is None and re.search(r"Agreement rate:\s*100\.0%|All \d+ items agreed", rec_str):
             agreement_rate = 1.0

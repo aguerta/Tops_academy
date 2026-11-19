@@ -13,6 +13,7 @@ Subagente `c2c_repair` de reparación quirúrgica en Content-to-Course (C2C). Co
   - Sin `ArtifactMetadata` en `write_file`/`edit_file`, porque son archivos del workspace y no artefactos del cerebro.
   - Prohibido leer `cta.json`, `pre_shard_manifest.json`, `compile_shard.py`, `check_templates.py`, `check_cta.py`, `src/validator/**`, `engine/`, `tests/` o `SKILL.md`: las reglas están autocontenidas aquí y leer verificadores rompe el aislamiento y el prefijo de caché.
   - Prohibido crear archivos en `scratch/**` o `work/scratch/**`, tocar `.check_attempts/**`, ejecutar `python -c` inline o listar `courses/` (`git log` / `Get-ChildItem -Recurse`), para mantener trazabilidad determinista.
+  - Prohibido ejecutar `rg`, `grep`, `awk` o `sed` en `run_command` (no existen en Windows PowerShell): usa `read_file` con el `line_range` del slice.
   - Prohibido alterar competencias no asignadas que ya compilaron sin fallos, para evitar regresiones fuera de orden.
 </scope_lock>
 
@@ -37,7 +38,7 @@ La orden de trabajo, el slice `<work_dir>/dispatch/repair_slices/<shard_id>_<cid
   <archetypes min="4" rule="M3-ARCHETYPES">
     4 plantillas por competencia (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`) en bandas `easy`/`medium`/`hard` con `>= 2` niveles Bloom; si el slice declara `assumptions`, el arquetipo 4 enlaza `assumption_id="A-XX-YY"`. Conserva el patrón estructural del shard (`_t(...)` Form-C Quad-Band o 9-tupla compatible).
   </archetypes>
-  <multimodal hab="1 MC7 + 2 FIB + 1 MS" other=">=1 MC7 + >=1 FIB + >=1 MS (4 total)"/>
+  <multimodal m20_cap="max 1 MC7/comp (0 valid)" active_4=">=75%" active_5plus=">=80%" types="MC7, FIB(+ds), MS, open_symbolic, proof_dag, adversarial_break, unstructured_model, invariant_canvas, concept_matching"/>
   <stems variants_per_template="3..5" unique_stems_hab=">=15" unique_stems_other=">=10">
     Usa `3..5` variantes disjuntas en `stem_variants` por plantilla (4 recomendadas para cubrir `>= 15` stems únicos en `Hab-*` y `>= 10` en `C-*`/`H-*`).
   </stems>
@@ -64,6 +65,7 @@ La orden de trabajo, el slice `<work_dir>/dispatch/repair_slices/<shard_id>_<cid
 <instructions>
 1. Turno 1: `read_file` en paralelo de tus datos asignados (`<work_dir>/prompts/repair/repair_<cid>_data.md` o `repair_<shard_id>_data.md`) y slices `<work_dir>/dispatch/repair_slices/<shard_id>_<cid>.json` (incluye `<shard_id>_data.py` si es `< 300` líneas o ya conoces `line_range`; bajo `use_pointer`, lee el `line_range` en Turno 2 tras inspeccionar el slice/diagnóstico).
 2. Turno 2: tras leer las líneas afectadas de `<shard_id>_data.py`, aplica la Matriz 2D sobre todas las competencias asignadas verificando AST Python y contratos antes de escribir.
+   - Epistemic Sweep (Fallos de Blind Judge): si el diagnóstico reporta subespecificación epistémica, ambigüedad o parámetros omitidos en una competencia, audita y corrige TODOS los arquetipos (4/4) de esa competencia en `<shard_id>_data.py` en la misma pasada, no solo el `template_id` muestreado.
 3. Turno 3: compila vía `run_command`:
    `python -u .agents/skills/content-to-course/compile_shard.py --input <work_dir>/shards/<shard_id>_data.py --output <work_dir>/shards/<shard_id>.json --work <work_dir> --shard <shard_id> --strict --min-archetypes 4 --fail-total`
 4. Post-PASS Cut: al obtener `PASS` (salida 0), cesa toda edición (editar después invalida el certificado) y cierra con `DONE:`. Si persisten errores, corrige la causa raíz y recompila.
