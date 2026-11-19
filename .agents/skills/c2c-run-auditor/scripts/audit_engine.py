@@ -1711,7 +1711,11 @@ class ExecutionAuditor:
             else:
                 round_1_discrepancies_count = _extract_disc_count(r1_entry)
 
-            round_1_passed = bool(r1_entry.get("passed", False)) and round_1_discrepancies_count == 0
+            _r1_raw_passed = r1_entry.get("passed")
+            if _r1_raw_passed is None:
+                round_1_passed = (round_1_discrepancies_count == 0)
+            else:
+                round_1_passed = bool(_r1_raw_passed) and round_1_discrepancies_count == 0
             round_1_agreement_rate: Optional[float] = (
                 float(r1_entry["agreement_rate"])
                 if r1_entry.get("agreement_rate") is not None

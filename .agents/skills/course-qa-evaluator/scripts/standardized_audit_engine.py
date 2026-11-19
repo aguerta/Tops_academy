@@ -1904,7 +1904,15 @@ class AntiGamingPsychometricLinter(BaseLinter):
                         ans_set.add(json.dumps(ans_val, sort_keys=True))
                 else:
                     ans_val = q.get("correct_answer") if q.get("correct_answer") is not None else q.get("answer")
-                    ans_set.add(json.dumps(ans_val, sort_keys=True))
+                    m20_spec = None
+                    for m20_k in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+                        if isinstance(q.get(m20_k), dict):
+                            m20_spec = q[m20_k]
+                            break
+                    if m20_spec is not None:
+                        ans_set.add(json.dumps({"ans": ans_val, "spec": m20_spec}, sort_keys=True, default=str))
+                    else:
+                        ans_set.add(json.dumps(ans_val, sort_keys=True, default=str))
             if len(ans_set) <= 4:
                 memorizable_comps.append({"competency_id": cid, "unique_answers": len(ans_set), "total_items": len(qlist)})
                 issues.append(LintIssue(

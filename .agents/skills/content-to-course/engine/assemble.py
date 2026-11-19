@@ -464,9 +464,15 @@ _GENERIC_RATIONALE_PATTERNS = re.compile(
     r"placeholder.*|"
     r"none|"
     r"null|"
-    r"n/a|"
+    r"n/?a|"
+    r"ningun[oa]|"
+    r"comod[ií]n|"
+    r"gen[eé]rico|generic|"
+    r"todo|tbd|test|default|"
+    r"(?:placeholder|distractor|error)(?:\s+[a-z0-9]+)?|"
+    r"error\s+(?:gen[eé]rico|rationale|de\s+prueba)|"
     r"distractor(?:\s+derivado.*)?\.?|"
-    r"incorrect[oa]\.?|"
+    r"incorrect[oa]?\.?|"
     r"opci[oó]n\s+(?:incorrecta|inv[aá]lida.*)\.?"
     r")$",
     re.IGNORECASE,
@@ -477,7 +483,11 @@ def _is_generic_placeholder(text: str) -> bool:
     """Return True if text is empty or a generic boilerplate placeholder."""
     if not text or not str(text).strip():
         return True
-    cleaned = str(text).strip()
+    cleaned = str(text).strip().strip(".!?,;:\"'-_ ")
+    if not cleaned:
+        return True
+    if "placeholder" in cleaned.lower():
+        return True
     return bool(_GENERIC_RATIONALE_PATTERNS.match(cleaned))
 
 
@@ -725,7 +735,7 @@ def _assemble_diagnostic_distractors(
             raw_eqs = item.get("accepted_equivalents") or item.get("equivalents") or []
             if isinstance(raw_eqs, list):
                 accepted_eqs = [
-                    _strip_outer_math_dollars(format_template_string(str(eq).strip(), variables))
+                    _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(eq).strip(), variables)))
                     for eq in raw_eqs
                     if str(eq).strip()
                 ]
@@ -748,7 +758,7 @@ def _assemble_diagnostic_distractors(
             raw_val = item
 
         did_norm = str(did).strip().replace("_", "-") if did else None
-        val_fmt = _strip_outer_math_dollars(format_template_string(str(raw_val).strip(), variables))
+        val_fmt = _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(raw_val).strip(), variables)))
         if not val_fmt:
             continue
 
@@ -813,6 +823,10 @@ def _assemble_unstructured_model(
         correct_role = sanitize_katex_syntax(format_template_string(str(it.get("correct_role") or ""), variables))
         if not label or not correct_role:
             raise ValueError(f"[STAGE0-P1] item '{iid}' missing label or correct_role.")
+        if correct_role not in roles:
+            raise ValueError(
+                f"[STAGE0-P1] item '{iid}' correct_role '{correct_role}' must be one of phase1_variables.roles {roles}."
+            )
         did = it.get("distractor_id") or it.get("did")
         did_norm = str(did).strip().replace("_", "-") if did else None
         it_lookup = dict(it)
@@ -926,11 +940,11 @@ def _assemble_unstructured_model(
         raw_expr = p3.get("correct_expression")
         if not isinstance(raw_expr, dict):
             raw_expr = {"expression": str(raw_expr or "")}
-        expr_val = _strip_outer_math_dollars(format_template_string(str(raw_expr.get("expression") or raw_expr.get("value") or ""), variables))
+        expr_val = _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(raw_expr.get("expression") or raw_expr.get("value") or ""), variables)))
         if not expr_val:
             raise ValueError("[STAGE0-P3] symbolic mode requires non-empty correct_expression.")
         eqs = [
-            _strip_outer_math_dollars(format_template_string(str(e), variables))
+            _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(e), variables)))
             for e in (raw_expr.get("accepted_equivalents") or [])
             if str(e).strip()
         ]
@@ -1048,9 +1062,23 @@ def _assemble_invariant_canvas(
             ni["kind"] = inv_kind
             if isinstance(ni.get("expr"), str):
                 ni["expr"] = format_template_string(ni["expr"], variables)
-            for num_k in ("target_x", "target_y", "x", "expected", "target_slope", "target", "min", "max"):
+            for num_k in (
+                "target_x", "target_y", "x", "y",
+                "expected", "target_slope", "target_value", "value",
+                "target", "min", "max", "tolerance",
+            ):
                 if isinstance(ni.get(num_k), str):
                     ni[num_k] = _coerce_num_if_numeric(format_template_string(ni[num_k], variables))
+            if inv_kind in ("slider_eq", "slope_at", "slider_range") and ni.get("target") is None:
+                for alias_k in ("target_value", "target_slope", "expected", "value"):
+                    if ni.get(alias_k) is not None:
+                        ni["target"] = ni[alias_k]
+                        break
+            if inv_kind == "point_coords":
+                if ni.get("target_x") is None and ni.get("x") is not None:
+                    ni["target_x"] = ni["x"]
+                if ni.get("target_y") is None and ni.get("y") is not None:
+                    ni["target_y"] = ni["y"]
             if inv_kind == "inequality_state":
                 for ik in ("expected_style", "expected_shade"):
                     if isinstance(ni.get(ik), str):

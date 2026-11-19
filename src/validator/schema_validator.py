@@ -110,6 +110,10 @@ COURSE_SCHEMA: dict[str, Any] = {
                 },
                 "source_examples": {
                     "type": "array"
+                },
+                "recommended_modalities": {
+                    "type": "array",
+                    "items": {"type": "string"}
                 }
             }
         },

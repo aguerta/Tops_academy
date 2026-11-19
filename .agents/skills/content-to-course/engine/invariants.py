@@ -939,7 +939,12 @@ def validate_katex_syntax(
 
     # 15. LaTeX math commands with backslash exposed outside math delimiters '$...$' or '$$...$$'
     # Skips purely algebraic fields (e.g. canonical_algebraic or expression in FIB) which are mathematical formulas by specification
-    if not ("canonical_algebraic" in context or "expression" in context):
+    if not (
+        "canonical_algebraic" in context
+        or "expression" in context
+        or context == "correct_answer"
+        or context.startswith("correct_answer.")
+    ):
         clean_no_math = re.sub(r"\$\$[\s\S]*?\$\$", "", clean_text)
         clean_no_math = re.sub(r"\$[^\$]*?\$", "", clean_no_math)
         EXPOSED_LATEX_CMD = (
@@ -997,6 +1002,28 @@ def _expressions_collide(expr_a: str, expr_b: str) -> bool:
     return False
 
 
+_PLACEHOLDER_RATIONALE_PAT = re.compile(
+    r"^(?:"
+    r"static|dummy.*|placeholder.*|none|null|n/?a|ningun[oa]|comod[ií]n|gen[eé]rico|generic|"
+    r"todo|tbd|test|default|(?:placeholder|distractor|error)(?:\s+[a-z0-9]+)?|"
+    r"error\s+(?:gen[eé]rico|rationale|de\s+prueba)|"
+    r"distractor(?:\s+derivado.*)?\.?|incorrect[oa]?\.?|opci[oó]n\s+(?:incorrecta|inv[aá]lida.*)\.?"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def _is_placeholder_rationale_inv(rationale: Any) -> bool:
+    if not isinstance(rationale, str):
+        return True
+    cleaned = rationale.strip().strip(".!?,;:\"'-_ ")
+    if not cleaned:
+        return True
+    if "placeholder" in cleaned.lower():
+        return True
+    return bool(_PLACEHOLDER_RATIONALE_PAT.match(cleaned))
+
+
 def _check_diagnostic_distractors_invariants(
     instance: Dict[str, Any],
     correct_expr: str,
@@ -1030,6 +1057,8 @@ def _check_diagnostic_distractors_invariants(
         rat = dd.get("error_rationale")
         if not isinstance(rat, str) or not rat.strip():
             errors.append(f"diagnostic_distractors[{idx}] must include a non-empty 'error_rationale'.")
+        elif _is_placeholder_rationale_inv(rat):
+            errors.append(f"diagnostic_distractors[{idx}] contains a generic placeholder 'error_rationale': '{rat}'")
         else:
             errors.extend(validate_katex_syntax(rat, f"diagnostic_distractors[{idx}].error_rationale", variables=effective_vars))
 
@@ -1106,6 +1135,24 @@ def check_instance_invariants(
 
         # Item-level options integrity (telltales, synthetic clone prefix, padding, vacuous quantifiers)
         errors.extend(check_item_level_options_integrity(options_raw, interaction_type))
+
+    if interaction_type in ("fill_in_the_blank", "open_symbolic") and not corr_texts_extracted:
+        ans_obj = instance.get("correct_answer") if instance.get("correct_answer") is not None else instance.get("correct")
+        if isinstance(ans_obj, dict):
+            for _ak in ("expression", "value", "canonical_algebraic"):
+                _av = ans_obj.get(_ak)
+                if isinstance(_av, str) and _av.strip():
+                    corr_texts_extracted.append(_av.strip())
+            for _eq in (ans_obj.get("accepted_equivalents") or []):
+                if isinstance(_eq, str) and _eq.strip():
+                    corr_texts_extracted.append(_eq.strip())
+        elif isinstance(ans_obj, str) and ans_obj.strip():
+            corr_texts_extracted.append(ans_obj.strip())
+        for _dd in (instance.get("diagnostic_distractors") or []):
+            if isinstance(_dd, dict):
+                _dv = str(_dd.get("expression") or _dd.get("value") or "").strip()
+                if _dv:
+                    dist_texts_extracted.append(_dv)
 
     # 1. Multiple Choice 7 options
     if interaction_type == "multiple_choice_7_options":
@@ -1253,6 +1300,18 @@ def check_instance_invariants(
                         errors.extend(validate_katex_syntax(ans, "correct_answer", variables=effective_vars))
             else:
                 errors.append(f"{type_label} answer format invalid: {type(ans)}")
+
+        if corr_expr_str and isinstance(stem, str):
+            clean_cand_fib = corr_expr_str.strip().strip("$").strip()
+            if clean_cand_fib:
+                leak_pat_fib = re.compile(
+                    rf"(?:=\s*|\bes\s+(?:igual\s+a\s+)?)\$?{re.escape(clean_cand_fib)}\$?(?=[^0-9a-zA-Z]|$)",
+                    re.IGNORECASE,
+                )
+                if leak_pat_fib.search(stem):
+                    errors.append(
+                        f"{type_label} correct answer '{clean_cand_fib}' leaked as direct assignment in stem text."
+                    )
 
         _check_diagnostic_distractors_invariants(instance, corr_expr_str, effective_vars, errors)
 
@@ -1445,12 +1504,26 @@ def check_instance_invariants(
                     if isinstance(ph_prompt, str) and ph_prompt:
                         errors.extend(validate_katex_syntax(ph_prompt, f"unstructured_model.{ph_name}.prompt", variables=effective_vars))
 
+                for r_idx, role_val in enumerate(p1.get("roles") or []):
+                    if isinstance(role_val, str) and role_val:
+                        errors.extend(validate_katex_syntax(role_val, f"unstructured_model.phase1_variables.roles[{r_idx}]", variables=effective_vars))
+
+                declared_roles = [str(r) for r in (p1.get("roles") or []) if str(r).strip()]
                 for it_idx, it in enumerate(p1.get("items") or []):
                     if isinstance(it, dict):
+                        c_role = str(it.get("correct_role") or "").strip()
+                        if declared_roles and c_role and c_role not in declared_roles:
+                            errors.append(
+                                f"unstructured_model.phase1_variables.items[{it_idx}] correct_role '{c_role}' is not in declared roles {declared_roles}."
+                            )
                         for fld in ("label", "error_rationale"):
                             fval = it.get(fld)
                             if isinstance(fval, str) and fval:
                                 errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase1_variables.items[{it_idx}].{fld}", variables=effective_vars))
+                        if isinstance(it.get("error_rationale"), str) and _is_placeholder_rationale_inv(it["error_rationale"]):
+                            errors.append(
+                                f"unstructured_model.phase1_variables.items[{it_idx}] contains a generic placeholder 'error_rationale': '{it['error_rationale']}'"
+                            )
 
                 for o_idx, opt in enumerate(p2_opts):
                     if isinstance(opt, dict):
@@ -1458,6 +1531,10 @@ def check_instance_invariants(
                             fval = opt.get(fld)
                             if isinstance(fval, str) and fval:
                                 errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}", variables=effective_vars))
+                        if isinstance(opt.get("error_rationale"), str) and _is_placeholder_rationale_inv(opt["error_rationale"]):
+                            errors.append(
+                                f"unstructured_model.phase2_assumptions.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'"
+                            )
 
                 for o_idx, opt in enumerate(p3.get("options") or []):
                     if isinstance(opt, dict):
@@ -1465,13 +1542,37 @@ def check_instance_invariants(
                             fval = opt.get(fld)
                             if isinstance(fval, str) and fval:
                                 errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}", variables=effective_vars))
+                        if not opt.get("is_correct") and isinstance(opt.get("error_rationale"), str) and _is_placeholder_rationale_inv(opt["error_rationale"]):
+                            errors.append(
+                                f"unstructured_model.phase3_formulation.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'"
+                            )
+
+                if isinstance(p3.get("correct_expression"), dict):
+                    ce_obj = p3["correct_expression"]
+                    for fld in ("expression", "value", "canonical_algebraic"):
+                        fval = ce_obj.get(fld)
+                        if isinstance(fval, str) and fval:
+                            errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase3_formulation.correct_expression.{fld}", variables=effective_vars))
+                    for eq_idx, eq_val in enumerate(ce_obj.get("accepted_equivalents") or []):
+                        if isinstance(eq_val, str) and eq_val:
+                            errors.extend(validate_katex_syntax(eq_val, f"unstructured_model.phase3_formulation.correct_expression.accepted_equivalents[{eq_idx}]", variables=effective_vars))
 
                 for dist_key in ("distractors", "diagnostic_distractors"):
                     for d_idx, dd in enumerate(p3.get(dist_key) or []):
                         if isinstance(dd, dict):
                             rat = dd.get("error_rationale")
-                            if isinstance(rat, str) and rat:
+                            if not isinstance(rat, str) or not rat.strip() or _is_placeholder_rationale_inv(rat):
+                                errors.append(
+                                    f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}] must include a non-placeholder 'error_rationale'."
+                                )
+                            else:
                                 errors.extend(validate_katex_syntax(rat, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale", variables=effective_vars))
+                            for expr_fld in ("expression", "value"):
+                                if isinstance(dd.get(expr_fld), str) and dd[expr_fld]:
+                                    errors.extend(validate_katex_syntax(dd[expr_fld], f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].{expr_fld}", variables=effective_vars))
+                            for eq_idx, eq_val in enumerate(dd.get("accepted_equivalents") or []):
+                                if isinstance(eq_val, str) and eq_val:
+                                    errors.extend(validate_katex_syntax(eq_val, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].accepted_equivalents[{eq_idx}]", variables=effective_vars))
 
     # 7. Invariant Canvas
     elif interaction_type == "invariant_canvas":

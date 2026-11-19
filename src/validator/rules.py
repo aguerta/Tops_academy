@@ -1161,7 +1161,7 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
 
             # --- Rule R-25: Hint Answer Leak in Hints 1-2 (ERR_HINT_ANSWER_LEAK_S12) ---
             candidate_correct_texts: list[str] = []
-            if isinstance(options, list):
+            if isinstance(options, list) and len(options) > 0:
                 for opt in options:
                     if isinstance(opt, dict) and opt.get("is_correct") is True:
                         c_text = opt.get("content")
@@ -1388,25 +1388,72 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
             ):
                 if isinstance(ph_obj.get("prompt"), str):
                     errors.extend(check_latex_and_templates(ph_obj["prompt"], q_id, f"unstructured_model.{ph_name}.prompt"))
+            for r_idx, role_val in enumerate(p1.get("roles") or []):
+                if isinstance(role_val, str) and role_val:
+                    errors.extend(check_latex_and_templates(role_val, q_id, f"unstructured_model.phase1_variables.roles[{r_idx}]"))
             for it_idx, it in enumerate(p1.get("items") or []):
                 if isinstance(it, dict):
                     for fld in ("label", "error_rationale"):
                         if isinstance(it.get(fld), str):
                             errors.extend(check_latex_and_templates(it[fld], q_id, f"unstructured_model.phase1_variables.items[{it_idx}].{fld}"))
+                    if isinstance(it.get("error_rationale"), str) and is_placeholder_rationale(it["error_rationale"]):
+                        errors.append(ValidationError(
+                            rule_id="R-17",
+                            code="ERR_PLACEHOLDER_RATIONALE",
+                            message=f"Question '{q_id}': unstructured_model.phase1_variables.items[{it_idx}] contains a generic placeholder 'error_rationale': '{it['error_rationale']}'",
+                            item_id=q_id
+                        ))
             for o_idx, opt in enumerate(p2.get("options") or []):
                 if isinstance(opt, dict):
                     for fld in ("content", "error_rationale"):
                         if isinstance(opt.get(fld), str):
                             errors.extend(check_latex_and_templates(opt[fld], q_id, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}"))
+                    if isinstance(opt.get("error_rationale"), str) and is_placeholder_rationale(opt["error_rationale"]):
+                        errors.append(ValidationError(
+                            rule_id="R-17",
+                            code="ERR_PLACEHOLDER_RATIONALE",
+                            message=f"Question '{q_id}': unstructured_model.phase2_assumptions.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'",
+                            item_id=q_id
+                        ))
             for o_idx, opt in enumerate(p3.get("options") or []):
                 if isinstance(opt, dict):
                     for fld in ("content", "error_rationale"):
                         if isinstance(opt.get(fld), str):
                             errors.extend(check_latex_and_templates(opt[fld], q_id, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}"))
+                    if not opt.get("is_correct") and isinstance(opt.get("error_rationale"), str) and is_placeholder_rationale(opt["error_rationale"]):
+                        errors.append(ValidationError(
+                            rule_id="R-17",
+                            code="ERR_PLACEHOLDER_RATIONALE",
+                            message=f"Question '{q_id}': unstructured_model.phase3_formulation.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'",
+                            item_id=q_id
+                        ))
+            ce = p3.get("correct_expression")
+            if isinstance(ce, dict):
+                for fld in ("expression", "value", "canonical_algebraic"):
+                    if isinstance(ce.get(fld), str) and ce[fld]:
+                        errors.extend(check_latex_and_templates(ce[fld], q_id, f"unstructured_model.phase3_formulation.correct_expression.{fld}"))
+                for eq_idx, eq_val in enumerate(ce.get("accepted_equivalents") or []):
+                    if isinstance(eq_val, str) and eq_val:
+                        errors.extend(check_latex_and_templates(eq_val, q_id, f"unstructured_model.phase3_formulation.correct_expression.accepted_equivalents[{eq_idx}]"))
             for dist_key in ("distractors", "diagnostic_distractors"):
                 for d_idx, dd in enumerate(p3.get(dist_key) or []):
-                    if isinstance(dd, dict) and isinstance(dd.get("error_rationale"), str):
-                        errors.extend(check_latex_and_templates(dd["error_rationale"], q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale"))
+                    if isinstance(dd, dict):
+                        d_rat = dd.get("error_rationale")
+                        if d_rat is None or (isinstance(d_rat, str) and not d_rat.strip()) or is_placeholder_rationale(d_rat):
+                            errors.append(ValidationError(
+                                rule_id="R-17",
+                                code="ERR_PLACEHOLDER_RATIONALE",
+                                message=f"Question '{q_id}': unstructured_model.phase3_formulation.{dist_key}[{d_idx}] must include a non-placeholder 'error_rationale'",
+                                item_id=q_id
+                            ))
+                        elif isinstance(d_rat, str):
+                            errors.extend(check_latex_and_templates(d_rat, q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale"))
+                        for expr_fld in ("expression", "value"):
+                            if isinstance(dd.get(expr_fld), str) and dd[expr_fld]:
+                                errors.extend(check_latex_and_templates(dd[expr_fld], q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].{expr_fld}"))
+                        for eq_idx, eq_val in enumerate(dd.get("accepted_equivalents") or []):
+                            if isinstance(eq_val, str) and eq_val:
+                                errors.extend(check_latex_and_templates(eq_val, q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].accepted_equivalents[{eq_idx}]"))
         elif itype == "invariant_canvas" and isinstance(q.get("invariant_canvas"), dict):
             ic = q["invariant_canvas"]
             ic_mode = str(ic.get("mode") or "cartesian").strip().lower()

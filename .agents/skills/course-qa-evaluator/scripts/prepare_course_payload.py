@@ -134,16 +134,30 @@ def summarize_course(course_entry: dict) -> dict:
                 risk_cluster_samples[cluster_name] = {  # type: ignore[assignment]
                     "items": []
                 } if not isinstance(risk_cluster_samples[cluster_name], list) else risk_cluster_samples[cluster_name]
-                risk_cluster_samples[cluster_name].append({
+                rc_item = {
                     "id": qid,
                     "competency_id": q_item.get("competency_id"),
+                    "interaction_type": q_item.get("interaction_type"),
                     "stem": q_item.get("stem"),
                     "options": q_item.get("options"),
+                    "correct_answer": q_item.get("correct_answer"),
                     "hints": q_item.get("hints"),
                     "detailed_solution": q_item.get("detailed_solution") or q_item.get("solution"),
                     "misconception_warning": q_item.get("misconception_warning") or q_item.get("common_misconception_warning"),
                     "detected_issues": telemetry.get("issues_by_item", {}).get(qid, []),
-                })
+                }
+                for m20_key in (
+                    "diagnostic_distractors",
+                    "symbolic_config",
+                    "proof_dag",
+                    "adversarial_break",
+                    "unstructured_model",
+                    "invariant_canvas",
+                    "concept_matching",
+                ):
+                    if q_item.get(m20_key) is not None:
+                        rc_item[m20_key] = q_item[m20_key]
+                risk_cluster_samples[cluster_name].append(rc_item)
 
     # 4. Ingest Stage-5 Blind Judge verification report if available in courses/<id>/work/
     cid_slug = str(course_entry.get("id") or "")
