@@ -75,7 +75,7 @@ def precheck_source(source: str) -> List[str]:
     except SyntaxError:
         return out  # the compiler reports syntax errors with exact lines
 
-    func_defs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+    func_defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
     gen_reachable = set()
     for fn_name, fn_node in func_defs.items():
         if fn_name.startswith("gen_") or fn_name.startswith("_gen"):
@@ -94,7 +94,7 @@ def precheck_source(source: str) -> List[str]:
                                 queue.append(c_id)
 
     for node in tree.body:
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name in gen_reachable:
                 for n in ast.walk(node):
                     if isinstance(n, ast.While) and not is_bounded_while(n):

@@ -2011,14 +2011,14 @@ def _extract_const_literal(node: Optional[ast.AST]) -> Tuple[bool, Any]:
         and not isinstance(node.operand.value, bool)
     ):
         return True, -node.operand.value
-    if isinstance(node, (ast.Tuple, ast.List)):
+    if isinstance(node, (ast.Tuple, ast.List, ast.Set)):
         items: List[Any] = []
         for elt in node.elts:
             ok, val = _extract_const_literal(elt)
             if not ok:
                 return False, None
             items.append(val)
-        return True, tuple(items) if isinstance(node, ast.Tuple) else items
+        return True, tuple(items) if isinstance(node, (ast.Tuple, ast.Set)) else items
     return False, None
 
 
@@ -2095,6 +2095,15 @@ class _ConstBindingSubstitutor(ast.NodeTransformer):
             return copy.deepcopy(self.bindings[node.id])
         return node
 
+    def visit_IfExp(self, node: ast.IfExp) -> ast.AST:
+        self.generic_visit(node)
+        branch_val = _eval_const_if_test(node.test)
+        if branch_val is True:
+            return node.body
+        if branch_val is False:
+            return node.orelse
+        return node
+
 
 def _prune_const_if_stmts(stmts: List[ast.stmt]) -> List[ast.stmt]:
     out: List[ast.stmt] = []
@@ -2140,6 +2149,7 @@ def _specialize_gen_ast(
 ) -> Union[ast.FunctionDef, ast.AsyncFunctionDef]:
     """Inline single-return helper wrappers (e.g. `def gen_2(r): return _g(r, 2)`) and prune constant branches."""
     cur = copy.deepcopy(fn_node)
+    seen_helpers: Set[str] = set()
     for _ in range(max_depth):
         body = list(cur.body)
         if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
@@ -2196,14 +2206,28 @@ def _specialize_gen_ast(
                     const_ast_bindings[p_name] = c_ast
                     bound_const_params.add(p_name)
 
-        if not const_ast_bindings:
+        param_renames: Dict[str, ast.AST] = {}
+        can_passthrough = True
+        for p_name, val_node in bound_exprs.items():
+            if p_name in bound_const_params:
+                continue
+            if isinstance(val_node, ast.Name) and p_name not in assigned_names:
+                continue
+            else:
+                can_passthrough = False
+                break
+        if not const_ast_bindings and not (can_passthrough and bound_exprs):
             break
+        if not const_ast_bindings and helper_name in seen_helpers:
+            break
+        seen_helpers.add(helper_name)
 
-        helper = _ConstBindingSubstitutor(const_ast_bindings).visit(helper)
+        helper = _ConstBindingSubstitutor({**const_ast_bindings, **param_renames}).visit(helper)
         helper.body = _prune_const_if_stmts(helper.body)
-        helper.args.posonlyargs = [a for a in helper.args.posonlyargs if a.arg not in bound_const_params]
-        helper.args.args = [a for a in helper.args.args if a.arg not in bound_const_params]
-        helper.args.kwonlyargs = [a for a in helper.args.kwonlyargs if a.arg not in bound_const_params]
+        drop_params = bound_const_params | set(param_renames)
+        helper.args.posonlyargs = [a for a in helper.args.posonlyargs if a.arg not in drop_params]
+        helper.args.args = [a for a in helper.args.args if a.arg not in drop_params]
+        helper.args.kwonlyargs = [a for a in helper.args.kwonlyargs if a.arg not in drop_params]
         helper.args.defaults = []
         helper.args.kw_defaults = []
         ast.fix_missing_locations(helper)
@@ -2349,7 +2373,7 @@ class _CanonicalGenASTNormalizer(ast.NodeTransformer):
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
             return ast.Constant(value="__NUM__")
-        if isinstance(node.value, str) and re.fullmatch(r"D-[A-Za-z0-9]+-\d+", node.value):
+        if isinstance(node.value, str) and re.fullmatch(r"D[-_][A-Za-z0-9_-]*\d+", node.value.strip()):
             return ast.Constant(value="__DID__")
         return node
 
@@ -2425,7 +2449,14 @@ def _extract_pure_sympy_expr(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDe
         if isinstance(node, ast.Constant):
             if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
                 return sympy.Rational(str(node.value)) if isinstance(node.value, float) else sympy.Integer(node.value)
+            if isinstance(node.value, str):
+                toks = re.findall(r"@([A-Za-z_][A-Za-z0-9_]*)(?::[^@]+)?@", node.value)
+                if len(toks) == 1 and toks[0] in env:
+                    return env[toks[0]]
             return None
+        if isinstance(node, ast.JoinedStr):
+            fvs = [v.value for v in node.values if isinstance(v, ast.FormattedValue)]
+            return _eval_expr(fvs[0]) if len(fvs) == 1 else None
         if isinstance(node, ast.Name):
             return env.get(node.id)
         if isinstance(node, ast.UnaryOp):
@@ -2453,6 +2484,8 @@ def _extract_pure_sympy_expr(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDe
                     return None
                 return left / right
             if isinstance(node.op, ast.Pow):
+                if getattr(right, "is_Number", False) and abs(float(right)) > 64:
+                    return None
                 return left ** right
             return None
         if isinstance(node, ast.Call):
@@ -2501,17 +2534,41 @@ def _extract_pure_sympy_expr(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDe
             for k_n, v_n in zip(stmt.value.keys, stmt.value.values):
                 if isinstance(k_n, ast.Constant) and isinstance(k_n.value, str):
                     dict_map[k_n.value] = v_n
-            if "correct" in dict_map:
-                c_expr = _eval_expr(dict_map["correct"])
-                if c_expr is not None:
-                    return c_expr
+            for ck in ("correct", "ans"):
+                if ck in dict_map:
+                    c_expr = _eval_expr(dict_map[ck])
+                    if c_expr is not None:
+                        return c_expr
             vars_node = dict_map.get("vars")
             if isinstance(vars_node, ast.Dict):
                 for vk_n, vv_n in zip(vars_node.keys, vars_node.values):
                     if isinstance(vk_n, ast.Constant) and vk_n.value == "ans":
                         return _eval_expr(vv_n)
+                last_dep = None
+                for vk_n, vv_n in zip(vars_node.keys, vars_node.values):
+                    val_e = _eval_expr(vv_n)
+                    if val_e is not None and getattr(val_e, "free_symbols", None):
+                        last_dep = val_e
+                return last_dep
             return None
     return None
+
+
+def _clone_correct_str(res: Dict[str, Any]) -> str:
+    raw = res.get("correct", res.get("ans", ""))
+    if isinstance(raw, dict):
+        raw = raw.get("expression") or raw.get("value") or raw.get("canonical_algebraic") or ""
+    return str(raw)
+
+
+def _canon_syms(expr: Any) -> Any:
+    syms = sorted(getattr(expr, "free_symbols", set()), key=lambda x: x.name)
+    if not syms:
+        return expr
+    import sympy
+    tmp = {sy: sympy.Symbol(f"__t{k}") for k, sy in enumerate(syms)}
+    out = expr.subs(tmp)
+    return out.subs({sympy.Symbol(f"__t{k}"): sympy.Symbol(f"x{k}") for k in range(len(syms))})
 
 
 def _check_intra_competency_anti_clone(
@@ -2730,12 +2787,12 @@ def _check_intra_competency_anti_clone(
                     r42_i = _eval_tpl_seed(i, 42)
                     r42_j = _eval_tpl_seed(j, 42)
                     if r42_i and r42_j:
-                        eq_42 = _sympy_expr_equiv_from_strings(str(r42_i.get("correct", "")), str(r42_j.get("correct", "")))
+                        eq_42 = _sympy_expr_equiv_from_strings(_clone_correct_str(r42_i), _clone_correct_str(r42_j))
                     if eq_42 is True:
                         r43_i = _eval_tpl_seed(i, 43)
                         r43_j = _eval_tpl_seed(j, 43)
                         if r43_i and r43_j:
-                            eq_43 = _sympy_expr_equiv_from_strings(str(r43_i.get("correct", "")), str(r43_j.get("correct", "")))
+                            eq_43 = _sympy_expr_equiv_from_strings(_clone_correct_str(r43_i), _clone_correct_str(r43_j))
                     if eq_42 is True and eq_43 is True:
                         sympy_clone_detected = True
                         errors.append(
@@ -2760,6 +2817,8 @@ def _check_intra_competency_anti_clone(
                     ):
                         try:
                             import sympy
+                            s_expr_i = _canon_syms(s_expr_i)
+                            s_expr_j = _canon_syms(s_expr_j)
                             is_equiv = (sympy.simplify(s_expr_i - s_expr_j) == 0)
                             if not is_equiv and s_expr_j != 0:
                                 ratio = sympy.simplify(s_expr_i / s_expr_j)
@@ -4886,7 +4945,8 @@ cross_check=verify
             cid_sources: List[str] = []
             if is_modular_fix:
                 try:
-                    cid_sources.append(fix_files_by_cid[cid].read_text(encoding="utf-8"))
+                    _, _healed_fix_ast = heal_shard_source_text(fix_files_by_cid[cid].read_text(encoding="utf-8"))
+                    cid_sources.append(_healed_fix_ast)
                 except Exception:
                     pass
             else:
@@ -5051,11 +5111,11 @@ cross_check=verify
                         f"'multiple_choice_7_options' (MC7), excediendo el tope máximo de 1 plantilla MC7 por competencia."
                     )
 
-                # [M20-ACTIVE-QUOTA]: >= 80% active modalities (>= 75% only when N <= 4 and K == 1)
+                # [M20-ACTIVE-QUOTA]: >= 80% active modalities (>= 75% only when N <= 4 and (K == 1 or legacy CTA without recommended_modalities))
                 if len(tpls) >= eff_min_arch:
                     active_count = sum(1 for m in actual_mods_seq if m in ACTIVE_INTERACTION_TYPES)
                     active_ratio = active_count / float(len(tpls)) if len(tpls) > 0 else 0.0
-                    min_active_ratio = 0.75 if (len(tpls) <= 4 and eff_k == 1) else 0.80
+                    min_active_ratio = 0.75 if (len(tpls) <= 4 and (eff_k == 1 or not allowed_mods_list)) else 0.80
                     if active_ratio + 1e-9 < min_active_ratio:
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [M20-ACTIVE-QUOTA] Competencia '{cid}' tiene solo "
@@ -5095,8 +5155,16 @@ cross_check=verify
                         )
                     if eff_k >= 2:
                         mod_counts = collections.Counter(m for m in actual_mods_seq if m)
+                        _active_allowed = [m for m in allowed_mods_list if m != "multiple_choice_7_options"]
                         for m_req in allowed_mods_list:
-                            req_k_for_m = 1 if m_req == "multiple_choice_7_options" else eff_k
+                            if is_skill and m_req == "multiple_choice_7_options":
+                                continue
+                            if m_req == "multiple_choice_7_options":
+                                req_k_for_m = 1
+                            elif has_mc7_plan and len(_active_allowed) == 1:
+                                req_k_for_m = max(4, eff_k)
+                            else:
+                                req_k_for_m = eff_k
                             cnt = int(mod_counts.get(m_req, 0))
                             if cnt < req_k_for_m:
                                 m3_errors.append(
@@ -5661,6 +5729,7 @@ cross_check=verify
                                         dist_samples_ms[did_o].append(fmt_v)
                         except Exception:
                             pass
+                    EvaluationContext.reset(norm_shard_id)
                     if len(set(corr_samples)) <= 1 and len(corr_samples) >= 10:
                         first_ans_str = str(corr_samples[0]) if corr_samples else ""
                         eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
@@ -5725,6 +5794,7 @@ cross_check=verify
 
                     for t_idx_s, tpl_s in enumerate(tpls):
                         tpl_id_s = tpl_s.get("id") or tpl_s.get("template_id") or f"T-{cid}-{t_idx_s+1:02d}"
+                        t_quota_cap = (quota_build // len(tpls)) + (1 if t_idx_s < (quota_build % len(tpls)) else 0)
                         sv_list = tpl_s.get("stem_variants") or ([tpl_s.get("stem_es")] if tpl_s.get("stem_es") else [])
                         c_call_s = gen_callables[t_idx_s] if t_idx_s < len(gen_callables) else None
                         sample_vars_list: List[Dict[str, Any]] = []
@@ -5739,6 +5809,7 @@ cross_check=verify
                                 except Exception:
                                     pass
                             EvaluationContext.reset(norm_shard_id)
+                        tpl_masked_stems: List[str] = []
                         for sv_raw in sv_list:
                             sv_str = str(sv_raw).strip()
                             if not sv_str:
@@ -5746,10 +5817,15 @@ cross_check=verify
                             if sample_vars_list and format_template_string:
                                 for sv_vars in sample_vars_list:
                                     rendered_sv = format_template_string(sv_str, sv_vars)
-                                    all_masked_stems.add(_mask_stem_nums(rendered_sv))
+                                    m_st = _mask_stem_nums(rendered_sv)
+                                    if m_st not in tpl_masked_stems:
+                                        tpl_masked_stems.append(m_st)
                             else:
                                 dummy_sv = re.sub(r"@[a-zA-Z0-9_]+(?::[^@]+)?@", "100", sv_str)
-                                all_masked_stems.add(_mask_stem_nums(dummy_sv))
+                                m_st = _mask_stem_nums(dummy_sv)
+                                if m_st not in tpl_masked_stems:
+                                    tpl_masked_stems.append(m_st)
+                        all_masked_stems.update(tpl_masked_stems[:t_quota_cap])
 
                         if loc_obj_s:
                             t_info_s = loc_obj_s.find_tuple_for_question(cid, template_id=tpl_id_s)

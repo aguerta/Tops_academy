@@ -52,7 +52,7 @@ def allocate_template_quotas(
 
     quotas = {}
     for idx, tpl in enumerate(templates):
-        t_id = tpl["id"]
+        t_id = tpl.get("id") or tpl.get("template_id") or f"tpl_{idx}"
         extra = 1 if idx < remainder else 0
         quotas[t_id] = base_quota + extra
 
@@ -330,19 +330,24 @@ def instantiate_competency(
 
     # Extract ID
     if isinstance(competency, dict):
-        comp_id = competency.get("id", competency_id or "comp-01")
-        comp_type = competency.get("type", category or "concept")
+        comp_id = str(competency.get("id") or competency_id or "comp-01")
+        comp_type = str(competency.get("type") or competency.get("category") or category or "")
     elif competency is not None:
-        comp_id = getattr(competency, "id", competency_id or "comp-01")
-        comp_type = getattr(competency, "category", getattr(competency, "type", category or "concept"))
+        comp_id = str(getattr(competency, "id", None) or competency_id or "comp-01")
+        comp_type = str(getattr(competency, "category", None) or getattr(competency, "type", None) or category or "")
     else:
-        comp_id = competency_id or "comp-01"
-        comp_type = category or "concept"
+        comp_id = str(competency_id or "comp-01")
+        comp_type = str(category or "")
+    if comp_id.startswith("Hab-"):
+        comp_type = "skill"
+    elif not comp_type.strip():
+        comp_type = "concept"
 
+    min_contract_quota = get_competency_quota(comp_type, num_templates=len(templates))
     if quota is not None:
-        target_quota = quota
+        target_quota = max(int(quota), min_contract_quota) if int(quota) >= 20 else int(quota)
     else:
-        target_quota = get_competency_quota(comp_type, num_templates=len(templates))
+        target_quota = min_contract_quota
 
     if base_seed is not None:
         seed_offset_base = base_seed
@@ -353,7 +358,7 @@ def instantiate_competency(
     q_counter = 1
 
     for t_idx, tpl in enumerate(templates):
-        t_id = tpl["id"]
+        t_id = tpl.get("id") or tpl.get("template_id") or f"tpl_{t_idx}"
         t_quota = quotas.get(t_id, 0)
         if t_quota <= 0:
             continue
