@@ -890,3 +890,156 @@
 {"timestamp": "2026-11-19T06:15:58.743918+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
 {"timestamp": "2026-11-19T06:16:37.657143+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
 {"timestamp": "2026-11-19T06:17:10.899219+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T06:27:31.063845+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T06:27:55.764413+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T06:28:15.282944+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T06:37:34.582185+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T06:42:28.137781+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:00:58.490328+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:00:58.548687+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:02:07.183148+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:02:07.226832+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:22:49.705284+00:00", "course_id": "c02m20", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:22:51.170947+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:22:51.221690+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:22:51.261745+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:22:51.305458+00:00", "course_id": "crep", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:44:23.577048+00:00", "course_id": "c02m20", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:44:25.034753+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:44:25.082409+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:44:25.113652+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:44:25.146540+00:00", "course_id": "crep", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:45:11.660246+00:00", "course_id": "c02m20", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:45:13.116424+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:45:13.165197+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:45:13.194712+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T07:45:13.226036+00:00", "course_id": "crep", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:26:45.386055+00:00", "course_id": "c02m20", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:26:47.072624+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:26:47.135329+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:26:47.184611+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:26:47.230386+00:00", "course_id": "crep", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:52:54.515954+00:00", "course_id": "ex2_work", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T12:53:27.796975+00:00", "course_id": "ex2", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:03:49.193989+00:00", "course_id": "c02m20", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:03:50.678200+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:03:50.731934+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:03:50.768690+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:03:50.800323+00:00", "course_id": "crep", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:11:41.723688+00:00", "course_id": "solow_delta", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:20:58.336746+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:20:59.508628+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:21:01.044505+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:21:02.176960+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:26:34.595752+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:26:35.854417+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:26:37.502541+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:26:38.705703+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:30:48.147621+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:30:49.315533+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:30:50.803277+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:30:52.031474+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:31:06.005710+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T13:34:22.809772+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:34:24.002072+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:34:25.476985+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:34:26.645447+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:34:39.676810+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T13:35:09.804769+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:35:11.034438+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:35:12.541460+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:35:13.721980+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:45:46.717660+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:54:21.392603+00:00", "course_id": "ex2_append", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:54:52.422393+00:00", "course_id": "ex2_append", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:57:27.608835+00:00", "course_id": "w2", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T13:59:11.909370+00:00", "course_id": "w2", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:02:00.062652+00:00", "course_id": "solow_test", "total_patches": 11, "healed": 0, "snapped": 11, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"EV_SNAPPED": 11}}
+{"timestamp": "2026-11-19T14:02:35.092162+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:02:56.664846+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:03:01.077139+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:03:41.974838+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:03:46.181470+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:04:13.864549+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:04:14.980231+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:04:36.349223+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:04:40.021798+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:10:58.788297+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:11:17.994234+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:13:41.989454+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:13:46.355296+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:15:27.514136+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:15:47.966093+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:16:10.032542+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:19:00.838622+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:19:04.869718+00:00", "course_id": "solow_test", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:21:27.388820+00:00", "course_id": "ex2_append", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:22:14.657877+00:00", "course_id": "ex2_append", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:29:57.410566+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:32:13.308074+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:32:13.597079+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:32:15.296536+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:32:15.514529+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:57:40.441639+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:57:40.544745+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:57:40.582373+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:58:57.628065+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:58:57.744600+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:58:57.791792+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:59:23.210085+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:59:23.287094+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T14:59:23.327832+00:00", "course_id": "solow", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:35.689878+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:35.741735+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:35.771485+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:35.782860+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:35.974409+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:37.960647+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:03:39.425702+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T15:10:22.841026+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:10:22.968616+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:10:22.970615+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:10:25.267753+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:10:25.595551+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:10:26.513528+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T15:10:26.945946+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:11:18.701310+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:11:18.742519+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:11:18.777598+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:11:19.899579+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:11:21.592478+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:11:23.136884+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T15:11:23.856653+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:08.480110+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:08.488637+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:08.577641+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:09.402887+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:11.034651+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:12.247729+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T15:12:12.745776+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:42.006208+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:42.085581+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:42.120465+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:42.535151+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:44.718420+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:12:46.025472+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-19T15:12:46.703049+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:13:12.608494+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:13:12.791808+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:13:15.291484+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:13:15.455470+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:13:16.493078+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-19T15:13:16.633354+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-19T15:20:45.615287+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:20:46.018901+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:20:48.175751+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-19T15:20:48.243998+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-19T15:20:48.272367+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:20:48.404763+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:20:58.076482+00:00", "course_id": "greene_append_v3", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:21:52.137461+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:21:52.563268+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-19T15:21:52.595348+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:21:52.642328+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-19T15:21:54.645835+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-19T15:21:54.709926+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
