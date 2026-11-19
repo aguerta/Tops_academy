@@ -30,7 +30,7 @@ El mensaje inicial `[SCOPE-LOCK]` fija exactamente las rutas autorizadas de `REA
 
 <contracts>
 - **Estructura Form-C (`TEMPLATES`)**: lista de diccionarios literales con claves `id` (patrón `^T-`), `cid`, `qtype` (`MC7 | FIB | MS | open_symbolic | proof_dag | adversarial_break | unstructured_model | invariant_canvas | concept_matching`), `archetype`, `band`, `gen`, `ver`, `stem_variants`, `hints` y `sol`. Prohibido importar o usar funciones bloqueadas por el sandbox AST (`os`, `open`, `eval`, `exec`, `re`, bucles `while True`) o alias dinámicos; en generadores escalares evita `np`/`numpy` (usa `rng.randint`, `rng.randrange` y `rng.choice` para prescindir de dependencias vectoriales opacas; si se requiere álgebra matricial, formatea con `sympy.latex()`). `correct` debe ser `str` no vacío (incluso `"0"`).
-- **`[CTA-MODALITY-PLAN]` (`<<S4_MIN_MODS>> <= M <= <<S4_MAX_MODS>>`, `K = <<S4_TPL_PER_MOD>>` por modalidad) y cobertura diagnóstica (`TPL-D3` / `TPL-D4`)**: en contrato v2 cada competencia declara `M` modalidades recomendadas (`<<S4_MIN_MODS>>..<<S4_MAX_MODS>>`). Debes autorar `N >= max(<<S4_MIN_ARCH>>, M * K)` plantillas usando **exclusivamente** modalidades listadas (`unexpected_mods`) y produciendo **al menos `K` plantillas genuinamente distintas por cada modalidad recomendada** (`count(m) >= K`; sin cuotas rígidas por tipo). La cuota Stage 4 escala dinámicamente a `max(<<S4_QUOTA_SKILL>>, N * 4)` en `Skill` y `max(<<S4_QUOTA_OTHER>>, N * 3)` en `Concept`/`Fact`. `TPL-D3`: en `seed=42`, cada competencia cubre el `100%` de sus `N_d` `distractor_id` mediante `ds` (`(distractor_id, valor, error_rationale >= 20c)` o diccionarios equivalentes en `FIB` / `open_symbolic`, regla `[TPL-DIAG-DISTRACTOR]`), `MS`, modalidades M20 o `MC7` (`RATS`, 6 slots distintos con `for _ in range(40)`).
+- **`[CTA-MODALITY-PLAN]` (`<<S4_MIN_MODS>> <= M <= <<S4_MAX_MODS>>`, `K = <<S4_TPL_PER_MOD>>` por modalidad activa), `[M20-MC7-CAP]`, `[M20-ACTIVE-QUOTA]` y cobertura diagnóstica (`TPL-D3` / `TPL-D4`)**: en contrato v2 cada competencia declara `M` modalidades recomendadas (`<<S4_MIN_MODS>>..<<S4_MAX_MODS>>`). Usa **exclusivamente** modalidades listadas (`unexpected_mods`) y produce **al menos `K` plantillas genuinamente distintas por cada modalidad activa recomendada** (`count(m) >= K` para toda `m != MC7`). En competencias `Skill` (`Hab-*`), `MC7` está **prohibido (`0 MC7`, `[M20-MC7-CAP]`)** y `N >= max(<<S4_MIN_ARCH>>, M * K)`; en competencias `Concept`/`Fact`/`PRE-*`, `MC7` tiene tope máximo de **`1` plantilla (`count(MC7) <= 1`, `[M20-MC7-CAP]`)** y al menos **`80%` de las plantillas deben ser modalidades activas (`[M20-ACTIVE-QUOTA]`, por lo que si el plan incluye `MC7` con `K >= 2`, debes escribir exactamente `1` plantilla `MC7` y `>= K` por cada modalidad activa hasta completar `N >= max(<<S4_MIN_ARCH>>, 5, 1 + (M - 1) * K)` con `>= 4` activas)**. La cuota Stage 4 escala dinámicamente a `max(<<S4_QUOTA_SKILL>>, N * 4)` en `Skill` y `max(<<S4_QUOTA_OTHER>>, N * 3)` en `Concept`/`Fact`. `TPL-D3`: en `seed=42`, cada competencia cubre el `100%` de sus `N_d` `distractor_id` mediante `ds` (`(distractor_id, valor, error_rationale >= 20c)` o diccionarios equivalentes en `FIB` / `open_symbolic`, regla `[TPL-DIAG-DISTRACTOR]`), `MS`, modalidades M20 o `MC7` (`RATS`, 6 slots distintos con `for _ in range(40)`).
 - **4 Candados Deterministas Anti-Clon intra-competencia**: queda estrictamente prohibido duplicar plantillas cosméticamente para llegar a `K` por modalidad:
   1. `[TPL-CLONE-AST]`: el AST normalizado de `gen` (renombrando variables/parámetros y enmascarando literales numéricos) debe ser distinto entre pares de igual modalidad o igual arquetipo.
   2. `[TPL-CLONE-BAND]`: cuando `K <= 4`, ninguna modalidad puede repetir exactamente la misma tupla `(archetype, difficulty, bloom)`.
@@ -62,14 +62,14 @@ El mensaje inicial `[SCOPE-LOCK]` fija exactamente las rutas autorizadas de `REA
 El guardián `c2c_hook_guard.py` impone máximo `10` compilaciones por sesión y dispara `BLOCKED:` si acumulas `streak >= 3` errores consecutivos:
 - `SyntaxError` (en cualquier compilación, sin depender de `total_compiles`) o `< 40` líneas: reescribe `<shard_id>_data.py` con `write_file(Overwrite=True)`.
 - `>= 40` líneas con `< 6` errores (`<= 5` líneas afectadas y sin `SyntaxError`): usa `edit_file` quirúrgico (también en fallback sin `error_count` si supera `450` líneas en `distinct_compiles == 1`, o `250` líneas en compilaciones posteriores). Agrupa todos los `edit_file` independientes en un solo turno paralelo para no malgastar turnos.
-- `>= 6` errores o `> 5` líneas afectadas (sin `SyntaxError`): si `total_compiles < 3` y `streak < 3`, usa `write_file` o `shard_fixes/` (con `>= 6` errores y `streak >= 2`, `c2c_hook_guard.py` también bloquea `edit_file` in-place, redirigiendo directamente a `shard_fixes/`); si `total_compiles >= 3`, repara modularmente vía `shard_fixes/` (verifica con `Test-Path`/`Get-ChildItem` no recursivo en `shards/shard_fixes/<shard_id>/`: si hay `*.py`, escribe en `shard_fixes/<shard_id>/<CID>.py`; si no, en `shard_fixes/<CID>.py`) incluyendo `'rats': RATS`. Todo archivo `<CID>.py` reemplaza por completo las plantillas de `<CID>` del archivo base, por lo que su lista `TEMPLATES` debe definir las `>= max(<<S4_MIN_ARCH>>, M * <<S4_TPL_PER_MOD>>)` plantillas completas de `<CID>` (`>= <<S4_TPL_PER_MOD>>` por modalidad y los `<<S4_MIN_ARCH>>` arquetipos). Si stdout se trunca, lee `<work_dir>/shards/<shard_id>_compile_error.log`; máximo `2` reintentos tras diagnóstico.
+- `>= 6` errores o `> 5` líneas afectadas (sin `SyntaxError`): si `total_compiles < 3` y `streak < 3`, usa `write_file` o `shard_fixes/` (con `>= 6` errores y `streak >= 2`, `c2c_hook_guard.py` también bloquea `edit_file` in-place, redirigiendo directamente a `shard_fixes/`); si `total_compiles >= 3`, repara modularmente vía `shard_fixes/` (verifica con `Test-Path`/`Get-ChildItem` no recursivo en `shards/shard_fixes/<shard_id>/`: si hay `*.py`, escribe en `shard_fixes/<shard_id>/<CID>.py`; si no, en `shard_fixes/<CID>.py`) incluyendo `'rats': RATS`. Todo archivo `<CID>.py` reemplaza por completo las plantillas de `<CID>` del archivo base, por lo que su lista `TEMPLATES` debe definir todas las plantillas requeridas de `<CID>` (`>= <<S4_TPL_PER_MOD>>` por modalidad activa, `0 MC7` en `Skill`, `<= 1 MC7` y `>= 80%` activo en `Concept`/`Fact`, cubriendo los `<<S4_MIN_ARCH>>` arquetipos). Si stdout se trunca, lee `<work_dir>/shards/<shard_id>_compile_error.log`; máximo `2` reintentos tras diagnóstico.
 - Prohibido emitir `DONE:` mientras un `run_command` de compilación siga ejecutándose en segundo plano, para no reportar cierre antes de que `<shard_id>.json` quede escrito y sellado.
 </error_recovery>
 
 <examples>
 Nota: los bloques Python se escriben exclusivamente vía `write_file` (nunca se imprimen en el chat); la respuesta textual final es únicamente la línea plana `DONE:` o `BLOCKED:`.
 <example>
-<input>author_01_data.md (work_out), Hab-01, recommended_modalities=['MC7','FIB','MS'] (M=3, K=2 => 6 plantillas), D-Hab01-01..06, A-Hab01-01.</input>
+<input>author_01_data.md (work_out), Hab-01 (skill: 0 MC7 permitido), recommended_modalities=['FIB','open_symbolic','MS'] (M=3, K=2 => 6 plantillas, 100% activo), D-Hab01-01..06, A-Hab01-01.</input>
 <output>
 Acción (write_file -> work_out/shards/shard_01_data.py):
 ```python
@@ -92,17 +92,18 @@ def gen_1(r):
  for _ in range(40):
   a,x,b=r.randint(3,12),r.randint(5,22),r.randint(6,30);ans=a*x+b;d=[a*x-b,a*x,a*(x+b),x+b,a+x+b,b*x+a]
   if _ok_sep([ans,*d]):break
- return{"vars":{'a':a,'x':x,'b':b,"ans":ans},"correct":str(ans),'ds':[(f'D-Hab01-{i:02d}',str(v))for i,v in enumerate(d,1)]}
+ return{"vars":{'a':a,'x':x,'b':b,"ans":ans},"correct":str(ans),'ds':[(f'D-Hab01-{i:02d}',str(v),RATS[f'D-Hab01-{i:02d}'])for i,v in enumerate(d,1)]}
 def gen_2(r):
  for _ in range(40):
   a,x,b=r.randint(3,9),r.randint(12,35),r.randint(10,28);y=a*x+b;d=[y-b,(y+b)//a+1,y//a+b,x+a,x*a-b,a+b]
   if _ok_sep([x,*d]):break
- return{'vars':{'a':a,'b':b,'y':y,'ans':x},'correct':str(x),'ds':[(f'D-Hab01-{i:02d}',str(v))for i,v in enumerate(d,1)]}
+ return{'vars':{'a':a,'b':b,'y':y,'ans':x},'correct':str(x),'ds':[(f'D-Hab01-{i:02d}',str(v),RATS[f'D-Hab01-{i:02d}'])for i,v in enumerate(d,1)]}
 def gen_3(r):
- a,x,b,w=r.randint(3,12),r.randint(5,22),r.randint(6,30),r.randint(2,12);return{'vars':{'a':a,'x':x,'b':b,'d':w,'ans':a*(x+w)+b},'correct':str(a*(x+w)+b)}
+ a,b,w=r.randint(3,12),r.randint(6,30),r.randint(2,12);c0=a*w+b
+ return{'vars':{'a':a,'b':b,'d':w,'ans':f'{a}*x+{c0}'},'correct':f'{a}*x+{c0}','accepted_equivalents':[f'{a}*(x+{w})+{b}',f'{c0}+{a}*x'],'variables':['x'],'symbolic_config':{'variables':['x'],'palette':['*','+','(',')'],'placeholder':'Ej: 4*x+18'},'ds':[('D-Hab01-03',f'{a}*x+{b}',r'Omite multiplicar el desplazamiento $@d@$ por la pendiente $@a@$ al expandir sobre $@b@$.')]}
 def gen_4(r):
- a,x1,dx,b=r.randint(3,11),r.randint(4,15),r.randint(3,14),r.randint(5,25);x2=x1+dx;df=a*(x2-x1)
- return{'vars':{'a':a,'x1':x1,'x2':x2,'b':b,'ans':df},'correct':str(df),'ds':[('D-Hab01-02',str(a*x2),r'Evalúa $@a@ \cdot @x2@$ desde el origen y omite restar la posición inicial $@x1@$.')]}
+ a,x1,b=r.randint(3,11),r.randint(4,15),r.randint(5,25);c1=a*x1
+ return{'vars':{'a':a,'x1':x1,'b':b,'ans':f'{a}*x-{c1}'},'correct':f'{a}*x-{c1}','accepted_equivalents':[f'{a}*(x-{x1})',f'-{c1}+{a}*x'],'variables':['x'],'symbolic_config':{'variables':['x'],'palette':['*','-','(',')'],'placeholder':'Ej: 5*x-20'},'ds':[('D-Hab01-02',f'{a}*x+{b}',r'Conserva el intercepto $@b@$ en vez de restar la imagen base $@a@ \cdot @x1@$.')]}
 def gen_5(r):
  for _ in range(20):
   a,x,b,d=r.randint(3,14),r.randint(4,18),r.randint(5,24),r.randint(2,10);ad=a*d
@@ -115,8 +116,14 @@ def gen_6(r):
  return{'vars':{'a':a,'x':x,'b':b},"options":[_o(r'$f(@x@)=(@a@)(@x@)+@b@$',None,None),_o(r'$f(@x@)<@b@$ ($@a@<0$)',None,None),_o(r'$f(@x@)=(@a@)(@x@)-@b@$','D-Hab01-01',e1),_o(r'$f(@x@)=(@a@)(@x@+@b@)$','D-Hab01-03',e2)]}
 def ver_1(c,v):return abs(_pv(c)-(v['a']*v['x']+v['b']))<1e-4
 def ver_2(c,v):return abs(_pv(c)-(v['y']-v['b'])/v['a'])<1e-4
-def ver_3(c,v):return abs(_pv(c)-(v['a']*(v['x']+v['d'])+v['b']))<1e-4
-def ver_4(c,v):return abs(_pv(c)-(v['a']*(v['x2']-v['x1'])))<1e-4
+def ver_3(c,v):
+ import sympy;x=sympy.Symbol('x')
+ try:return sympy.simplify(sympy.sympify(str(c))-(v['a']*(x+v['d'])+v['b']))==0
+ except Exception:return False
+def ver_4(c,v):
+ import sympy;x=sympy.Symbol('x')
+ try:return sympy.simplify(sympy.sympify(str(c))-(v['a']*(x-v['x1'])))==0
+ except Exception:return False
 def ver_5(r):
  o=r.get('options',[])if isinstance(r,dict)else[];v=r.get('vars',{});a,ad=v.get('a',0),v.get('ad',0);t,f=[u.get('value','')for u in o if u.get('is_correct')is True],[u for u in o if u.get('is_correct')is False];st=''.join(t)
  return len(o)==4 and a>0 and len(t)==2==len(f)and'>'in st and(str(ad)in st or'@ad@'in st)and all(u.get('distractor_id')in RATS and len(u.get('error_rationale',''))>=20 and'='in u.get('value','')for u in f)
@@ -125,27 +132,27 @@ def ver_6(r):
  return len(o)==4 and a<0 and len(t)==2==len(f)and'<'in st and(f'{a})'in st or'@a@)'in st)and(f'-{b}'in sf or'-@b@'in sf)and(f'+{b})'in sf or'+@b@)'in sf)and all(u.get('distractor_id')in RATS and len(u.get('error_rationale',''))>=20 for u in f)
 S1=[r'$f(t)=@a@t+@b@$, halle $f(@x@)$:',r'Con $f(x)=@a@x+@b@$, dé $f(@x@)$:',r'Evalúe $f(@x@)$ si $f(u)=@a@u+@b@$:',r'Determine imagen $f(@x@)$ en $f(t)=@a@t+@b@$:']
 S2=[r'Si $@a@x+@b@=@y@$, halle $x$:',r'Despeje incógnita $x$ cuando $@a@x+@b@=@y@$:',r'¿Qué abscisa $x$ resuelve $@a@x+@b@=@y@$?',r'Aísle la raíz lineal $x$ de $@a@x+@b@=@y@$:']
-S3=[r'Si $f(x)=@a@x+@b@$ y $x=@x@+@d@$, dé $f$:',r'Con $f(t)=@a@t+@b@$ en $t=@x@+@d@$, halle $f$:',r'Sea $f(x)=@a@x+@b@$; calcule $f(@x@+@d@)$:',r'Sustituya entrada desplazada $@x@+@d@$ en $f(u)=@a@u+@b@$:']
-S4=[r'Entre $x_1=@x1@$ y $x_2=@x2@$ ($f(x)=@a@x+@b@$), halle $\Delta f$:',r'Calcule incremento $\Delta f=f(@x2@)-f(@x1@)$ si $f(x)=@a@x+@b@$:',r'Cuánto cambia $f(t)=@a@t+@b@$ al pasar de $t=@x1@$ a $@x2@$:',r'Obtenga diferencia neta $f(@x2@)-f(@x1@)$ bajo regla $@a@x+@b@$:']
+S3=[r'Expanda $f(x+@d@)$ en función de $x$ si $f(x)=@a@x+@b@$:',r'Con $f(t)=@a@t+@b@$, exprese simbólicamente $f(x+@d@)$:',r'Sea $f(x)=@a@x+@b@$; formule la regla desplazada $f(x+@d@)$:',r'Sustituya $x+@d@$ en $f(u)=@a@u+@b@$ como expresión en $x$:']
+S4=[r'Desde $x_1=@x1@$ en $f(x)=@a@x+@b@$, exprese $\Delta f(x)=f(x)-f(@x1@)$:',r'Formule simbólicamente $f(x)-f(@x1@)$ si $f(x)=@a@x+@b@$:',r'Halle en función de $x$ la variación $f(x)-f(@x1@)$ bajo $f(t)=@a@t+@b@$:',r'Obtenga la expresión algebraica de $f(x)-f(@x1@)$ para regla $@a@x+@b@$:']
 S5=[r'Pendiente $@a@>0$ y paso $@d@>0$ en $f(x)=@a@x+@b@$: marque ciertas:',r'Con $f(t)=@a@t+@b@$ ($@a@>0$) y salto $@d@$, identifique propiedades:',r'Al avanzar $@d@$ desde $x=@x@$ con $@a@>0$, seleccione válidas:',r'Propiedades exactas del cambio $f(@x@+@d@)-f(@x@)$ ($@a@>0$):']
 S6=[r'$f(x)=@a@x+@b@$ ($@a@<0,x=@x@$): marque:',r'$@a@<0,x=@x@$ en $@a@x+@b@$: elija:',r'$f(t)=@a@t+@b@$ ($@a@<0,t=@x@$): cierto:',r'Dado $f(x)=@a@x+@b@$ ($@a@<0,x=@x@$): válido:']
 H1 = [r'Regla afín $f(t)=@a@t+@b@$ fija.',r'Multiplique $@a@$ por $@x@$ inicial.',r'Sume $@b@$ al producto $@a@ \cdot @x@$ calculado.']
 H2 = [r'Reste $@b@$ a $@y@$ como primer paso.',r'Plantee ecuación lineal $@a@x+@b@=@y@$.',r'Divida la resta hallada entre $@a@$.']
-H3 = [r'Sume entrada desplazada $@x@+@d@$.',r'Multiplique esa suma dada por $@a@$.',r'Agregue constante $@b@$ al cierre.']
-H4 = [r'Reste $x_1=@x1@$ a $x_2=@x2@$.',r'El término constante $@b@$ se cancela al restar.',r'Multiplique $\Delta x$ por la pendiente $@a@$.']
+H3 = [r'Reemplace la variable por $(x+@d@)$.',r'Distribuya la pendiente $@a@$ sobre $(x+@d@)$.',r'Agrupe $@a@ \cdot @d@+@b@$ como término independiente.']
+H4 = [r'Reste $f(@x1@)=@a@(@x1@)+@b@$ a $f(x)$.',r'El término constante $@b@$ se cancela al restar.',r'Exprese la diferencia como $@a@(x-@x1@)$.']
 H5 = [r'Al restar $f(@x@+@d@)-f(@x@)$, $@b@$ desaparece.',r'Como $@a@>0$ y $@d@>0$, $f$ crece en $@ad@$.',r'Verifique que la pendiente $@a@$ multiplica a $@d@$.']
 H6 = [r'La regla lineal aplica con $@a@<0$.',r'El término constante $@b@$ es fijo.',r'Evalúe signo de $@a@ \cdot @x@+@b@$.']
 SOL1=r'Paso 1: Sustituya $t=@x@$ en $f(t)=@a@t+@b@$. Paso 2: Opere $@a@(@x@)+@b@=@ans@$ exacto.'
 SOL2=r'Paso 1: Plantee la ecuación $@y@=@a@x+@b@$. Paso 2: Despeje $x=(@y@-@b@)/@a@=@ans@$ exacto.'
-SOL3=r'Paso 1: Calcule entrada $@x@+@d@$. Paso 2: Evalúe expresión $@a@(@x@+@d@)+@b@=@ans@$ directo.'
-SOL4=r'Paso 1: Note $\Delta x=@x2@-@x1@$. Paso 2: $\Delta f=@a@(@x2@-@x1@)=@ans@$ exacto.'
+SOL3=r'Paso 1: Evalúe $f(x+@d@)=@a@(x+@d@)+@b@$. Paso 2: Simplifique el término constante a $@ans@$.'
+SOL4=r'Paso 1: Cancelando $@b@$, resulta $f(x)-f(@x1@)=@a@(x-@x1@)$. Paso 2: Expanda a $@ans@$.'
 SOL5=r'Paso 1: $f(@x@+@d@)-f(@x@)=@a@ \cdot @d@=@ad@>0$. Paso 2: $@b@$ no altera el incremento neto.'
 SOL6=r'Paso 1: Como $@a@<0$ y $@x@>0$, resulta $@a@(@x@)<0$ y $f(@x@)=@a@(@x@)+@b@<@b@$. Paso 2: $@b@$ queda invariante.'
 TEMPLATES = [
-{'id':'T-Hab-01-01','cid':'Hab-01','qtype':'MC7','archetype':'direct','band':('easy','Apply'),'gen':gen_1,'ver':ver_1,'stem_variants':S1,'hints':H1,'sol':SOL1,'fmt':r'$@X@$','rats':RATS},
-{'id':'T-Hab-01-02','cid':'Hab-01','qtype':'MC7','archetype':'inverse','band':('medium','Apply'),'gen':gen_2,'ver':ver_2,'stem_variants':S2,'hints':H2,'sol':SOL2,'fmt':r'$@X@$','rats':RATS},
-{'id':'T-Hab-01-03','cid':'Hab-01','qtype':'FIB','archetype':'perturbation','band':('hard','Analyze'),'gen':gen_3,'ver':ver_3,'stem_variants':S3,'hints':H3,'sol':SOL3},
-{'id':'T-Hab-01-04','cid':'Hab-01','qtype':'FIB','archetype':'direct','band':('medium','Analyze'),'gen':gen_4,'ver':ver_4,'stem_variants':S4,'hints':H4,'sol':SOL4},
+{'id':'T-Hab-01-01','cid':'Hab-01','qtype':'FIB','archetype':'direct','band':('easy','Apply'),'gen':gen_1,'ver':ver_1,'stem_variants':S1,'hints':H1,'sol':SOL1,'rats':RATS},
+{'id':'T-Hab-01-02','cid':'Hab-01','qtype':'FIB','archetype':'inverse','band':('medium','Apply'),'gen':gen_2,'ver':ver_2,'stem_variants':S2,'hints':H2,'sol':SOL2,'rats':RATS},
+{'id':'T-Hab-01-03','cid':'Hab-01','qtype':'open_symbolic','archetype':'perturbation','band':('hard','Analyze'),'gen':gen_3,'ver':ver_3,'stem_variants':S3,'hints':H3,'sol':SOL3,'rats':RATS},
+{'id':'T-Hab-01-04','cid':'Hab-01','qtype':'open_symbolic','archetype':'direct','band':('medium','Analyze'),'gen':gen_4,'ver':ver_4,'stem_variants':S4,'hints':H4,'sol':SOL4,'rats':RATS},
 {'id':'T-Hab-01-05','cid':'Hab-01','qtype':'MS','archetype':'perturbation','band':('hard','Apply'),'gen':gen_5,'ver':ver_5,'stem_variants':S5,'hints':H5,'sol':SOL5},
 {'id':'T-Hab-01-06','cid':'Hab-01','qtype':'MS','archetype':'boundary_or_edge_case','band':('hard','Evaluate'),'assumption_id':'A-Hab01-01','gen':gen_6,'ver':ver_6,'stem_variants':S6,'hints':H6,'sol':SOL6},
 ]
@@ -153,7 +160,7 @@ TEMPLATES = [
 DONE: work_out/shards/shard_01.json</output>
 </example>
 <example>
-<input>author_02_data.md (work_out), C-02 (shard M20, M=2 ['open_symbolic','invariant_canvas'], K=2 => 4 plantillas/arquetipos), D-C02-01..03, A-C02-01.</input>
+<input>author_02_data.md (work_out), C-02 (concept con MC7 + M20, M=3 ['MC7','open_symbolic','invariant_canvas'], K=2 => 1 MC7 + 2 open_symbolic + 2 invariant_canvas = 5 plantillas, 80% activo), D-C02-01..06, A-C02-01.</input>
 <output>
 Acción (write_file -> work_out/shards/shard_02_data.py):
 ```python
@@ -161,7 +168,23 @@ RATS={
 'D-C02-01':r'Olvida el factor $1/2$ al derivar $@a@\sqrt{x}$ reteniendo coeficiente $@a@$ sin dividir.',
 'D-C02-02':r'Suma el gasto $@p1@ \cdot @xk@$ al ingreso $@m@$ en vez de restarlo al ubicar la ordenada $P_1$.',
 'D-C02-03':r'Usa frontera punteada o sombra superior omitiendo que $\le$ incluye el ingreso $@m@$ exacto.',
+'D-C02-04':r'Divide el ingreso $@m@$ entre la suma de precios $(@p1@+@p2@)$ en lugar de usar $@p2@$.',
+'D-C02-05':r'Multiplica el ingreso $@m@$ por el precio $@p2@$ en vez de calcular el cociente $@m@/@p2@$.',
+'D-C02-06':r'Resta el precio $@p2@$ al ingreso $@m@$ confundiendo intercepto vertical con diferencia lineal.',
 }
+def _pv(c):
+ for t in reversed(''.join(x if x in'0123456789.eE+-'else' 'for x in str(c)).split()):
+  try:return float(t.rstrip('.'))
+  except ValueError:pass
+ return float('nan')
+def _ok_sep(vals):return len({*vals})==len(vals)and all(q-p>=0.02*max(abs(p),q)for p,q in zip(sorted(vals),sorted(vals)[1:]))
+def gen_mc1(r):
+ for _ in range(40):
+  p1,p2=r.randint(3,8),r.randint(2,6);q=r.randint(5,18);m=p2*q;xk=r.randint(2,6);a=2*r.randint(3,9)
+  d=[m+p1*xk,m-p1*xk,m//(p1+p2)+1,m*p2,m-p2,q+a]
+  if _ok_sep([q,*d]):break
+ return{"vars":{"m":m,"p1":p1,"p2":p2,"xk":xk,"a":a,"ans":q},"correct":str(q),"ds":[(f"D-C02-{i:02d}",str(v))for i,v in enumerate(d,1)]}
+def ver_mc1(c,v):return abs(_pv(c)-(v['m']/v['p2']))<1e-4
 def gen_os1(r):
  a,k=2*r.randint(3,24),r.randint(5,45)
  return{"vars":{"a":a,"k":k,"ans":f"{a//2}/sqrt(x)"},"correct":f"{a//2}/sqrt(x)","accepted_equivalents":[f"{a//2}*x^(-1/2)",f"{a//2}*x**(-0.5)"],"variables":["x"],"symbolic_config":{"variables":["x"],"palette":["sqrt()","/"],"placeholder":"Ej: 5/sqrt(x)"},"ds":[("D-C02-01",f"{a}/sqrt(x)",RATS['D-C02-01'])]}
@@ -186,23 +209,27 @@ def gen_ic2(r):
 def ver_ic2(r):
  ic=r.get("invariant_canvas",{})if isinstance(r,dict)else{};invs=ic.get("invariants",[]);ts=ic.get("target_state",{});v=r.get("vars",{})
  return ic.get("mode")=="cartesian"and len(invs)>=2 and ts.get("inequalityStyle")=="solid"and ts.get("inequalityShade")=="below"and ts.get("sliders",{}).get("s1")==v.get("m")and all(i.get("distractor_id")in RATS and len(i.get('error_rationale',''))>=20 for i in invs)
+S_MC1=[r"En $@p1@x_1+@p2@x_2=@m@$, ¿cuál es el intercepto vertical $x_2$ cuando $x_1=0$?",r"Si el consumidor gasta todo $@m@$ en el bien $2$ ($p_1=@p1@,p_2=@p2@$), halle $x_2$:",r"Determine la ordenada máxima $x_2$ sobre la frontera $@p1@x_1+@p2@x_2=@m@$:",r"Para ingreso $@m@$ y precios $p_1=@p1@,p_2=@p2@$, calcule la cesta extrema $x_2(0)$:"]
 S_OS1=[r"Derive $f(x)=@a@\sqrt{x}+@k@$ respecto a $x$:",r"Sea $g(x)=@a@\sqrt{x}+@k@$; halle $g'(x)$:",r"Calcule $\frac{d}{dx}(@a@\sqrt{x}+@k@)$ en $x$:",r"Diferencie $h(x)=@a@\sqrt{x}+@k@$ simbólicamente:"]
 S_OS2=[r"Despeje $x_2$ en función de $x$ desde $@p1@x+@p2@x_2=@m@$:",r"Exprese la recta presupuestaria $@p1@x+@p2@x_2=@m@$ como $x_2(x)$:",r"Aísle $x_2$ de la restricción lineal $@p1@x+@p2@x_2=@m@$:",r"Escriba $x_2$ en términos de $x$ dado presupuesto $@m@$ ($p_1=@p1@,p_2=@p2@$):"]
 S_IC1=[r"Sobre $@p1@x_1+@p2@x_2=@m@$ ($p_1=@p1@,p_2=@p2@$), ubique el punto $P_1$ para $x_1=@xk@$:",r"Ajuste las coordenadas de $P_1$ en la recta $@p1@x_1+@p2@x_2=@m@$ cuando $x_1=@xk@$:",r"Para $x_1=@xk@$ en $@p1@x_1+@p2@x_2=@m@$ ($p_1=@p1@,p_2=@p2@$), posicione $P_1$:",r"Localice $P_1$ sobre la frontera $@p1@x_1+@p2@x_2=@m@$ evaluada en $x_1=@xk@$:" ]
 S_IC2=[r"Configure frontera y zona factible de $@p1@x_1+@p2@x_2 \le @m@$ ajustando el parámetro $m=@m@$:",r"Para $@p1@x_1+@p2@x_2 \le @m@$, trace estilo de borde, sombreado y deslizador en $@m@$:",r"En la restricción débil $@p1@x_1+@p2@x_2 \le @m@$, defina región válida y parámetro $@m@$:",r"Modele región factible para desigualdad $\le$ con ingreso $@m@$ ($p_1=@p1@,p_2=@p2@$) en deslizador:" ]
+H_MC1=[r"Evalúe la restricción presupuestaria en $x_1=0$.",r"El gasto en el bien $1$ se anula por completo.",r"Divida el ingreso total $@m@$ entre el precio $@p2@$."]
 H_OS1=[r"Reescriba $@a@\sqrt{x}$ como $@a@x^{1/2}$.",r"Aplique la regla de potencia a $@a@x^{1/2}$.",r"La constante $@k@$ tiene derivada cero."]
 H_OS2=[r"Reste el gasto $@p1@x$ al ingreso $@m@$.",r"Divida toda la diferencia resultante entre $@p2@$.",r"Conserve el signo negativo delante del cociente."]
 H_IC1=[r"Sustituya $x_1=@xk@$ en $@p1@x_1+@p2@x_2=@m@$.",r"Reste $@p1@ \cdot @xk@$ al ingreso total $@m@$.",r"Divida el remanente entre $@p2@$ para obtener $x_2$."]
 H_IC2=[r"Una desigualdad $\le$ usa frontera sólida.",r"Sombree debajo de la recta al exigir $\le @m@$.",r"Ajuste el deslizador al presupuesto exacto $@m@$."]
+SOL_MC1=r"Paso 1: Fije $x_1=0$ en $@p1@x_1+@p2@x_2=@m@$. Paso 2: Despeje $x_2=@m@/@p2@=@ans@$ unidades."
 SOL_OS1=r"Paso 1: Derive $@a@x^{1/2}$ bajando factor $1/2$. Paso 2: Resultado $@a@/(2\sqrt{x})=@ans@$ exacto."
 SOL_OS2=r"Paso 1: Pase $@p1@x$ restando a $@m@$. Paso 2: Divida por $@p2@$ para obtener $(@m@-@p1@x)/@p2@=@ans@$."
 SOL_IC1=r"Paso 1: Evalúe $@p1@(@xk@)+@p2@x_2=@m@$. Paso 2: Despeje $x_2=@yk@$ ubicando $P_1=(@xk@,@yk@)$."
 SOL_IC2=r"Paso 1: Por $\le$, frontera sólida y sombra inferior. Paso 2: Fije el deslizador en $m=@m@$."
 TEMPLATES=[
-{'id':'T-C02-01','cid':'C-02','qtype':'open_symbolic','archetype':'direct','band':('easy','Understand'),'gen':gen_os1,'ver':ver_os1,'stem_variants':S_OS1,'hints':H_OS1,'sol':SOL_OS1,'rats':RATS},
-{'id':'T-C02-02','cid':'C-02','qtype':'open_symbolic','archetype':'inverse','band':('medium','Apply'),'gen':gen_os2,'ver':ver_os2,'stem_variants':S_OS2,'hints':H_OS2,'sol':SOL_OS2,'rats':RATS},
-{'id':'T-C02-03','cid':'C-02','qtype':'invariant_canvas','archetype':'perturbation','band':('hard','Analyze'),'gen':gen_ic1,'ver':ver_ic1,'stem_variants':S_IC1,'hints':H_IC1,'sol':SOL_IC1,'rats':RATS},
-{'id':'T-C02-04','cid':'C-02','qtype':'invariant_canvas','archetype':'boundary_or_edge_case','band':('hard','Evaluate'),'assumption_id':'A-C02-01','gen':gen_ic2,'ver':ver_ic2,'stem_variants':S_IC2,'hints':H_IC2,'sol':SOL_IC2,'rats':RATS},
+{'id':'T-C02-01','cid':'C-02','qtype':'MC7','archetype':'direct','band':('easy','Remember'),'gen':gen_mc1,'ver':ver_mc1,'stem_variants':S_MC1,'hints':H_MC1,'sol':SOL_MC1,'fmt':r'$@X@$','rats':RATS},
+{'id':'T-C02-02','cid':'C-02','qtype':'open_symbolic','archetype':'direct','band':('easy','Understand'),'gen':gen_os1,'ver':ver_os1,'stem_variants':S_OS1,'hints':H_OS1,'sol':SOL_OS1,'rats':RATS},
+{'id':'T-C02-03','cid':'C-02','qtype':'open_symbolic','archetype':'inverse','band':('medium','Apply'),'gen':gen_os2,'ver':ver_os2,'stem_variants':S_OS2,'hints':H_OS2,'sol':SOL_OS2,'rats':RATS},
+{'id':'T-C02-04','cid':'C-02','qtype':'invariant_canvas','archetype':'perturbation','band':('hard','Analyze'),'gen':gen_ic1,'ver':ver_ic1,'stem_variants':S_IC1,'hints':H_IC1,'sol':SOL_IC1,'rats':RATS},
+{'id':'T-C02-05','cid':'C-02','qtype':'invariant_canvas','archetype':'boundary_or_edge_case','band':('hard','Evaluate'),'assumption_id':'A-C02-01','gen':gen_ic2,'ver':ver_ic2,'stem_variants':S_IC2,'hints':H_IC2,'sol':SOL_IC2,'rats':RATS},
 ]
 ```
 DONE: work_out/shards/shard_02.json</output>
