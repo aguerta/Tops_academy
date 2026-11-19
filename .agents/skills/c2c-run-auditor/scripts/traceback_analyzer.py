@@ -271,7 +271,7 @@ class SubagentTreeResolver:
     """Discovers subagent conversation IDs and maps their roles."""
 
     @staticmethod
-    def discover_subagents(root_steps: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def discover_subagents(root_steps: List[Dict[str, Any]], conv_id: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
         subagents: Dict[str, Dict[str, Any]] = {}
 
         pending_invokes: List[Dict[str, str]] = []
@@ -347,6 +347,28 @@ class SubagentTreeResolver:
                             "role": wf_role.strip(' "\'') or "unknown",
                             "type": wf_type.strip() or "workflow_agent",
                         }
+
+        # 3c. Scan workflow task logs (.system_generated/tasks/task-*.log) for failed/truncated workflows
+        if conv_id:
+            t_dir = get_brain_dir() / conv_id / ".system_generated" / "tasks"
+            if t_dir.is_dir():
+                for log_p in sorted(t_dir.glob("task-*.log")):
+                    try:
+                        log_txt = log_p.read_text(encoding="utf-8", errors="ignore")
+                    except Exception:
+                        continue
+                    if "[agent:" in log_txt:
+                        for wf_type, wf_role, wf_cid in re.findall(
+                            r"\[agent:([^\]\r\n]+)\]\s*([^\r\n]*?):\s*(?:done|failed|error)\s*\(([0-9a-f]{8}-[0-9a-f\-]{27})\)",
+                            log_txt,
+                            re.IGNORECASE,
+                        ):
+                            if wf_cid not in subagents:
+                                subagents[wf_cid] = {
+                                    "conversation_id": wf_cid,
+                                    "role": wf_role.strip(' "\'') or "unknown",
+                                    "type": wf_type.strip() or "workflow_agent",
+                                }
 
         # 4. Infer roles from individual subagent transcripts if role is still generic/unknown
         brain_dir = get_brain_dir()
@@ -1083,7 +1105,7 @@ def run_traceback_audit(
     # 1. Parse root steps and discover subagents
     root_steps = TranscriptReader.read_steps(transcript_p)
     root_turns = TranscriptReader.extract_turns(root_steps)
-    subagents = SubagentTreeResolver.discover_subagents(root_steps)
+    subagents = SubagentTreeResolver.discover_subagents(root_steps, conv_id=conv_id)
 
     # 1b. Load C2C v3.2 verified stage telemetry (Zero-Collision Gate)
     stage_telemetry_v3 = load_verified_stage_telemetry(conv_id, root_steps, work_dir=work_dir)
