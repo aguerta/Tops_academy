@@ -14,6 +14,7 @@ import {
   isOptionCorrect,
   getCorrectOptionIds,
   requiresBlankFirstCurtain,
+  createInitialStructuredAnswer,
 } from '../utils/questionUtils';
 import {
   validateAdversarialSubmission,
@@ -67,54 +68,6 @@ const isTypingTarget = (t: EventTarget | null): boolean => {
   );
 };
 
-function createInitialStructuredAnswer(q: Question | undefined): StructuredUserAnswer | null {
-  if (!q) return null;
-  switch (q.type) {
-    case 'open_symbolic':
-      return { kind: 'open_symbolic', expression: '' };
-    case 'proof_dag':
-      return { kind: 'proof_dag', orderedStepIds: [], justifications: {} };
-    case 'adversarial_break':
-      return {
-        kind: 'adversarial_break',
-        selectedStepId: null,
-        selectedReasonId: null,
-        witnessValues: {},
-      };
-    case 'unstructured_model':
-      return {
-        kind: 'unstructured_model',
-        phase1Roles: {},
-        phase2SelectedIds: [],
-        phase3SelectedId: null,
-        phase3Expression: '',
-      };
-    case 'invariant_canvas': {
-      const sliderValues: Record<string, number> = {};
-      for (const sl of q.invariant_canvas?.sliders || []) {
-        sliderValues[sl.id] = sl.initial ?? (sl.min + sl.max) / 2;
-      }
-      const pointPositions: Record<string, { x: number; y: number }> = {};
-      for (const pt of q.invariant_canvas?.interactive_points || []) {
-        pointPositions[pt.id] = { x: pt.x, y: pt.y };
-      }
-      return {
-        kind: 'invariant_canvas',
-        sliderValues,
-        pointPositions,
-        selectedEdgeIds: [],
-        infoSets: [],
-        inequalityStyle: q.invariant_canvas?.inequality?.initial_style ?? 'solid',
-        inequalityShade: q.invariant_canvas?.inequality?.initial_shade ?? 'above',
-      };
-    }
-    case 'concept_matching':
-      return { kind: 'concept_matching', pairs: {} };
-    default:
-      return null;
-  }
-}
-
 export const PracticeSession: React.FC<PracticeSessionProps> = ({
   sessionTitle,
   questions,
@@ -143,6 +96,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     () => initialSnapshot?.stage0Phase ?? 1
   );
   const [stage0PhaseNotice, setStage0PhaseNotice] = useState<string | null>(null);
+  const [canvasInteracted, setCanvasInteracted] = useState<boolean>(
+    () => initialSnapshot?.canvasInteracted ?? false
+  );
   const [hintsRevealed, setHintsRevealed] = useState(() => initialSnapshot?.hintsRevealed ?? 0);
 
   const [wrongAttemptsCount, setWrongAttemptsCount] = useState<number>(() => initialSnapshot?.wrongAttemptsCount ?? 0);
@@ -195,6 +151,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       return;
     }
     setIsCurtainLifted(false);
+    setCanvasInteracted(false);
     questionStartTimeRef.current = Date.now();
   }, [currentIndex]);
 
@@ -225,6 +182,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       isChecked,
       isCorrect,
       isCurtainLifted,
+      canvasInteracted,
       results,
       telemetry: telemetryRef.current,
       elapsedSeconds: Math.max(1, Math.round((Date.now() - questionStartTimeRef.current) / 1000)),
@@ -250,6 +208,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     isChecked,
     isCorrect,
     isCurtainLifted,
+    canvasInteracted,
     results,
   ]);
 
@@ -345,7 +304,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           : structuredAnswer.phase3Expression.trim().length > 0;
       }
       case 'invariant_canvas':
-        return structuredAnswer?.kind === 'invariant_canvas';
+        return structuredAnswer?.kind === 'invariant_canvas' && canvasInteracted;
       case 'concept_matching': {
         if (structuredAnswer?.kind !== 'concept_matching') return false;
         const premises = currentQuestion.concept_matching?.premises || [];
@@ -361,6 +320,9 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleChangeStructuredAnswer = (next: StructuredUserAnswer) => {
     if (isExhausted || (isChecked && isCorrect === true)) return;
+    if (next.kind === 'invariant_canvas') {
+      setCanvasInteracted(true);
+    }
     setStructuredAnswer(next);
     setStage0PhaseNotice(null);
     if (isChecked && !isCorrect) {
@@ -588,6 +550,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     if (currentQuestion.type !== 'unstructured_model') {
       setStructuredAnswer(createInitialStructuredAnswer(currentQuestion));
     }
+    setCanvasInteracted(false);
     setIsChecked(false);
     setIsCorrect(null);
     resetScroll();
@@ -671,6 +634,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       setWrongAttemptsCount(0);
       setIsExhausted(false);
       setIsCurtainLifted(false);
+      setCanvasInteracted(false);
     }
   };
 
@@ -729,6 +693,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       setWrongAttemptsCount(0);
       setIsExhausted(false);
       setIsCurtainLifted(false);
+      setCanvasInteracted(false);
     }
   };
 

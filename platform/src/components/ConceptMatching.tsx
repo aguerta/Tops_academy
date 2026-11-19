@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ConceptMatchingSpec } from '../types';
+import { toPlainOptionLabel } from '../utils/latexOptionLabel';
 import { MathText } from './MathText';
 
 interface ConceptMatchingProps {
@@ -18,6 +19,10 @@ export const ConceptMatching: React.FC<ConceptMatchingProps> = ({
   const [activePremiseId, setActivePremiseId] = useState<string | null>(
     spec.premises[0]?.id ?? null
   );
+
+  useEffect(() => {
+    setActivePremiseId(spec.premises[0]?.id ?? null);
+  }, [spec]);
 
   const targetById = new Map(spec.targets.map((t) => [t.id, t]));
 
@@ -81,13 +86,28 @@ export const ConceptMatching: React.FC<ConceptMatchingProps> = ({
                   className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 bg-white text-slate-800 outline-none focus:border-ka-blue"
                 >
                   <option value="">-- Selecciona correspondencia --</option>
-                  {spec.targets.map((tg, tIdx) => (
-                    <option key={tg.id} value={tg.id}>
-                      {String.fromCharCode(65 + tIdx)}. {tg.content}
-                    </option>
-                  ))}
+                  {spec.targets.map((tg, tIdx) => {
+                    const letter = String.fromCharCode(65 + tIdx);
+                    const cleanTarget = toPlainOptionLabel(tg.content, `Opción ${letter}`);
+                    return (
+                      <option key={tg.id} value={tg.id}>
+                        {letter}. {cleanTarget}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
+              {assignedTarget && (
+                <div
+                  data-testid={`matching-assigned-${pr.id}`}
+                  className="text-xs px-2.5 py-1.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-start gap-1.5"
+                >
+                  <span className="font-bold shrink-0">→</span>
+                  <div className="min-w-0 flex-1">
+                    <MathText text={assignedTarget.content} inline />
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

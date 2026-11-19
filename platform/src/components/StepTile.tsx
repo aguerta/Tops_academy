@@ -1,5 +1,6 @@
 import React from 'react';
 import { ProofStep } from '../types';
+import { hasRawLatex, toPlainOptionLabel } from '../utils/latexOptionLabel';
 import { MathText } from './MathText';
 
 interface StepTileProps {
@@ -119,12 +120,20 @@ export const StepTile: React.FC<StepTileProps> = ({
             className="text-xs px-2.5 py-1.5 rounded border border-slate-300 bg-white text-slate-800 outline-none focus:border-ka-blue"
           >
             <option value="">-- Selecciona regla --</option>
-            {justificationBank.map((rule) => (
+            {justificationBank.map((rule, rIdx) => (
               <option key={rule} value={rule}>
-                {rule}
+                {toPlainOptionLabel(rule, `Regla ${rIdx + 1}`)}
               </option>
             ))}
           </select>
+          {selectedJustification && hasRawLatex(selectedJustification) && (
+            <span
+              data-testid={`proof-just-preview-${step.id}`}
+              className="text-xs px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-slate-800"
+            >
+              <MathText text={selectedJustification} inline />
+            </span>
+          )}
         </div>
       )}
     </div>

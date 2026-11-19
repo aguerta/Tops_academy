@@ -157,7 +157,10 @@ export function validateCartesianInvariants(
       case 'slider_eq': {
         if (inv.slider_id) {
           const sVal = scope[inv.slider_id];
-          const tVal = evalTargetNumber(inv.expr ?? inv.target, scope);
+          const tVal = evalTargetNumber(
+            inv.expr ?? inv.target ?? inv.target_value ?? inv.expected,
+            scope
+          );
           if (typeof sVal === 'number' && tVal !== null && Math.abs(sVal - tVal) <= tol) {
             passed = true;
           }

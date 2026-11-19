@@ -219,6 +219,11 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
                   <strong>Razón:</strong> <MathText text={corrReason.content} inline />
                 </div>
               )}
+              {fallStep.error_rationale && (
+                <div className="text-slate-700">
+                  <strong>Diagnóstico:</strong> <MathText text={fallStep.error_rationale} inline />
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-xs font-mono text-slate-800">

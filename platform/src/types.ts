@@ -199,8 +199,16 @@ export interface AdversarialInputField {
 export interface AdversarialPredicate {
   id?: string;
   expr: string;
-  failure_rationale: string;
+  failure_rationale?: string;
+  error_rationale?: string;
   distractor_id?: string;
+}
+
+export interface AdversarialReadoutSpec {
+  id?: string;
+  label: string;
+  expr: string;
+  unit?: string;
 }
 
 export interface AdversarialBreakSpec {
@@ -210,6 +218,8 @@ export interface AdversarialBreakSpec {
   reason_options?: AdversarialReasonOption[];
   inputs?: AdversarialInputField[];
   predicates?: AdversarialPredicate[];
+  trap_predicates?: AdversarialPredicate[];
+  computed_readouts?: AdversarialReadoutSpec[];
   sample_witness?: Record<string, number>;
 }
 
@@ -358,6 +368,8 @@ export interface CanvasInvariant {
   target_x?: number | string;
   target_y?: number | string;
   target?: number;
+  target_value?: number | string;
+  expected?: number | string;
   min?: number;
   max?: number;
   tolerance?: number;
@@ -634,4 +646,52 @@ export interface CourseProgressDetails {
   inProgressUnits: number;
   notStartedUnits: number;
   totalUnits: number;
+}
+
+export type MetacognitiveConfidence = 'high' | 'medium' | 'low';
+
+export interface IronExamQuestionDraft {
+  selectedOption: string | null;
+  selectedMultiOptions: string[];
+  fillBlankValue: string;
+  structuredAnswer: StructuredUserAnswer | null;
+  canvasInteracted: boolean;
+}
+
+export interface MetacognitiveItemAudit {
+  question_id: string;
+  competency_id: string;
+  type: QuestionType;
+  confidence: MetacognitiveConfidence;
+  is_correct: boolean;
+  answered: boolean;
+  quadrant:
+    | 'calibrated_mastery'
+    | 'illusion_of_competence'
+    | 'lucky_guess'
+    | 'known_gap';
+  diagnostic_rationale?: string;
+}
+
+export interface MetacognitiveAudit {
+  global_confidence: MetacognitiveConfidence;
+  total_questions: number;
+  answered_count: number;
+  correct_count: number;
+  calibrated_mastery_count: number;
+  illusions_of_competence_count: number;
+  lucky_guesses_count: number;
+  known_gaps_count: number;
+  calibration_score: number;
+  items: MetacognitiveItemAudit[];
+}
+
+export interface IronDeferredReviewItem {
+  question: Question;
+  is_correct: boolean;
+  answered: boolean;
+  confidence: MetacognitiveConfidence;
+  flagged: boolean;
+  user_summary: string;
+  diagnostic_rationale?: string;
 }

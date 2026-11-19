@@ -1,5 +1,6 @@
 import React, { useId, useRef, useState } from 'react';
 import { InvariantCanvasSpec } from '../types';
+import { hasRawLatex } from '../utils/latexOptionLabel';
 import { evaluateCartesianExpression } from './canvas/TopologyValidator';
 import { MathText } from './MathText';
 
@@ -185,16 +186,34 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
                     strokeLinecap="round"
                   />
                   {ed.label && (
-                    <text
-                      x={mx}
-                      y={my - 7}
-                      textAnchor="middle"
-                      fontSize={12}
-                      fontWeight={isSel ? 700 : 500}
-                      fill={isSel ? '#1865f2' : '#334155'}
-                    >
-                      {ed.label}
-                    </text>
+                    hasRawLatex(ed.label) ? (
+                      <foreignObject
+                        x={mx - 70}
+                        y={my - 26}
+                        width={140}
+                        height={24}
+                        className="overflow-visible pointer-events-none"
+                      >
+                        <div
+                          className={`text-[11px] text-center leading-tight px-1 rounded bg-white/85 ${
+                            isSel ? 'font-bold text-ka-blue' : 'font-medium text-slate-700'
+                          }`}
+                        >
+                          <MathText text={ed.label} inline />
+                        </div>
+                      </foreignObject>
+                    ) : (
+                      <text
+                        x={mx}
+                        y={my - 7}
+                        textAnchor="middle"
+                        fontSize={12}
+                        fontWeight={isSel ? 700 : 500}
+                        fill={isSel ? '#1865f2' : '#334155'}
+                      >
+                        {ed.label}
+                      </text>
+                    )
                   )}
                 </g>
               );
@@ -203,6 +222,7 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
             {/* Decision / Terminal Nodes */}
             {nodes.map((nd) => {
               const inDraft = draftGroupNodes.includes(nd.id);
+              const nodeLabel = nd.label || nd.id;
               return (
                 <g
                   key={nd.id}
@@ -218,26 +238,54 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
                     stroke={inDraft ? '#1865f2' : '#0f172a'}
                     strokeWidth={inDraft ? 3 : 2}
                   />
-                  <text
-                    x={nd.x}
-                    y={nd.y + (nd.terminal ? 20 : 4)}
-                    textAnchor="middle"
-                    fontSize={11}
-                    fontWeight={700}
-                    fill="#0f172a"
-                  >
-                    {nd.label || nd.id}
-                  </text>
-                  {nd.payoff && (
+                  {hasRawLatex(nodeLabel) ? (
+                    <foreignObject
+                      x={nd.x - 65}
+                      y={nd.terminal ? nd.y + 8 : nd.y - 12}
+                      width={130}
+                      height={24}
+                      className="overflow-visible pointer-events-none"
+                    >
+                      <div className="text-[11px] font-bold text-slate-900 text-center leading-tight">
+                        <MathText text={nodeLabel} inline />
+                      </div>
+                    </foreignObject>
+                  ) : (
                     <text
                       x={nd.x}
-                      y={nd.y + 34}
+                      y={nd.y + (nd.terminal ? 20 : 4)}
                       textAnchor="middle"
                       fontSize={11}
-                      fill="#475569"
+                      fontWeight={700}
+                      fill="#0f172a"
                     >
-                      {nd.payoff}
+                      {nodeLabel}
                     </text>
+                  )}
+                  {nd.payoff && (
+                    hasRawLatex(nd.payoff) ? (
+                      <foreignObject
+                        x={nd.x - 65}
+                        y={nd.y + 22}
+                        width={130}
+                        height={24}
+                        className="overflow-visible pointer-events-none"
+                      >
+                        <div className="text-[11px] text-slate-600 text-center leading-tight">
+                          <MathText text={nd.payoff} inline />
+                        </div>
+                      </foreignObject>
+                    ) : (
+                      <text
+                        x={nd.x}
+                        y={nd.y + 34}
+                        textAnchor="middle"
+                        fontSize={11}
+                        fill="#475569"
+                      >
+                        {nd.payoff}
+                      </text>
+                    )
                   )}
                 </g>
               );
@@ -266,7 +314,7 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
                           : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                       }`}
                     >
-                      {ed.label || ed.id} ({ed.from}→{ed.to})
+                      <MathText text={ed.label || ed.id} inline /> ({ed.from}→{ed.to})
                     </button>
                   );
                 })}
@@ -295,7 +343,7 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
                             : 'bg-white text-slate-700 border-slate-300'
                         }`}
                       >
-                        {nd.label || nd.id}
+                        <MathText text={nd.label || nd.id} inline />
                       </button>
                     );
                   })}

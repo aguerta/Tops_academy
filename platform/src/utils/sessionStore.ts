@@ -29,6 +29,8 @@ export interface ActiveSessionSnapshot {
   isChecked: boolean;
   isCorrect: boolean | null;
   isCurtainLifted: boolean;
+  canvasInteracted?: boolean;
+  ironExamState?: Record<string, unknown>;
   results: PersistedQuestionResult[];
   telemetry: QuestionTelemetry[];
   elapsedSeconds: number;

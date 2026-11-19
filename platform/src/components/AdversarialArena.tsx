@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AdversarialBreakSpec } from '../types';
+import { evaluateAdversarialReadouts } from '../services/symbolicValidator';
 import { MathText } from './MathText';
 
 export interface AdversarialAnswerState {
@@ -112,6 +113,11 @@ export const AdversarialArena: React.FC<AdversarialArenaProps> = ({
 
   // mode === 'counterexample'
   const inputs = spec.inputs || [];
+  const readouts = useMemo(
+    () => evaluateAdversarialReadouts(spec.computed_readouts, value.witnessValues),
+    [spec.computed_readouts, value.witnessValues]
+  );
+
   return (
     <div data-testid="adversarial-arena-root" className="space-y-4 max-w-xl">
       {spec.prompt && (
@@ -161,6 +167,34 @@ export const AdversarialArena: React.FC<AdversarialArenaProps> = ({
           );
         })}
       </div>
+
+      {readouts.length > 0 && (
+        <div
+          data-testid="adv-computed-readouts"
+          className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-2"
+        >
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600">
+            Lectura computada en vivo
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {readouts.map((ro, idx) => (
+              <div
+                key={ro.id}
+                data-testid={`adv-readout-${idx}`}
+                className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-white border border-slate-200 text-xs"
+              >
+                <span className="font-semibold text-slate-700 min-w-0">
+                  <MathText text={ro.label} inline />
+                </span>
+                <span className="font-mono font-bold text-ka-blue shrink-0">
+                  {ro.formatted}
+                  {ro.unit ? ` ${ro.unit}` : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

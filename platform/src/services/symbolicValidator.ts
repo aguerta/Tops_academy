@@ -1,6 +1,7 @@
 import * as math from 'mathjs';
 import {
   AdversarialBreakSpec,
+  AdversarialReadoutSpec,
   ConceptMatchingSpec,
   CorrectAnswer,
   DiagnosticDistractor,
@@ -649,9 +650,10 @@ export function validateAdversarialSubmission(
       if (!pickedReason || !pickedReason.is_correct) {
         return {
           isCorrect: false,
-          matchedDistractorId: pickedReason?.distractor_id,
+          matchedDistractorId: pickedReason?.distractor_id || fallacyStep.distractor_id,
           diagnosticRationale:
             pickedReason?.error_rationale ||
+            fallacyStep.error_rationale ||
             'Identificaste el paso incorrecto, pero la justificación elegida no explica la ruptura matemática real.',
         };
       }
@@ -713,6 +715,24 @@ export function validateAdversarialSubmission(
     scope[iid] = numVal;
   }
 
+  for (const trap of spec.trap_predicates || []) {
+    try {
+      const triggered = evaluateSafePredicate(trap.expr, scope);
+      if (triggered) {
+        return {
+          isCorrect: false,
+          matchedDistractorId: trap.distractor_id,
+          diagnosticRationale:
+            trap.error_rationale ||
+            trap.failure_rationale ||
+            'El testigo propuesto cae en una trampa conceptual conocida.',
+        };
+      }
+    } catch {
+      // Unparseable/un-evaluable trap predicate with partial inputs does not pass/fail by itself
+    }
+  }
+
   for (const pred of spec.predicates || []) {
     try {
       const ok = evaluateSafePredicate(pred.expr, scope);
@@ -720,19 +740,88 @@ export function validateAdversarialSubmission(
         return {
           isCorrect: false,
           matchedDistractorId: pred.distractor_id,
-          diagnosticRationale: pred.failure_rationale,
+          diagnosticRationale: pred.failure_rationale || pred.error_rationale,
         };
       }
     } catch {
       return {
         isCorrect: false,
         matchedDistractorId: pred.distractor_id,
-        diagnosticRationale: pred.failure_rationale || 'Error al evaluar la condición del contraejemplo.',
+        diagnosticRationale:
+          pred.failure_rationale ||
+          pred.error_rationale ||
+          'Error al evaluar la condición del contraejemplo.',
       };
     }
   }
 
   return { isCorrect: true };
+}
+
+export interface EvaluatedReadoutItem {
+  id: string;
+  label: string;
+  value: number | null;
+  formatted: string;
+  unit?: string;
+}
+
+/**
+ * Safely evaluates `adversarial_break.computed_readouts` using mathjs from live student input strings.
+ */
+export function evaluateAdversarialReadouts(
+  readouts: AdversarialReadoutSpec[] | undefined,
+  witnessValues: Record<string, string>
+): EvaluatedReadoutItem[] {
+  if (!readouts || readouts.length === 0) return [];
+  const scope: Record<string, number> = {};
+  for (const [k, raw] of Object.entries(witnessValues || {})) {
+    const trimmed = String(raw ?? '').trim();
+    if (!trimmed) continue;
+    try {
+      const val = math.evaluate(normalizeSymbolicInput(trimmed));
+      if (typeof val === 'number' && Number.isFinite(val)) {
+        scope[k] = val;
+      }
+    } catch {
+      // ignore invalid partial inputs
+    }
+  }
+
+  return readouts.map((ro, idx) => {
+    const id = ro.id || `ro-${idx}`;
+    try {
+      const evaluated = math.evaluate(normalizeSymbolicInput(ro.expr), scope);
+      if (typeof evaluated === 'number' && Number.isFinite(evaluated)) {
+        const rounded = Math.round(evaluated * 10000) / 10000;
+        return {
+          id,
+          label: ro.label,
+          value: evaluated,
+          formatted: Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(4).replace(/\.?0+$/, ''),
+          unit: ro.unit,
+        };
+      }
+      if (typeof evaluated === 'boolean') {
+        return {
+          id,
+          label: ro.label,
+          value: evaluated ? 1 : 0,
+          formatted: evaluated ? 'Verdadero' : 'Falso',
+          unit: ro.unit,
+        };
+      }
+    } catch {
+      // incomplete scope
+    }
+    return {
+      id,
+      label: ro.label,
+      value: null,
+      formatted: '—',
+      unit: ro.unit,
+    };
+  });
 }
 
 /**
