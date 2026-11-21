@@ -52,9 +52,21 @@ def _is_valid_katex_span(span: str, is_display: bool = False) -> bool:
 
 # Import validators from check_cta
 try:
-    from .check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
+    from .check_cta import (
+        JsonLineLocator,
+        _VALID_RECOMMENDED_MODALITIES,
+        check_cta_katex,
+        check_prerequisites_dag,
+        validate_cta_rules,
+    )
 except ImportError:
-    from check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
+    from check_cta import (
+        JsonLineLocator,
+        _VALID_RECOMMENDED_MODALITIES,
+        check_cta_katex,
+        check_prerequisites_dag,
+        validate_cta_rules,
+    )
 
 # Import patch recording from patch_ledger
 try:
@@ -67,12 +79,32 @@ except ImportError:
             pass
 
 try:
-    from .engine.stage_contract import MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY
+    from .engine.stage_contract import (
+        ASSUMPTION_REQUIRED_MODALITIES as _ASSUMPTION_REQUIRED_MODALITIES,
+        BLOOM_LEVELS as _BLOOM_LEVELS,
+        MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+        MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+        compute_cta_bloom_portfolio_metrics,
+        normalize_modality_name,
+    )
 except ImportError:
     try:
-        from engine.stage_contract import MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY
+        from engine.stage_contract import (
+            ASSUMPTION_REQUIRED_MODALITIES as _ASSUMPTION_REQUIRED_MODALITIES,
+            BLOOM_LEVELS as _BLOOM_LEVELS,
+            MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+            MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+            compute_cta_bloom_portfolio_metrics,
+            normalize_modality_name,
+        )
     except ImportError:
         _MAX_MODALITIES_PER_COMPETENCY = 4
+        _MIN_MODALITIES_PER_COMPETENCY = 2
+        _BLOOM_LEVELS = ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create")
+        _ASSUMPTION_REQUIRED_MODALITIES = frozenset({"unstructured_model"})
+        compute_cta_bloom_portfolio_metrics = None  # type: ignore[assignment]
+        def normalize_modality_name(raw: Any) -> str:
+            return str(raw or "").strip().lower()
 
 
 logger = logging.getLogger("cta_merge")
@@ -1168,8 +1200,10 @@ def _build_outline_payload(
                 "id": bc_id,
                 "name": bc.get("name") or bc.get("title", ""),
                 "type": (bc.get("type") or bc.get("category", "concept")).lower(),
+                "bloom": bc.get("bloom", ""),
                 "description_latex": bc.get("description_latex") or bc.get("description", ""),
                 "assumptions_count": len(bc.get("assumptions") or []),
+                "distractor_count": len(bc.get("distractors") or bc.get("distractor_names") or []),
                 "session": bc.get("session", "[BASE]"),
                 "unit_index": bc.get("unit_index", 0),
                 "evidence": bc.get("evidence", []),
@@ -1186,8 +1220,10 @@ def _build_outline_payload(
             "id": c["id"],
             "name": c.get("name", ""),
             "type": c.get("type", ""),
+            "bloom": c.get("bloom", ""),
             "description_latex": c.get("description_latex") or c.get("description", ""),
             "assumptions_count": len(c.get("assumptions") or []),
+            "distractor_count": len(c.get("distractors") or []),
             "session": c.get("session", ""),
             "unit_index": c.get("unit_index", 0),
             "evidence": c.get("evidence", []),
@@ -1202,6 +1238,11 @@ def _build_outline_payload(
     draft_count = len(draft_competencies)
     recommended_min = max(14, int(round(draft_count * 0.50)))
     recommended_max = max(24, min(32, int(round(draft_count * 0.68))))
+    bloom_preview = (
+        compute_cta_bloom_portfolio_metrics(draft_competencies)
+        if compute_cta_bloom_portfolio_metrics is not None
+        else {}
+    )
     return {
         "course_id": course_id,
         "title": course_title,
@@ -1212,6 +1253,7 @@ def _build_outline_payload(
             "draft_count": draft_count,
             "consolidation_needed": draft_count > recommended_max,
         },
+        "bloom_portfolio_preview": bloom_preview,
         "competencies": outline_competencies,
     }
 
@@ -2402,6 +2444,129 @@ def apply_harmonize(
                             d["wrong_belief"] = str(d["omitted_step"])
                         d["omitted_step"] = None
 
+    # 3b. Process optional 5th root key: adjust_modalities
+    raw_adj = harmonize_data.get("adjust_modalities")
+    adj_directives: List[Dict[str, Any]] = []
+    if isinstance(raw_adj, dict):
+        for cid_k, mods_v in raw_adj.items():
+            adj_directives.append({
+                "competency": str(cid_k),
+                "recommended_modalities": mods_v if isinstance(mods_v, list) else [mods_v],
+            })
+    elif isinstance(raw_adj, list):
+        for item in raw_adj:
+            if isinstance(item, dict):
+                adj_directives.append(item)
+            else:
+                validation_errors.append(
+                    f"adjust_modalities failed: entry must be an object, got {type(item).__name__}."
+                )
+    elif raw_adj is not None:
+        validation_errors.append(
+            f"adjust_modalities failed: expected list or dict, got {type(raw_adj).__name__}."
+        )
+
+    for adj_item in adj_directives:
+        cid = str(
+            adj_item.get("competency")
+            or adj_item.get("competency_id")
+            or adj_item.get("id")
+            or ""
+        ).strip()
+        if not cid:
+            validation_errors.append("adjust_modalities failed: missing 'competency' ID.")
+            continue
+        if cid in existing_competency_ids:
+            validation_errors.append(
+                f"adjust_modalities failed: Epistemic monotonicity violation — cannot mutate base competency '{cid}' ([BASE])."
+            )
+            continue
+        target_comp = next((c for c in competencies if c["id"] == cid), None)
+        if not target_comp:
+            hint = (
+                f" (absorbed into '{absorbed_to_root[cid]}'; use '{absorbed_to_root[cid]}')"
+                if cid in absorbed_to_root
+                else ""
+            )
+            validation_errors.append(
+                f"adjust_modalities failed: Competency '{cid}' not found{hint}."
+            )
+            continue
+
+        raw_mods = adj_item.get("recommended_modalities")
+        if raw_mods is None:
+            raw_mods = adj_item.get("modalities")
+        if not isinstance(raw_mods, list):
+            validation_errors.append(
+                f"adjust_modalities failed for '{cid}': 'recommended_modalities' must be a list."
+            )
+            continue
+
+        norm_mods = list(dict.fromkeys(
+            normalize_modality_name(m) for m in raw_mods if str(m).strip()
+        ))
+        invalid_mods = [m for m in norm_mods if m not in _VALID_RECOMMENDED_MODALITIES]
+        if invalid_mods:
+            validation_errors.append(
+                f"[CTA-MODALITY-INVALID] adjust_modalities failed for '{cid}': invalid modalities {invalid_mods}. "
+                f"Allowed: {sorted(_VALID_RECOMMENDED_MODALITIES)}."
+            )
+            continue
+        if not (_MIN_MODALITIES_PER_COMPETENCY <= len(norm_mods) <= _MAX_MODALITIES_PER_COMPETENCY):
+            validation_errors.append(
+                f"[CTA-MODALITY-RANGE] adjust_modalities failed for '{cid}': got {len(norm_mods)} unique modalities "
+                f"({norm_mods}); required range is {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY}."
+            )
+            continue
+
+        ctype_adj = str(target_comp.get("type") or "").lower().strip()
+        is_skill_adj = ctype_adj == "skill" or cid.startswith("Hab-")
+        if is_skill_adj and "multiple_choice_7_options" in norm_mods:
+            validation_errors.append(
+                f"[M20-MC7-CAP] adjust_modalities failed for skill '{cid}': "
+                f"'multiple_choice_7_options' (MC7) is prohibited in Skill competencies."
+            )
+            continue
+
+        dist_count_adj = len(target_comp.get("distractors") or [])
+        if "multiple_choice_7_options" in norm_mods and dist_count_adj < 6:
+            validation_errors.append(
+                f"[CTA-MC7-DISTRACTORS] adjust_modalities failed for '{cid}' ({ctype_adj}): "
+                f"MC7 requires >= 6 distractors (found {dist_count_adj})."
+            )
+            continue
+
+        assump_count_adj = len(target_comp.get("assumptions") or [])
+        req_assump_mods = [m for m in norm_mods if m in _ASSUMPTION_REQUIRED_MODALITIES]
+        if req_assump_mods and assump_count_adj == 0:
+            validation_errors.append(
+                f"[CTA-MODALITY-ELIGIBILITY] adjust_modalities failed for '{cid}' ({ctype_adj}): "
+                f"{req_assump_mods} requires >= 1 assumption (assumptions=[]). Use 'multiple_select', "
+                f"'fill_in_the_blank' or 'proof_dag' instead."
+            )
+            continue
+
+        new_bloom = adj_item.get("bloom")
+        if new_bloom is not None:
+            canon_bloom = str(new_bloom).strip().capitalize()
+            if canon_bloom not in _BLOOM_LEVELS:
+                validation_errors.append(
+                    f"adjust_modalities failed for '{cid}': invalid bloom '{new_bloom}'. Allowed: {_BLOOM_LEVELS}."
+                )
+                continue
+            target_comp["bloom"] = canon_bloom
+
+        prev_mods = list(target_comp.get("recommended_modalities") or [])
+        target_comp["recommended_modalities"] = norm_mods
+        decisions_log.append({
+            "operation": "adjust_modalities",
+            "competency": cid,
+            "previous_modalities": prev_mods,
+            "recommended_modalities": norm_mods,
+            **({"bloom": target_comp["bloom"]} if new_bloom is not None else {}),
+            **({"reason": str(adj_item.get("reason"))} if adj_item.get("reason") else {}),
+        })
+
     # 4. Process add_prerequisites (supports dict, prerequisite_additions, prerequisite_updates)
     prereq_directives: List[Tuple[str, List[str]]] = []
     for prereq_key in ("add_prerequisites", "prerequisite_additions", "prerequisite_updates"):
@@ -2554,6 +2719,7 @@ def apply_harmonize(
             cta_draft,
             manifest_data,
             allowed_prereq_ids=existing_competency_ids,
+            exclude_bloom_ids=existing_competency_ids,
         )
         if not valid:
             for r_err in rule_errors:

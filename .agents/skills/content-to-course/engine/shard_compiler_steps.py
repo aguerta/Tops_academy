@@ -24,10 +24,14 @@ from engine.shard_ast_transforms import (
 from engine.shard_locator import ShardDataLineLocator, _find_diagnostic_line
 from engine.stage_contract import (
     ARCHETYPE_KINDS as _S4_ARCHETYPE_KINDS,
+    BLOOM_LEVELS as _BLOOM_LEVELS,
+    BLOOM_RANK as _BLOOM_RANK,
     MAX_MODALITIES_PER_COMPETENCY as _S4_MAX_MODS,
     MIN_MODALITIES_PER_COMPETENCY as _S4_MIN_MODS,
+    check_template_bloom_coherence as _check_template_bloom_coherence,
     competency_contract as _s4_competency_contract,
     is_skill_type as _s4_is_skill_type,
+    max_achievable_bloom_rank as _max_achievable_bloom_rank,
     quota_for_competency as _s4_quota_for_competency,
     required_templates_for_competency as _s4_required_templates,
     required_unique_stems as _s4_required_unique_stems,
@@ -1885,6 +1889,53 @@ def evaluate_m3_and_m20_archetype_gates(
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [M3-ARCHETYPES] Diversidad cognitiva insuficiente para habilidad '{cid}'. "
                             f"Se requiere al menos 1 nivel Bloom de aplicación o superior ({sorted(list(high_blooms))})."
+                        )
+
+                # [M3-BLOOM-COHERENCE]: Modality x Archetype x Bloom bounds (anti-Goodhart)
+                if cta_contract_version >= 2:
+                    for t_coh in tpls:
+                        t_id_coh = t_coh.get("id") or t_coh.get("template_id") or "?"
+                        t_mod_coh = _QTYPE_TO_INTERACTION.get(
+                            str(t_coh.get("interaction_type") or t_coh.get("question_type") or "").strip().lower(),
+                            str(t_coh.get("interaction_type") or t_coh.get("question_type") or "").strip().lower(),
+                        )
+                        coh_err = _check_template_bloom_coherence(
+                            t_mod_coh,
+                            t_coh.get("archetype"),
+                            t_coh.get("bloom"),
+                        )
+                        if coh_err:
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [M3-BLOOM-COHERENCE] En '{t_id_coh}': {coh_err}"
+                            )
+
+                # [M3-TARGET-BLOOM]: Concept/Skill in v2 must reach feasible target_bloom from CTA
+                target_bloom_raw = str(cta_c.get("bloom") or "").strip().capitalize()
+                if (
+                    cta_contract_version >= 2
+                    and (is_skill or c_type == "concept")
+                    and target_bloom_raw in ("Analyze", "Evaluate", "Create")
+                ):
+                    target_rank = _BLOOM_RANK[target_bloom_raw]
+                    pool_mods = allowed_mods_list or [m for m in actual_mods_seq if m]
+                    max_mod_rank = _max_achievable_bloom_rank(pool_mods)
+                    feasible_rank = min(target_rank, max_mod_rank) if max_mod_rank > 0 else target_rank
+                    max_tpl_rank = max(
+                        (_BLOOM_RANK.get(str(t.get("bloom") or "").strip().capitalize(), 0) for t in tpls),
+                        default=0,
+                    )
+                    if max_tpl_rank < feasible_rank:
+                        feasible_lbl = _BLOOM_LEVELS[feasible_rank - 1]
+                        eval_cands = [
+                            m for m in pool_mods
+                            if m in ("adversarial_break", "unstructured_model", "proof_dag", "multiple_select", "open_symbolic")
+                        ]
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [M3-TARGET-BLOOM] Competencia '{cid}' ({c_type or 'concept'}) "
+                            f"tiene target_bloom='{target_bloom_raw}' (techo factible '{feasible_lbl}' según modalidades {pool_mods}), "
+                            f"pero el Bloom máximo de sus plantillas es '{_BLOOM_LEVELS[max_tpl_rank - 1] if max_tpl_rank > 0 else 'none'}'. "
+                            f"Promueve al menos 1 plantilla (idealmente 'boundary_or_edge_case' o 'perturbation', modalidades candidatas: {eval_cands or pool_mods}) "
+                            f"a '{feasible_lbl}' asegurando rigor cognitivo acorde a su modalidad."
                         )
 
                 # Verificación 1 — Enunciados (stem_es) distintos por arquetipo & detección de clones

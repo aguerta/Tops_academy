@@ -1069,6 +1069,8 @@ def _compile_shard_body(
                             cta_comp_map[cid_key]["assumptions"] = c["assumptions"]
                         if c.get("recommended_modalities"):
                             cta_comp_map[cid_key]["recommended_modalities"] = c["recommended_modalities"]
+                        if c.get("bloom"):
+                            cta_comp_map[cid_key]["bloom"] = c["bloom"]
         except Exception:
             pass
 

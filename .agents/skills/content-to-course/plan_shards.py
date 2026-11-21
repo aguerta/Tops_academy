@@ -143,6 +143,12 @@ DSL_REFERENCE: Dict[str, Any] = {
             "(3) [TPL-CLONE-STEM]: similitud léxica Jaccard < 0.70 en stem_variants entre plantillas de igual modalidad o arquetipo; "
             "(4) [TPL-CLONE-SYMPY]: expresiones algebraicas no equivalentes bajo SymPy dentro del mismo arquetipo."
         ),
+        "bloom_coherence": (
+            "[M3-BLOOM-COHERENCE] y [M3-TARGET-BLOOM]: Respeta los rangos coherentes modalidad x arquetipo x Bloom "
+            "(MC7 <= Apply; concept_matching <= Analyze; FIB direct <= Apply y FIB <= Analyze; "
+            "adversarial_break/unstructured_model >= Analyze; proof_dag >= Apply). En competencias Concept/Skill v2, "
+            "al menos 1 plantilla (idealmente boundary_or_edge_case o perturbation) debe alcanzar el target_bloom factible."
+        ),
         "form_b_triband": (
             "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla o dict Form-C "
             "por competencia cubriendo los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') "
@@ -844,6 +850,11 @@ def plan_shards(
         for c in competencies
         if isinstance(c, dict) and c.get("id")
     }
+    cta_bloom_by_cid = {
+        str(c.get("id")): str(c.get("bloom") or "").strip()
+        for c in competencies
+        if isinstance(c, dict) and c.get("id")
+    }
     templates_dir_abs = str((work_dir / "templates").resolve().as_posix())
 
     for idx, shard in enumerate(shards):
@@ -908,6 +919,7 @@ def plan_shards(
                 num_modalities=num_mods_s4,
                 templates_per_modality=eff_tpl_per_mod,
                 has_mc7=has_mc7_s4,
+                target_bloom=cta_bloom_by_cid.get(cid_s4) or None,
             )
         shard_entry = {
             "shard_id": s_id,

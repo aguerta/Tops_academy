@@ -1290,9 +1290,9 @@ def dispatch_cta_reduce(
     prompt_text = (
         f"# Asignación de Tarea: CTA Harmonizer (MapReduce Harmonization v4.1)\n\n"
         f"{scope_header}\n\n"
-        f"- **Insumos:** `{work_rel}/cta_outline.json`, `{work_rel}/duplicate_candidates.json`\n"
-        f"- **Salida JSON:** `{work_rel}/cta_harmonize.json` (`duplicate_decisions` [`keep_id`/`drop_id`], `add_prerequisites`, `rename`, `drop_duplicate_distractors`)\n"
-        f"- **Invariantes DAG:** `connected_components == 1`, `root_ratio <= 0.20`\n"
+        f"- **Insumos:** `{work_rel}/cta_outline.json` (incluye `bloom` y `bloom_portfolio_preview`), `{work_rel}/duplicate_candidates.json`\n"
+        f"- **Salida JSON:** `{work_rel}/cta_harmonize.json` (`duplicate_decisions` [`keep_id`/`drop_id`], `add_prerequisites`, `rename`, `drop_duplicate_distractors`, opc. `adjust_modalities`)\n"
+        f"- **Invariantes DAG y Bloom:** `connected_components == 1`, `root_ratio <= 0.20`, `[CTA-BLOOM-FLOOR]`\n"
         f"{delta_note}"
         f"- **Merge:** `{compile_cmd}`\n"
         f"- **Cierre al aprobar:** `{work_rel}/cta.json` (señal terminal DONE)\n"
@@ -1701,10 +1701,18 @@ def dispatch_authors(
             tpl_distrib_note = (
                 f"1 MC7 + >={comp_k}/modalidad activa" if (has_mc7_comp and comp_k >= 2) else f"{comp_k}/modalidad"
             )
+            target_bloom = _clean_str(c_obj.get("bloom")) or ("Analyze" if is_skill_type(raw_type) else "Understand")
+            bloom_line = (
+                f"- **Techo Bloom objetivo (`target_bloom`):** `{target_bloom}` "
+                f"(al menos 1 plantilla —idealmente `boundary_or_edge_case` o `perturbation`— debe alcanzar el techo factible; "
+                f"coherencia `[M3-BLOOM-COHERENCE]`: `MC7<=Apply`, `concept_matching<=Analyze`, `FIB direct<=Apply`, "
+                f"`FIB<=Analyze`, `adversarial_break`/`unstructured_model>=Analyze`, `proof_dag>=Apply`)\n"
+            )
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
                 f"{rec_mods_line}"
+                f"{bloom_line}"
                 f"- **Umbrales Stage 4 (contrato exacto, se auditan al construir):** cuota **{quota}**; "
                 f"mínimo **{min_tpls} plantillas** ({tpl_distrib_note}, >= {_s4c['min_archetypes']} arquetipos); "
                 f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla); "
@@ -2077,6 +2085,8 @@ def dispatch_judges(
                     it for it in raw_items
                     if (
                         str(it.get("competency_id", "")).strip().upper() in target_ids
+                        or str(it.get("template_id", "")).strip().upper() in target_ids
+                        or any(_matches_token(tid, str(it.get("item_id", "")).upper()) for tid in target_ids)
                         or any(_matches_token(tid, str(it.get("question_id", "")).upper()) for tid in target_ids)
                         or any(_matches_token(tid, str(it.get("id", "")).upper()) for tid in target_ids)
                     )
@@ -2388,7 +2398,7 @@ def build_dispatch(
             f"## 1. FRAGMENTOS CTA A FUSIONAR Y ARMONIZAR\n"
             f"{shard_json_lines}\n\n"
             f"## 2. INSTRUCCIONES DE EJECUCIÓN\n"
-            f"0. FAST-PATH: lee en paralelo SOLO `cta_outline.json` + `duplicate_candidates.json`, escribe `cta_harmonize.json` de una vez y ejecuta el merge. PROHIBIDO listar/buscar directorios o leer los shards. Si el merge falla, corrige `cta_harmonize.json` con `edit_file` y re-ejecuta.\n"
+            f"0. FAST-PATH: lee en paralelo SOLO `cta_outline.json` (incluye `bloom` y `bloom_portfolio_preview`) + `duplicate_candidates.json`, escribe `cta_harmonize.json` (4 claves obligatorias + 5.ª opcional `adjust_modalities` si falla `[CTA-BLOOM-FLOOR]`) y ejecuta el merge. PROHIBIDO listar/buscar directorios o leer los shards. Si el merge falla, corrige `cta_harmonize.json` con `edit_file` y re-ejecuta.\n"
             f"1. Analiza los fragmentos curriculares y deduplica competencias.\n"
             f"2. Emite la armonización en `{work_rel}/cta_harmonize.json` y luego EJECUTA TÚ el merge oficial (obligatorio, el orquestador NO lo ejecuta):\n"
             f"   ```bash\n"

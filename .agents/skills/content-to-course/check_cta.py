@@ -28,10 +28,14 @@ try:
     from engine.stage_contract import (
         MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
         MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+        MIN_COMPS_FOR_CTA_BLOOM_GATE as _MIN_COMPS_FOR_CTA_BLOOM_GATE,
+        compute_cta_bloom_portfolio_metrics,
     )
 except ImportError:
     _MIN_MODALITIES_PER_COMPETENCY = 2
     _MAX_MODALITIES_PER_COMPETENCY = 4
+    _MIN_COMPS_FOR_CTA_BLOOM_GATE = 5
+    compute_cta_bloom_portfolio_metrics = None  # type: ignore[assignment]
 
 try:
     import pykatex
@@ -1075,6 +1079,45 @@ def check_cta_part(
     return ValidationResult(len(unique_errors) == 0, unique_errors, part_warnings)
 
 
+def check_cta_bloom_portfolio(
+    competencies: List[Dict[str, Any]],
+    exclude_ids: Optional[Set[str]] = None,
+    warnings: Optional[List[str]] = None,
+    enforce_hard_fail: bool = True,
+) -> List[str]:
+    """Validate adaptive portfolio Bloom floor across eligible contract v2 competencies."""
+    if compute_cta_bloom_portfolio_metrics is None:
+        return []
+    metrics = compute_cta_bloom_portfolio_metrics(competencies, exclude_ids=exclude_ids)
+    if not metrics.get("active_gate") or metrics.get("passes"):
+        return []
+
+    weak_parts: List[str] = []
+    for wc in metrics.get("weak_competencies", []):
+        weak_parts.append(
+            f"{wc['id']} ({wc['type']}, expected={wc['expected_bloom']:.2f}, "
+            f"assumptions={wc['assumptions_count']}, mods={wc['recommended_modalities']})"
+        )
+    weak_str = "; ".join(weak_parts) if weak_parts else "ninguna"
+    msg = (
+        f"[CTA-BLOOM-FLOOR] Portafolio de modalidades por debajo del piso cognitivo adaptativo "
+        f"(evaluadas {metrics['eligible_competencies']} competencias): "
+        f"expected_bloom_index={metrics['expected_bloom_index']:.3f} (piso {metrics['adaptive_bloom_floor']:.3f}), "
+        f"evaluate_capable={metrics['evaluate_capable_ratio']*100:.1f}% (piso {metrics['adaptive_eval_floor']*100:.1f}%), "
+        f"low_modalities={metrics['low_modality_ratio']*100:.1f}% (tope {metrics['adaptive_low_cap']*100:.1f}%). "
+        f"Brechas: {', '.join(metrics['violations'])}. "
+        f"Competencias más débiles a promover: {weak_str}. "
+        f"Acción: usa la 5.ª clave 'adjust_modalities' en cta_harmonize.json para reemplazar modalidades bajas "
+        f"(MC7/concept_matching) por modalidades Evaluate-capable (adversarial_break, proof_dag, multiple_select, "
+        f"o unstructured_model solo si assumptions_count >= 1) sin mutar nodos [BASE]."
+    )
+    if enforce_hard_fail:
+        return [msg]
+    if warnings is not None:
+        warnings.append(msg)
+    return []
+
+
 def validate_cta_rules(
     cta_data: Dict[str, Any],
     manifest_data: Optional[Dict[str, Any]] = None,
@@ -1084,6 +1127,8 @@ def validate_cta_rules(
     require_assumptions: bool = False,
     require_modalities: Optional[bool] = None,
     warnings_out: Optional[List[str]] = None,
+    exclude_bloom_ids: Optional[Set[str]] = None,
+    enforce_bloom_gate: Optional[bool] = None,
 ) -> ValidationResult:
     """Validate all cognitive and psychometric rules on cta.json."""
     errors = []
@@ -1115,6 +1160,16 @@ def validate_cta_rules(
         warnings=comp_warnings,
     )
     errors.extend(comp_errors)
+
+    # 2b. Portfolio Bloom quality gate [CTA-BLOOM-FLOOR] (global CTA only, v2+, >= 5 delta comps)
+    if eff_require_modalities and enforce_bloom_gate is not False:
+        bloom_errors = check_cta_bloom_portfolio(
+            competencies=competencies,
+            exclude_ids=exclude_bloom_ids,
+            warnings=comp_warnings,
+            enforce_hard_fail=True,
+        )
+        errors.extend(bloom_errors)
 
     # 3. Prerequisites DAG check (respecting base competencies in --append mode)
     delta_info = None
@@ -1161,6 +1216,12 @@ def main():
         action="store_true",
         default=False,
         help="Allow omitting recommended_modalities in contract v2 (legacy v1 compatibility)",
+    )
+    parser.add_argument(
+        "--no-bloom-gate",
+        action="store_true",
+        default=False,
+        help="Bypass the [CTA-BLOOM-FLOOR] portfolio gate (for retrospective audits)",
     )
     args = parser.parse_args()
 
@@ -1230,6 +1291,7 @@ def main():
         locator=locator,
         require_assumptions=eff_req_assumptions,
         require_modalities=eff_req_modalities,
+        enforce_bloom_gate=(False if args.no_bloom_gate else None),
     )
     valid, errors = res[0], res[1]
     for w in getattr(res, "warnings", []):
