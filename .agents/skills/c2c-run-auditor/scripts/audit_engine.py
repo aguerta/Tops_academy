@@ -1408,6 +1408,44 @@ class ExecutionAuditor:
             "from_v3_telemetry_snapshot": bool(pre_extracted),
         }
 
+    @staticmethod
+    def _extract_tc_args(tc: Dict[str, Any]) -> Dict[str, Any]:
+        args = tc.get("args") or tc.get("function", {}).get("arguments", {})
+        if isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except Exception:
+                args = {}
+        return args if isinstance(args, dict) else {}
+
+    @staticmethod
+    def _detect_shell_work_mutation(cmd: str) -> Optional[str]:
+        """Detect inline shell writes against C2C work/ artifacts (e.g. python -c json.dump)."""
+        if not cmd:
+            return None
+        is_inline_py = bool(re.search(r"python(?:\.exe)?[\"']?\s+-c\b", cmd, re.IGNORECASE))
+        if not is_inline_py and re.search(
+            r"\b(?:run|dispatch|compile_shard|compile_cta|cta_merge|plan_shards|judge|check_cta|check_templates)\.py\b",
+            cmd,
+            re.IGNORECASE,
+        ):
+            return None
+        has_write_op = bool(re.search(
+            r"json\.dump\s*\(|\.write_text\s*\(|\.write\s*\(|open\s*\([^)]*['\"][wa]\+?['\"]|\b(?:Set-Content|Out-File|Add-Content)\b",
+            cmd,
+            re.IGNORECASE,
+        ))
+        if not has_write_op:
+            return None
+        m_target = re.search(
+            r"(?:[^\s'\"();]*[/\\])?(pre_shard_manifest\.json|cta\.json|cta_draft\.json|repair\.json|(?:shards|templates|dispatch)[/\\][^\s'\"();]+)",
+            cmd,
+            re.IGNORECASE,
+        )
+        if m_target:
+            return m_target.group(0).strip("'\"")
+        return None
+
     def _extract_orchestrator_interventions(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Audits every direct file modification made by the orchestrator (Supervisor Repair Catalog)."""
         interventions = []
@@ -1422,13 +1460,25 @@ class ExecutionAuditor:
             tcs = rec.get("tool_calls", [])
             for tc in tcs:
                 tname = tc.get("name") or tc.get("function", {}).get("name", "")
+                if tname == "run_command":
+                    args = self._extract_tc_args(tc)
+                    cmd = str(args.get("CommandLine") or "")
+                    mut_target = self._detect_shell_work_mutation(cmd)
+                    if mut_target:
+                        fname = Path(mut_target).name
+                        interventions.append({
+                            "step": step_idx,
+                            "file": fname,
+                            "full_path": mut_target,
+                            "action_type": "Mutación Inline vía Shell (Supervisor Fix)",
+                            "tool": tname,
+                            "cause": f"Mutación directa vía python -c / shell sobre {fname} ({cmd[:80]})",
+                            "tokens_step": rec.get("input_tokens", 0) + rec.get("output_tokens", 0),
+                            "snippet": cmd[:140],
+                        })
+                    continue
                 if tname in ("replace_file_content", "write_to_file", "write_file", "edit_file"):
-                    args = tc.get("args") or tc.get("function", {}).get("arguments", {})
-                    if isinstance(args, str):
-                        try:
-                            args = json.loads(args)
-                        except Exception:
-                            args = {}
+                    args = self._extract_tc_args(tc)
                     target_raw = args.get("TargetFile") or args.get("Path", "")
                     target_file = target_raw.strip('"\'')
                     desc = (args.get("Description", "") or args.get("Instruction", "") or args.get("Summary", "")).strip()
@@ -1519,7 +1569,15 @@ class ExecutionAuditor:
                 elif any(tn in ("replace_file_content", "write_to_file", "write_file", "edit_file") for tn in tool_names):
                     total_repair_dur += delta
                 elif "run_command" in tool_names:
-                    total_cli_dur += delta
+                    has_mut = any(
+                        (tc.get("name") or tc.get("function", {}).get("name", "")) == "run_command"
+                        and self._detect_shell_work_mutation(str(self._extract_tc_args(tc).get("CommandLine") or ""))
+                        for tc in tcs
+                    )
+                    if has_mut:
+                        total_repair_dur += delta
+                    else:
+                        total_cli_dur += delta
             elif curr.get("type") in ("GENERIC", "USER_INPUT", "SYSTEM_MESSAGE"):
                 if nxt.get("type") == "PLANNER_RESPONSE":
                     total_model_dur += delta

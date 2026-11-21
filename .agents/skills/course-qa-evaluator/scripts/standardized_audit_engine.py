@@ -121,6 +121,7 @@ class KaTeXSyntaxLinter(BaseLinter):
     UNESCAPED_LATEX_CMD = re.compile(r"(?<!\$)(?<!\\)\\(dot|bar|vec|hat|tilde|ddot)\{[a-zA-Z0-9]+\}(?!\$)")
     TRIPLE_DOLLAR = re.compile(r"\${3,}")
     DOUBLE_BRACE = re.compile(r"\{\{[a-zA-Z0-9_]+\}\}")
+    SYMPY_IN_KATEX = re.compile(r"\$[^$]*(?:\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()[^$]*\$")
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         unclosed_braces = []
@@ -128,6 +129,7 @@ class KaTeXSyntaxLinter(BaseLinter):
         double_braces = []
         unbalanced_dollars = []
         orphan_latex = []
+        sympy_in_katex = []
 
         questions = course_data.get("questions", [])
 
@@ -216,6 +218,20 @@ class KaTeXSyntaxLinter(BaseLinter):
                         snippet=m_orph.group(0),
                     ))
 
+                # 6. Raw SymPy syntax leaked inside KaTeX math delimiters
+                m_sym = self.SYMPY_IN_KATEX.search(text_no_escaped)
+                if m_sym:
+                    sympy_in_katex.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="warning",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=f"Sintaxis cruda de SymPy filtrada en KaTeX ('{m_sym.group(0)[:40]}') en '{field_name}'",
+                        snippet=m_sym.group(0)[:50],
+                    ))
+
         return {
             "unclosed_braces_count": len(set(unclosed_braces)),
             "unclosed_braces_items": list(set(unclosed_braces))[:15],
@@ -223,6 +239,8 @@ class KaTeXSyntaxLinter(BaseLinter):
             "double_braces_count": len(set(double_braces)),
             "unbalanced_dollars_count": len(set(unbalanced_dollars)),
             "orphan_latex_plain_text_count": len(set(orphan_latex)),
+            "sympy_in_katex_count": len(set(sympy_in_katex)),
+            "sympy_in_katex_items": list(set(sympy_in_katex))[:15],
         }
 
 
@@ -3379,6 +3397,7 @@ class AuditLinterRegistry:
             "string_concat_collisions": [],
             "disconnected_numeric_rationales": [],
             "duplicate_competencies": [],
+            "sympy_in_katex": [],
         }
 
         issues_by_item: dict[str, list[str]] = {}
@@ -3397,6 +3416,11 @@ class AuditLinterRegistry:
             elif iss.linter == "uninterpolated_math_variable_linter" and "concatenación" in iss.message.lower():
                 if qid not in risk_clusters["string_concat_collisions"]:
                     risk_clusters["string_concat_collisions"].append(qid)
+                if qid not in risk_clusters["katex_issues"]:
+                    risk_clusters["katex_issues"].append(qid)
+            elif iss.linter == "katex_syntax_linter" and "sympy" in iss.message.lower():
+                if qid not in risk_clusters["sympy_in_katex"]:
+                    risk_clusters["sympy_in_katex"].append(qid)
                 if qid not in risk_clusters["katex_issues"]:
                     risk_clusters["katex_issues"].append(qid)
             elif iss.dimension == "D5_katex" and qid not in risk_clusters["katex_issues"]:

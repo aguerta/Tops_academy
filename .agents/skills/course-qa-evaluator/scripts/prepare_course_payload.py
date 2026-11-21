@@ -66,7 +66,16 @@ def get_available_courses() -> list[dict]:
 
 def summarize_course(course_entry: dict) -> dict:
     """Build an enriched, standardized audit package for a course."""
-    data = course_entry.get("data", {})
+    data = course_entry.get("data") or {}
+    if not data and course_entry.get("filename"):
+        raw_path = COURSES_DIR / str(course_entry["filename"])
+        if raw_path.is_file():
+            try:
+                loaded = json.loads(raw_path.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    data = loaded
+            except Exception:
+                pass
     competencies = data.get("competencies", [])
     questions = data.get("questions", [])
 
@@ -179,10 +188,11 @@ def summarize_course(course_entry: dict) -> dict:
                 pass
 
     return {
-        "course_id": course_entry.get("id"),
+        "course_id": data.get("course_id") or course_entry.get("id"),
         "filename": course_entry.get("filename"),
-        "title": course_entry.get("title"),
+        "title": data.get("title") or data.get("course_title") or course_entry.get("title"),
         "description": data.get("description", ""),
+        "platform_validation_error": course_entry.get("error_message"),
         "total_competencies": len(competencies),
         "total_questions": len(questions),
         "question_types_distribution": types_count,
