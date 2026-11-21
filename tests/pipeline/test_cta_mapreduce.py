@@ -313,7 +313,7 @@ class TestCTAHarmonizer:
 
     def test_apply_harmonize_rejects_forward_prerequisites(self, setup_work_env: Path):
         work_dir = setup_work_env
-        # H-01 (index 0) cannot depend forward on Hab-01 (index 3)
+        # In setup_work_env, Hab-01 already depends transitively on H-01, so H-01 -> Hab-01 forms a cycle
         harmonize_data = {
             "add_prerequisites": [
                 {"competency": "H-01", "requires": ["Hab-01"]}
@@ -321,12 +321,12 @@ class TestCTAHarmonizer:
         }
         (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
 
-        with pytest.raises(ValueError, match="Backward-only violation"):
+        with pytest.raises(ValueError, match="Cycle detected in prerequisites"):
             apply_harmonize(work_dir)
 
     def test_apply_harmonize_rejects_cycles(self, setup_work_env: Path):
         work_dir = setup_work_env
-        # If C-01 already required Hab-01 (or vice versa), self or circular dependency
+        # Self-dependency is rejected deterministically
         harmonize_data = {
             "add_prerequisites": [
                 {"competency": "C-01", "requires": ["C-01"]}
@@ -334,7 +334,7 @@ class TestCTAHarmonizer:
         }
         (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
 
-        with pytest.raises(ValueError, match="Backward-only violation"):
+        with pytest.raises(ValueError, match="Self-dependency violation"):
             apply_harmonize(work_dir)
 
     def test_apply_harmonize_merge_valid_candidate(self, setup_work_env: Path):
@@ -564,23 +564,28 @@ class TestMarkdownRenderingAndSectionalCheck:
         c1 = make_mock_competency("H-01", "fact", "Fact 1", session="Sesión 1", page=1, prerequisites=[])
         c2 = make_mock_competency("C-01", "concept", "Concept 1", session="Sesión 1", page=2, prerequisites=["H-01"])
 
-        # Original order was H-01 then C-01
-        order_data = {"order": ["H-01", "C-01"], "order_hash": "hash"}
-        # But draft was tampered/reversed to C-01 then H-01
+        # Draft has C-01 before its prerequisite H-01 (e.g. alphabetical multi-PDF order)
+        order_data = {"order": ["C-01", "H-01"], "order_hash": "hash"}
         draft_data = {
             "course_id": "test",
             "title": "Test",
             "macro_competency": "Test",
             "competencies": [c2, c1],
         }
+        manifest_data = {
+            "course_id": "test",
+            "cta_mode": "mapreduce",
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }
 
         (work_dir / "cta_draft.json").write_text(json.dumps(draft_data, indent=2), encoding="utf-8")
         (work_dir / "cta_order.json").write_text(json.dumps(order_data, indent=2), encoding="utf-8")
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest_data, indent=2), encoding="utf-8")
         (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
         (work_dir / "cta_harmonize.json").write_text("{}", encoding="utf-8")
 
-        with pytest.raises(ValueError, match="Pedagogical order violation"):
-            apply_harmonize(work_dir)
+        final_cta = apply_harmonize(work_dir)
+        assert [c["id"] for c in final_cta["competencies"]] == ["H-01", "C-01"]
 
     def test_apply_harmonize_skill_omitted_step_quota(self, tmp_path: Path):
         work_dir = tmp_path / "work"
@@ -1061,7 +1066,7 @@ class TestStream1AContractVerification:
 
         # Trigger 4 independent errors at once:
         # 1) rename missing ID, 2) add_prerequisites on absorbed drop_id C-02,
-        # 3) backward-only violation C-01 -> Hab-01, 4) disconnected DAG
+        # 3) self-dependency violation C-01 -> C-01, 4) disconnected DAG
         harmonize_data = {
             "rename": [{"competency": "H-99", "name": "Missing"}],
             "duplicate_decisions": [
@@ -1069,7 +1074,7 @@ class TestStream1AContractVerification:
             ],
             "add_prerequisites": [
                 {"competency": "C-02", "requires": ["Hab-01"]},
-                {"competency": "C-01", "requires": ["Hab-01"]},
+                {"competency": "C-01", "requires": ["C-01"]},
             ],
         }
         (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
@@ -1081,7 +1086,7 @@ class TestStream1AContractVerification:
         assert "[CONSOLIDATED ERROR PACK]" in msg
         assert "Rename failed: competency 'H-99' not found" in msg
         assert "Competency 'C-02' not found (absorbed into 'C-01'" in msg
-        assert "Backward-only violation: Competency 'C-01'" in msg
+        assert "Self-dependency violation: Competency 'C-01'" in msg
         assert "Prerequisite DAG validation failed:" in msg
         assert not (work_dir / "cta.json").exists()
 

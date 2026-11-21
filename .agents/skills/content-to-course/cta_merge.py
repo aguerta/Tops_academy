@@ -2467,13 +2467,9 @@ def apply_harmonize(
                     f"add_prerequisites failed: Prerequisite '{req}' for '{cid}' not found{hint}."
                 )
                 continue
-            req_pos = current_order_map[req]
-
-            # Enforce backward-only constraint: req_pos < cid_pos
-            if req_pos >= cid_pos:
+            if req == cid:
                 validation_errors.append(
-                    f"Backward-only violation: Competency '{cid}' (order pos {cid_pos}) "
-                    f"cannot depend on '{req}' (order pos {req_pos}). Prerequisites must point only backward."
+                    f"Self-dependency violation: Competency '{cid}' cannot depend on itself."
                 )
                 continue
 
@@ -2492,14 +2488,40 @@ def apply_harmonize(
     for dag_err in dag_errors:
         validation_errors.append(f"Prerequisite DAG validation failed: {dag_err}")
 
-    # 6. Validate pedagogical order immutability
-    current_ids = [c["id"] for c in competencies]
-    expected_order = [cid for cid in orig_order if cid in current_ids]
-    if current_ids != expected_order:
-        validation_errors.append(
-            f"Pedagogical order violation: Competency ordering was modified. "
-            f"Expected {expected_order}, got {current_ids}."
-        )
+    # 6. Stable topological sort (places prerequisites before dependents while preserving relative order)
+    if not dag_errors and len(competencies) > 1:
+        id_to_orig_idx = {c["id"]: idx for idx, c in enumerate(competencies)}
+        in_degree = {idx: 0 for idx in range(len(competencies))}
+        adj: Dict[int, List[int]] = {idx: [] for idx in range(len(competencies))}
+
+        for idx, c in enumerate(competencies):
+            for req in c.get("prerequisites", []):
+                if req in id_to_orig_idx:
+                    req_idx = id_to_orig_idx[req]
+                    if req_idx != idx:
+                        adj[req_idx].append(idx)
+                        in_degree[idx] += 1
+
+        def _topo_priority(idx: int) -> Tuple[int, int]:
+            comp_obj = competencies[idx]
+            is_pre = bool(comp_obj.get("is_prerequisite")) or str(comp_obj.get("id", "")).startswith("PRE-")
+            return (0 if is_pre else 1, idx)
+
+        ready: List[Tuple[Tuple[int, int], int]] = [
+            (_topo_priority(idx), idx) for idx, deg in in_degree.items() if deg == 0
+        ]
+        heapq.heapify(ready)
+        sorted_indices: List[int] = []
+        while ready:
+            _, curr = heapq.heappop(ready)
+            sorted_indices.append(curr)
+            for nxt in adj[curr]:
+                in_degree[nxt] -= 1
+                if in_degree[nxt] == 0:
+                    heapq.heappush(ready, (_topo_priority(nxt), nxt))
+
+        if len(sorted_indices) == len(competencies):
+            competencies = [competencies[i] for i in sorted_indices]
 
     # 6b. Hard gate: exact duplicate competency titles
     validation_errors.extend(

@@ -1,7 +1,10 @@
 import React from 'react';
+import { Cloud } from 'lucide-react';
 import { CourseSummary } from '../types';
 import { getCourseMasteryRecord, isCourseCompleted, getCourseProgressDetails } from '../utils/masteryStorage';
+import { getSyncConfig, PROGRESS_SYNCED_EVENT } from '../utils/cloudSync';
 import { MathText } from './MathText';
+import { SyncSettingsModal } from './SyncSettingsModal';
 
 interface CourseLibraryProps {
   courses: CourseSummary[];
@@ -28,6 +31,18 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
 
   const [canInstall, setCanInstall] = React.useState(!isStandalone);
   const [isInstalling, setIsInstalling] = React.useState(false);
+  const [showSyncModal, setShowSyncModal] = React.useState(false);
+  const [syncConfigured, setSyncConfigured] = React.useState(() => Boolean(getSyncConfig()?.gistId));
+  const [, setSyncTick] = React.useState(0);
+
+  React.useEffect(() => {
+    const handleSynced = () => {
+      setSyncConfigured(Boolean(getSyncConfig()?.gistId));
+      setSyncTick((t) => t + 1);
+    };
+    window.addEventListener(PROGRESS_SYNCED_EVENT, handleSynced);
+    return () => window.removeEventListener(PROGRESS_SYNCED_EVENT, handleSynced);
+  }, []);
 
   React.useEffect(() => {
     if (isStandalone) {
@@ -107,28 +122,53 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
           </p>
         </div>
 
-        {canInstall && (
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           <button
             type="button"
-            data-testid="pwa-install-button"
-            onClick={handleInstallClick}
-            disabled={isInstalling}
-            className="self-start sm:self-auto px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer shrink-0 disabled:opacity-85"
+            data-testid="cloud-sync-button"
+            onClick={() => setShowSyncModal(true)}
+            className="px-3.5 py-2 bg-white hover:bg-slate-50 text-ka-text-primary border border-ka-border text-xs sm:text-sm font-bold rounded-lg shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+            title="Sincronizar progreso con GitHub Gist"
           >
-            {isInstalling ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
-                <span>Preparando instalación...</span>
-              </>
-            ) : (
-              <>
-                <span aria-hidden="true">📲</span>
-                <span>Instalar App</span>
-              </>
-            )}
+            <Cloud className={`w-4 h-4 ${syncConfigured ? 'text-emerald-600' : 'text-slate-400'}`} />
+            <span>{syncConfigured ? 'Sincronizado' : 'Sincronizar'}</span>
+            <span
+              className={`w-2 h-2 rounded-full ${syncConfigured ? 'bg-emerald-500' : 'bg-slate-300'}`}
+            />
           </button>
-        )}
+
+          {canInstall && (
+            <button
+              type="button"
+              data-testid="pwa-install-button"
+              onClick={handleInstallClick}
+              disabled={isInstalling}
+              className="px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer shrink-0 disabled:opacity-85"
+            >
+              {isInstalling ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span>Preparando instalación...</span>
+                </>
+              ) : (
+                <>
+                  <span aria-hidden="true">📲</span>
+                  <span>Instalar App</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
+
+      <SyncSettingsModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        onSyncCompleted={() => {
+          setSyncConfigured(Boolean(getSyncConfig()?.gistId));
+          setSyncTick((t) => t + 1);
+        }}
+      />
 
       {loading ? (
         <div className="py-12 text-center text-slate-400">

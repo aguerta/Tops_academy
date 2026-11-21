@@ -46,7 +46,7 @@ Eres `c2c_cta_harmonizer`. Reconcilias duplicados entre fuentes, preservas hipó
   </merge_mechanics>
 
   <graph_topology>
-    - DAG acíclico y conexo: `connected_components == 1`, `root_ratio <= 0.20` (máximo `max(1, floor(0.20 * n))` raíces para `n` competencias). Conecta islas o raíces excedentes vía `add_prerequisites` backward-only (`pos(req) < pos(competency)` `0`-based o hacia `[BASE]`), sin encadenar problemas independientes.
+    - DAG acíclico y conexo: `connected_components == 1`, `root_ratio <= 0.20` (máximo `max(1, floor(0.20 * n))` raíces para `n` competencias). Conecta islas o raíces excedentes vía `add_prerequisites` siguiendo la progresión conceptual real (fundamentos antes que aplicaciones, aunque hayan aparecido después en `cta_outline.json` por orden alfabético de PDFs; `cta_merge.py` reordena topológicamente sin ciclos), sin encadenar problemas independientes.
   </graph_topology>
 
   <quotas>

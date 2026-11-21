@@ -54,6 +54,11 @@ import {
   clearActiveSession,
   ActiveSessionSnapshot,
 } from './utils/sessionStore';
+import {
+  getSyncConfig,
+  PROGRESS_SYNCED_EVENT,
+  syncWithGist,
+} from './utils/cloudSync';
 
 // Instant manifest detection for 0ms initial render
 const getInitialManifest = (): CourseSummary[] | null => {
@@ -144,6 +149,23 @@ export const App: React.FC = () => {
       pushNavState(navState);
     }
   };
+
+  // Automatic background GitHub Gist sync on startup & live refresh on remote merge
+  useEffect(() => {
+    if (getSyncConfig()) {
+      void syncWithGist();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleSynced = () => {
+      if (activeCourse) {
+        setMastery(loadCourseMastery(activeCourse));
+      }
+    };
+    window.addEventListener(PROGRESS_SYNCED_EVENT, handleSynced);
+    return () => window.removeEventListener(PROGRESS_SYNCED_EVENT, handleSynced);
+  }, [activeCourse]);
 
   // Setup browser popstate listener for native mobile back gesture
   useEffect(() => {
