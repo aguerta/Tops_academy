@@ -645,7 +645,7 @@ class TestFormalAssumptionsAndCertification:
             '        [\n'
             '            ("A-C01-01", "$x > 0$ strictly positive", "Breakdown of convergence", "Positivity", "Premise"),\n'
             '        ],\n'
-            '        ["MC7", "FIB", "concept_matching"],\n'
+            '        ["MS", "FIB", "concept_matching"],\n'
             '    ),\n'
             ']\n'
         )

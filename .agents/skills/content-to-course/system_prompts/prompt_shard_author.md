@@ -48,14 +48,14 @@ El mensaje inicial `[SCOPE-LOCK]` fija exactamente las rutas autorizadas de `REA
 - **Verificadores y dominio matemático (`TPL-ASM` / `TPL-FRANKENSTEIN-SUM`)**:
   - `MC7`, `FIB` y `open_symbolic`: `ver(c, v)` reproduce la fórmula exacta de `gen`. En `FIB` con `>= 3` decimales (salvo `0.25`), finaliza todo enunciado con `'(redondee a 4 decimales)'`, declara `"tolerance": 0.005` y verifica `abs(_pv(c) - exact_val) <= 0.005`.
   - `MS`: `ver(r)` acepta `4..6` opciones (`>= 1` verdadera y `>= 1` falsa en ambas polaridades), valida `distractor_id in RATS` y `len(error_rationale) >= 20`, y rechaza las 5 mutaciones del compilador (`is_correct` invertido, `__INVALID_DID__`, `''`, `'__MUTATED__'`, `'$0 = 1$'` / `'$1 = 2$'`).
-  - Prohibido usar `return True`, `try/except -> True`, `raise`, `assert`, `print`, argumentos con valores por defecto (`defaults`) o `*args` (rompen el arnés determinista de verificación del compilador).
+  - Prohibido usar `return True`, `try/except -> True`, `raise`, `assert`, `print`, bucles `while` (`[TPL-UNBOUNDED-LOOP]`: usa fórmulas cerradas o `for _ in range(40):`), argumentos con valores por defecto (`defaults`) o `*args` (rompen el arnés determinista de verificación del compilador).
   - Unidades homogéneas (`TPL-FRANKENSTEIN-SUM`): varianza, desviación estándar, error estándar, ECM y tamaño muestral `n > 0`; probabilidades en `[0, 1]` (cotas `Markov`/`Chebyshev` > 1 o <= 1 explicadas causalmente); `n` muestral con `math.ceil` y sufijo `'(redondee al entero superior inmediato)'`; preguntas de LGN/TCL deben evaluar convergencia, cotas o estadístico $Z$.
 - **Psicometría, KaTeX e higiene de compilación**:
-  - `3..5` pistas (`hints`) únicas con `>= 25c` cada una, sin revelar `@ans@` ni derivarse entre plantillas; `error_rationale` único por distractor con `>= 1` marcador `@var@` presente en el `vars` de la plantilla (`>= 20c` crudo, `>= 50c` estricto tras reemplazar `@var@ -> 'X'`, meta de calidad `>= 60c`, evitando parches genéricos); `sol >= 60c` piso duro (meta recomendada `>= 80c`); separación relativa `>= 2.0%`; `[R-15]`: longitud de correcta en `[0.80*min(D), 1.20*max(D)]` (`<= 20%` simetría dura en validador; meta recomendada `<= 15%`); `[R-16]`: correcta más larga o más corta en `<= 25%` de los ítems MC del curso (`[R-15]`..`[R-25]`); `0` variables o marcadores `@var@` huérfanos.
+  - `3..5` pistas (`hints`) únicas con `>= 25c` cada una, sin revelar `@ans@` ni el valor correcto en `stem_variants` o `hints` (`[R-19]`); `error_rationale` único por distractor dinámico (`RATS`, `ds`, `MS` y modalidades M20) con `>= 1` marcador `@var@` presente en `vars` (`[TPL-DYNAMIC-RATIONALE]`, `>= 20c` crudo, `>= 50c` estricto tras `@var@ -> 'X'`, meta `>= 60c`, sin parches genéricos); `sol >= 60c` piso duro (meta `>= 80c`); separación relativa `>= 2.0%`; `[R-15]`: longitud de correcta en `[0.80*min(D), 1.20*max(D)]`; `[R-16]`: `<= 25%` extremos en MC; `0` variables o marcadores `@var@` huérfanos en `vars`.
   - Enunciados únicos: `>= <<S4_UNIQ_SKILL>>` para `Hab-*` (`>= <<S4_VARIANTS_SKILL>>` por plantilla en base; `>= ceil(quota * <<S4_RATIO>>)` cuando `N` escala la cuota dinámica) y `>= <<S4_UNIQ_OTHER>>` en el resto (`>= <<S4_VARIANTS_OTHER>>` por plantilla), diversidad `>= <<S4_RATIO>>` y `>= 4` pares `(vars, masked_stem)` en 50 semillas; claves únicas `>= 10` en `Skill` (`>= 5` en Concept/Fact/MS, `>= 4` en M20), frecuencia máxima `<= 20%`, sin multiplicadores mágicos `DIAG-MAGIC-MULT` (`0.5..1.5`) porque los distractores deben derivarse de errores algebraicos reales, no de escalar la clave.
   - KaTeX con raw strings `r"..."`, balance estricto de `$`, `{}` y `\left`/`\right`, flechas `\Rightarrow`/`\Leftrightarrow`, producto `@a@ \cdot @b@`, respuestas `FIB` sin `$` externos y `\text{} <= 2 palabras y <= 20 caracteres` en instancia (`[KATEX-TEXT-PROSE]` en `check_templates.py`, además de techo global `<= 45` caracteres `[KATEX-PROSE-OVERFLOW]` en `invariants.py`/`rules.py`/`shard_precheck.py`: mantén toda prosa narrativa fuera de `$...$`).
-  - `EPISTEMIC-SELF-CONTAINED`: todo `stem_variants` define explícitamente funciones, ecuaciones, distribuciones y parámetros sin asumir contexto previo.
-  - `PRE-COMPILE CHECK`: verifica antes de compilar el uso de `r"..."` en cadenas LaTeX, `>= 1 @var@` por cada `error_rationale` (`RATS` y `ds`) y balance `[R-15]` / `[R-16]`.
+  - `EPISTEMIC-SELF-CONTAINED`: **cada variante individual** de `stem_variants` (en especial en `FIB` y `open_symbolic`) debe escribir explícitamente la ecuación, función, EDP, condición de frontera y significado de cada parámetro dentro del propio enunciado; prohibido preguntar *"halle $\partial P/\partial \tau$ para $a=@a@$"*, *"halle $P(@x@,@y@)$ dado $P_0=@p0@$"* o *"con parámetro @c@"* sin incluir la fórmula explícita (el juez ciego rechaza con `BLOCKED` cualquier enunciado sin ecuación completa).
+  - `PRE-COMPILE CHECK`: antes de compilar confirma: (1) `r"..."` en cadenas LaTeX, (2) `>= 1 @var@` presente en `vars` por cada `error_rationale` (`RATS`, `ds` y M20), (3) balance `[R-15]`/`[R-16]` y `0` `@ans@`/fugas `[R-19]`, (4) cero `while` sin cota, y (5) cada `stem_variant` incluye la ecuación/función/EDP completa para resolverse sin contexto externo.
 </contracts>
 
 <error_recovery>
@@ -100,10 +100,10 @@ def gen_2(r):
  return{'vars':{'a':a,'b':b,'y':y,'ans':x},'correct':str(x),'ds':[(f'D-Hab01-{i:02d}',str(v),RATS[f'D-Hab01-{i:02d}'])for i,v in enumerate(d,1)]}
 def gen_3(r):
  a,b,w=r.randint(3,12),r.randint(6,30),r.randint(2,12);c0=a*w+b
- return{'vars':{'a':a,'b':b,'d':w,'ans':f'{a}*x+{c0}'},'correct':f'{a}*x+{c0}','accepted_equivalents':[f'{a}*(x+{w})+{b}',f'{c0}+{a}*x'],'variables':['x'],'symbolic_config':{'variables':['x'],'palette':['*','+','(',')'],'placeholder':'Ej: 4*x+18'},'ds':[('D-Hab01-03',f'{a}*x+{b}',r'Omite multiplicar el desplazamiento $@d@$ por la pendiente $@a@$ al expandir sobre $@b@$.')]}
+ return{'vars':{'a':a,'b':b,'d':w,'ans':f'{a}x+{c0}'},'correct':f'{a}*x+{c0}','accepted_equivalents':[f'{a}*(x+{w})+{b}',f'{c0}+{a}*x'],'variables':['x'],'symbolic_config':{'variables':['x'],'palette':['*','+','(',')'],'placeholder':'Ej: 4*x+18'},'ds':[('D-Hab01-03',f'{a}*x+{b}',r'Omite multiplicar el desplazamiento $@d@$ por la pendiente $@a@$ al expandir sobre $@b@$.')]}
 def gen_4(r):
  a,x1,b=r.randint(3,11),r.randint(4,15),r.randint(5,25);c1=a*x1
- return{'vars':{'a':a,'x1':x1,'b':b,'ans':f'{a}*x-{c1}'},'correct':f'{a}*x-{c1}','accepted_equivalents':[f'{a}*(x-{x1})',f'-{c1}+{a}*x'],'variables':['x'],'symbolic_config':{'variables':['x'],'palette':['*','-','(',')'],'placeholder':'Ej: 5*x-20'},'ds':[('D-Hab01-02',f'{a}*x+{b}',r'Conserva el intercepto $@b@$ en vez de restar la imagen base $@a@ \cdot @x1@$.')]}
+ return{'vars':{'a':a,'x1':x1,'b':b,'ans':f'{a}x-{c1}'},'correct':f'{a}*x-{c1}','accepted_equivalents':[f'{a}*(x-{x1})',f'-{c1}+{a}*x'],'variables':['x'],'symbolic_config':{'variables':['x'],'palette':['*','-','(',')'],'placeholder':'Ej: 5*x-20'},'ds':[('D-Hab01-02',f'{a}*x+{b}',r'Conserva el intercepto $@b@$ en vez de restar la imagen base $@a@ \cdot @x1@$.')]}
 def gen_5(r):
  for _ in range(20):
   a,x,b,d=r.randint(3,14),r.randint(4,18),r.randint(5,24),r.randint(2,10);ad=a*d
@@ -187,12 +187,12 @@ def gen_mc1(r):
 def ver_mc1(c,v):return abs(_pv(c)-(v['m']/v['p2']))<1e-4
 def gen_os1(r):
  a,k=2*r.randint(3,24),r.randint(5,45)
- return{"vars":{"a":a,"k":k,"ans":f"{a//2}/sqrt(x)"},"correct":f"{a//2}/sqrt(x)","accepted_equivalents":[f"{a//2}*x^(-1/2)",f"{a//2}*x**(-0.5)"],"variables":["x"],"symbolic_config":{"variables":["x"],"palette":["sqrt()","/"],"placeholder":"Ej: 5/sqrt(x)"},"ds":[("D-C02-01",f"{a}/sqrt(x)",RATS['D-C02-01'])]}
+ return{"vars":{"a":a,"k":k,"ans":f"{a//2}/\\sqrt{{x}}"},"correct":f"{a//2}/sqrt(x)","accepted_equivalents":[f"{a//2}*x^(-1/2)",f"{a//2}*x**(-0.5)"],"variables":["x"],"symbolic_config":{"variables":["x"],"palette":["sqrt()","/"],"placeholder":"Ej: 5/sqrt(x)"},"ds":[("D-C02-01",f"{a}/sqrt(x)",RATS['D-C02-01'])]}
 def ver_os1(c,v):
  h=str(v['a']//2);return str(c).replace(' ','').lower()in(f'{h}/sqrt(x)',f'{h}*x^(-1/2)',f'{h}*x**(-0.5)',f'{h}*x^(-0.5)')
 def gen_os2(r):
  p1,p2=r.randint(2,6),r.randint(2,5);m=p2*r.randint(6,18)
- return{"vars":{"m":m,"p1":p1,"p2":p2,"ans":f"({m}-{p1}*x)/{p2}"},"correct":f"({m}-{p1}*x)/{p2}","accepted_equivalents":[f"{m}/{p2}-({p1}/{p2})*x",f"{m//p2}-({p1}/{p2})*x"],"variables":["x"],"symbolic_config":{"variables":["x"],"palette":["/","(",")"],"placeholder":"Ej: (20-3*x)/2"},"ds":[("D-C02-02",f"({m}+{p1}*x)/{p2}",r"Suma el término de gasto $@p1@x$ al ingreso $@m@$ en lugar de restarlo.")]}
+ return{"vars":{"m":m,"p1":p1,"p2":p2,"ans":f"({m}-{p1}x)/{p2}"},"correct":f"({m}-{p1}*x)/{p2}","accepted_equivalents":[f"{m}/{p2}-({p1}/{p2})*x",f"{m//p2}-({p1}/{p2})*x"],"variables":["x"],"symbolic_config":{"variables":["x"],"palette":["/","(",")"],"placeholder":"Ej: (20-3*x)/2"},"ds":[("D-C02-02",f"({m}+{p1}*x)/{p2}",r"Suma el término de gasto $@p1@x$ al ingreso $@m@$ en lugar de restarlo.")]}
 def ver_os2(c,v):
  import sympy;x=sympy.Symbol('x')
  try:return sympy.simplify(sympy.sympify(str(c))-((v['m']-v['p1']*x)/v['p2']))==0

@@ -780,6 +780,15 @@ def plan_shards(
     for c in competencies:
         if isinstance(c, dict):
             c.setdefault("assumptions", [])
+            rec_mods = c.get("recommended_modalities") or []
+            dists = c.get("distractors") or []
+            if isinstance(rec_mods, list) and "multiple_choice_7_options" in rec_mods and len(dists) < 6:
+                cid_label = c.get("id", "<unknown>")
+                raise ValueError(
+                    f"[CTA-MC7-DISTRACTORS] Competency '{cid_label}' includes "
+                    f"'multiple_choice_7_options' (MC7) in recommended_modalities but only declares "
+                    f"{len(dists)} distractors (MC7 requires >= 6 distinct distractors)."
+                )
 
     # Partitioning Strategy Selection
     if k is not None or not isolate_skills:

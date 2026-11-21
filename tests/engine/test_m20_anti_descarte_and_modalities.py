@@ -369,7 +369,7 @@ S4 = [
     r"Encuentre la deducción errónea al evaluar $f''(0)=0$ con $@coef@$ y exponente $@p@$:",
 ]
 
-H1 = [r"Multiplique primero el coeficiente $@a@$ por $@x@$.", r"Agregue una unidad al producto $@a@@x@$.", r"Verifique la suma aritmética final obtenida."]
+H1 = [r"Multiplique primero el coeficiente $@a@$ por $@x@$.", r"Agregue una unidad al producto $@a@ \cdot @x@$.", r"Verifique la suma aritmética final obtenida."]
 H2 = [r"Identifique la pendiente delante de la variable $x$.", r"Sume el término constante positivo al producto.", r"Combine el coeficiente lineal con la constante $@b@$."]
 H3 = [r"Comience identificando los parámetros iniciales del sistema.", r"Descarte pasos que resten cantidades fuera de la regla.", r"Culmine el producto lógico tras declarar las variables."]
 H4 = [r"Recuerde qué ocurre cuando la segunda derivada se anula.", r"Verifique si un exponente par $@p@$ puede tener mínimo.", r"Revise el paso que afirma conclusión sin orden superior."]

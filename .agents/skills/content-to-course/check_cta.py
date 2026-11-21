@@ -841,6 +841,13 @@ def _validate_competencies_rules(
                     f"[M20-MC7-CAP]{line_tag_rm} Competency '{cid}' (skill) cannot include 'multiple_choice_7_options' (MC7) "
                     f"in recommended_modalities (0 MC7 allowed in Skill competencies)."
                 )
+            if not invalid_rm and "multiple_choice_7_options" in rec_mods and len(distractors) < 6:
+                errors.append(
+                    f"[CTA-MC7-DISTRACTORS]{line_tag_rm} Competency '{cid}' ({ctype}) includes "
+                    f"'multiple_choice_7_options' (MC7) in recommended_modalities but only declares "
+                    f"{len(distractors)} distractors (MC7 requires >= 6 distinct distractors; "
+                    f"either declare >= 6 distractors or remove 'multiple_choice_7_options')."
+                )
             if require_modalities and not invalid_rm:
                 unique_rm_count = len(set(m for m in rec_mods if isinstance(m, str)))
                 if unique_rm_count != len(rec_mods):
