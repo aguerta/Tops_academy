@@ -341,6 +341,71 @@ def test_audit_engine_detects_inline_shell_mutation_and_ignores_readonly():
     assert decomp["supervisor_repair_seconds"] == 3.0
 
 
+def test_audit_engine_detects_frictions_blocked_status_and_first_compile():
+    from audit_engine import ExecutionAuditor
+
+    auditor = ExecutionAuditor([], "test-conv")
+    root_records = [
+        {
+            "step_index": 32,
+            "type": "PLANNER_RESPONSE",
+            "tool_calls": [{"name": "run_workflow", "args": {"Description": "wave"}}],
+        },
+        {
+            "step_index": 50,
+            "type": "GENERIC",
+            "status": "ERROR",
+            "content": "tool call denied by pre-tool hook: Barrera de Consolidación",
+        },
+        {
+            "step_index": 54,
+            "type": "PLANNER_RESPONSE",
+            "tool_calls": [{"name": "invoke_subagent", "args": {"TypeName": "c2c_repair"}}],
+        },
+        {
+            "step_index": 64,
+            "type": "ERROR_MESSAGE",
+            "content": "Error: Malformed function call: Function call is empty",
+        },
+        {
+            "step_index": 68,
+            "type": "PLANNER_RESPONSE",
+            "tool_calls": [{"name": "manage_subagents", "args": {"Action": "kill"}}],
+        },
+    ]
+    frictions = auditor._extract_orchestrator_frictions(root_records)
+    assert frictions["hook_denials_count"] == 1
+    assert frictions["malformed_tool_calls_count"] == 1
+    assert frictions["is_hybrid_workflow_fallback"] is True
+    assert frictions["legacy_manage_kill_count"] == 1
+
+    sub_records = [
+        {
+            "step_index": 1,
+            "type": "PLANNER_RESPONSE",
+            "created_at": "2026-11-19T20:06:00Z",
+            "tool_calls": [{"name": "run_command", "args": {"CommandLine": "python compile_shard.py --strict"}}],
+        },
+        {
+            "step_index": 2,
+            "type": "GENERIC",
+            "content": "FAIL: [TPL-D2] MC7 requires 6 distinct distractors (exited with code 1)",
+        },
+        {
+            "step_index": 3,
+            "type": "PLANNER_RESPONSE",
+            "created_at": "2026-11-19T20:06:20Z",
+            "content": "BLOCKED: Contradicción entre CTA-MODALITY-PLAN y TPL-D2.",
+        },
+    ]
+    sub_m = auditor._analyze_conversation(sub_records, "sub-1", "Repair Engineer")
+    assert sub_m["terminal_status"] == "BLOCKED"
+    assert "Contradicción" in sub_m["blocked_reason"]
+    assert sub_m["compile_attempts_count"] == 1
+    assert sub_m["compile_first_passed"] is False
+    assert "TPL-D2" in sub_m["first_compile_rules"]
+
+
 # ---------------------------------------------------------------------------
 # 7. standardized_audit_engine.py & prepare_course_payload.py
 # ---------------------------------------------------------------------------

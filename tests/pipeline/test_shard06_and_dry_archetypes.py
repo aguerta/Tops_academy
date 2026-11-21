@@ -270,8 +270,8 @@ TEMPLATES = [
         [
             "Deduzca el parametro invertido sabiendo que el producto objetivo es {target} con factor {factor}.",
             "A partir del valor objetivo {target}, determine el parametro estructural inverso con factor {factor}.",
-            "En el contexto inverso formal, evalue la cantidad estimada correspondiente para factor {factor}.",
-            "Despeje rigurosamente el parametro del modelo sabiendo el objetivo {target}.",
+            "En el contexto inverso formal, evalue la cantidad estimada correspondiente para objetivo {target} y factor {factor}.",
+            "Despeje rigurosamente el parametro del modelo sabiendo el objetivo {target} y factor {factor}.",
         ],
         hints_inverso,
         "Resolucion inversa formal: el parametro despejado es ans = target / factor = {ans}."
@@ -282,8 +282,8 @@ TEMPLATES = [
         [
             "Evalue la respuesta ante una perturbacion de magnitud {dx} sobre el valor inicial {x}.",
             "Considere el desplazamiento marginal {dx} aplicado al sistema con nivel {x} y determine la respuesta.",
-            "Bajo el supuesto de una perturbacion {dx}, calcule el estado final del estimador.",
-            "Analice la sensibilidad analitica y halle el valor desplazado con variacion {dx}.",
+            "Bajo el supuesto de una perturbacion {dx} desde el nivel {x}, calcule el estado final del estimador.",
+            "Analice la sensibilidad analitica desde {x} y halle el valor desplazado con variacion {dx}.",
         ],
         hints_perturbacion,
         "Resolucion de perturbacion: el valor perturbado es x + dx = {ans}."
@@ -732,26 +732,26 @@ TEMPLATES = [
     ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("easy", "Apply"), [
         r"Enfoque Directo: En un modelo salarial con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@, y ratio de fiabilidad q = @q@, calcule el estadistico de Hausman H:",
         r"A partir de estimaciones directas con datos de gemelos con b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
-        r"Para contrastar frontalmente la presencia de endogeneidad en gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico H:",
-        r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, compute el estadistico H:",
+        r"Para contrastar frontalmente la presencia de endogeneidad en gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y q = @q@, determine el estadistico H:",
+        r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y q = @q@, compute el estadistico H:",
     ], hints_h06_1, r"El estadistico de Hausman univariado directo calculado paso a paso es H = @ans@."),
     ("T-Hab06-02", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("medium", "Apply"), [
-        r"A partir de una estimacion MCO atenuada b_LS = @b_ls@ y fiabilidad observada q = @q@ en datos de gemelos, calcule el estadistico H:",
-        r"Diagnostico inverso: Sabiendo que el sesgo de atenuacion reduce el coeficiente con fiabilidad q = @q@, halle el estadistico H:",
-        r"Despeje analiticamente el efecto causal con varianzas V_LS = @v_ls@ y V_IV = @v_iv@, compute H:",
-        r"En el modelo de gemelos con fiabilidad q = @q@ y estimadores observados, obtenga el estadistico H:",
+        r"A partir de una estimacion MCO atenuada b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y fiabilidad observada q = @q@ en datos de gemelos, calcule el estadistico H:",
+        r"Diagnostico inverso: Sabiendo que el sesgo de atenuacion reduce el coeficiente con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y fiabilidad q = @q@, halle el estadistico H:",
+        r"Despeje analiticamente el efecto causal con b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@ y fiabilidad q = @q@, compute H:",
+        r"En el modelo de gemelos con fiabilidad q = @q@, b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, obtenga el estadistico H:",
     ], hints_h06_2, r"El estadistico de Hausman univariado inverso despejado paso a paso es H = @ans@."),
     ("T-Hab06-03", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("medium", "Analyze"), [
-        r"Sensibilidad: Si el ratio de fiabilidad varia con varianzas V_LS = @v_ls@ y V_IV = @v_iv@, determine H:",
-        r"Analisis perturbado: Evaluando una perturbacion marginal en la medicion de fiabilidad con b_LS = @b_ls@, calcule H:",
-        r"Estudio de perturbacion: Ante un cambio en la medicion partiendo de V_LS = @v_ls@ y V_IV = @v_iv@, halle H:",
-        r"Impacto de perturbacion: Con variacion en las condiciones de estimacion bajo b_LS = @b_ls@, determine H:",
+        r"Sensibilidad: Si el ratio de fiabilidad es q = @q@ con b_LS = @b_ls@, b_IV = @b_iv@ y varianzas V_LS = @v_ls@, V_IV = @v_iv@, determine H:",
+        r"Analisis perturbado: Evaluando una perturbacion marginal en q = @q@ con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, calcule H:",
+        r"Estudio de perturbacion: Ante un cambio en la medicion q = @q@ partiendo de b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, halle H:",
+        r"Impacto de perturbacion: Con variacion en q = @q@ bajo b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine H:",
     ], hints_h06_3, r"El estadistico de Hausman univariado bajo perturbacion marginal es H = @ans@."),
     ("T-Hab06-04", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("hard", "Evaluate"), [
-        r"Frontera: En el limite teorico de medicion donde b_LS = @b_ls@, V_LS = @v_ls@ y b_IV = @b_iv@, V_IV = @v_iv@, halle H:",
-        r"Regimen de frontera: Si las varianzas son V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico de Hausman H:",
-        r"Caso frontera extrema: Cuando la fiabilidad alcanza su cota maxima con b_LS = @b_ls@, calcule el contraste H:",
-        r"Condicion asintotica de frontera: Con estimadores observados b_LS = @b_ls@, b_IV = @b_iv@, deduzca H:",
+        r"Frontera: En el limite teorico de medicion con q = @q@ donde b_LS = @b_ls@, V_LS = @v_ls@ y b_IV = @b_iv@, V_IV = @v_iv@, halle H:",
+        r"Regimen de frontera: Si q = @q@, b_LS = @b_ls@, b_IV = @b_iv@ y las varianzas son V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico de Hausman H:",
+        r"Caso frontera extrema: Cuando la fiabilidad alcanza q = @q@ con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, calcule el contraste H:",
+        r"Condicion asintotica de frontera: Con q = @q@, b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, deduzca H:",
     ], hints_h06_4, r"El estadistico de Hausman univariado en la frontera teorica resulta H = @ans@."),
 ]
 '''

@@ -1408,7 +1408,7 @@ stems_hab01_fib1 = [
 stems_hab01_fib2 = [
     r"Para la empresa competitiva con $p = @p@$ y costo $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$), despeje numéricamente la escala estacionaria $x_{\text{stat}}$ donde $\pi'(x) = 0$:",
     r"Iguale el precio $p = @p@$ al costo marginal de $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$) y halle el punto crítico $x_{\text{stat}}$:",
-    r"¿En qué nivel productivo $x_{\text{stat}}$ se anula la derivada del beneficio si $p = @p@$ y $c'(x) = @k@/\sqrt{x}$?",
+    r"¿En qué nivel productivo $x_{\text{stat}}$ se anula la derivada del beneficio si $p = @p@$ y $c'(x) = @k@/\sqrt{x}$ ($a = @a@$)?" ,
     r"Resuelva la ecuación $p = @k@/\sqrt{x}$ para $p = @p@$ ($a = @a@$) reportando el valor entero exacto de $x_{\text{stat}}$:",
 ]
 

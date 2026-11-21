@@ -1228,13 +1228,13 @@ def gen_ms(rng):
         {"value": f"Estimador principal igual a @ans@ para base @k@.", "is_correct": True},
         {"value": f"Cota escalada linealmente en factor diez igual a @ans@.", "is_correct": True},
         {
-            "value": f"Valor desplazado igual a @d1@.",
+            "value": f"Valor desplazado con error aditivo igual a @d1@.",
             "is_correct": False,
             "distractor_id": "D-Hab99-01",
             "error_rationale": "Confunde el multiplicador lineal de @k@ con un desplazamiento aditivo constante, obteniendo @d1@.",
         },
         {
-            "value": f"Valor con sesgo aditivo igual a @d2@.",
+            "value": f"Valor truncado con sesgo aditivo igual a @d2@.",
             "is_correct": False,
             "distractor_id": "D-Hab99-02",
             "error_rationale": "Aplica una escala decimal truncada sobre el parametro @k@ y suma un sesgo residual hasta @d2@.",
@@ -1254,8 +1254,8 @@ def ver_ms(r):
         "Cota escalada linealmente en factor diez igual a @ans@.",
     }
     expected_false = {
-        "Valor desplazado igual a @d1@.": "D-Hab99-01",
-        "Valor con sesgo aditivo igual a @d2@.": "D-Hab99-02",
+        "Valor desplazado con error aditivo igual a @d1@.": "D-Hab99-01",
+        "Valor truncado con sesgo aditivo igual a @d2@.": "D-Hab99-02",
     }
     t_vals = {o.get("value") for o in opts if o.get("is_correct") is True}
     f_opts = [o for o in opts if o.get("is_correct") is False]
