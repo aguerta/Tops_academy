@@ -30,6 +30,7 @@ import re
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Set, Union
 
@@ -1953,17 +1954,24 @@ class PipelineRunner:
                     cb = _resolved_costs["cost_breakdown_usd"]
                     stage_costs = _resolved_costs["stage_costs_usd"]
                 except Exception:
-                    _in_u = round((in_tok / 1_000_000.0) * 1.50, 4)
-                    _out_u = round((out_tok / 1_000_000.0) * 7.50, 4)
-                    _c_u = round((cache_tok / 1_000_000.0) * 0.075, 4)
-                    total_cost_usd = round(_in_u + _out_u + _c_u, 4)
-                    cb = {"input_usd": _in_u, "output_usd": _out_u, "cache_read_usd": _c_u, "total_usd": total_cost_usd}
+                    _raw_in = (in_tok / 1_000_000.0) * 1.50
+                    _raw_out = (out_tok / 1_000_000.0) * 7.50
+                    _raw_c = (cache_tok / 1_000_000.0) * 0.075
+                    total_cost_usd = round(_raw_in + _raw_out + _raw_c, 4)
+                    cb = {
+                        "input_usd": round(_raw_in, 4),
+                        "output_usd": round(_raw_out, 4),
+                        "cache_read_usd": round(_raw_c, 4),
+                        "total_usd": total_cost_usd,
+                    }
                     stage_costs = {}
 
             q_cnt = workload.get("questions_count", 0) or 0
             c_cnt = workload.get("competencies_count", 0) or 0
-            usd_per_q = unit.get("usd_per_question", round(total_cost_usd / q_cnt, 4) if q_cnt else 0.0)
-            usd_per_comp = unit.get("usd_per_competency", round(total_cost_usd / c_cnt, 4) if c_cnt else 0.0)
+            _raw_uq = unit.get("usd_per_question")
+            usd_per_q = float(_raw_uq) if _raw_uq is not None else (round(float(total_cost_usd) / q_cnt, 4) if q_cnt else 0.0)
+            _raw_uc = unit.get("usd_per_competency")
+            usd_per_comp = float(_raw_uc) if _raw_uc is not None else (round(float(total_cost_usd) / c_cnt, 4) if c_cnt else 0.0)
 
             lines.extend([
                 f"  Tiempo Total de Pared:        {wall_min:.2f} min ({wall_sec:.0f}s) | Cómputo: {comp_min:.2f} min | Speedup: {speedup:.2f}x",
@@ -2044,10 +2052,15 @@ class PipelineRunner:
                 from audit_engine import compute_hydrogen_cost_usd as _h2_cost  # type: ignore
             except Exception:
                 def _h2_cost(input_tokens: int = 0, output_tokens: int = 0, cache_read_tokens: int = 0) -> Dict[str, float]:
-                    _i = round((max(0, int(input_tokens or 0)) / 1_000_000.0) * 1.50, 4)
-                    _o = round((max(0, int(output_tokens or 0)) / 1_000_000.0) * 7.50, 4)
-                    _c = round((max(0, int(cache_read_tokens or 0)) / 1_000_000.0) * 0.075, 4)
-                    return {"input_usd": _i, "output_usd": _o, "cache_read_usd": _c, "total_usd": round(_i + _o + _c, 4)}
+                    _raw_i = (max(0, int(input_tokens or 0)) / 1_000_000.0) * 1.50
+                    _raw_o = (max(0, int(output_tokens or 0)) / 1_000_000.0) * 7.50
+                    _raw_c = (max(0, int(cache_read_tokens or 0)) / 1_000_000.0) * 0.075
+                    return {
+                        "input_usd": round(_raw_i, 4),
+                        "output_usd": round(_raw_o, 4),
+                        "cache_read_usd": round(_raw_c, 4),
+                        "total_usd": round(_raw_i + _raw_o + _raw_c, 4),
+                    }
 
             if stages_dict:
                 fb_tot_in = fb_tot_out = fb_tot_cache = 0
@@ -2401,7 +2414,27 @@ class PipelineRunner:
         if hasattr(self, "work_dir") and self.work_dir:
             self.work_dir.mkdir(parents=True, exist_ok=True)
             (self.work_dir / "subagent_types.json").write_bytes(types_bytes)
-        (skill_dir / "subagent_types.json").write_bytes(types_bytes)
+        target_types_path = skill_dir / "subagent_types.json"
+        should_write_global = True
+        if target_types_path.is_file():
+            try:
+                if target_types_path.read_bytes() == types_bytes:
+                    should_write_global = False
+            except OSError:
+                pass
+        if should_write_global:
+            tmp_types_path = skill_dir / f".subagent_types.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp"
+            try:
+                tmp_types_path.write_bytes(types_bytes)
+                os.replace(tmp_types_path, target_types_path)
+            except OSError:
+                if tmp_types_path.exists():
+                    try:
+                        tmp_types_path.unlink()
+                    except OSError:
+                        pass
+                if not (target_types_path.is_file() and target_types_path.read_bytes() == types_bytes):
+                    raise
 
         # Guardar y listar rutas individuales en work/dispatch/types/<type_name>.json
         types_dir = self.work_dir / "dispatch" / "types"
@@ -2969,7 +3002,7 @@ class PipelineRunner:
         agreed = max(0, total_items - len(discord))
         failed_c = sorted({str(d.get("cid") or d.get("competency_id") or "") for d in discord if d.get("cid") or d.get("competency_id")})
         failed_t = sorted({str(d.get("template_id")) for d in discord if d.get("template_id")})
-        complete = bool(partial.get("all_complete", False)) and total_items > 0
+        complete = bool(base.get("all_complete", True)) and bool(partial.get("all_complete", False)) and total_items > 0
         passed = complete and not discord
         merged = dict(base)
         merged.update({

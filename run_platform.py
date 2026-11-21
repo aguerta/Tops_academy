@@ -293,6 +293,66 @@ def validate_platform_course(content: str) -> tuple[bool, dict | str]:
                 if not ok:
                     return False, err
 
+        # M20 structured modality container & nested KaTeX validation (when present)
+        _m20_text_keys = (
+            "content",
+            "prompt",
+            "label",
+            "error_rationale",
+            "failure_rationale",
+            "x_label",
+            "y_label",
+            "rationale",
+            "feedback",
+            "statement",
+            "description",
+        )
+
+        def _walk_m20_katex(obj, path_label: str):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if isinstance(v, str) and k in _m20_text_keys:
+                        ok_m, err_m = _check_katex_invariants(v, f"{path_label}.{k}")
+                        if not ok_m:
+                            return False, err_m
+                    elif isinstance(v, (dict, list)):
+                        ok_m, err_m = _walk_m20_katex(v, f"{path_label}.{k}")
+                        if not ok_m:
+                            return False, err_m
+            elif isinstance(obj, list):
+                for i_m, elem in enumerate(obj):
+                    if isinstance(elem, (dict, list)):
+                        ok_m, err_m = _walk_m20_katex(elem, f"{path_label}[{i_m}]")
+                        if not ok_m:
+                            return False, err_m
+            return True, None
+
+        m20_structured_types = (
+            "proof_dag",
+            "adversarial_break",
+            "unstructured_model",
+            "invariant_canvas",
+            "concept_matching",
+        )
+        for m20_key in m20_structured_types:
+            if m20_key in q and q[m20_key] is not None:
+                if not isinstance(q[m20_key], dict):
+                    return False, f"Question '{q_id}' field '{m20_key}' must be a JSON object"
+                ok, err = _walk_m20_katex(q[m20_key], f"question '{q_id}' ({m20_key})")
+                if not ok:
+                    return False, err
+
+        if q_type in m20_structured_types and not isinstance(q.get(q_type), dict):
+            return False, f"Question '{q_id}' of type '{q_type}' is missing required '{q_type}' object"
+
+        diag_d = q.get("diagnostic_distractors")
+        if diag_d is not None:
+            if not isinstance(diag_d, list):
+                return False, f"Question '{q_id}' field 'diagnostic_distractors' must be a list"
+            ok, err = _walk_m20_katex(diag_d, f"question '{q_id}' (diagnostic_distractors)")
+            if not ok:
+                return False, err
+
     return True, data
 
 

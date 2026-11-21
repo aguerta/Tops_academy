@@ -803,7 +803,11 @@ def generate_judge_batch(
                     stem_variant_index=selected_var_idx,
                 )
 
-                is_inv, inv_errs = check_instance_invariants(cand_assembled, itype)
+                is_inv, inv_errs = check_instance_invariants(
+                    cand_assembled,
+                    itype,
+                    variables=cand_res.get("vars") if isinstance(cand_res, dict) else None,
+                )
                 if not is_inv:
                     active_seed = (active_seed + 101) % 99991 + 100
                     continue

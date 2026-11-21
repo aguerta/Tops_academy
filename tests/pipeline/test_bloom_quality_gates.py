@@ -461,3 +461,80 @@ def test_plan_shards_and_dispatch_propagate_target_bloom(tmp_path: Path):
     assert "target_bloom" in combined_md
     assert "Evaluate" in combined_md
     assert "[M3-BLOOM-COHERENCE]" in combined_md
+
+
+def test_validate_cta_rules_excludes_manifest_base_from_bloom_floor(tmp_path: Path):
+    """validate_cta_rules must exclude manifest delta.existing_competency_ids from [CTA-BLOOM-FLOOR]."""
+    base_comps = [
+        _make_comp(
+            f"H-0{i}",
+            "fact",
+            "Remember",
+            ["concept_matching", "fill_in_the_blank"],
+            [] if i == 1 else [f"H-0{i - 1}"],
+        )
+        for i in range(1, 6)
+    ]
+    delta_comp = _make_comp(
+        "Hab-01",
+        "skill",
+        "Evaluate",
+        ["open_symbolic", "adversarial_break", "unstructured_model"],
+        ["H-05"],
+    )
+    manifest = {
+        "course_id": "test_append_cli",
+        "files": [{"doc": "solow.pdf", "total_pages": 30, "valid_page_range": [1, 30]}],
+        "delta": {"existing_competency_ids": [c["id"] for c in base_comps], "existing_competencies": base_comps},
+    }
+    cta = {
+        "course_id": "test_append_cli",
+        "title": "Append CLI Test",
+        "contract_version": 2,
+        "competencies": base_comps + [delta_comp],
+    }
+    valid, rule_errors = validate_cta_rules(cta, manifest)
+    assert valid, f"Expected base comps in manifest.delta to be excluded from [CTA-BLOOM-FLOOR]: {rule_errors}"
+
+
+def test_apply_harmonize_dict_adjust_modalities_and_forward_prereq_merge(tmp_path: Path):
+    """adjust_modalities dict-of-dict unpacks cleanly and merge preserves forward prereqs for topological sort."""
+    work_dir = tmp_path / "work_dict_merge"
+    work_dir.mkdir()
+    _write_manifest(work_dir)
+    comps = [
+        _make_comp("H-01", "fact", "Remember", ["fill_in_the_blank", "multiple_select"], []),
+        _make_comp("C-01", "concept", "Understand", ["concept_matching", "multiple_choice_7_options"], ["H-01"], num_distractors=6),
+        _make_comp("C-02", "concept", "Evaluate", ["adversarial_break", "proof_dag", "multiple_select"], ["H-01"]),
+        _make_comp("C-03", "concept", "Understand", ["concept_matching", "multiple_choice_7_options"], ["C-02"], num_distractors=6),
+        _make_comp("Hab-01", "skill", "Evaluate", ["open_symbolic", "adversarial_break", "unstructured_model"], ["C-01"]),
+        _make_comp("Hab-02", "skill", "Evaluate", ["open_symbolic", "proof_dag", "adversarial_break"], ["C-01"]),
+    ]
+    draft = {"course_id": "test_bloom_course", "title": "Test", "contract_version": 2, "competencies": comps}
+    (work_dir / "cta_draft.json").write_text(json.dumps(draft), encoding="utf-8")
+    (work_dir / "cta_order.json").write_text(json.dumps({"order": [c["id"] for c in comps]}), encoding="utf-8")
+    (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
+
+    harmonize = {
+        # C-01 absorbs C-03 (which depends on C-02 appearing after C-01 in original order)
+        "duplicate_decisions": [
+            {"decision": "merge", "keep_id": "C-01", "drop_id": "C-03", "reason": "Same concept"},
+        ],
+        "add_prerequisites": [],
+        "rename": [],
+        "drop_duplicate_distractors": [],
+        "adjust_modalities": {
+            "C-01": {
+                "recommended_modalities": ["adversarial_break", "proof_dag", "multiple_select"],
+                "bloom": "Evaluate",
+            },
+        },
+    }
+    (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize), encoding="utf-8")
+    final_cta = apply_harmonize(work_dir)
+    ids = [c["id"] for c in final_cta["competencies"]]
+    c01 = next(c for c in final_cta["competencies"] if c["id"] == "C-01")
+    assert c01["bloom"] == "Evaluate"
+    assert c01["recommended_modalities"] == ["adversarial_break", "proof_dag", "multiple_select"]
+    assert "C-02" in c01["prerequisites"]
+    assert ids.index("C-02") < ids.index("C-01")

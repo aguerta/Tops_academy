@@ -158,17 +158,42 @@ def test_run_platform_accepts_all_m20_types():
         "invariant_canvas",
         "concept_matching",
     ]
+    m20_payloads = {
+        "proof_dag": {"steps": [{"id": "S1", "content": "Paso 1"}], "edges": []},
+        "adversarial_break": {"mode": "find_fallacy", "steps": [{"id": "S1", "content": "Paso 1"}]},
+        "unstructured_model": {"phase1_variables": {}, "phase2_assumptions": {}, "phase3_formulation": {}},
+        "invariant_canvas": {"mode": "cartesian", "x_range": [0, 10], "y_range": [0, 10], "invariants": []},
+        "concept_matching": {"premises": [], "targets": [], "correct_pairs": {}},
+    }
     sample_course = {
         "course_id": "test_m20_all",
         "title": "Test M2.0 All Types",
         "competencies": [{"id": "C-01", "name": "Test Comp"}],
         "questions": [
-            {"id": f"Q-{i}", "competency_id": "C-01", "type": qtype, "stem": f"Stem {i}"}
+            {
+                "id": f"Q-{i}",
+                "competency_id": "C-01",
+                "type": qtype,
+                "stem": f"Stem {i}",
+                **({qtype: m20_payloads[qtype]} if qtype in m20_payloads else {}),
+            }
             for i, qtype in enumerate(all_types, start=1)
         ],
     }
     ok, res = run_platform.validate_platform_course(json.dumps(sample_course))
     assert ok, f"Expected all M2.0 types to be valid, got: {res}"
+
+    for m20_type in m20_payloads:
+        missing_payload_course = {
+            "course_id": "test_m20_missing",
+            "title": "Missing M20 Payload",
+            "competencies": [{"id": "C-01", "name": "Test Comp"}],
+            "questions": [{"id": "Q-1", "competency_id": "C-01", "type": m20_type, "stem": "Stem 1"}],
+        }
+        ok_m, err_m = run_platform.validate_platform_course(json.dumps(missing_payload_course))
+        assert not ok_m and m20_type in str(err_m), (
+            f"Expected missing '{m20_type}' payload to be rejected, got: {(ok_m, err_m)}"
+        )
 
     for slug in ("solow_m20_v1", "solow_m20_v2"):
         course_path = ROOT_DIR / "courses" / f"{slug}.json"
@@ -276,4 +301,56 @@ def test_qa_engine_detects_v3_pow_tautology_and_no_cross_category_dup():
         if iss["linter"] == "architecture_dag_linter"
     )
     assert v3_res["dimension_summaries"]["zpd_progression_linter"]["bloom_weighted_index"] > 3.5
+
+
+def test_sympy_in_katex_segments_bold_display_and_bidual_superscripts():
+    """SYMPY_IN_KATEX parses math segments: ignores Markdown **bold** between $...$,
+    allows bidual superscripts like $f^{**}(x)$, and catches $$2 * x + 1$$."""
+    # 1) Markdown bold between two inline math spans must NOT trigger in invariants or QA engine
+    bold_between = r"Sea $x > 0$ el valor **óptimo** cuando $y = 1$."
+    assert validate_katex_syntax(bold_between, "stem") == []
+
+    # 2) Valid bidual superscript $f^{**}(x)$ / $V^{**}$ must NOT trigger
+    bidual = r"El bidual $V^{**}$ y la biconjugada $f^{**}(x)$ coinciden con $f(x)$."
+    assert validate_katex_syntax(bidual, "detailed_solution") == []
+
+    # 3) Display math $$2 * x + 1$$ MUST trigger both engine invariants and QA linter
+    disp_bad = r"Calcula $$2 * x + 1$$ en el punto óptimo."
+    assert any("[TPL-KATEX-SYMPY-LEAK]" in e for e in validate_katex_syntax(disp_bad, "stem"))
+
+    synthetic = {
+        "course_id": "test_katex_segments",
+        "title": "KaTeX Segment Boundary Regression",
+        "competencies": [{"id": "C-01", "name": "Dualidad", "category": "Concept", "prerequisites": []}],
+        "questions": [
+            {
+                "id": "Q-OK-1",
+                "competency_id": "C-01",
+                "type": "multiple_choice_7_options",
+                "difficulty": "medium",
+                "bloom": "Analyze",
+                "stem": bold_between,
+                "options": ["$1$", "$2$", "$3$", "$4$", "$5$", "$6$", "$7$"],
+                "correct_answer": "$1$",
+                "hints": ["P1.", "P2.", "P3."],
+                "detailed_solution": bidual,
+            },
+            {
+                "id": "Q-BAD-DISP",
+                "competency_id": "C-01",
+                "type": "multiple_choice_7_options",
+                "difficulty": "medium",
+                "bloom": "Apply",
+                "stem": disp_bad,
+                "options": ["$1$", "$2$", "$3$", "$4$", "$5$", "$6$", "$7$"],
+                "correct_answer": "$1$",
+                "hints": ["P1.", "P2.", "P3."],
+                "detailed_solution": "Sustitución directa.",
+            },
+        ],
+    }
+    res = run_full_audit(synthetic)
+    sympy_cluster = res["risk_clusters"].get("sympy_in_katex", [])
+    assert "Q-OK-1" not in sympy_cluster
+    assert "Q-BAD-DISP" in sympy_cluster
 

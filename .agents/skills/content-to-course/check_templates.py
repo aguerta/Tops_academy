@@ -147,7 +147,24 @@ def _check_stem_variant_parity(template: Dict[str, Any]) -> List[Tuple[str, List
         return []
 
     n_stems = len(entries)
-    majority_threshold = max(2, (n_stems + 1) // 2) if n_stems >= 3 else 2
+    if n_stems == 2:
+        # With 2 variants, flag if one variant carries parametric placeholders while the other drops all of them
+        (lbl0, phs0), (lbl1, phs1) = entries
+        if bool(phs0) == bool(phs1):
+            return []
+        empty_label = lbl0 if not phs0 else lbl1
+        other_phs = sorted(phs1 if not phs0 else phs0)
+        itype = str(template.get("interaction_type", "")).strip().lower()
+        is_ms = itype in ("multiple_select", "ms")
+        if not is_ms:
+            return [(empty_label, other_phs)]
+        print(
+            f"WARNING: [TPL-STEM-VARIANT-PARITY] En '{template.get('id', '?')}': '{empty_label}' omite {other_phs} presente(s) en la otra variante.",
+            file=sys.stderr,
+        )
+        return []
+
+    majority_threshold = max(2, (n_stems + 1) // 2)
     required_phs = {p for p, c in counts.items() if c >= majority_threshold}
 
     if not required_phs:

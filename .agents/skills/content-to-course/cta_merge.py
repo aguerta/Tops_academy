@@ -2362,19 +2362,42 @@ def apply_harmonize(
                             survivor_assumptions.append(a_copy)
                 comp_survivor["assumptions"] = survivor_assumptions
 
-                # Inherit valid backward prerequisites from absorbed competency
+                # Inherit valid prerequisites from absorbed competency without introducing cycles
                 survivor_prereqs = list(comp_survivor.get("prerequisites", []))
-                root_pos = orig_pos.get(root, 999999)
+                known_comp_ids = {c["id"] for c in competencies if c["id"] != absorbed_id}
+                comp_by_id = {c["id"]: c for c in competencies}
+
+                def _depends_on_root(start_id: str) -> bool:
+                    visited: Set[str] = set()
+                    stack: List[str] = [start_id]
+                    while stack:
+                        curr_id = stack.pop()
+                        if curr_id in visited:
+                            continue
+                        visited.add(curr_id)
+                        curr_obj = comp_by_id.get(curr_id)
+                        if not curr_obj:
+                            continue
+                        for req in curr_obj.get("prerequisites", []):
+                            mapped = root if req == absorbed_id else absorbed_to_root.get(req, req)
+                            if mapped == root:
+                                return True
+                            if mapped not in visited and mapped in comp_by_id:
+                                stack.append(mapped)
+                    return False
+
                 for pr in comp_absorbed.get("prerequisites", []):
                     target_pr = absorbed_to_root.get(pr, pr)
                     if target_pr == root or target_pr == absorbed_id:
                         continue
-                    if target_pr in existing_competency_ids or orig_pos.get(target_pr, 999999) < root_pos:
+                    if target_pr in existing_competency_ids or (
+                        target_pr in known_comp_ids and not _depends_on_root(target_pr)
+                    ):
                         if target_pr not in survivor_prereqs:
                             survivor_prereqs.append(target_pr)
                     else:
                         logger.warning(
-                            "Dropping non-inheritable prerequisite '%s' from absorbed '%s' into earlier survivor '%s'",
+                            "Dropping cyclic or unknown prerequisite '%s' from absorbed '%s' into survivor '%s'",
                             target_pr, absorbed_id, root,
                         )
                 comp_survivor["prerequisites"] = survivor_prereqs
@@ -2449,10 +2472,13 @@ def apply_harmonize(
     adj_directives: List[Dict[str, Any]] = []
     if isinstance(raw_adj, dict):
         for cid_k, mods_v in raw_adj.items():
-            adj_directives.append({
-                "competency": str(cid_k),
-                "recommended_modalities": mods_v if isinstance(mods_v, list) else [mods_v],
-            })
+            if isinstance(mods_v, dict):
+                adj_directives.append({"competency": str(cid_k), **mods_v})
+            else:
+                adj_directives.append({
+                    "competency": str(cid_k),
+                    "recommended_modalities": mods_v if isinstance(mods_v, list) else [mods_v],
+                })
     elif isinstance(raw_adj, list):
         for item in raw_adj:
             if isinstance(item, dict):
@@ -2669,7 +2695,7 @@ def apply_harmonize(
 
         def _topo_priority(idx: int) -> Tuple[int, int]:
             comp_obj = competencies[idx]
-            is_pre = bool(comp_obj.get("is_prerequisite")) or str(comp_obj.get("id", "")).startswith("PRE-")
+            is_pre = bool(comp_obj.get("is_prerequisite")) or str(comp_obj.get("id", "")).upper().startswith("PRE-")
             return (0 if is_pre else 1, idx)
 
         ready: List[Tuple[Tuple[int, int], int]] = [
@@ -2686,7 +2712,11 @@ def apply_harmonize(
                     heapq.heappush(ready, (_topo_priority(nxt), nxt))
 
         if len(sorted_indices) == len(competencies):
-            competencies = [competencies[i] for i in sorted_indices]
+            if sorted_indices != list(range(len(competencies))):
+                competencies = [competencies[i] for i in sorted_indices]
+                for new_u_idx, comp_obj in enumerate(competencies, start=1):
+                    if "unit_index" in comp_obj:
+                        comp_obj["unit_index"] = new_u_idx
 
     # 6b. Hard gate: exact duplicate competency titles
     validation_errors.extend(

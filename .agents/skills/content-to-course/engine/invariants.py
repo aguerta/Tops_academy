@@ -971,7 +971,7 @@ def validate_katex_syntax(
         errors.append(f"Newtonian dot accent on digits detected in {context}: '{m_dot.group(0)}'.")
 
     # 18. Raw SymPy syntax leaked inside KaTeX math blocks ($...$ or $$...$$) [TPL-KATEX-SYMPY-LEAK]
-    _sympy_leak_re = re.compile(r"(?:\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
+    _sympy_leak_re = re.compile(r"(?:(?<![{^])\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
     for mb_sym in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
         math_seg = mb_sym.group(1) if mb_sym.group(0).startswith("$$") else mb_sym.group(2)
         if not math_seg:

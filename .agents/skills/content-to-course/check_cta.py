@@ -1161,17 +1161,7 @@ def validate_cta_rules(
     )
     errors.extend(comp_errors)
 
-    # 2b. Portfolio Bloom quality gate [CTA-BLOOM-FLOOR] (global CTA only, v2+, >= 5 delta comps)
-    if eff_require_modalities and enforce_bloom_gate is not False:
-        bloom_errors = check_cta_bloom_portfolio(
-            competencies=competencies,
-            exclude_ids=exclude_bloom_ids,
-            warnings=comp_warnings,
-            enforce_hard_fail=True,
-        )
-        errors.extend(bloom_errors)
-
-    # 3. Prerequisites DAG check (respecting base competencies in --append mode)
+    # Extract base competency IDs (for --append mode) before Bloom portfolio & DAG checks
     delta_info = None
     if manifest_data and isinstance(manifest_data, dict):
         delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
@@ -1181,6 +1171,18 @@ def validate_cta_rules(
     if allowed_prereq_ids:
         existing_comp_ids = existing_comp_ids | set(allowed_prereq_ids)
 
+    # 2b. Portfolio Bloom quality gate [CTA-BLOOM-FLOOR] (global CTA only, v2+, >= 5 delta comps)
+    if eff_require_modalities and enforce_bloom_gate is not False:
+        eff_exclude_bloom = (set(exclude_bloom_ids or ()) | existing_comp_ids) or None
+        bloom_errors = check_cta_bloom_portfolio(
+            competencies=competencies,
+            exclude_ids=eff_exclude_bloom,
+            warnings=comp_warnings,
+            enforce_hard_fail=True,
+        )
+        errors.extend(bloom_errors)
+
+    # 3. Prerequisites DAG check (respecting base competencies in --append mode)
     dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_comp_ids)
     errors.extend(dag_errors)
 
