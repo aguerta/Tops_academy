@@ -58,7 +58,7 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
   const flaggedCount = questions.filter((q) => flaggedMap[q.id]).length;
   const allItemsCalibrated =
     total > 0 && questions.every((q) => Boolean(itemConfidences[q.id]));
-  const canConfirm = globalConfidence !== null || allItemsCalibrated;
+  const canConfirm = total > 0 && (globalConfidence !== null || allItemsCalibrated);
 
   return (
     <div

@@ -52,7 +52,18 @@ export function saveSyncConfig(config: GistSyncConfig): void {
   );
 }
 
+let syncEpoch = 0;
+let activeSyncPromise: Promise<SyncResult> | null = null;
+let pendingResync = false;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function clearSyncConfig(): void {
+  syncEpoch += 1;
+  pendingResync = false;
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
   if (typeof window === 'undefined' || !window.localStorage) return;
   window.localStorage.removeItem(SYNC_CONFIG_KEY);
 }
@@ -153,7 +164,41 @@ function mergeCompetencyMastery(
     unit_test: mergeUnitTest(localComp.unit_test, remoteComp.unit_test),
     history: mergedHistory,
     timing: mergeCompetencyTiming(localComp.timing, remoteComp.timing, localWins),
+    ...(winner.needs_review !== undefined ? { needs_review: winner.needs_review } : {}),
+    ...(winner.recent_misconceptions !== undefined
+      ? { recent_misconceptions: winner.recent_misconceptions }
+      : {}),
   };
+}
+
+function computeCourseProgressPercentage(
+  competencies: Record<string, CompetencyMastery>,
+  courseChallenge?: CourseMasteryRecord['course_challenge']
+): number {
+  const compList = Object.values(competencies || {});
+  const totalUnits = compList.length;
+  if (totalUnits === 0) return 0;
+
+  let sumUnitTestPercentages = 0;
+  for (const comp of compList) {
+    if (comp.unit_test && comp.unit_test.total_questions > 0) {
+      sumUnitTestPercentages += comp.unit_test.percentage;
+    }
+  }
+
+  const avgUnitTests = sumUnitTestPercentages / totalUnits;
+  const unitTestsContribution = avgUnitTests * 0.8;
+
+  const cc = courseChallenge;
+  const ccPercentage =
+    cc && cc.total_questions > 0
+      ? (cc.percentage ??
+          (cc.completed ? 100 : Math.round((cc.last_score / cc.total_questions) * 100)))
+      : 0;
+  const ccContribution = (ccPercentage / 100) * 20;
+
+  const rawPercentage = Math.round(unitTestsContribution + ccContribution);
+  return Math.min(100, Math.max(0, rawPercentage));
 }
 
 /**
@@ -186,7 +231,6 @@ export function mergeAllMasteryData(
       ...Object.keys(rRec.competencies || {}),
     ]);
     const mergedCompetencies: Record<string, CompetencyMastery> = {};
-    let totalPoints = 0;
 
     for (const compId of allCompIds) {
       const mergedComp = mergeCompetencyMastery(
@@ -194,7 +238,6 @@ export function mergeAllMasteryData(
         rRec.competencies?.[compId]
       );
       mergedCompetencies[compId] = mergedComp;
-      totalPoints += mergedComp.points || 0;
     }
 
     let mergedChallenge = lRec.course_challenge || rRec.course_challenge;
@@ -215,7 +258,7 @@ export function mergeAllMasteryData(
 
     merged[courseId] = {
       course_id: courseId,
-      mastery_points: totalPoints,
+      mastery_points: computeCourseProgressPercentage(mergedCompetencies, mergedChallenge),
       competencies: mergedCompetencies,
       ...(mergedChallenge ? { course_challenge: mergedChallenge } : {}),
     };
@@ -240,9 +283,6 @@ function writeLocalProgress(data: Record<string, CourseMasteryRecord>): void {
   window.dispatchEvent(new CustomEvent(PROGRESS_SYNCED_EVENT));
 }
 
-let activeSyncPromise: Promise<SyncResult> | null = null;
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
 /**
  * Synchronizes localStorage mastery progress with the configured private GitHub Gist.
  * Creates the private Gist automatically if `gistId` is empty.
@@ -252,7 +292,17 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
     return activeSyncPromise;
   }
 
+  const myEpoch = syncEpoch;
+
+  while (activeSyncPromise) {
+    await activeSyncPromise.catch(() => undefined);
+  }
+
   const run = async (): Promise<SyncResult> => {
+    if (myEpoch !== syncEpoch) {
+      return { status: 'unconfigured' };
+    }
+
     const cfg = overrideConfig || getSyncConfig();
     if (!cfg || !cfg.token) {
       return { status: 'unconfigured' };
@@ -264,11 +314,10 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
       'Content-Type': 'application/json',
     };
 
-    const localData = readLocalProgress();
-
     try {
       // First-time setup: create a new private (secret) Gist
       if (!cfg.gistId) {
+        const localData = readLocalProgress();
         const res = await fetch('https://api.github.com/gists', {
           method: 'POST',
           headers,
@@ -289,12 +338,25 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
         }
 
         const created = await res.json();
+        if (!created || typeof created.id !== 'string' || !created.id.trim()) {
+          return {
+            status: 'error',
+            message: 'GitHub API no devolvió un Gist ID válido al crear el respaldo.',
+          };
+        }
+        if (myEpoch !== syncEpoch) {
+          return { status: 'unconfigured' };
+        }
+
         const now = new Date().toISOString();
         saveSyncConfig({
           token: cfg.token,
           gistId: created.id,
           lastSyncedAt: now,
         });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(PROGRESS_SYNCED_EVENT));
+        }
         return { status: 'created', gistId: created.id, lastSyncedAt: now };
       }
 
@@ -311,26 +373,60 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
       }
 
       const gistJson = await getRes.json();
-      const remoteRaw = gistJson?.files?.[GIST_FILENAME]?.content;
+      const gistFile = gistJson?.files?.[GIST_FILENAME];
+      let remoteRaw: unknown = gistFile?.content;
+      if (gistFile?.truncated && typeof gistFile?.raw_url === 'string' && gistFile.raw_url) {
+        const rawRes = await fetch(gistFile.raw_url, {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        if (!rawRes.ok) {
+          const errText = await rawRes.text().catch(() => rawRes.statusText);
+          return {
+            status: 'error',
+            message: `GitHub Raw Gist (${rawRes.status}): ${errText}`,
+          };
+        }
+        remoteRaw = await rawRes.text();
+      }
+
       let remoteData: Record<string, CourseMasteryRecord> = {};
       if (typeof remoteRaw === 'string' && remoteRaw.trim()) {
         try {
-          remoteData = JSON.parse(remoteRaw);
+          const parsed = JSON.parse(remoteRaw);
+          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            return {
+              status: 'error',
+              message:
+                'El archivo remoto del Gist no contiene un objeto JSON válido; se abortó la sincronización para proteger tus datos.',
+            };
+          }
+          remoteData = parsed as Record<string, CourseMasteryRecord>;
         } catch {
-          remoteData = {};
+          return {
+            status: 'error',
+            message:
+              'El archivo remoto del Gist contiene JSON inválido; se abortó la sincronización para proteger tus datos.',
+          };
         }
       }
 
-      const merged = mergeAllMasteryData(localData, remoteData);
+      if (myEpoch !== syncEpoch) {
+        return { status: 'unconfigured' };
+      }
+
+      // Re-read localStorage AFTER the GET round-trip so progress saved in-flight is preserved
+      const latestLocalData = readLocalProgress();
+      const merged = mergeAllMasteryData(latestLocalData, remoteData);
       const mergedSerialized = JSON.stringify(merged, null, 2);
-      const localSerialized = JSON.stringify(localData, null, 2);
+      const localSerialized = JSON.stringify(latestLocalData, null, 2);
       const remoteSerialized = JSON.stringify(remoteData, null, 2);
 
       if (mergedSerialized !== localSerialized) {
         writeLocalProgress(merged);
       }
 
-      if (mergedSerialized !== remoteSerialized || !gistJson?.files?.[GIST_FILENAME]) {
+      if (mergedSerialized !== remoteSerialized || !gistFile) {
         const patchRes = await fetch(
           `https://api.github.com/gists/${encodeURIComponent(cfg.gistId)}`,
           {
@@ -352,6 +448,10 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
         }
       }
 
+      if (myEpoch !== syncEpoch) {
+        return { status: 'unconfigured' };
+      }
+
       const now = new Date().toISOString();
       saveSyncConfig({
         token: cfg.token,
@@ -367,14 +467,17 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
     }
   };
 
-  if (overrideConfig) {
-    return run();
-  }
-
-  activeSyncPromise = run().finally(() => {
-    activeSyncPromise = null;
+  const promise = run().finally(() => {
+    if (activeSyncPromise === promise) {
+      activeSyncPromise = null;
+    }
+    if (pendingResync && getSyncConfig()) {
+      pendingResync = false;
+      void syncWithGist();
+    }
   });
-  return activeSyncPromise;
+  activeSyncPromise = promise;
+  return promise;
 }
 
 /**
@@ -387,6 +490,10 @@ export function scheduleBackgroundSync(): void {
   }
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
+    if (activeSyncPromise) {
+      pendingResync = true;
+      return;
+    }
     void syncWithGist();
   }, 800);
 }

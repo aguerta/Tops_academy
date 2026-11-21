@@ -99,16 +99,28 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   const [globalConfidence, setGlobalConfidence] = useState<MetacognitiveConfidence | null>(
     () => restoredIron.globalConfidence ?? null
   );
-  const effectiveTimeLimit = useMemo(
-    () =>
-      restoredIron.timeLimitSeconds ??
-      timeLimitSeconds ??
-      Math.max(180, questions.length * 120),
-    [restoredIron.timeLimitSeconds, timeLimitSeconds, questions.length]
-  );
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(
-    () => restoredIron.elapsedSeconds ?? initialSnapshot?.elapsedSeconds ?? 0
-  );
+  const effectiveTimeLimit = useMemo(() => {
+    const candidate =
+      typeof restoredIron.timeLimitSeconds === 'number' && restoredIron.timeLimitSeconds > 0
+        ? restoredIron.timeLimitSeconds
+        : typeof timeLimitSeconds === 'number' && timeLimitSeconds > 0
+        ? timeLimitSeconds
+        : null;
+    return candidate ?? Math.max(180, questions.length * 120);
+  }, [restoredIron.timeLimitSeconds, timeLimitSeconds, questions.length]);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(() => {
+    const baseElapsed = Math.max(
+      0,
+      restoredIron.elapsedSeconds ?? initialSnapshot?.elapsedSeconds ?? 0
+    );
+    const savedAt = initialSnapshot?.savedAt;
+    const offlineDelta =
+      typeof savedAt === 'number' && savedAt > 0
+        ? Math.max(0, Math.floor((Date.now() - savedAt) / 1000))
+        : 0;
+    const combined = baseElapsed + offlineDelta;
+    return effectiveTimeLimit > 0 ? Math.min(effectiveTimeLimit, combined) : combined;
+  });
   const [showMetaModal, setShowMetaModal] = useState(false);
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
   const [scratchpadBgMode, setScratchpadBgMode] = useState<ScratchBgMode>('transparent');
@@ -116,6 +128,10 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   const remainingSeconds = Math.max(0, effectiveTimeLimit - elapsedSeconds);
   const isTimeExpired = effectiveTimeLimit > 0 && remainingSeconds === 0;
 
+  const examStartWallMsRef = useRef<number | null>(null);
+  if (examStartWallMsRef.current === null) {
+    examStartWallMsRef.current = Date.now() - elapsedSeconds * 1000;
+  }
   const questionEnterTimeRef = useRef<number>(Date.now());
   const spentByQidRef = useRef<Record<string, number>>({});
   const mainRef = useRef<HTMLElement | null>(null);
@@ -149,24 +165,30 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
     [questions, answeredMap]
   );
 
-  // Countdown timer tick; halts once time expires
+  // Countdown timer tick (wall-clock anchored); halts once time expires or with 0 questions
   useEffect(() => {
-    if (isTimeExpired) return;
-    const id = window.setInterval(() => {
-      setElapsedSeconds((prev) => {
-        const next = prev + 1;
-        return effectiveTimeLimit > 0 ? Math.min(effectiveTimeLimit, next) : next;
-      });
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [isTimeExpired, effectiveTimeLimit]);
+    if (isTimeExpired || questions.length === 0) return;
+    const updateElapsed = () => {
+      const startMs = examStartWallMsRef.current ?? Date.now();
+      const wallElapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      setElapsedSeconds(
+        effectiveTimeLimit > 0 ? Math.min(effectiveTimeLimit, wallElapsed) : wallElapsed
+      );
+    };
+    const id = window.setInterval(updateElapsed, 1000);
+    document.addEventListener('visibilitychange', updateElapsed);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', updateElapsed);
+    };
+  }, [isTimeExpired, effectiveTimeLimit, questions.length]);
 
   // Auto-open mandatory metacognitive modal when exam time expires
   useEffect(() => {
-    if (isTimeExpired) {
+    if (isTimeExpired && questions.length > 0) {
       setShowMetaModal(true);
     }
-  }, [isTimeExpired]);
+  }, [isTimeExpired, questions.length]);
 
   // Persist Iron Exam snapshot across page reload (sessionStore v1)
   useEffect(() => {
@@ -251,12 +273,27 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   };
 
   const handleConfirmSubmit = () => {
-    const allItemsCalibrated =
-      questions.length > 0 && questions.every((q) => Boolean(itemConfidences[q.id]));
+    if (questions.length === 0) return;
+    const allItemsCalibrated = questions.every((q) => Boolean(itemConfidences[q.id]));
     if (globalConfidence === null && !allItemsCalibrated) {
       return;
     }
-    const effectiveGlobalConfidence: MetacognitiveConfidence = globalConfidence ?? 'medium';
+    let effectiveGlobalConfidence: MetacognitiveConfidence;
+    if (globalConfidence !== null) {
+      effectiveGlobalConfidence = globalConfidence;
+    } else {
+      const confScoreMap: Record<MetacognitiveConfidence, number> = {
+        low: 1,
+        medium: 2,
+        high: 3,
+      };
+      const sumScore = questions.reduce(
+        (acc, q) => acc + confScoreMap[itemConfidences[q.id] || 'medium'],
+        0
+      );
+      const avgScore = Math.round(sumScore / questions.length);
+      effectiveGlobalConfidence = avgScore >= 3 ? 'high' : avgScore <= 1 ? 'low' : 'medium';
+    }
 
     recordTimeForCurrentQuestion();
     const { audit, deferredReview, gradedResults } = computeMetacognitiveAudit(

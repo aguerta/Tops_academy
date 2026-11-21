@@ -202,6 +202,9 @@ export const App: React.FC = () => {
     }
 
     const unregister = registerBackInterceptor(() => {
+      if (!showQuitConfirm && document.querySelector('[data-testid="iron-time-expired-banner"]')) {
+        return true;
+      }
       if (showQuitConfirm) {
         // Second back gesture: dismiss confirm modal and remain in session
         setShowQuitConfirm(false);
