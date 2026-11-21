@@ -2049,6 +2049,34 @@ class ExecutionAuditor:
                 except Exception:
                     pass
 
+            for aux_name in ("judge_report_rejudge.json", "judge_report_lqas.json"):
+                aux_file = work_path / aux_name
+                if aux_file.is_file():
+                    try:
+                        aux_data = json.loads(aux_file.read_text(encoding="utf-8"))
+                        aux_hist = aux_data.get("rounds_history")
+                        if isinstance(aux_hist, list) and len(aux_hist) > len(rounds_history):
+                            rounds_history = [r for r in aux_hist if isinstance(r, dict)]
+                            round_1_data = next(
+                                (r for r in rounds_history if r.get("round") == 1),
+                                rounds_history[0],
+                            )
+                        if aux_data.get("rejudge") or aux_data.get("round", 1) > 1 or len(rounds_history) > 1:
+                            has_rejudge = True
+                    except Exception:
+                        pass
+
+        judge_archive_dirs: List[Path] = []
+        if workload.get("work_dir"):
+            arch_root = Path(workload["work_dir"]) / "judge_archive"
+            if arch_root.is_dir():
+                judge_archive_dirs = sorted(
+                    [d for d in arch_root.iterdir() if d.is_dir()],
+                    key=lambda p: p.name.removeprefix("lqas_"),
+                )
+                if judge_archive_dirs:
+                    has_rejudge = True
+
         r1_entry: Optional[Dict[str, Any]] = None
         if rounds_history:
             r1_entry = next(
@@ -2129,6 +2157,15 @@ class ExecutionAuditor:
         ]
         infra_judge_interventions = [it for it in interv_list if "judge.py" in it.get("file", "").lower()]
 
+        distinct_judge_steps = len({j.get("spawn_step") for j in judge_subs if j.get("spawn_step") is not None})
+        judge_archive_waves = (len(judge_archive_dirs) + 1) if judge_archive_dirs else 0
+        judge_waves_count = max(
+            judge_archive_waves,
+            len(rounds_history),
+            distinct_judge_steps,
+            repair_iters or 1,
+        )
+
         round_1_failed = (round_1_passed is False) or (round_1_discrepancies_count > 0)
         if (
             judge_compare_passed_v3 is True
@@ -2177,7 +2214,7 @@ class ExecutionAuditor:
                     )
                 actions_taken = [
                     f"1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: {round_1_discrepancies_count} discrepancia(s) detectada(s){r1_agr_str}.",
-                    f"2. **Bucle de Auto-Reparación / Rejudge**: {repair_iters or 1} iteración(es) ejecutada(s) ({len(interv_list)} intervenciones de supervisor).",
+                    f"2. **Bucle de Auto-Reparación / Rejudge**: {judge_waves_count} ola(s) de jueces ejecutada(s) ({len(interv_list)} intervenciones de supervisor).",
                     f"3. **Resultado Final Post-Rejudge (`judge_report.json`)**: {'✅ Aprobado' if final_passed else '❌ No aprobado'} (`{final_agr_pct} agreement rate`, `{discrepancies_count} discrepancias` sobre {batch_items} reactivos).",
                 ]
             else:
@@ -2206,6 +2243,19 @@ class ExecutionAuditor:
             dis_list = jb_src.get("disagreements") or []
             if isinstance(dis_list, list) and dis_list:
                 round_1_flaw_detected_count = sum(1 for d in dis_list if isinstance(d, dict) and d.get("flaw_detected") is True)
+
+        if round_1_flaw_detected_count == 0 and judge_archive_dirs:
+            try:
+                for vf in sorted(judge_archive_dirs[0].glob("*.json")):
+                    v_data = json.loads(vf.read_text(encoding="utf-8", errors="ignore"))
+                    if isinstance(v_data, dict):
+                        resp_map = v_data.get("responses") if isinstance(v_data.get("responses"), dict) else v_data
+                        if isinstance(resp_map, dict):
+                            round_1_flaw_detected_count += sum(
+                                1 for v in resp_map.values() if isinstance(v, dict) and v.get("flaw_detected") is True
+                            )
+            except Exception:
+                pass
 
         if round_1_flaw_detected_count == 0 and round_1_discrepancies_count > 0 and judge_subs:
             r1_steps = [j.get("spawn_step") for j in judge_subs if j.get("spawn_step") is not None]
@@ -2276,6 +2326,7 @@ class ExecutionAuditor:
         judge_cost = _sum_agent_group_cost(judge_subs)
         stage_5 = {
             "judges_count": len(judge_subs),
+            "judge_waves_count": judge_waves_count,
             "judges": judge_subs,
             "max_judge_duration": max(judge_durs) if judge_durs else 0.0,
             "total_input_tokens": judge_cost["input_tokens"],
