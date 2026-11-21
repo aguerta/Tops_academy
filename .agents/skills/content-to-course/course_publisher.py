@@ -387,13 +387,13 @@ def build_specific_error_report(
         if cid:
             q_by_cid.setdefault(cid, []).append(q)
 
-    # Import ShardDataLineLocator dynamically from compile_shard.py
+    # Import ShardDataLineLocator dynamically from engine.shard_locator
     ShardDataLineLocator = None
     curr_dir = Path(__file__).resolve().parent
     if str(curr_dir) not in sys.path:
         sys.path.insert(0, str(curr_dir))
     try:
-        from compile_shard import ShardDataLineLocator as _SDLL
+        from engine.shard_locator import ShardDataLineLocator as _SDLL
         ShardDataLineLocator = _SDLL
     except Exception:
         pass

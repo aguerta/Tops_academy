@@ -1419,7 +1419,7 @@ class PipelineRunner:
             all_questions.extend(comp_questions)
 
         if stem_gate_failures:
-            from compile_shard import ShardDataLineLocator
+            from engine.shard_locator import ShardDataLineLocator
             shards_dir = self.work_dir / "shards"
             manifest_p = shards_dir / "pre_shard_manifest.json"
             if not manifest_p.is_file():
