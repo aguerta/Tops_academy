@@ -327,3 +327,82 @@ class TestInterJudgeKappaAndAdaptiveLQAS:
         assert rep["passed"] is False
         assert "T1" in rep["failed_templates"]
         assert rep["kernel_override_count"] == 0
+
+    def test_dispatch_judges_matches_template_id_and_item_id(self, tmp_path: Path):
+        """Regression test: LQAS rejudge passes template_ids to dispatch_judges, where items use item_id/template_id."""
+        from dispatch import dispatch_judges
+
+        verif_dir = tmp_path / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        items = [
+            {
+                "item_id": "T-Hab09-02_judge_1",
+                "template_id": "T-Hab09-02",
+                "competency_id": "Hab-09",
+                "interaction_type": "open_symbolic",
+                "stem": "Halle la tasa de crecimiento.",
+            },
+            {
+                "item_id": "T-Hab09-02_judge_2",
+                "template_id": "T-Hab09-02",
+                "competency_id": "Hab-09",
+                "interaction_type": "open_symbolic",
+                "stem": "Determine la tasa de crecimiento.",
+            },
+            {
+                "item_id": "T-Hab09-04_judge_1",
+                "template_id": "T-Hab09-04",
+                "competency_id": "Hab-09",
+                "interaction_type": "fill_in_the_blank",
+                "stem": "Calcule el valor numerico.",
+            },
+            {
+                "item_id": "T-Hab09-01_judge_1",
+                "template_id": "T-Hab09-01",
+                "competency_id": "Hab-09",
+                "interaction_type": "fill_in_the_blank",
+                "stem": "Plantilla excluida del filtro.",
+            },
+        ]
+        (verif_dir / "judge_batch.json").write_text(json.dumps(items), encoding="utf-8")
+        (verif_dir / "judge_batch_01.json").write_text(json.dumps(items), encoding="utf-8")
+        (verif_dir / "judge_ground_truth.json").write_text(json.dumps({}), encoding="utf-8")
+
+        res = dispatch_judges(
+            tmp_path,
+            ids=["T-Hab09-02", "T-Hab09-04"],
+            max_judges=1,
+            pointer=True,
+        )
+        assert len(res["Subagents"]) == 1
+        items_file = tmp_path / "dispatch" / "items" / "judge_01_items.json"
+        assert items_file.is_file()
+        dispatched_raw = json.loads(items_file.read_text(encoding="utf-8"))
+        dispatched = dispatched_raw["items"] if isinstance(dispatched_raw, dict) else dispatched_raw
+        dispatched_ids = {it["item_id"] for it in dispatched}
+        assert dispatched_ids == {
+            "T-Hab09-02_judge_1",
+            "T-Hab09-02_judge_2",
+            "T-Hab09-04_judge_1",
+        }
+
+    def test_lqas_rejudge_raises_on_zero_dispatched_judges(self, tmp_path: Path, monkeypatch):
+        """Regression test: run_stage_lqas_rejudge must fail fast instead of running an empty wave."""
+        import run as c2c_run
+
+        (tmp_path / "judge_report.json").write_text(
+            json.dumps(
+                {
+                    "single_seed_override_templates": ["T-Hab09-02", "T-Hab09-04"],
+                    "lqas_followup_required": True,
+                }
+            ),
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(c2c_run, "dispatch_judges", lambda *args, **kwargs: {"Subagents": []})
+        runner = c2c_run.PipelineRunner.__new__(c2c_run.PipelineRunner)
+        runner.work_dir = tmp_path
+        runner.no_pointer = False
+
+        with pytest.raises(RuntimeError, match="LQAS rejudge dispatch produced 0 judges"):
+            runner.run_stage_lqas_rejudge()

@@ -187,7 +187,7 @@ def test_fib_rounding_contract_allows_explicit_rounding_calc_or_short_decimals()
 # 3. MsLengthBiasLinter
 # ---------------------------------------------------------------------------
 
-def test_ms_length_bias_flags_when_gt_60_pct_exceed_108x():
+def test_ms_length_bias_flags_when_gt_60_pct_exceed_115x():
     linter = MsLengthBiasLinter()
     issues: list[LintIssue] = []
     ms_biased = lambda qid: {
@@ -196,7 +196,7 @@ def test_ms_length_bias_flags_when_gt_60_pct_exceed_108x():
         "type": "multiple_select",
         "options": [
             {"text": "Opción correcta muy detallada y extensa", "is_correct": True},
-            {"text": "Corta", "is_correct": False},
+            {"text": "Opción falsa corta", "is_correct": False},
         ],
     }
     ms_balanced = {
@@ -204,8 +204,8 @@ def test_ms_length_bias_flags_when_gt_60_pct_exceed_108x():
         "competency_id": "C1",
         "type": "multiple_select",
         "options": [
-            {"text": "Texto corto", "is_correct": True},
-            {"text": "Texto corto", "is_correct": False},
+            {"text": "Texto corto equivalente", "is_correct": True},
+            {"text": "Texto corto alternativo", "is_correct": False},
         ],
     }
     # 3 de 4 biased = 75% > 60%
@@ -227,7 +227,7 @@ def test_ms_length_bias_does_not_flag_at_or_below_60_pct():
         "type": "multiple_select",
         "options": [
             {"text": "Opción correcta muy detallada y extensa", "is_correct": True},
-            {"text": "Corta", "is_correct": False},
+            {"text": "Opción falsa corta", "is_correct": False},
         ],
     }
     ms_balanced = lambda qid: {
@@ -249,6 +249,25 @@ def test_ms_length_bias_does_not_flag_at_or_below_60_pct():
     ])
     summary = linter.run(course, issues)
     assert summary["biased_ms_pct"] == 60.0
+    assert issues == []
+
+
+def test_ms_length_bias_ignores_within_r15_ms_tolerance():
+    linter = MsLengthBiasLinter()
+    issues: list[LintIssue] = []
+    # Ratio = 71 / 64.5 = 1.101 <= 1.15 and abs diff = 6.5 < 8.0 (aligned with [R-15-MS])
+    ms_grey_zone = {
+        "id": "ms_grey",
+        "competency_id": "C1",
+        "type": "multiple_select",
+        "options": [
+            {"text": "Aunque w/p=29 cambie, L(t)=132 e^(0.03t) es totalmente inelástica", "is_correct": True},
+            {"text": "Si w/p=29, persiste desempleo L_emp < 132 e^(0.03t) en equilibrio", "is_correct": False},
+        ],
+    }
+    course = _base_course([ms_grey_zone])
+    summary = linter.run(course, issues)
+    assert summary["biased_ms_items_count"] == 0
     assert issues == []
 
 
