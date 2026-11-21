@@ -1077,8 +1077,9 @@ class ExecutionAuditor:
         # 1. Audit Orchestrator root
         root_metrics = self._analyze_conversation(self.root_records, self.root_conv_id, "Director (Orchestrator)")
 
-        # 2. Extract and audit Orchestrator manual file interventions
+        # 2. Extract and audit Orchestrator manual file interventions & orchestration frictions
         interventions = self._extract_orchestrator_interventions(self.root_records)
+        orch_frictions = self._extract_orchestrator_frictions(self.root_records)
         orch_time_decomp = self._decompose_orchestrator_time(self.root_records, interventions)
 
         # 3. Discover ALL subagents across transcript & workflow task logs
@@ -1251,7 +1252,8 @@ class ExecutionAuditor:
                 "metrics": root_metrics,
                 "time_decomposition": orch_time_decomp,
                 "interventions_count": len(interventions),
-                "interventions": interventions
+                "interventions": interventions,
+                "frictions": orch_frictions,
             },
             "bottlenecks": bottlenecks,
             "subagents": subagent_nodes,
@@ -1282,6 +1284,12 @@ class ExecutionAuditor:
         tool_calls_by_name: Dict[str, int] = {}
         tool_errors_count = 0
         failed_commands = []
+        last_planner_text = ""
+        sent_terminal_text = ""
+        pending_compile_check = False
+        compile_attempts_count = 0
+        compile_first_passed: Optional[bool] = None
+        first_compile_rules: List[str] = []
 
         timestamps = []
         steps_summary = []
@@ -1316,6 +1324,10 @@ class ExecutionAuditor:
                 output_tokens += out
                 cache_read_tokens += cache
 
+                p_txt = (rec.get("content") or "").strip()
+                if p_txt:
+                    last_planner_text = p_txt
+
                 th = rec.get("thinking", "")
                 if th:
                     thinking_chars += len(th)
@@ -1328,6 +1340,17 @@ class ExecutionAuditor:
                     tname = tc.get("name", "unknown")
                     tool_calls_by_name[tname] = tool_calls_by_name.get(tname, 0) + 1
                     tools_in_step.append(tname)
+                    tc_args = self._extract_tc_args(tc)
+                    if tname == "run_command" and "compile_shard.py" in str(tc_args.get("CommandLine") or ""):
+                        pending_compile_check = True
+                    elif tname == "send_message":
+                        msg_txt = str(tc_args.get("Message") or "").strip()
+                        if "BLOCKED:" in msg_txt or "DONE:" in msg_txt:
+                            sent_terminal_text = msg_txt
+                    elif tname == "finish":
+                        fin_txt = str(tc_args.get("result") or tc_args.get("Result") or "").strip().strip('"')
+                        if "BLOCKED:" in fin_txt or "DONE:" in fin_txt:
+                            sent_terminal_text = fin_txt
 
                 steps_summary.append({
                     "step_index": rec.get("step_index"),
@@ -1338,8 +1361,30 @@ class ExecutionAuditor:
                     "tools": tools_in_step
                 })
 
-            elif rec_type == "GENERIC":
+            elif rec_type in ("GENERIC", "TOOL_RESPONSE", "USER_INPUT", "SYSTEM_MESSAGE"):
                 content = rec.get("content", "")
+                if pending_compile_check:
+                    is_bg_notice = "Tool is running as a background task" in content and "finished with result" not in content
+                    if not is_bg_notice and (
+                        "exited with code" in content
+                        or "FAIL:" in content
+                        or "PASS" in content
+                        or "Traceback (most recent call last)" in content
+                    ):
+                        pending_compile_check = False
+                        compile_attempts_count += 1
+                        is_comp_fail = (
+                            "FAIL:" in content
+                            or "exited with code 1" in content
+                            or "exited with code 2" in content
+                            or "Traceback (most recent call last)" in content
+                        )
+                        if compile_attempts_count == 1:
+                            compile_first_passed = not is_comp_fail
+                            if is_comp_fail:
+                                first_compile_rules = list(dict.fromkeys(
+                                    re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", content)
+                                ))[:8]
                 if "exited with code" in content:
                     code_match = re.search(r"exited with code\s+(\d+)", content)
                     if code_match and int(code_match.group(1)) != 0:
@@ -1381,6 +1426,15 @@ class ExecutionAuditor:
                             "thinking_snippet": str(tr.get("thinking"))[-300:].strip(),
                         })
 
+        term_source = sent_terminal_text or last_planner_text
+        terminal_status = "UNKNOWN"
+        blocked_reason = ""
+        if "BLOCKED:" in term_source:
+            terminal_status = "BLOCKED"
+            blocked_reason = term_source.split("BLOCKED:", 1)[1].strip()[:160]
+        elif "DONE:" in term_source:
+            terminal_status = "DONE"
+
         return {
             "conversation_id": conv_id,
             "label": label,
@@ -1406,6 +1460,11 @@ class ExecutionAuditor:
             "failed_commands": failed_commands[:5],
             "steps": steps_summary[:15],
             "from_v3_telemetry_snapshot": bool(pre_extracted),
+            "terminal_status": terminal_status,
+            "blocked_reason": blocked_reason,
+            "compile_attempts_count": compile_attempts_count,
+            "compile_first_passed": compile_first_passed,
+            "first_compile_rules": first_compile_rules,
         }
 
     @staticmethod
@@ -1445,6 +1504,46 @@ class ExecutionAuditor:
         if m_target:
             return m_target.group(0).strip("'\"")
         return None
+
+    def _extract_orchestrator_frictions(self, records: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Extract pre-tool hook denials, malformed tool calls, and hybrid invoke_subagent fallback usage."""
+        hook_denials: List[Dict[str, Any]] = []
+        malformed_calls: List[Dict[str, Any]] = []
+        run_workflow_count = 0
+        legacy_invoke_count = 0
+        legacy_kill_count = 0
+
+        for rec in records:
+            step_idx = rec.get("step_index")
+            rtype = rec.get("type", "")
+            c_txt = str(rec.get("content") or "")
+            c_low = c_txt.lower()
+            if "tool call denied by pre-tool hook" in c_low:
+                hook_denials.append({"step": step_idx, "snippet": c_txt[:180].strip()})
+            if rtype == "ERROR_MESSAGE" or "malformed function call" in c_low or "improperly formatted function call" in c_low:
+                malformed_calls.append({"step": step_idx, "snippet": c_txt[:180].strip()})
+
+            for tc in rec.get("tool_calls", []) or []:
+                tname = tc.get("name") or tc.get("function", {}).get("name", "")
+                if tname == "run_workflow":
+                    run_workflow_count += 1
+                elif tname == "invoke_subagent":
+                    legacy_invoke_count += 1
+                elif tname == "manage_subagents":
+                    args = self._extract_tc_args(tc)
+                    if str(args.get("Action") or "").lower() in ("kill", "kill_all"):
+                        legacy_kill_count += 1
+
+        return {
+            "hook_denials_count": len(hook_denials),
+            "hook_denials": hook_denials,
+            "malformed_tool_calls_count": len(malformed_calls),
+            "malformed_tool_calls": malformed_calls,
+            "run_workflow_count": run_workflow_count,
+            "legacy_invoke_subagent_count": legacy_invoke_count,
+            "legacy_manage_kill_count": legacy_kill_count,
+            "is_hybrid_workflow_fallback": run_workflow_count > 0 and legacy_invoke_count > 0,
+        }
 
     def _extract_orchestrator_interventions(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Audits every direct file modification made by the orchestrator (Supervisor Repair Catalog)."""
@@ -1660,6 +1759,16 @@ class ExecutionAuditor:
         author_comps_total = sum(s.get("competencies_count", 0) for s in author_subs)
         avg_tokens_per_comp = round(author_active_tokens / author_comps_total, 1) if author_comps_total > 0 else 0.0
 
+        compiled_authors = [s for s in author_subs if s.get("compile_first_passed") is not None]
+        first_compile_passed_count = sum(1 for s in compiled_authors if s.get("compile_first_passed") is True)
+        first_compile_total = len(compiled_authors) if compiled_authors else len(author_subs)
+        first_compile_pass_rate = round((first_compile_passed_count / first_compile_total) * 100.0, 1) if first_compile_total > 0 else 0.0
+        rule_counts: Dict[str, int] = {}
+        for s in author_subs:
+            for rcode in s.get("first_compile_rules", []):
+                rule_counts[rcode] = rule_counts.get(rcode, 0) + 1
+        first_compile_top_rules = sorted(rule_counts.items(), key=lambda kv: -kv[1])[:6]
+
         stage_3 = {
             "shards_count": len(author_subs),
             "shards": author_subs,
@@ -1670,7 +1779,11 @@ class ExecutionAuditor:
             "straggler_delay_vs_median": round(max(author_durs) - median_author_dur, 1) if author_durs else 0.0,
             "total_author_active_tokens": author_active_tokens,
             "total_author_cache_tokens": sum(s["cache_read_tokens"] for s in author_subs),
-            "avg_tokens_per_competency": avg_tokens_per_comp
+            "avg_tokens_per_competency": avg_tokens_per_comp,
+            "first_compile_passed_count": first_compile_passed_count,
+            "first_compile_total": first_compile_total,
+            "first_compile_pass_rate": first_compile_pass_rate,
+            "first_compile_top_rules": first_compile_top_rules,
         }
 
         # 4. Stage 5: Blind Judges & Psychometric Verification (Consuming 05b_judge_compare.json & judge_report.json)
@@ -1726,6 +1839,13 @@ class ExecutionAuditor:
                     pass
 
             jr_file = work_path / "judge_report.json"
+            jr_baseline_file = work_path / "judge_report_baseline.json"
+            jb_data: Optional[Dict[str, Any]] = None
+            if jr_baseline_file.is_file():
+                try:
+                    jb_data = json.loads(jr_baseline_file.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
             if jr_file.is_file():
                 try:
                     jr_data = json.loads(jr_file.read_text(encoding="utf-8"))
@@ -1899,6 +2019,36 @@ class ExecutionAuditor:
                     f"3. **Certificación y Verificación Final**: Se concluyó la validación tras {repair_iters or 1} iteraciones sobre el lote de {batch_items} reactivos."
                 ]
 
+        round_1_kernel_override_count = 0
+        round_1_flaw_detected_count = 0
+        jb_src = jb_data if isinstance(locals().get("jb_data"), dict) else (jr_data if isinstance(locals().get("jr_data"), dict) else None)
+        if jb_src:
+            ko_items = jb_src.get("kernel_overridden_items")
+            round_1_kernel_override_count = int(
+                jb_src.get("kernel_override_count", len(ko_items) if isinstance(ko_items, list) else 0) or 0
+            )
+            dis_list = jb_src.get("disagreements") or []
+            if isinstance(dis_list, list) and dis_list:
+                round_1_flaw_detected_count = sum(1 for d in dis_list if isinstance(d, dict) and d.get("flaw_detected") is True)
+
+        if round_1_flaw_detected_count == 0 and round_1_discrepancies_count > 0 and judge_subs:
+            r1_steps = [j.get("spawn_step") for j in judge_subs if j.get("spawn_step") is not None]
+            min_j_step = min(r1_steps) if r1_steps else None
+            for j in judge_subs:
+                if min_j_step is not None and j.get("spawn_step") != min_j_step:
+                    continue
+                j_cid = j.get("conversation_id", "")
+                j_logs_dir = self.brain_dir / j_cid / ".system_generated" / "logs"
+                j_tpath = j_logs_dir / "transcript_full.jsonl"
+                if not j_tpath.is_file():
+                    j_tpath = j_logs_dir / "transcript.jsonl"
+                if j_tpath.is_file():
+                    try:
+                        j_txt = j_tpath.read_text(encoding="utf-8", errors="ignore")
+                        round_1_flaw_detected_count += len(re.findall(r'(?:\\"|")flaw_detected(?:\\"|")\s*:\s*true', j_txt, re.IGNORECASE))
+                    except Exception:
+                        pass
+
         stage_5 = {
             "judges_count": len(judge_subs),
             "judges": judge_subs,
@@ -1909,6 +2059,8 @@ class ExecutionAuditor:
             "has_rejudge": has_rejudge,
             "round_1_passed": round_1_passed,
             "round_1_discrepancies_count": round_1_discrepancies_count,
+            "round_1_flaw_detected_count": round_1_flaw_detected_count,
+            "round_1_kernel_override_count": round_1_kernel_override_count,
             "round_1_agreement_rate": round_1_agreement_rate,
             "final_passed": (judge_compare_passed_v3 is True and discrepancies_count == 0) if judge_compare_passed_v3 is not None else passed_first_attempt,
             "rounds_history": rounds_history,
@@ -1931,9 +2083,32 @@ class ExecutionAuditor:
         total_repair_active_tokens = sum(s["active_tokens"] for s in repair_subs)
         slowest_repair = next((s for s in repair_subs if s["duration_seconds"] == max_repair_dur), None) if repair_durs else None
 
+        blocked_repairs_count = sum(1 for s in repair_subs if s.get("terminal_status") == "BLOCKED")
+        done_repairs_count = sum(1 for s in repair_subs if s.get("terminal_status") == "DONE")
+        rounds_by_step: Dict[Any, List[Dict[str, Any]]] = {}
+        for s in repair_subs:
+            rounds_by_step.setdefault(s.get("spawn_step"), []).append(s)
+        repair_rounds = [
+            {
+                "round": r_idx,
+                "spawn_step": step_key,
+                "workers_count": len(grp),
+                "blocked_count": sum(1 for g in grp if g.get("terminal_status") == "BLOCKED"),
+                "done_count": sum(1 for g in grp if g.get("terminal_status") == "DONE"),
+            }
+            for r_idx, (step_key, grp) in enumerate(
+                sorted(rounds_by_step.items(), key=lambda kv: (kv[0] is None, kv[0] or 0)),
+                start=1,
+            )
+        ]
+
         stage_3b = {
             "repairs_count": len(repair_subs),
             "repairs": repair_subs,
+            "total_repair_rounds": len(repair_rounds),
+            "repair_rounds": repair_rounds,
+            "blocked_repairs_count": blocked_repairs_count,
+            "done_repairs_count": done_repairs_count,
             "min_duration_seconds": min(repair_durs) if repair_durs else 0.0,
             "median_duration_seconds": median_repair_dur,
             "max_duration_seconds": max_repair_dur,
@@ -2468,12 +2643,18 @@ class ReportGenerator:
                 f"{ha['cache_read_tokens']:,} | {ha['tool_errors_count']} | **{ha['duration_seconds']}s** |"
             )
 
+        _fc_passed = stg["stage_3_authors"].get("first_compile_passed_count", 0)
+        _fc_total = stg["stage_3_authors"].get("first_compile_total", stg["stage_3_authors"]["shards_count"])
+        _fc_pct = stg["stage_3_authors"].get("first_compile_pass_rate", 0.0)
+        _fc_rules = stg["stage_3_authors"].get("first_compile_top_rules", [])
+        _fc_rules_txt = ", ".join(f"`[{r}]` ({c})" for r, c in _fc_rules) if _fc_rules else "N/A"
         md.extend([
             "",
             "---",
             "",
             "### 3.3. Stage 3: Autoría de Reactivos por Shard y Análisis por Competencia",
             f"- **Total de Shards Auditados:** `{stg['stage_3_authors']['shards_count']} shards concurrentes`",
+            f"- **Tasa de Aprobación en 1ra Compilación:** **`{_fc_passed}/{_fc_total} ({_fc_pct}%)`** (Reglas en 1er fallo: {_fc_rules_txt})",
             f"- **Duración Mínima de Shard:** `{stg['stage_3_authors']['min_duration_seconds']}s` | **Mediana:** `{stg['stage_3_authors']['median_duration_seconds']}s`",
             f"- **Tiempo de Pared Máximo (Straggler Crítico):** **`{stg['stage_3_authors']['max_duration_seconds']}s`** (`{round(stg['stage_3_authors']['max_duration_seconds']/60, 1)} min`) por `{stg['stage_3_authors']['straggler_shard']}`",
             f"- **Retraso de Sincronización Impuesto por el Straggler:** **`+{stg['stage_3_authors']['straggler_delay_vs_median']}s`** frente a la mediana",
@@ -2499,22 +2680,26 @@ class ReportGenerator:
 
         stg_3b = stg.get("stage_3b_repairs", {})
         if stg_3b and stg_3b.get("repairs_count", 0) > 0:
+            _r_rounds = stg_3b.get("total_repair_rounds", 0)
+            _r_blocked = stg_3b.get("blocked_repairs_count", 0)
+            _r_done = stg_3b.get("done_repairs_count", 0)
             md.extend([
                 "",
                 "---",
                 "",
                 "### 3.3b. Stage 3B: Remediación y Repair Engineers (Ingenieros de Reparación)",
-                f"- **Total de Repair Engineers Desplegados:** `{stg_3b['repairs_count']} subagentes`",
+                f"- **Total de Repair Engineers Desplegados:** `{stg_3b['repairs_count']} subagentes` en **`{_r_rounds} ronda(s)`** (`DONE`: `{_r_done}`, `BLOCKED`: **`{_r_blocked}`**)",
                 f"- **Duración Mínima:** `{stg_3b['min_duration_seconds']}s` | **Mediana:** `{stg_3b['median_duration_seconds']}s` | **Máxima:** `{stg_3b['max_duration_seconds']}s` (`{round(stg_3b['max_duration_seconds']/60, 1)} min`)",
                 f"- **Tokens Activos Totales en Reparación:** `{stg_3b['total_active_tokens']:,} tokens`",
                 f"- **Agente Determinante del Retraso:** `{stg_3b['slowest_repair']}`",
                 "",
-                "| Repair Engineer | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Errores | Duración |",
-                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |"
+                "| Repair Engineer | Estado | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Errores | Duración |",
+                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |"
             ])
             for ra in stg_3b.get("repairs", []):
+                _r_state = ra.get("terminal_status", "UNKNOWN")
                 md.append(
-                    f"| **{ra['label']}** | {ra['turns_count']} | {ra['input_tokens']:,} | {ra['output_tokens']:,} | "
+                    f"| **{ra['label']}** | `{_r_state}` | {ra['turns_count']} | {ra['input_tokens']:,} | {ra['output_tokens']:,} | "
                     f"{ra['cache_read_tokens']:,} | {ra['active_tokens']:,} | {ra['tool_errors_count']} | **{ra['duration_seconds']}s** |"
                 )
 
@@ -2531,9 +2716,14 @@ class ReportGenerator:
             first_att_obs = "Sin discrepancias ni arbitraje necesario"
         elif bj.get("has_rejudge") or bj.get("round_1_discrepancies_count", 0) > 0:
             r1_disc = bj.get("round_1_discrepancies_count", 0)
+            r1_flaw = bj.get("round_1_flaw_detected_count", 0)
+            r1_ko = bj.get("round_1_kernel_override_count", 0)
             r1_agr = bj.get("round_1_agreement_rate")
             r1_agr_txt = f" ({r1_agr * 100:.1f}% acuerdo)" if r1_agr is not None else ""
-            first_att_obs = f"Ronda 1: {r1_disc} discrepancia(s){r1_agr_txt}; {bj['initial_errors_count']} violaciones iniciales"
+            first_att_obs = (
+                f"Ronda 1: {r1_disc} discrepancia(s){r1_agr_txt} "
+                f"(`flaw_detected`: {r1_flaw}, `kernel_override`: {r1_ko}); {bj['initial_errors_count']} violaciones iniciales"
+            )
         else:
             first_att_obs = f"{bj['initial_errors_count']} violaciones iniciales registradas"
         rep_obs = "0 requeridas" if bj["passed_first_attempt"] else f"{bj['repair_iterations']} iteraciones ejecutadas"
@@ -2597,6 +2787,20 @@ class ReportGenerator:
                 )
         else:
             md.append("| — | *Ninguna intervención registrada* | — | — | — | 0 |")
+
+        fr = orch.get("frictions", {})
+        if fr and (
+            fr.get("hook_denials_count", 0) > 0
+            or fr.get("malformed_tool_calls_count", 0) > 0
+            or fr.get("is_hybrid_workflow_fallback")
+        ):
+            md.extend([
+                "",
+                "### 4.3. Fricciones de Orquestación, Hooks y Gobernanza Híbrida",
+                f"- **Denegaciones de Pre-Tool Hooks:** `{fr.get('hook_denials_count', 0)}` (Pasos: {', '.join(str(h['step']) for h in fr.get('hook_denials', [])) or 'N/A'})",
+                f"- **Llamadas Malformadas (`Malformed function call`):** `{fr.get('malformed_tool_calls_count', 0)}` (Pasos: {', '.join(str(m['step']) for m in fr.get('malformed_tool_calls', [])) or 'N/A'})",
+                f"- **Gobernanza Híbrida (`run_workflow` + `invoke_subagent` legado):** `{'Sí' if fr.get('is_hybrid_workflow_fallback') else 'No'}` (`run_workflow`: {fr.get('run_workflow_count', 0)}, `invoke_subagent`: {fr.get('legacy_invoke_subagent_count', 0)}, `manage_subagents(kill*)`: {fr.get('legacy_manage_kill_count', 0)})",
+            ])
 
         md.extend([
             "",

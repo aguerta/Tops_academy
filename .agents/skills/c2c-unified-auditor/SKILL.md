@@ -141,7 +141,7 @@ En el modo conversacional estándar, el orquestador lanza **ambos subagentes en 
       "Role": "C2C Run Auditor",
       "TypeName": "c2c_run_auditor",
       "Model": "inherit",
-      "Prompt": "Audita la telemetría forense de la conversación <conv_id> para el curso '<course_id>'. Ejecuta el análisis de camino crítico, descomposición de inferencia LLM vs herramientas y taxonomía de errores. Asegúrate de emitir 'telemetry.json' y 'traceback_deepdive.json'."
+      "Prompt": "Audita en modo forense agéntico la telemetría de la conversación <conv_id> para el curso '<course_id>'. NO te limites a resumir reportes deterministas previos: inspecciona directamente los transcripts crudos (transcript.jsonl/transcript_full.jsonl) del Orquestador, Repairers y Blind Judges, los logs en tasks/*.log y los artefactos en work/ (cta.json, pre_shard_manifest.json, judge_report*.json) para verificar denegaciones de hooks, rondas BLOCKED de reparación, mutaciones inline vía shell, tasa de 1ra compilación y desglose flaw_detected vs kernel_override. Emite/actualiza 'report.md', 'telemetry.json' y 'traceback_deepdive.json'."
     },
     {
       "Role": "Course QA Evaluator",

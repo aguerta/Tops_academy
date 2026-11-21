@@ -1037,7 +1037,9 @@ class UninterpolatedMathVariableLinter(BaseLinter):
     dimension = "D5_katex"
 
     BRACE_VAR_PAT = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
-    LATEX_ARG_PREFIX_PAT = re.compile(r"(?:\\[a-zA-Z]+\s*(?:\[[^\]]*\])?(?:\s*\{[^}]*\})*|[_^])\s*$")
+    LATEX_ARG_PREFIX_PAT = re.compile(
+        r"(?:\\[a-zA-Z]+\s*(?:\[[^\]]*\])?(?:\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})*|[_^])\s*$"
+    )
     CONSECUTIVE_SIGNS_PAT = re.compile(r"(?:\+\s*-\d+|-\s*-\d+)")
     KNOWN_LATEX_SINGLE_LETTER_OR_MACRO = {
         "n", "i", "j", "k", "t", "x", "y", "z", "p", "d", "R", "C", "N", "E", "P", "F", "V",
@@ -2327,6 +2329,67 @@ class MsLengthBiasLinter(BaseLinter):
         }
 
 
+class PhantomNumericRationaleLinter(BaseLinter):
+    """Detects phantom numeric literals leaked into error_rationale of open_symbolic items."""
+    name = "phantom_numeric_rationale_linter"
+    dimension = "D3_scaffolding"
+
+    DECIMAL_PAT = re.compile(r"(?<![a-zA-Z0-9_])\d+\.\d+(?![a-zA-Z0-9_])")
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        evaluated_symbolic = 0
+        affected_items: list[str] = []
+
+        for q in questions:
+            qtype = str(q.get("interaction_type") or q.get("type") or "").strip().lower()
+            if qtype != "open_symbolic":
+                continue
+            evaluated_symbolic += 1
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+            stem = str(q.get("stem") or "")
+            ca = q.get("correct_answer")
+            if isinstance(ca, dict):
+                ca_str = str(ca.get("expression") or ca.get("value") or ca.get("canonical_algebraic") or "")
+            else:
+                ca_str = str(ca or "")
+
+            for dd_idx, dd in enumerate(q.get("diagnostic_distractors") or []):
+                if not isinstance(dd, dict):
+                    continue
+                rat = str(dd.get("error_rationale") or "")
+                expr = str(dd.get("expression") or dd.get("value") or "")
+                allowed = f"{stem} {ca_str} {expr}"
+                phantom_tok = None
+                for tok in self.DECIMAL_PAT.findall(rat):
+                    if tok not in allowed:
+                        phantom_tok = tok
+                        break
+                if phantom_tok is not None:
+                    if qid not in affected_items:
+                        affected_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="warning",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=(
+                            f"Fuga numérica fantasma en open_symbolic diagnostic_distractors[{dd_idx}].error_rationale: "
+                            f"el decimal '{phantom_tok}' no aparece en el enunciado ni en la expresión simbólica."
+                        ),
+                        snippet=rat[:120],
+                    ))
+                    break
+
+        return {
+            "total_open_symbolic": evaluated_symbolic,
+            "phantom_numeric_items_count": len(affected_items),
+            "phantom_numeric_sample_items": affected_items[:15],
+        }
+
+
 class DAGMasteryTopologyLinter(BaseLinter):
     """Audits prerequisite DAG topology for linear 'Up Next' navigation and Quiz/Unit Test interleaving.
 
@@ -3272,6 +3335,7 @@ class AuditLinterRegistry:
             DomainImpossibleDistractorLinter(),
             FibRoundingContractLinter(),
             MsLengthBiasLinter(),
+            PhantomNumericRationaleLinter(),
         ]
         self.domain_linters: dict[str, list[BaseLinter]] = {}
 
@@ -3398,6 +3462,13 @@ class AuditLinterRegistry:
             "disconnected_numeric_rationales": [],
             "duplicate_competencies": [],
             "sympy_in_katex": [],
+            "phantom_numeric_rationale": [],
+            "ms_length_bias": (
+                list(summaries.get("ms_length_bias_linter", {}).get("biased_ms_sample_items", []))
+                if summaries.get("ms_length_bias_linter", {}).get("total_ms_items", 0) >= 5
+                and summaries.get("ms_length_bias_linter", {}).get("biased_ms_pct", 0.0) >= 30.0
+                else []
+            ),
         }
 
         issues_by_item: dict[str, list[str]] = {}
@@ -3444,6 +3515,14 @@ class AuditLinterRegistry:
                         risk_clusters["boilerplate_hints"].append(qid)
                 if qid not in risk_clusters["scaffolding_flaws"]:
                     risk_clusters["scaffolding_flaws"].append(qid)
+            elif iss.linter == "phantom_numeric_rationale_linter":
+                if qid not in risk_clusters["phantom_numeric_rationale"]:
+                    risk_clusters["phantom_numeric_rationale"].append(qid)
+                if qid not in risk_clusters["scaffolding_flaws"]:
+                    risk_clusters["scaffolding_flaws"].append(qid)
+            elif iss.linter == "ms_length_bias_linter":
+                if qid not in risk_clusters["ms_length_bias"]:
+                    risk_clusters["ms_length_bias"].append(qid)
             elif iss.dimension == "D3_scaffolding" and qid not in risk_clusters["scaffolding_flaws"]:
                 risk_clusters["scaffolding_flaws"].append(qid)
             elif iss.linter == "diagnostic_rationale_alignment_linter":

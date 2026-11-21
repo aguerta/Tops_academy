@@ -100,7 +100,7 @@ Cuando el usuario solicita una auditoría estándar sin pedir intervención agé
 > [!IMPORTANT]
 > Cuando el usuario especifica explícitamente **`mediante agente`**, **`no headless`**, **`con subagente`** o solicita una **investigación forense profunda de causa raíz**:
 > 1. **Paso A (Baseline Cuantitativo Determinista):** Ejecuta primero `audit_engine.py --conversation <ID_O_ENLACE> --traceback` para generar la estructura base (`telemetry.json`, `traceback_deepdive_<id>.json`, `shard_timing_profile.json`, `report.md`).
-> 2. **Paso B (Despacho del Subagente Especializado `c2c_run_auditor`):** Define e invoca mediante `define_subagent` + `invoke_subagent` un subagente forense dedicado (`c2c_run_auditor`, con `enable_write_tools=True`) encargado de verificar el aislamiento estricto de `conversation_id`, inspeccionar turnos de fallos y redactar el reporte forense enriquecido.
+> 2. **Paso B (Despacho del Subagente Especializado `c2c_run_auditor`):** Define e invoca mediante `define_subagent` + `invoke_subagent` un subagente forense dedicado (`c2c_run_auditor`, con `enable_write_tools=True`) encargado de verificar el aislamiento estricto de `conversation_id`, inspeccionar turnos de fallos en los transcripts crudos (`transcript.jsonl`/`transcript_full.jsonl`, `tasks/*.log`, `work/`), validar `orchestrator_audit.frictions`, `repair_rounds`, `first_compile_pass_rate` y `round_1_flaw_detected_count` vs `round_1_kernel_override_count`, y redactar el reporte forense enriquecido.
 
 ### Modo 3: Orquestación Forense Jerárquica Paralela (Ultra-Escala $\ge 10$ Shards / Gavilano Pattern)
 > [!TIP]
