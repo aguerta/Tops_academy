@@ -176,7 +176,7 @@ Al registrar el subagente vía `define_subagent`:
 1. **Arquitectura y Granularidad (0 a 4 pts)**: Atomicidad de micro-competencias, balance cognitivo (Hechos/Conceptos/Habilidades) y modelado de prerrequisitos.
 2. **Calidad de Evaluación y Reactivos (0 a 5 pts)**: Variedad de ítems (MC7, MS, FIB), distractores con rationales diagnósticos reales, cero answer leaks ni metainformación visible delatora.
 3. **Andamiaje y Pistas Progresivas (0 a 5 pts)**: Exactamente 3 a 5 pistas escalonadas (Conceptual $\to$ Procedimental $\to$ Cálculo) y solución detallada con advertencia de ideas erróneas.
-4. **Alineación Instruccional (0 a 4 pts)**: Congruencia semántica estricta con la teoría, sin preguntas huérfanas ni contaminación cruzada.
+4. **Alineación Instruccional (0 a 4 pts)**: Congruencia semántica estricta con la teoría, habilidades en `Apply+`, **Índice Bloom Ponderado (`1–5`) vs piso adaptativo (banda Élite `3.85–4.15`) y coherencia `modalidad × bloom` anti-Goodhart**, sin preguntas huérfanas ni contaminación cruzada.
 5. **Ergonomía Técnica y KaTeX (0 a 2 pts)**: Delimitadores `$` balanceados, sin triples `$$$`, sin llaves dobles `{{...}}` y notación matemática formal preservada.
 
 **Penalizaciones Duras Automáticas**:

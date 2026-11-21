@@ -121,7 +121,7 @@ class KaTeXSyntaxLinter(BaseLinter):
     UNESCAPED_LATEX_CMD = re.compile(r"(?<!\$)(?<!\\)\\(dot|bar|vec|hat|tilde|ddot)\{[a-zA-Z0-9]+\}(?!\$)")
     TRIPLE_DOLLAR = re.compile(r"\${3,}")
     DOUBLE_BRACE = re.compile(r"\{\{[a-zA-Z0-9_]+\}\}")
-    SYMPY_IN_KATEX = re.compile(r"\$[^$]*(?:\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()[^$]*\$")
+    SYMPY_IN_KATEX = re.compile(r"\$[^$]*(?:\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()[^$]*\$")
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         unclosed_braces = []
@@ -569,18 +569,41 @@ class ArchitectureDAGLinter(BaseLinter):
         return symbols
 
     @classmethod
+    def _canon_comp_category(cls, c: dict) -> str:
+        raw = str(c.get("category") or c.get("type") or "").strip().lower()
+        if raw in ("skill", "hab", "habilidad"):
+            return "skill"
+        if raw in ("concept", "concepto"):
+            return "concept"
+        if raw in ("fact", "hecho", "prerequisite"):
+            return "fact"
+        cid = str(c.get("id") or "")
+        if cid.startswith("Hab-"):
+            return "skill"
+        if cid.startswith(("H-", "PRE-")):
+            return "fact"
+        return raw or "concept"
+
+    @classmethod
     def _are_competencies_duplicate(cls, c1: dict, c2: dict) -> bool:
         n1 = str(c1.get("name") or c1.get("title") or "").strip().lower()
         n2 = str(c2.get("name") or c2.get("title") or "").strip().lower()
         if n1 and n2 and n1 == n2:
             return True
+        same_category = cls._canon_comp_category(c1) == cls._canon_comp_category(c2)
         stems_n1 = cls._extract_content_stems(n1)
         stems_n2 = cls._extract_content_stems(n2)
-        if not (stems_n1 & stems_n2):
+        shared_n = stems_n1 & stems_n2
+        if not shared_n:
             return False
-        min_name_len = min(len(stems_n1), len(stems_n2))
-        if min_name_len >= 2 and len(stems_n1 & stems_n2) / min_name_len >= 0.75:
-            return True
+        if same_category:
+            min_name_len = min(len(stems_n1), len(stems_n2))
+            if min_name_len >= 2 and len(shared_n) / min_name_len >= 0.75:
+                return True
+        else:
+            union_n = stems_n1 | stems_n2
+            if len(shared_n) >= 3 and union_n and (len(shared_n) / len(union_n)) >= 0.65:
+                return True
         t1 = f"{c1.get('name') or ''} {c1.get('description') or c1.get('description_latex') or ''}"
         t2 = f"{c2.get('name') or ''} {c2.get('description') or c2.get('description_latex') or ''}"
         s1 = cls._extract_content_stems(t1)
@@ -591,7 +614,9 @@ class ArchitectureDAGLinter(BaseLinter):
         m1 = cls._extract_math_symbols(t1)
         m2 = cls._extract_math_symbols(t2)
         math_j = (len(m1 & m2) / len(m1 | m2)) if (m1 and m2) else 0.0
-        return stem_j >= 0.35 or (stem_j >= 0.25 and math_j >= 0.45)
+        if same_category:
+            return stem_j >= 0.35 or (stem_j >= 0.25 and math_j >= 0.45)
+        return stem_j >= 0.40 and math_j >= 0.50
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         competencies = course_data.get("competencies", [])
@@ -1164,6 +1189,29 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
     dimension = "D1_architecture"
 
     HIGHER_BLOOM = {"apply", "analyze", "evaluate", "create", "aplicar", "analizar", "evaluar", "crear"}
+    BLOOM_WEIGHTS = {
+        "remember": 1.0, "recordar": 1.0,
+        "understand": 2.0, "comprender": 2.0,
+        "apply": 3.0, "aplicar": 3.0,
+        "analyze": 4.0, "analizar": 4.0,
+        "evaluate": 5.0, "evaluar": 5.0,
+        "create": 5.0, "crear": 5.0,
+    }
+    FLOOR_BY_CATEGORY = {"skill": 4.00, "concept": 3.75, "fact": 3.25}
+    M20_MODALITIES = {
+        "open_symbolic", "proof_dag", "adversarial_break",
+        "unstructured_model", "invariant_canvas", "concept_matching",
+    }
+
+    @classmethod
+    def _comp_bucket(cls, cid: str, raw_cat: str) -> str:
+        c = str(raw_cat or "").strip().lower()
+        cid_s = str(cid or "").strip()
+        if c in ("skill", "hab", "habilidad") or cid_s.startswith("Hab-"):
+            return "skill"
+        if c in ("fact", "hecho", "prerequisite") or cid_s.startswith(("H-", "PRE-")):
+            return "fact"
+        return "concept"
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         competencies = course_data.get("competencies", [])
@@ -1177,7 +1225,19 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
         skill_total = 0
         skill_higher_bloom = 0
 
+        bloom_weight_sum = 0.0
+        bloom_evaluated = 0
+        bloom_apply_plus = 0
+        bloom_superior = 0
+        floor_weight_sum = 0.0
+        has_m20_course = any(
+            str(q.get("interaction_type") or q.get("type") or "").strip().lower() in self.M20_MODALITIES
+            for q in questions
+        )
+        coherence_violations: list[tuple[str, str, str]] = []
+
         for q in questions:
+            qid = q.get("id", "unknown")
             cid = q.get("competency_id", "unassigned")
             q_by_comp.setdefault(cid, []).append(q)
             raw_diff = str(q.get("difficulty") or "medium").lower().strip()
@@ -1186,12 +1246,37 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
 
             bloom = str(q.get("bloom_taxonomy_level") or q.get("bloom") or "unspecified").strip()
             bloom_counts[bloom] = bloom_counts.get(bloom, 0) + 1
+            b_low = bloom.lower()
+            b_w = self.BLOOM_WEIGHTS.get(b_low)
 
-            is_skill = comp_cat.get(cid) == "Skill" or str(cid).lower().startswith("hab")
+            bucket = self._comp_bucket(str(cid), str(comp_cat.get(cid, "")))
+            is_skill = bucket == "skill"
             if is_skill:
                 skill_total += 1
-                if bloom.lower() in self.HIGHER_BLOOM:
+                if b_low in self.HIGHER_BLOOM:
                     skill_higher_bloom += 1
+
+            if b_w is not None:
+                bloom_evaluated += 1
+                bloom_weight_sum += b_w
+                floor_weight_sum += self.FLOOR_BY_CATEGORY.get(bucket, 3.75)
+                if b_w >= 3.0:
+                    bloom_apply_plus += 1
+                if b_w >= 4.0:
+                    bloom_superior += 1
+
+                qtype = str(q.get("interaction_type") or q.get("type") or "").strip().lower()
+                coh_reason = None
+                if qtype == "concept_matching" and b_w > 4.0:
+                    coh_reason = f"concept_matching etiquetado como '{bloom}' (> Analyze)"
+                elif qtype in ("fill_in_the_blank", "fib") and b_w > 4.0:
+                    coh_reason = f"fill_in_the_blank etiquetado como '{bloom}' (> Analyze)"
+                elif qtype in ("adversarial_break", "unstructured_model") and b_w < 4.0:
+                    coh_reason = f"{qtype} degradado a '{bloom}' (< Analyze)"
+                elif has_m20_course and qtype in ("multiple_choice_7_options", "multiple_choice", "mc7") and b_w > 3.0:
+                    coh_reason = f"MC7 en curso M20 etiquetado como '{bloom}' (> Apply)"
+                if coh_reason:
+                    coherence_violations.append((qid, str(cid), coh_reason))
 
         eligible_comps = 0
         zpd_dead_comps = []
@@ -1248,6 +1333,46 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
                 ),
             ))
 
+        bloom_weighted_index = round(bloom_weight_sum / bloom_evaluated, 3) if bloom_evaluated else 0.0
+        adaptive_bloom_floor = round(floor_weight_sum / bloom_evaluated, 3) if bloom_evaluated else 3.85
+        bloom_index_gap = round(max(0.0, adaptive_bloom_floor - bloom_weighted_index), 3) if bloom_evaluated else 0.0
+        bloom_apply_plus_pct = round((bloom_apply_plus / bloom_evaluated * 100.0) if bloom_evaluated else 100.0, 2)
+        bloom_superior_pct = round((bloom_superior / bloom_evaluated * 100.0) if bloom_evaluated else 100.0, 2)
+
+        if bloom_evaluated == 0:
+            bloom_tier = "N/A"
+        elif bloom_weighted_index + 1e-9 >= adaptive_bloom_floor:
+            bloom_tier = "ÉLITE"
+        elif bloom_weighted_index >= 3.60:
+            bloom_tier = "SÓLIDO"
+        else:
+            bloom_tier = "BAJO"
+
+        if len(questions) >= 20 and bloom_evaluated >= 20 and bloom_weighted_index + 1e-9 < adaptive_bloom_floor:
+            rep_q = questions[0] if questions else {}
+            issues.append(LintIssue(
+                linter=self.name,
+                dimension="D4_alignment",
+                severity="warning",
+                item_id=rep_q.get("id", "course_bloom"),
+                competency_id=rep_q.get("competency_id", "global"),
+                message=(
+                    f"Índice Bloom ponderado por debajo del piso adaptativo: {bloom_weighted_index:.2f}/5.0 "
+                    f"(piso {adaptive_bloom_floor:.2f}, brecha -{bloom_index_gap:.2f}; Analyze+Evaluate={bloom_superior_pct:.1f}%)."
+                ),
+            ))
+
+        if len(questions) >= 20 and coherence_violations:
+            for v_qid, v_cid, v_msg in coherence_violations[:10]:
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension="D4_alignment",
+                    severity="warning",
+                    item_id=v_qid,
+                    competency_id=v_cid,
+                    message=f"Incoherencia Bloom modalidad x nivel: {v_msg}.",
+                ))
+
         return {
             "difficulty_distribution": diff_counts,
             "bloom_distribution": bloom_counts,
@@ -1261,6 +1386,15 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
             "skill_questions_total": skill_total,
             "skill_higher_bloom_count": skill_higher_bloom,
             "skill_higher_bloom_pct": round((skill_higher_bloom / skill_total * 100.0) if skill_total else 100.0, 2),
+            "bloom_evaluated_count": bloom_evaluated,
+            "bloom_weighted_index": bloom_weighted_index,
+            "adaptive_bloom_floor": adaptive_bloom_floor,
+            "bloom_index_gap": bloom_index_gap,
+            "bloom_apply_plus_pct": bloom_apply_plus_pct,
+            "bloom_superior_pct": bloom_superior_pct,
+            "bloom_tier": bloom_tier,
+            "bloom_coherence_violations_count": len(coherence_violations),
+            "bloom_coherence_sample_items": [qid for qid, _, _ in coherence_violations[:15]],
         }
 
 
@@ -2267,12 +2401,15 @@ class FibRoundingContractLinter(BaseLinter):
 
 class MsLengthBiasLinter(BaseLinter):
     """Audits average option length ratio len(true_options) / len(false_options)
-    in multiple_select items and flags courses where > 60% exceed 1.08x.
+    in multiple_select items and flags courses where > 60% exceed 1.15x
+    (aligned with pipeline [R-15-MS] bounds and >= 8-char noise guard).
     """
     name = "ms_length_bias_linter"
     dimension = "D2_assessment"
 
-    RATIO_THRESHOLD = 1.08
+    RATIO_THRESHOLD = 1.15
+    MIN_AVG_LEN = 15.0
+    MIN_ABS_DIFF = 8.0
     ITEM_PCT_THRESHOLD = 0.60
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
@@ -2301,7 +2438,11 @@ class MsLengthBiasLinter(BaseLinter):
 
             evaluated_ms += 1
             ratio = avg_true / avg_false
-            if ratio > self.RATIO_THRESHOLD:
+            if (
+                min(avg_true, avg_false) >= self.MIN_AVG_LEN
+                and abs(avg_true - avg_false) >= self.MIN_ABS_DIFF
+                and ratio > self.RATIO_THRESHOLD
+            ):
                 qid = q.get("id", "unknown")
                 cid = q.get("competency_id", "unassigned")
                 biased_items.append((qid, cid, round(ratio, 3)))
@@ -2590,6 +2731,7 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
     RAW_IDENT_MATH_PAT = re.compile(r"\$[a-zA-Z]+_(?:hat|bar|tilde|vec|star|dot|sq|ols|mle|var|est)\b")
     RAW_SCI_FLOAT_MATH_PAT = re.compile(r"(\${1,2})(?:\\.|[^$\\])*\b-?\d+(?:\.\d+)?e[+-]0?\d+\b(?:\\.|[^$\\])*\1")
     RAW_ASTERISK_MATH_PAT = re.compile(r"(\${1,2})(?:\\.|[^$\\])*\d\s*\*\s*\d(?:\\.|[^$\\])*\1")
+    MATH_SEG_PAT = re.compile(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", re.DOTALL)
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         questions = course_data.get("questions", [])
@@ -2597,6 +2739,7 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
         raw_ident_items = []
         raw_sci_float_items = []
         raw_asterisk_items = []
+        tautological_identity_items = []
 
         for q in questions:
             qid = q.get("id", "unknown")
@@ -2657,6 +2800,32 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
                         snippet=m_ast.group(0)[:50],
                     ))
 
+                if field_name in ("solution_steps", "solution_text"):
+                    clean_sol = txt.replace("\\$", "")
+                    for mb_taut in self.MATH_SEG_PAT.finditer(clean_sol):
+                        seg = mb_taut.group(1) if mb_taut.group(0).startswith("$$") else mb_taut.group(2)
+                        if not seg or "=" not in seg:
+                            continue
+                        if any(op in seg for op in ("\\neq", "\\ne ", "\\leq", "\\geq", "\\equiv", "!=", "<=", ">=")):
+                            continue
+                        sides = [re.sub(r"\s+", "", s) for s in seg.split("=")]
+                        taut_pair = next(
+                            ((sides[i], sides[i + 1]) for i in range(len(sides) - 1) if len(sides[i]) >= 4 and sides[i] == sides[i + 1]),
+                            None,
+                        )
+                        if taut_pair:
+                            tautological_identity_items.append(qid)
+                            issues.append(LintIssue(
+                                linter=self.name,
+                                dimension=self.dimension,
+                                severity="warning",
+                                item_id=qid,
+                                competency_id=cid,
+                                message=f"Identidad tautológica redundante '{taut_pair[0]}={taut_pair[1]}' en '{field_name}'",
+                                snippet=f"{taut_pair[0]}={taut_pair[1]}"[:50],
+                            ))
+                            break
+
         return {
             "prose_in_katex_text_items_count": len(set(prose_in_text_items)),
             "prose_in_katex_text_sample_items": list(set(prose_in_text_items))[:15],
@@ -2666,6 +2835,8 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
             "raw_scientific_float_sample_items": list(set(raw_sci_float_items))[:15],
             "raw_asterisk_math_items_count": len(set(raw_asterisk_items)),
             "raw_asterisk_math_sample_items": list(set(raw_asterisk_items))[:15],
+            "tautological_identity_items_count": len(set(tautological_identity_items)),
+            "tautological_identity_sample_items": list(set(tautological_identity_items))[:15],
         }
 
 
@@ -2716,7 +2887,13 @@ def compute_mastery_path_readiness(summaries: dict[str, Any], total_comps: int, 
         band_score = 12.0 * ((three_b * 1.0 + two_b * 0.6) / elig_c)
     else:
         band_score = 12.0
-    bloom_score = 8.0 * (zpd.get("skill_higher_bloom_pct", 100.0) / 100.0)
+    bloom_idx = zpd.get("bloom_weighted_index", 0.0)
+    bloom_floor = zpd.get("adaptive_bloom_floor", 3.85)
+    if total_questions >= 20 and bloom_idx > 0:
+        bloom_index_attainment = min(1.0, max(0.0, (bloom_idx - 2.50) / max(0.5, bloom_floor - 2.50)))
+    else:
+        bloom_index_attainment = 1.0
+    bloom_score = 4.0 * (zpd.get("skill_higher_bloom_pct", 100.0) / 100.0) + 4.0 * bloom_index_attainment
     p1_zpd = round(max(0.0, min(20.0, band_score + bloom_score)), 2)
 
     # Pillar 2: Retrieval Modality & Anti-Memorization (20 pts)
@@ -3031,6 +3208,15 @@ def compute_deterministic_rubric_scores(
     bloom_skill_pct = zpd.get("skill_higher_bloom_pct", 100.0)
     if bloom_skill_pct < 80.0:
         d4 -= round((80.0 - bloom_skill_pct) * 0.02, 2)
+    bloom_idx = zpd.get("bloom_weighted_index", 0.0)
+    bloom_floor = zpd.get("adaptive_bloom_floor", 3.85)
+    bloom_sup_pct = zpd.get("bloom_superior_pct", 0.0)
+    bloom_tier = zpd.get("bloom_tier", "N/A")
+    bloom_coh_cnt = zpd.get("bloom_coherence_violations_count", 0)
+    if total_questions >= 20 and bloom_idx > 0 and bloom_idx < bloom_floor:
+        d4 -= min(0.8, round((bloom_floor - bloom_idx) * 1.2, 2))
+    if total_questions >= 20 and bloom_coh_cnt > 0:
+        d4 -= min(0.4, round(bloom_coh_cnt * 0.05, 2))
     cd_cnt = ag.get("cross_domain_prefix_items_count", 0)
     if cd_cnt > 0:
         d4 -= min(0.8, round((cd_cnt / total_q) * 10.0, 2))
@@ -3043,8 +3229,9 @@ def compute_deterministic_rubric_scores(
     d4 = max(0.0, min(4.0, round(d4, 2)))
 
     d4_fb = (
-        f"Alineación cognitiva de Bloom: {bloom_skill_pct}% de habilidades prácticas en niveles superiores (Apply+). "
-        f"Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        f"Alineación cognitiva de Bloom: {bloom_skill_pct}% de habilidades prácticas en Apply+; "
+        f"Índice Bloom ponderado: {bloom_idx:.2f}/5.0 (piso adaptativo {bloom_floor:.2f}, "
+        f"{bloom_sup_pct:.1f}% Analyze+Evaluate, tier: {bloom_tier}, incoherencias={bloom_coh_cnt})."
     )
 
     # Dimensión 5: Accesibilidad, Ergonomía Cognitiva en UI y Sintaxis KaTeX (0 a 2.0 pts)
@@ -3060,6 +3247,9 @@ def compute_deterministic_rubric_scores(
     sci_ast = erg.get("raw_scientific_float_items_count", 0) + erg.get("raw_asterisk_math_items_count", 0)
     if sci_ast > 0:
         d5 -= min(0.3, round(sci_ast * 0.02, 2))
+    taut_cnt = erg.get("tautological_identity_items_count", 0)
+    if taut_cnt > 0:
+        d5 -= min(0.2, round(taut_cnt * 0.03, 2))
     concat_cnt = uninterp.get("string_concat_collision_items_count", 0)
     if concat_cnt > 0:
         d5 -= min(0.5, round(concat_cnt * 0.05, 2))
@@ -3071,7 +3261,7 @@ def compute_deterministic_rubric_scores(
     d5_fb = (
         f"Sintaxis KaTeX: {crit_katex} errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). "
         f"Ergonomía: {prose_cnt} observaciones de prosa en \\text{{...}}, {raw_ids} identificadores crudos, "
-        f"{concat_cnt} colisiones por concatenación y {sci_ast} formatos flotantes/asteriscos crudos."
+        f"{concat_cnt} colisiones por concatenación, {taut_cnt} identidades tautológicas y {sci_ast} formatos flotantes/asteriscos crudos."
     )
 
     raw_subtotal = round(d1 + d2 + d3 + d4 + d5, 2)
@@ -3136,6 +3326,16 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
     mpri_score = mpri_data.get("mpri_score", 100.0)
     mpri_tier = mpri_data.get("mpri_tier", "GOLD MASTERY PATH")
     mpri_pillars = mpri_data.get("pillars", {})
+    zpd_sum = telemetry.get("dimension_summaries", {}).get("zpd_progression_linter", {})
+    bloom_index_meta = {
+        "weighted_index": zpd_sum.get("bloom_weighted_index", 0.0),
+        "adaptive_floor": zpd_sum.get("adaptive_bloom_floor", 3.85),
+        "gap": zpd_sum.get("bloom_index_gap", 0.0),
+        "apply_plus_pct": zpd_sum.get("bloom_apply_plus_pct", 100.0),
+        "superior_pct": zpd_sum.get("bloom_superior_pct", 100.0),
+        "tier": zpd_sum.get("bloom_tier", "N/A"),
+        "coherence_violations_count": zpd_sum.get("bloom_coherence_violations_count", 0),
+    }
 
     today_str = datetime.date.today().isoformat()
     is_empty_course = total_comps == 0 or total_questions == 0
@@ -3201,6 +3401,7 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
             "total_competencies": total_comps,
             "total_questions": total_questions,
             "question_types_distribution": types_count,
+            "bloom_index": bloom_index_meta,
             "platform_status": platform_status,
             "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
             "evaluation_date": today_str,
@@ -3236,6 +3437,7 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
         f"- **Calificación Final Certificada:** **{final_score:.1f} / 20.0 pts**",
         f"- **Quality Tier:** **{quality_tier}**",
         f"- **Mastery Path Readiness Index (MPRI):** **{mpri_score:.2f} / 100.0** ({mpri_tier})",
+        f"- **Índice Bloom Ponderado (1–5):** **{bloom_index_meta['weighted_index']:.2f} / 5.0** (piso adaptativo {bloom_index_meta['adaptive_floor']:.2f} | Analyze+Evaluate: {bloom_index_meta['superior_pct']:.1f}% | Tier: **{bloom_index_meta['tier']}**)",
         "",
         "---",
         "",
@@ -3463,6 +3665,7 @@ class AuditLinterRegistry:
             "duplicate_competencies": [],
             "sympy_in_katex": [],
             "phantom_numeric_rationale": [],
+            "bloom_alignment": [],
             "ms_length_bias": (
                 list(summaries.get("ms_length_bias_linter", {}).get("biased_ms_sample_items", []))
                 if summaries.get("ms_length_bias_linter", {}).get("total_ms_items", 0) >= 5
@@ -3479,7 +3682,10 @@ class AuditLinterRegistry:
                 issues_by_item[qid] = []
             issues_by_item[qid].append(f"[{iss.severity.upper()}] {iss.message}")
 
-            if iss.linter == "katex_frontend_ergonomics_linter":
+            if iss.linter == "zpd_progression_linter" and iss.dimension == "D4_alignment":
+                if qid not in risk_clusters["bloom_alignment"]:
+                    risk_clusters["bloom_alignment"].append(qid)
+            elif iss.linter == "katex_frontend_ergonomics_linter":
                 if qid not in risk_clusters["katex_ergonomics"]:
                     risk_clusters["katex_ergonomics"].append(qid)
                 if qid not in risk_clusters["katex_issues"]:
