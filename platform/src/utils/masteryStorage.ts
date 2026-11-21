@@ -11,6 +11,7 @@ import {
   ChallengeSkillResult,
   ChallengeExecutionSummary,
 } from '../types';
+import { scheduleBackgroundSync } from './cloudSync';
 
 const STORAGE_KEY = 'tops_academic_progress_v1';
 const LEGACY_STORAGE_KEY = 'khan_academic_progress_v1';
@@ -143,9 +144,12 @@ function getAllStoredData(): Record<string, CourseMasteryRecord> {
   }
 }
 
-function saveAllStoredData(data: Record<string, CourseMasteryRecord>) {
+function saveAllStoredData(data: Record<string, CourseMasteryRecord>, triggerCloudSync: boolean = true) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (triggerCloudSync) {
+      scheduleBackgroundSync();
+    }
   } catch (err) {
     console.error('Failed to save mastery data to localStorage', err);
   }
@@ -188,7 +192,7 @@ export function loadCourseMastery(course: Course): CourseMasteryRecord {
   };
 
   all[course.course_id] = record;
-  saveAllStoredData(all);
+  saveAllStoredData(all, false);
   return record;
 }
 
@@ -506,7 +510,7 @@ export function updateCourseChallengeCompleted(
   record.mastery_points = progress.percentage;
 
   all[course.course_id] = record;
-  saveAllStoredData(all);
+  saveAllStoredData(all, false);
   return record;
 }
 

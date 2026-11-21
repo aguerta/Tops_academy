@@ -50,7 +50,7 @@ Antes de cada herramienta o cierre, verifica:
 
   <graph_topology>
     - DAG acíclico y conexo (`connected_components == 1`, `root_ratio <= 0.20`, es decir, `<= floor(0.20 * n)` raíces).
-    - Conecta islas o raíces excedentes vía `add_prerequisites` con aristas backward-only (`pos(req) < pos(competency)` `0`-based o hacia IDs `[BASE]` limpios). Evita encadenar problemas paralelos independientes para no crear dependencias artificiales.
+    - Conecta islas o raíces excedentes vía `add_prerequisites` siguiendo la progresión conceptual real (fundamentos antes que aplicaciones, aunque hayan aparecido después en `cta_outline.json` por orden alfabético de PDFs; `cta_merge.py` reordena topológicamente sin ciclos). Evita encadenar problemas paralelos independientes para no crear dependencias artificiales.
   </graph_topology>
 
   <quotas>
