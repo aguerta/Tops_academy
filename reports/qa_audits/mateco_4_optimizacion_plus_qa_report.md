@@ -1,5 +1,10 @@
 # Reporte de Auditoría QA: `mateco_4_optimizacion_plus`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-21 18:53:49**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-21 18:53:49  
 **Título del curso:** Mateco 4 Optimizacion Plus  
 **Objetivo detectado:** Dominio y aplicación analítica integral de Mateco 4 Optimizacion Plus (Cálculo de Variaciones y Control Óptimo)  
 **Calificación Final QM-OSCQR:** **19.06 / 20.0** — **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**  

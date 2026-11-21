@@ -3,7 +3,8 @@
 
 - **Fecha de Evaluación:** 2026-11-18
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
-- **Estado en Plataforma:** ACTIVO
+- **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-21 18:53:49  
 - **Calificación Final Certificada:** **18.8 / 20.0 pts**
 - **Quality Tier:** **EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY**
 - **Mastery Path Readiness Index (MPRI):** **93.14 / 100.0** (GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo)

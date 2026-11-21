@@ -1,5 +1,10 @@
 # Auditoría de Calidad Pedagógica, Psicométrica y Path-to-Mastery: `solow_m20_v2`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-21 18:53:50**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-21 18:53:50  
 **Curso:** `Solow M20 V2` (`solow_m20_v2.json`)  
 **Fecha de Auditoría:** 2026-11-21  
 **Estándares:** Quality Matters (QM), OSCQR, Bloom's 2-Sigma Mastery Learning, ZPD (Vygotsky) & Path-to-Mastery v2.0  

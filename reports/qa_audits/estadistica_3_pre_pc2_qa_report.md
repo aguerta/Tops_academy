@@ -1,5 +1,10 @@
 # Reporte de Auditoría Técnica, Psicométrica y Pedagógica (QA): `estadistica_3_pre_pc2`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-21 18:53:48**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-21 18:53:48  
 - **ID del Curso:** `estadistica_3_pre_pc2`
 - **Título del Curso:** Estadística 3 - Preparación PC2 (Propiedades en Muestras Finitas y Teoría Asintótica)
 - **Estándares de Evaluación:** Quality Matters (QM), OSCQR, Mastery Learning v2.0 (`StandardizedAuditEngine` + Verificación Semántica Adaptativa)

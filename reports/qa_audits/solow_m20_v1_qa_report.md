@@ -1,5 +1,10 @@
 # Auditoría Técnica y Pedagógica QA: `solow_m20_v1`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-21 18:53:50**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-21 18:53:50  
 **Curso:** Solow M20 V1 (`solow_m20_v1`)  
 **Objetivo:** Dominio y aplicación analítica integral del modelo de crecimiento de Solow (1956) y sus extensiones (Harrod-Domar, CES, precios factoriales, cambio tecnológico neutral, oferta laboral elástica, trampa poblacional y rigidez salarial/liquidez).  
 **Fecha de Auditoría:** 2026-11-21  

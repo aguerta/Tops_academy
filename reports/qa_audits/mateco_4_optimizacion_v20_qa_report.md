@@ -3,7 +3,8 @@
 
 - **Fecha de Evaluación:** 2026-11-21
 - **Evaluador:** Course QA Auditor — Top's Academy (Pass Determinista + Loop de Verificación Semántica Adaptativa)
-- **Estado en Plataforma:** ACTIVO
+- **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-21 18:53:50  
 - **Calificación Final Certificada:** **19.37 / 20.0 pts** (`19.4 / 20.0`)
 - **Quality Tier:** **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**
 - **Mastery Path Readiness Index (MPRI):** **97.42 / 100.0** (GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo)
