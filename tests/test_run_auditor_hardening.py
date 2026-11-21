@@ -458,3 +458,95 @@ def test_stage_costs_sum_equals_total_cost_and_renders_in_reports(tmp_path: Path
     })
     assert "$0.2400 USD" in fb_summary
     assert "TOTAL CORRIDA (Hydrogen):  $0.2400 USD" in fb_summary
+
+
+def test_audit_engine_r1_flaw_fallback_ignores_prompt_and_handles_null_content(tmp_path: Path) -> None:
+    """Round-1 flaw fallback ignores prompt_blind_judge.md instructions and compile tracker handles null content & exit 137."""
+    eng = _make_engine()
+    eng.brain_dir = tmp_path
+
+    # 1) _analyze_conversation: content=None + non-zero exit code 137 must not crash and must fail first compile
+    records = [
+        {
+            "type": "PLANNER_RESPONSE",
+            "step_index": 1,
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "cache_read_tokens": 0,
+            "tool_calls": [
+                {"name": "run_command", "args": {"CommandLine": "python compile_shard.py --shard 01"}}
+            ],
+        },
+        {"type": "TOOL_RESPONSE", "step_index": 2, "content": None},
+        {"type": "TOOL_RESPONSE", "step_index": 3, "content": "Command exited with code 137"},
+    ]
+    metrics = eng._analyze_conversation(records, "author-01", "Author 01")
+    assert metrics["compile_attempts_count"] == 1
+    assert metrics["compile_first_passed"] is False
+
+    # 2) round_1_flaw_detected_count fallback ignores system prompt mentions and counts actual verdict write_file
+    j_cid = "judge-conv-01"
+    j_logs = tmp_path / j_cid / ".system_generated" / "logs"
+    j_logs.mkdir(parents=True)
+    judge_lines = [
+        {
+            "type": "USER_INPUT",
+            "content": 'Scoring rubric: FAIL ("flaw_detected": true) example in prompt_blind_judge.md',
+        },
+        {
+            "type": "PLANNER_RESPONSE",
+            "thinking": 'Checking if "flaw_detected": true applies here.',
+            "tool_calls": [
+                {
+                    "name": "write_file",
+                    "args": {
+                        "Path": "work/verification/judge_responses_01.json",
+                        "Content": json.dumps({
+                            "responses": {
+                                "item_1": {"answer": "A", "flaw_detected": False},
+                                "item_2": {"answer": "BLOCKED: missing var", "flaw_detected": True},
+                            }
+                        }),
+                    },
+                }
+            ],
+        },
+    ]
+    (j_logs / "transcript_full.jsonl").write_text(
+        "\n".join(json.dumps(x) for x in judge_lines), encoding="utf-8"
+    )
+
+    work_dir = tmp_path / "work"
+    work_dir.mkdir()
+    (work_dir / "judge_report_round_1.json").write_text(
+        json.dumps({"passed": False, "agreement_rate": 0.5, "total_items": 2, "disagreements": [{"id": "item_2"}]}),
+        encoding="utf-8",
+    )
+    (work_dir / "judge_report.json").write_text(
+        json.dumps({"passed": True, "agreement_rate": 1.0, "total_items": 2, "disagreements": []}),
+        encoding="utf-8",
+    )
+
+    deep = eng._build_stage_deep_dives(
+        subagents=[
+            {
+                "conversation_id": j_cid,
+                "label": "Judge 01",
+                "category": "judge",
+                "spawn_step": 10,
+                "duration_seconds": 5.0,
+                "input_tokens": 100,
+                "output_tokens": 50,
+                "cache_read_tokens": 0,
+                "active_tokens": 150,
+                "total_tokens": 150,
+                "tool_calls_count": 1,
+                "tool_errors_count": 0,
+            }
+        ],
+        orch_time={"barrier_wait_seconds": 0.0},
+        workload={"work_dir": str(work_dir), "competencies_count": 1, "telemetry_snapshots": []},
+        interventions=[],
+        records=[],
+    )
+    assert deep["stage_5_judges"]["round_1_flaw_detected_count"] == 1

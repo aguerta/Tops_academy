@@ -1518,7 +1518,7 @@ class ExecutionAuditor:
                 })
 
             elif rec_type in ("GENERIC", "TOOL_RESPONSE", "USER_INPUT", "SYSTEM_MESSAGE"):
-                content = rec.get("content", "")
+                content = str(rec.get("content") or "")
                 if pending_compile_check:
                     is_bg_notice = "Tool is running as a background task" in content and "finished with result" not in content
                     if not is_bg_notice and (
@@ -1529,10 +1529,10 @@ class ExecutionAuditor:
                     ):
                         pending_compile_check = False
                         compile_attempts_count += 1
+                        code_m = re.search(r"exited with code\s+(-?\d+)", content)
                         is_comp_fail = (
                             "FAIL:" in content
-                            or "exited with code 1" in content
-                            or "exited with code 2" in content
+                            or bool(code_m and int(code_m.group(1)) != 0)
                             or "Traceback (most recent call last)" in content
                         )
                         if compile_attempts_count == 1:
@@ -1542,7 +1542,7 @@ class ExecutionAuditor:
                                     re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", content)
                                 ))[:8]
                 if "exited with code" in content:
-                    code_match = re.search(r"exited with code\s+(\d+)", content)
+                    code_match = re.search(r"exited with code\s+(-?\d+)", content)
                     if code_match and int(code_match.group(1)) != 0:
                         tool_errors_count += 1
                         failed_commands.append({
@@ -2220,8 +2220,56 @@ class ExecutionAuditor:
                     j_tpath = j_logs_dir / "transcript.jsonl"
                 if j_tpath.is_file():
                     try:
-                        j_txt = j_tpath.read_text(encoding="utf-8", errors="ignore")
-                        round_1_flaw_detected_count += len(re.findall(r'(?:\\"|")flaw_detected(?:\\"|")\s*:\s*true', j_txt, re.IGNORECASE))
+                        verdict_flaws_by_path: Dict[str, int] = {}
+                        for raw_line in j_tpath.read_text(encoding="utf-8", errors="ignore").splitlines():
+                            raw_line = raw_line.strip()
+                            if not raw_line:
+                                continue
+                            try:
+                                j_rec = json.loads(raw_line)
+                            except Exception:
+                                continue
+                            if not isinstance(j_rec, dict) or j_rec.get("type") != "PLANNER_RESPONSE":
+                                continue
+                            for tc in j_rec.get("tool_calls", []) or []:
+                                if not isinstance(tc, dict):
+                                    continue
+                                tname = str(tc.get("name") or "")
+                                if tname not in ("write_file", "edit_file"):
+                                    continue
+                                tc_args = self._extract_tc_args(tc)
+                                target_path = str(tc_args.get("Path") or tc_args.get("path") or "").strip()
+                                target_low = target_path.lower()
+                                if not target_low or ("verdict" not in target_low and "judge" not in target_low):
+                                    continue
+                                payload = str(
+                                    tc_args.get("Content")
+                                    or tc_args.get("content")
+                                    or tc_args.get("Replacement")
+                                    or ""
+                                )
+                                if not payload:
+                                    continue
+                                counted = None
+                                if tname == "write_file":
+                                    try:
+                                        parsed_v = json.loads(payload)
+                                        if isinstance(parsed_v, dict):
+                                            resp_map = parsed_v.get("responses") if isinstance(parsed_v.get("responses"), dict) else parsed_v
+                                            counted = sum(
+                                                1
+                                                for v in resp_map.values()
+                                                if isinstance(v, dict) and v.get("flaw_detected") is True
+                                            )
+                                    except Exception:
+                                        counted = None
+                                if counted is None:
+                                    counted = len(re.findall(r'"flaw_detected"\s*:\s*true', payload, re.IGNORECASE))
+                                if tname == "write_file":
+                                    verdict_flaws_by_path[target_path] = counted
+                                else:
+                                    verdict_flaws_by_path[target_path] = verdict_flaws_by_path.get(target_path, 0) + counted
+                        round_1_flaw_detected_count += sum(verdict_flaws_by_path.values())
                     except Exception:
                         pass
 

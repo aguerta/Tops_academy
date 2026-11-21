@@ -121,7 +121,8 @@ class KaTeXSyntaxLinter(BaseLinter):
     UNESCAPED_LATEX_CMD = re.compile(r"(?<!\$)(?<!\\)\\(dot|bar|vec|hat|tilde|ddot)\{[a-zA-Z0-9]+\}(?!\$)")
     TRIPLE_DOLLAR = re.compile(r"\${3,}")
     DOUBLE_BRACE = re.compile(r"\{\{[a-zA-Z0-9_]+\}\}")
-    SYMPY_IN_KATEX = re.compile(r"\$[^$]*(?:\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()[^$]*\$")
+    MATH_SEG_PAT = re.compile(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", re.DOTALL)
+    SYMPY_IN_KATEX = re.compile(r"(?:(?<![{^])\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         unclosed_braces = []
@@ -219,18 +220,23 @@ class KaTeXSyntaxLinter(BaseLinter):
                     ))
 
                 # 6. Raw SymPy syntax leaked inside KaTeX math delimiters
-                m_sym = self.SYMPY_IN_KATEX.search(text_no_escaped)
-                if m_sym:
-                    sympy_in_katex.append(qid)
-                    issues.append(LintIssue(
-                        linter=self.name,
-                        dimension=self.dimension,
-                        severity="warning",
-                        item_id=qid,
-                        competency_id=cid,
-                        message=f"Sintaxis cruda de SymPy filtrada en KaTeX ('{m_sym.group(0)[:40]}') en '{field_name}'",
-                        snippet=m_sym.group(0)[:50],
-                    ))
+                for mb_sym in self.MATH_SEG_PAT.finditer(text_no_escaped):
+                    math_seg = mb_sym.group(1) if mb_sym.group(0).startswith("$$") else mb_sym.group(2)
+                    if not math_seg:
+                        continue
+                    m_sym = self.SYMPY_IN_KATEX.search(math_seg)
+                    if m_sym:
+                        sympy_in_katex.append(qid)
+                        issues.append(LintIssue(
+                            linter=self.name,
+                            dimension=self.dimension,
+                            severity="warning",
+                            item_id=qid,
+                            competency_id=cid,
+                            message=f"Sintaxis cruda de SymPy filtrada en KaTeX ('{mb_sym.group(0)[:40]}') en '{field_name}'",
+                            snippet=mb_sym.group(0)[:50],
+                        ))
+                        break
 
         return {
             "unclosed_braces_count": len(set(unclosed_braces)),
@@ -2889,7 +2895,8 @@ def compute_mastery_path_readiness(summaries: dict[str, Any], total_comps: int, 
         band_score = 12.0
     bloom_idx = zpd.get("bloom_weighted_index", 0.0)
     bloom_floor = zpd.get("adaptive_bloom_floor", 3.85)
-    if total_questions >= 20 and bloom_idx > 0:
+    bloom_eval_cnt = zpd.get("bloom_evaluated_count", 0)
+    if total_questions >= 20 and bloom_eval_cnt >= 20 and bloom_idx > 0:
         bloom_index_attainment = min(1.0, max(0.0, (bloom_idx - 2.50) / max(0.5, bloom_floor - 2.50)))
     else:
         bloom_index_attainment = 1.0
@@ -3213,7 +3220,8 @@ def compute_deterministic_rubric_scores(
     bloom_sup_pct = zpd.get("bloom_superior_pct", 0.0)
     bloom_tier = zpd.get("bloom_tier", "N/A")
     bloom_coh_cnt = zpd.get("bloom_coherence_violations_count", 0)
-    if total_questions >= 20 and bloom_idx > 0 and bloom_idx < bloom_floor:
+    bloom_eval_cnt = zpd.get("bloom_evaluated_count", 0)
+    if total_questions >= 20 and bloom_eval_cnt >= 20 and bloom_idx > 0 and bloom_idx < bloom_floor:
         d4 -= min(0.8, round((bloom_floor - bloom_idx) * 1.2, 2))
     if total_questions >= 20 and bloom_coh_cnt > 0:
         d4 -= min(0.4, round(bloom_coh_cnt * 0.05, 2))
