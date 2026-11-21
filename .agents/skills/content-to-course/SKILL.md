@@ -409,19 +409,22 @@ Este comando ejecuta en `< 1s`:
    > - **Tiempo Total de Pared:** **{wall_min} min** ({wall_sec}s) | **Cómputo Acumulado:** {comp_min} min | **Speedup Paralelo:** **{speedup}x**
    > - **Subagentes Desplegados:** **{sub_total}** | **Intervenciones Manuales:** {interventions}
    > - **Consumo de Tokens:** **{tot_tok} totales** (**{act_tok} activos**: In={in_tok}, Out={out_tok}, Think={think_tok} | Cache={cache_tok})
+   > - **Costo Estimado Total (Gemini 4 Hydrogen):** **\${total_cost_usd} USD** (\${usd_per_q} USD/preg | \${usd_per_comp} USD/comp | In=\${in_usd} @ \$1.50/1M, Out+Think=\${out_usd} @ \$7.50/1M, Cache=\${cache_usd} @ \$0.075/1M)
    > - **Unit Economics:** {tok_per_q} tok/preg ({act_tok_per_q} activos/preg) | {sec_per_q} s/preg ({qpm} preg/min)
    >
-   > | Etapa / Sección | Duración / Pared | Recursos y Resultado |
-   > | :--- | :---: | :--- |
-   > | **Stage 0 (Bootstrap/Prep)** | {prep_dur}s | CLI |
-   > | **Stage 1A (Visión)** | {s1a_wall}s | {s1a_agents} agentes / {s1a_tok} tok activos |
-   > | **Stage 1B (CTA)** | {s1b_wall}s | {s1b_agents} agentes / {s1b_tok} tok activos ({total_comps} comps) |
-   > | **Stage 2 (Sharding)** | {shard_dur}s | {shards_count} shards |
-   > | **Stage 3 (Autores)** | min={s3_min}s / med={s3_med}s / max={s3_max}s | Straggler: {straggler} / {s3_tok} tok activos |
-   > | **Stage 3B (Reparaciones)** | {s3b_max}s | {s3b_count} reparaciones / {s3b_tok} tok activos |
-   > | **Stage 4 (Templates/Build)** | {s4_dur}s | {total_questions} reactivos |
-   > | **Stage 5 (Blind Judges)** | {s5_wall}s | {s5_judges} jueces / {s5_items} ítems ({s5_agree}% acuerdo) |
-   > | **Stage 6 (Publish)** | {pub_dur}s | CLI + QA + Run Auditor |
+   > | Etapa / Sección | Duración / Pared | Costo (USD) | Recursos y Resultado |
+   > | :--- | :---: | :---: | :--- |
+   > | **Stage 0 (Bootstrap/Prep)** | {prep_dur}s | \$0.0000 | CLI |
+   > | **Stage 1A (Visión)** | {s1a_wall}s | \${s1a_usd} | {s1a_agents} agentes / {s1a_tok} tok activos |
+   > | **Stage 1B (CTA)** | {s1b_wall}s | \${s1b_usd} | {s1b_agents} agentes / {s1b_tok} tok activos ({total_comps} comps) |
+   > | **Stage 2 (Sharding)** | {shard_dur}s | \$0.0000 | {shards_count} shards |
+   > | **Stage 3 (Autores)** | min={s3_min}s / med={s3_med}s / max={s3_max}s | \${s3_usd} | Straggler: {straggler} / {s3_tok} tok activos |
+   > | **Stage 3B (Reparaciones)** | {s3b_max}s | \${s3b_usd} | {s3b_count} reparaciones / {s3b_tok} tok activos |
+   > | **Stage 4 (Templates/Build)** | {s4_dur}s | \$0.0000 | {total_questions} reactivos |
+   > | **Stage 5 (Blind Judges)** | {s5_wall}s | \${s5_usd} | {s5_judges} jueces / {s5_items} ítems ({s5_agree}% acuerdo) |
+   > | **Stage 6 (Publish)** | {pub_dur}s | \$0.0000 | CLI + QA + Run Auditor |
+   > | **Orquestador (Director)** | {wall_sec}s | \${orch_usd} | Subagente raíz + workflows |
+   > | **TOTAL CORRIDA** | **{wall_sec}s** | **\${total_cost_usd} USD** | **Gemini 4 Hydrogen** |
    >
    > ---
    >

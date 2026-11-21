@@ -1938,14 +1938,43 @@ class PipelineRunner:
             tool_calls = summary.get("tool_calls_total", 0)
             tool_errs = summary.get("tool_errors_total", 0)
 
+            # Resolve Gemini 4 Hydrogen USD costs (prefer precomputed summary from audit_engine.py)
+            total_cost_usd = summary.get("total_cost_usd")
+            cb = summary.get("cost_breakdown_usd")
+            stage_costs = summary.get("stage_costs_usd")
+            if total_cost_usd is None or not isinstance(cb, dict) or not isinstance(stage_costs, dict):
+                try:
+                    _run_aud_dir = repo_root / ".agents" / "skills" / "c2c-run-auditor" / "scripts"
+                    if str(_run_aud_dir) not in sys.path:
+                        sys.path.insert(0, str(_run_aud_dir))
+                    from audit_engine import resolve_telemetry_costs  # type: ignore
+                    _resolved_costs = resolve_telemetry_costs(tel)
+                    total_cost_usd = _resolved_costs["total_cost_usd"]
+                    cb = _resolved_costs["cost_breakdown_usd"]
+                    stage_costs = _resolved_costs["stage_costs_usd"]
+                except Exception:
+                    _in_u = round((in_tok / 1_000_000.0) * 1.50, 4)
+                    _out_u = round((out_tok / 1_000_000.0) * 7.50, 4)
+                    _c_u = round((cache_tok / 1_000_000.0) * 0.075, 4)
+                    total_cost_usd = round(_in_u + _out_u + _c_u, 4)
+                    cb = {"input_usd": _in_u, "output_usd": _out_u, "cache_read_usd": _c_u, "total_usd": total_cost_usd}
+                    stage_costs = {}
+
+            q_cnt = workload.get("questions_count", 0) or 0
+            c_cnt = workload.get("competencies_count", 0) or 0
+            usd_per_q = unit.get("usd_per_question", round(total_cost_usd / q_cnt, 4) if q_cnt else 0.0)
+            usd_per_comp = unit.get("usd_per_competency", round(total_cost_usd / c_cnt, 4) if c_cnt else 0.0)
+
             lines.extend([
                 f"  Tiempo Total de Pared:        {wall_min:.2f} min ({wall_sec:.0f}s) | Cómputo: {comp_min:.2f} min | Speedup: {speedup:.2f}x",
                 f"  Subagentes Desplegados:       {sub_total} | Intervenciones Manuales: {interventions}",
                 f"  Consumo Total de Tokens:      {tot_tok:,} ({act_tok:,} activos: In={in_tok:,}, Out={out_tok:,}, Think={think_tok:,} | Cache={cache_tok:,})",
+                f"  Costo Estimado (Hydrogen):    ${float(total_cost_usd):.4f} USD (In=${cb.get('input_usd', 0.0):.4f} @ $1.50/1M | Out+Think=${cb.get('output_usd', 0.0):.4f} @ $7.50/1M | Cache=${cb.get('cache_read_usd', 0.0):.4f} @ $0.075/1M)",
                 f"  Llamadas a Herramientas:      {tool_calls:,} llamadas ({tool_errs} errores)",
                 "",
                 "  📈 Unit Economics Normalizados:",
                 f"    • Tokens / Pregunta:        {unit.get('tokens_per_question', 0.0):,.1f} tot ({unit.get('active_tokens_per_question', 0.0):,.1f} activos)",
+                f"    • Costo Unitario (USD):     ${usd_per_q:.4f} USD/preg  |  ${usd_per_comp:.4f} USD/comp",
                 f"    • Velocidad de Entrega:     {unit.get('seconds_per_question', 0.0):.2f} s/preg  |  Throughput: {unit.get('questions_per_minute', 0.0):.2f} preg/min",
                 f"    • Tokens / Competencia:     {unit.get('tokens_per_competency', 0.0):,.1f} tot ({unit.get('author_tokens_per_competency', 0.0):,.1f} autoría)",
             ])
@@ -1970,19 +1999,33 @@ class PipelineRunner:
             cta_wall = s1b.get("total_stage_wall_time", 0.0)
             cta_tok = s1b.get("total_active_tokens", 0)
 
+            s1a_usd = float(stage_costs.get("stage_1a_vision", s1a.get("cost_usd", 0.0)))
+            s1b_usd = float(stage_costs.get("stage_1b_cta", s1b.get("cost_usd", 0.0)))
+            s3_usd = float(stage_costs.get("stage_3_authors", s3.get("cost_usd", 0.0)))
+            s3b_usd = float(stage_costs.get("stage_3b_repairs", s3b.get("cost_usd", 0.0)))
+            s5_usd = float(stage_costs.get("stage_5_judges", s5.get("cost_usd", 0.0)))
+            orch_usd = float(stage_costs.get("orchestrator", 0.0))
+            oth_usd = float(stage_costs.get("other_subagents", 0.0))
+
             lines.extend([
                 "",
-                "  ⏱️  Desglose por Etapas / Secciones:",
-                f"    • Stage 0  (Bootstrap/Prep): {prep_dur:.2f}s CLI",
-                f"    • Stage 1A (Visión):         {s1a.get('agents_count', 0)} agentes | {s1a.get('max_wall_time_seconds', 0.0):.1f}s pared | {s1a.get('total_active_tokens', 0):,} tok activos",
-                f"    • Stage 1B (CTA):            {cta_agents} agentes | {cta_wall:.1f}s pared | {cta_tok:,} tok activos | {workload.get('competencies_count', 0)} comps",
-                f"    • Stage 2  (Sharding):       {shard_dur:.2f}s CLI | {workload.get('shards_count', 0)} shards",
-                f"    • Stage 3  (Autores):        {s3.get('shards_count', 0)} shards | min={s3.get('min_duration_seconds', 0.0):.1f}s / med={s3.get('median_duration_seconds', 0.0):.1f}s / max={s3.get('max_duration_seconds', 0.0):.1f}s | {s3.get('total_author_active_tokens', 0):,} tok activos",
+                "  ⏱️  Desglose por Etapas / Secciones (con Costos Gemini 4 Hydrogen):",
+                f"    • Stage 0  (Bootstrap/Prep): {prep_dur:.2f}s CLI | $0.0000 USD",
+                f"    • Stage 1A (Visión):         {s1a.get('agents_count', 0)} agentes | {s1a.get('max_wall_time_seconds', 0.0):.1f}s pared | {s1a.get('total_active_tokens', 0):,} tok activos | ${s1a_usd:.4f} USD",
+                f"    • Stage 1B (CTA):            {cta_agents} agentes | {cta_wall:.1f}s pared | {cta_tok:,} tok activos | {workload.get('competencies_count', 0)} comps | ${s1b_usd:.4f} USD",
+                f"    • Stage 2  (Sharding):       {shard_dur:.2f}s CLI | {workload.get('shards_count', 0)} shards | $0.0000 USD",
+                f"    • Stage 3  (Autores):        {s3.get('shards_count', 0)} shards | min={s3.get('min_duration_seconds', 0.0):.1f}s / med={s3.get('median_duration_seconds', 0.0):.1f}s / max={s3.get('max_duration_seconds', 0.0):.1f}s | {s3.get('total_author_active_tokens', 0):,} tok activos | ${s3_usd:.4f} USD",
                 f"       └─ Straggler Crítico:     {s3.get('straggler_shard', 'N/A')} ({s3.get('max_duration_seconds', 0.0):.1f}s, +{s3.get('straggler_delay_vs_median', 0.0):.1f}s vs mediana)",
-                f"    • Stage 3B (Reparaciones):   {s3b.get('repairs_count', 0)} reparaciones | max={s3b.get('max_duration_seconds', 0.0):.1f}s | {s3b.get('total_active_tokens', 0):,} tok activos",
-                f"    • Stage 4  (Templates/Build):{tpl_dur + bld_dur:.2f}s CLI (templates={tpl_dur:.2f}s, build={bld_dur:.2f}s) | {workload.get('questions_count', 0)} reactivos",
-                f"    • Stage 5  (Blind Judges):   {s5.get('judges_count', 0)} jueces | {s5.get('max_judge_duration', 0.0):.1f}s pared | {s5.get('batch_items_count', 0)} ítems | {s5.get('agreement_rate', 1.0) * 100:.1f}% acuerdo ({s5.get('discrepancies_count', 0)} discrepancias)",
-                f"    • Stage 6  (Publish):        {pub_dur:.2f}s CLI",
+                f"    • Stage 3B (Reparaciones):   {s3b.get('repairs_count', 0)} reparaciones | max={s3b.get('max_duration_seconds', 0.0):.1f}s | {s3b.get('total_active_tokens', 0):,} tok activos | ${s3b_usd:.4f} USD",
+                f"    • Stage 4  (Templates/Build):{tpl_dur + bld_dur:.2f}s CLI (templates={tpl_dur:.2f}s, build={bld_dur:.2f}s) | {workload.get('questions_count', 0)} reactivos | $0.0000 USD",
+                f"    • Stage 5  (Blind Judges):   {s5.get('judges_count', 0)} jueces | {s5.get('max_judge_duration', 0.0):.1f}s pared | {s5.get('batch_items_count', 0)} ítems | {s5.get('agreement_rate', 1.0) * 100:.1f}% acuerdo ({s5.get('discrepancies_count', 0)} discrepancias) | ${s5_usd:.4f} USD",
+                f"    • Stage 6  (Publish):        {pub_dur:.2f}s CLI | $0.0000 USD",
+                f"    • Orquestador (Director):    {wall_sec:.0f}s pared | ${orch_usd:.4f} USD",
+            ])
+            if oth_usd > 0:
+                lines.append(f"    • Otros Subagentes:          ${oth_usd:.4f} USD")
+            lines.extend([
+                f"    • TOTAL CORRIDA (Hydrogen):  ${float(total_cost_usd):.4f} USD",
                 "",
                 "  📁 Reportes del Pipeline Auditor Guardados:",
                 f"    • Informe Auditor (MD):      {audit_info.get('report_md', '')}",
@@ -1994,10 +2037,40 @@ class PipelineRunner:
             state = audit_info.get("state", {})
             stages_dict = state.get("stages", {}) if isinstance(state, dict) else {}
             lines.append("  (Modo Fallback Local — Sin transcript de conversación activo)")
+            try:
+                _run_aud_dir = repo_root / ".agents" / "skills" / "c2c-run-auditor" / "scripts"
+                if str(_run_aud_dir) not in sys.path:
+                    sys.path.insert(0, str(_run_aud_dir))
+                from audit_engine import compute_hydrogen_cost_usd as _h2_cost  # type: ignore
+            except Exception:
+                def _h2_cost(input_tokens: int = 0, output_tokens: int = 0, cache_read_tokens: int = 0) -> Dict[str, float]:
+                    _i = round((max(0, int(input_tokens or 0)) / 1_000_000.0) * 1.50, 4)
+                    _o = round((max(0, int(output_tokens or 0)) / 1_000_000.0) * 7.50, 4)
+                    _c = round((max(0, int(cache_read_tokens or 0)) / 1_000_000.0) * 0.075, 4)
+                    return {"input_usd": _i, "output_usd": _o, "cache_read_usd": _c, "total_usd": round(_i + _o + _c, 4)}
+
             if stages_dict:
+                fb_tot_in = fb_tot_out = fb_tot_cache = 0
                 for st_key, st_val in stages_dict.items():
                     if isinstance(st_val, dict):
-                        lines.append(f"    • {st_key:<20}: {st_val.get('duration_seconds', 0.0):.2f}s ({st_val.get('status', 'unknown')})")
+                        st_tok = st_val.get("tokens") or {}
+                        st_in = int(st_tok.get("input", 0) or 0)
+                        st_out = int(st_tok.get("output", 0) or 0)
+                        st_cch = int(st_tok.get("cached", 0) or 0)
+                        fb_tot_in += st_in
+                        fb_tot_out += st_out
+                        fb_tot_cache += st_cch
+                        st_usd = _h2_cost(st_in, st_out, st_cch)["total_usd"]
+                        lines.append(
+                            f"    • {st_key:<20}: {st_val.get('duration_seconds', 0.0):.2f}s "
+                            f"({st_val.get('status', 'unknown')}) | ${st_usd:.4f} USD"
+                        )
+                tot_st_tok = state.get("total_tokens") if isinstance(state.get("total_tokens"), dict) else {}
+                t_in = int(tot_st_tok.get("input", fb_tot_in) or fb_tot_in)
+                t_out = int(tot_st_tok.get("output", fb_tot_out) or fb_tot_out)
+                t_cch = int(tot_st_tok.get("cached", fb_tot_cache) or fb_tot_cache)
+                tot_fb_usd = _h2_cost(t_in, t_out, t_cch)["total_usd"]
+                lines.append(f"    • TOTAL CORRIDA (Hydrogen):  ${tot_fb_usd:.4f} USD")
             elif timings:
                 for t_key, t_val in timings.items():
                     if isinstance(t_val, (int, float)):
@@ -2746,6 +2819,11 @@ class PipelineRunner:
         )
         res = dispatch_judges(self.work_dir, ids=target, pointer=not self.no_pointer)
         n_sub = len(res.get("Subagents", []))
+        if target and n_sub == 0:
+            raise RuntimeError(
+                f"Rejudge dispatch produced 0 judges for {len(target)} target(s) "
+                f"({', '.join(target)}). Aborting before empty wave."
+            )
         (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
         (self.work_dir / "dispatch" / "judge_work_orders.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"  [+] Re-judging {len(target)} competency(ies): {', '.join(target)} -> {n_sub} judge(s)")
@@ -2849,6 +2927,11 @@ class PipelineRunner:
             pointer=not self.no_pointer,
         )
         n_sub = len(res.get("Subagents", []))
+        if target_tids and n_sub == 0:
+            raise RuntimeError(
+                f"LQAS rejudge dispatch produced 0 judges for {len(target_tids)} template(s) "
+                f"({', '.join(target_tids)}). Aborting before empty wave."
+            )
         (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
         (self.work_dir / "dispatch" / "judges.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"  [+] LQAS micro-wave: confirming {len(target_tids)} template(s) ({', '.join(target_tids)}) x 2 seeds -> {n_sub} judge(s)")

@@ -59,14 +59,14 @@ Esta skill orquesta la **auditoría completa y automática post-creación de cur
    - Arquitectura curricular y modelado formal del Grafo Acíclico Dirigido (DAG).
    - Balance tipológico de reactivos (MC7, MS, FIB) y cobertura del 100% en `error_rationale` diagnósticos.
    - Andamiaje socrático progresivo (3 a 5 pistas por ítem) y soluciones analíticas detalladas.
-   - Congruencia semántica con taxonomía de Bloom (niveles de Aplicación y Análisis).
+   - Congruencia semántica con taxonomía de Bloom (niveles de Aplicación/Análisis y **Índice Bloom Ponderado `1–5` frente al piso adaptativo**).
    - Ergonomía técnica de expresiones matemáticas KaTeX y erradicación de residuos de f-strings.
 2. **Telemetría Forense, Rendimiento y Cuellos de Botella (Google Antigravity SDK):**
    - Descomposición empírica de tiempos: **Inferencia LLM (thinking + tokens) vs. Ejecución de herramientas locales**.
    - Consumo granular de tokens por subagente (entrada, salida, caché y tokens activos).
    - Detección de cuellos de botella en camino crítico, fenómenos *straggler* y barreras síncronas.
    - Taxonomía consolidada de errores y fricciones operativas en 12 categorías.
-   - Unit Economics normalizados (Tokens/pregunta, Segundos/pregunta, Preguntas/minuto).
+   - Unit Economics normalizados (Tokens/pregunta, Segundos/pregunta, Preguntas/minuto) y **valorización en dólares (USD) por etapa y total bajo tarifas de Gemini 4 Hydrogen** (`\$1.50/1M` entrada, `\$7.50/1M` salida+thinking, `\$0.075/1M` caché).
 
 ---
 
@@ -164,8 +164,8 @@ python .agents/skills/c2c-unified-auditor/scripts/unified_audit_engine.py --cour
 
 ### Paso 4: Presentación al Usuario
 El orquestador presenta un resumen ejecutivo que incluye:
-- **Calificación Final Certificada** sobre 20.0 pts y Quality Tier.
-- **Métricas Forenses Clave**: Tiempo de pared, factor de aceleración (*speedup*), tokens totales y densidad (tokens/pregunta, seg/pregunta).
+- **Calificación Final Certificada** sobre 20.0 pts, Quality Tier e **Índice Bloom Ponderado (1–5)** frente a su piso adaptativo.
+- **Métricas Forenses Clave**: Tiempo de pared, factor de aceleración (*speedup*), tokens totales, densidad (tokens/pregunta, seg/pregunta) y **costo estimado en USD por etapa y total (tarifas Gemini 4 Hydrogen)**.
 - **Diagnóstico Principal de Rendimiento**: Cuello de botella detectado (CTA, straggler de autores o llamadas web de jueces).
 - **Enlaces Clicables**:
   - [Reporte Unificado de Calidad y Rendimiento](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/c2c_audits/merged_quality_and_performance_<course_id>.md) *(con Tabla de Contenidos interactiva)*.
