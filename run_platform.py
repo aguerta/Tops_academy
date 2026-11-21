@@ -221,7 +221,17 @@ def validate_platform_course(content: str) -> tuple[bool, dict | str]:
                         return False, err
 
     # Check questions
-    valid_types = {"multiple_choice_7_options", "multiple_select", "fill_in_the_blank"}
+    valid_types = {
+        "multiple_choice_7_options",
+        "multiple_select",
+        "fill_in_the_blank",
+        "open_symbolic",
+        "proof_dag",
+        "adversarial_break",
+        "unstructured_model",
+        "invariant_canvas",
+        "concept_matching",
+    }
     for q in questions:
         if not isinstance(q, dict):
             return False, "Question items must be JSON objects"
