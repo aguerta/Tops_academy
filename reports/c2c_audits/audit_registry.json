@@ -3656,8 +3656,70 @@
     "bottlenecks_count": 2
   },
   {
-    "run_id": "20261121_114141_solow_m20_v1_90285b08",
-    "timestamp": "2026-11-21T16:41:41.352772+00:00",
+    "run_id": "20261121_120935_solow_m20_v2_ca734bad",
+    "timestamp": "2026-11-21T17:09:35.225372+00:00",
+    "course_id": "solow_m20_v2",
+    "course_title": "Solow M20 V2",
+    "conversation_id": "ca734bad-202b-42eb-843c-a3a8c56266b0",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 21,
+      "questions": 520,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 874.0,
+      "agent_compute_seconds": 4051.0,
+      "speedup": 4.64,
+      "total_tokens": 9218746,
+      "total_active_tokens": 2062778,
+      "input_tokens": 1325460,
+      "output_tokens": 550071,
+      "cache_read_tokens": 7155968,
+      "total_turns": 173,
+      "subagents_count": 26,
+      "tool_errors": 8,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 133.0,
+      "stage_3_max_wall": 340.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 2 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 2 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 256076.3,
+      "active_tokens_per_page": 57299.4,
+      "tokens_per_input_kb": 6053.5,
+      "tokens_per_competency": 438987.9,
+      "active_tokens_per_competency": 98227.5,
+      "author_tokens_per_competency": 57214.3,
+      "tokens_per_question": 17728.4,
+      "active_tokens_per_question": 3966.9,
+      "seconds_per_page": 24.28,
+      "seconds_per_question": 1.68,
+      "questions_per_minute": 35.7,
+      "agent_seconds_per_question": 7.79,
+      "output_tokens_per_question": 1139.9
+    },
+    "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261121_121209_solow_m20_v1_90285b08",
+    "timestamp": "2026-11-21T17:12:09.541166+00:00",
     "course_id": "solow_m20_v1",
     "course_title": "Solow M20 V1",
     "conversation_id": "90285b08-71a7-43ca-bbe7-285cd65efaab",
@@ -3680,7 +3742,7 @@
       "cache_read_tokens": 13380433,
       "total_turns": 286,
       "subagents_count": 39,
-      "tool_errors": 24,
+      "tool_errors": 38,
       "stage_1a_max_wall": 0.0,
       "stage_1b_total_wall": 112.0,
       "stage_3_max_wall": 319.0,

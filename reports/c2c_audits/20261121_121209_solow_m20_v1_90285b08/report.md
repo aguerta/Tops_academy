@@ -1,7 +1,7 @@
 # Informe de Auditoría Arquitectónica Forense: Rendimiento, Shards y Telemetría Multi-Agente
 ## Curso: Solow M20 V1 (`solow_m20_v1`)
 
-**Fecha de Auditoría:** `2026-11-21 16:41:41 UTC`  
+**Fecha de Auditoría:** `2026-11-21 17:12:09 UTC`  
 **Conversación Orquestadora:** [`90285b08-71a7-43ca-bbe7-285cd65efaab`](conversation://90285b08-71a7-43ca-bbe7-285cd65efaab)  
 **Directorio de Trabajo Validado (Zero-Collision):** `D:\Augusto\personal_portfolio\Tops_academy\courses\solow_m20_v1\work` (`match=True`)  
 **Enfoque:** Telemetría Determinista de API, Subagentes, Shards, Latencias y Operaciones del Orquestador.
@@ -91,6 +91,7 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 
 ### 3.3. Stage 3: Autoría de Reactivos por Shard y Análisis por Competencia
 - **Total de Shards Auditados:** `9 shards concurrentes`
+- **Tasa de Aprobación en 1ra Compilación:** **`0/9 (0.0%)`** (Reglas en 1er fallo: `[GENERAL]` (6), `[TPL-ORPHAN-VARS]` (5), `[TPL-DRY]` (5), `[TPL-VERIFIER-UNSOUND]` (5), `[TPL-STATIC-OPT]` (5), `[TPL-VAR]` (5))
 - **Duración Mínima de Shard:** `154.0s` | **Mediana:** `218.0s`
 - **Tiempo de Pared Máximo (Straggler Crítico):** **`319.0s`** (`5.3 min`) por `Shard Author shard_02`
 - **Retraso de Sincronización Impuesto por el Straggler:** **`+101.0s`** frente a la mediana
@@ -98,41 +99,41 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 
 | Shard ID | Competencias Asignadas | Comps | Tokens In | Tokens Out | Cache Leído | Total Activo | Tokens / Comp | Turnos | Errores | Duración |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Shard Author shard_01** | `Hab-01, Hab-02` | 2 | 89,120 | 37,450 | 414,230 | 126,570 | **63,285.0** | 9 | 0 | **215.0s** |
-| **Shard Author shard_02 🛑** | `Hab-03, Hab-04` | 2 | 99,664 | 47,406 | 680,763 | 147,070 | **73,535.0** | 12 | 0 | **319.0s** |
-| **Shard Author shard_03** | `Hab-05, Hab-06` | 2 | 150,878 | 44,877 | 275,448 | 195,755 | **97,877.5** | 8 | 0 | **218.0s** |
-| **Shard Author shard_04** | `Hab-07, Hab-08` | 2 | 82,120 | 42,977 | 336,722 | 125,097 | **62,548.5** | 8 | 0 | **223.0s** |
-| **Shard Author shard_05** | `Hab-09, Hab-10` | 2 | 65,766 | 24,737 | 398,799 | 90,503 | **45,251.5** | 10 | 0 | **154.0s** |
-| **Shard Author shard_06** | `C-01, C-02, C-03` | 3 | 113,324 | 53,965 | 471,910 | 167,289 | **55,763.0** | 9 | 1 | **245.0s** |
-| **Shard Author shard_07** | `C-06, C-07, C-08` | 3 | 75,483 | 40,576 | 351,994 | 116,059 | **38,686.3** | 8 | 0 | **212.0s** |
-| **Shard Author shard_08** | `C-09, C-10, C-11` | 3 | 87,124 | 54,231 | 298,539 | 141,355 | **47,118.3** | 7 | 0 | **236.0s** |
-| **Shard Author shard_09** | `C-04, C-05, H-01` | 3 | 79,092 | 46,564 | 273,491 | 125,656 | **41,885.3** | 7 | 1 | **201.0s** |
+| **Shard Author shard_01** | `Hab-01, Hab-02` | 2 | 89,120 | 37,450 | 414,230 | 126,570 | **63,285.0** | 9 | 1 | **215.0s** |
+| **Shard Author shard_02 🛑** | `Hab-03, Hab-04` | 2 | 99,664 | 47,406 | 680,763 | 147,070 | **73,535.0** | 12 | 2 | **319.0s** |
+| **Shard Author shard_03** | `Hab-05, Hab-06` | 2 | 150,878 | 44,877 | 275,448 | 195,755 | **97,877.5** | 8 | 1 | **218.0s** |
+| **Shard Author shard_04** | `Hab-07, Hab-08` | 2 | 82,120 | 42,977 | 336,722 | 125,097 | **62,548.5** | 8 | 1 | **223.0s** |
+| **Shard Author shard_05** | `Hab-09, Hab-10` | 2 | 65,766 | 24,737 | 398,799 | 90,503 | **45,251.5** | 10 | 1 | **154.0s** |
+| **Shard Author shard_06** | `C-01, C-02, C-03` | 3 | 113,324 | 53,965 | 471,910 | 167,289 | **55,763.0** | 9 | 2 | **245.0s** |
+| **Shard Author shard_07** | `C-06, C-07, C-08` | 3 | 75,483 | 40,576 | 351,994 | 116,059 | **38,686.3** | 8 | 2 | **212.0s** |
+| **Shard Author shard_08** | `C-09, C-10, C-11` | 3 | 87,124 | 54,231 | 298,539 | 141,355 | **47,118.3** | 7 | 1 | **236.0s** |
+| **Shard Author shard_09** | `C-04, C-05, H-01` | 3 | 79,092 | 46,564 | 273,491 | 125,656 | **41,885.3** | 7 | 2 | **201.0s** |
 
 ---
 
 ### 3.3b. Stage 3B: Remediación y Repair Engineers (Ingenieros de Reparación)
-- **Total de Repair Engineers Desplegados:** `15 subagentes`
+- **Total de Repair Engineers Desplegados:** `15 subagentes` en **`7 ronda(s)`** (`DONE`: `6`, `BLOCKED`: **`9`**)
 - **Duración Mínima:** `34.0s` | **Mediana:** `78.0s` | **Máxima:** `134.0s` (`2.2 min`)
 - **Tokens Activos Totales en Reparación:** `1,005,553 tokens`
 - **Agente Determinante del Retraso:** `Repair Engineer C-01`
 
-| Repair Engineer | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Errores | Duración |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Repair Engineer shard_06 (C-01, C-02, C-03)** | 7 | 52,110 | 9,761 | 193,584 | 61,871 | 2 | **78.0s** |
-| **Repair Engineer shard_09 (C-04, C-05, H-01)** | 8 | 122,792 | 12,168 | 213,054 | 134,960 | 2 | **92.0s** |
-| **Repair Engineer shard_07 (C-06, C-07, C-08)** | 7 | 54,969 | 10,172 | 215,229 | 65,141 | 2 | **84.0s** |
-| **Repair Engineer C-01** | 8 | 63,695 | 17,171 | 298,830 | 80,866 | 2 | **110.0s** |
-| **Repair Engineer shard_09 (C-04, H-01)** | 9 | 65,237 | 14,480 | 326,903 | 79,717 | 2 | **105.0s** |
-| **Repair Engineer C-06** | 6 | 52,148 | 10,722 | 165,895 | 62,870 | 1 | **71.0s** |
-| **Repair Engineer C-01** | 11 | 71,247 | 18,146 | 427,198 | 89,393 | 4 | **134.0s** |
-| **Repair Engineer shard_09 (C-04, H-01)** | 7 | 53,442 | 9,898 | 214,092 | 63,340 | 2 | **90.0s** |
-| **Repair Engineer C-06** | 7 | 45,278 | 7,101 | 186,961 | 52,379 | 2 | **69.0s** |
-| **Repair Engineer C-01** | 8 | 54,773 | 4,378 | 242,971 | 59,151 | 0 | **45.0s** |
-| **Repair Engineer shard_09 (C-04, H-01)** | 7 | 64,166 | 10,828 | 252,657 | 74,994 | 1 | **90.0s** |
-| **Repair Engineer C-06** | 6 | 42,604 | 4,560 | 142,065 | 47,164 | 0 | **38.0s** |
-| **Repair Engineer C-03** | 5 | 43,537 | 4,491 | 114,913 | 48,028 | 0 | **41.0s** |
-| **Repair Engineer C-09** | 5 | 37,890 | 3,429 | 104,673 | 41,319 | 0 | **34.0s** |
-| **Repair Engineer Hab-04** | 6 | 40,394 | 3,966 | 132,962 | 44,360 | 0 | **56.0s** |
+| Repair Engineer | Estado | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Errores | Duración |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Repair Engineer shard_06 (C-01, C-02, C-03)** | `BLOCKED` | 7 | 52,110 | 9,761 | 193,584 | 61,871 | 2 | **78.0s** |
+| **Repair Engineer shard_09 (C-04, C-05, H-01)** | `BLOCKED` | 8 | 122,792 | 12,168 | 213,054 | 134,960 | 2 | **92.0s** |
+| **Repair Engineer shard_07 (C-06, C-07, C-08)** | `BLOCKED` | 7 | 54,969 | 10,172 | 215,229 | 65,141 | 2 | **84.0s** |
+| **Repair Engineer C-01** | `BLOCKED` | 8 | 63,695 | 17,171 | 298,830 | 80,866 | 2 | **110.0s** |
+| **Repair Engineer shard_09 (C-04, H-01)** | `BLOCKED` | 9 | 65,237 | 14,480 | 326,903 | 79,717 | 2 | **105.0s** |
+| **Repair Engineer C-06** | `BLOCKED` | 6 | 52,148 | 10,722 | 165,895 | 62,870 | 1 | **71.0s** |
+| **Repair Engineer C-01** | `BLOCKED` | 11 | 71,247 | 18,146 | 427,198 | 89,393 | 4 | **134.0s** |
+| **Repair Engineer shard_09 (C-04, H-01)** | `BLOCKED` | 7 | 53,442 | 9,898 | 214,092 | 63,340 | 2 | **90.0s** |
+| **Repair Engineer C-06** | `BLOCKED` | 7 | 45,278 | 7,101 | 186,961 | 52,379 | 2 | **69.0s** |
+| **Repair Engineer C-01** | `DONE` | 8 | 54,773 | 4,378 | 242,971 | 59,151 | 0 | **45.0s** |
+| **Repair Engineer shard_09 (C-04, H-01)** | `DONE` | 7 | 64,166 | 10,828 | 252,657 | 74,994 | 1 | **90.0s** |
+| **Repair Engineer C-06** | `DONE` | 6 | 42,604 | 4,560 | 142,065 | 47,164 | 0 | **38.0s** |
+| **Repair Engineer C-03** | `DONE` | 5 | 43,537 | 4,491 | 114,913 | 48,028 | 0 | **41.0s** |
+| **Repair Engineer C-09** | `DONE` | 5 | 37,890 | 3,429 | 104,673 | 41,319 | 0 | **34.0s** |
+| **Repair Engineer Hab-04** | `DONE` | 6 | 40,394 | 3,966 | 132,962 | 44,360 | 0 | **56.0s** |
 
 ---
 
@@ -146,7 +147,7 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 | :--- | :--- | :--- |
 | **Lote Estratificado Ciego** | `120 reactivos` (22 comps × 2) | Lote de evaluación sin soluciones (`judge_batch.json`) |
 | **Subagentes Jueces Ciegos** | `11 jueces` | Aislamiento epistémico en Stage 5 |
-| **Resultado al Primer Intento** | **`❌ Falló al primer intento`** | Ronda 1: 3 discrepancia(s); 0 violaciones iniciales |
+| **Resultado al Primer Intento** | **`❌ Falló al primer intento`** | Ronda 1: 3 discrepancia(s) (`flaw_detected`: 3, `kernel_override`: 5); 0 violaciones iniciales |
 | **Resultado Final Post-Rejudge** | **`✅ Aprobado`** | `100.0%` acuerdo, `0` discrepancia(s) |
 | **Iteraciones de Auto-Reparación** | `0 iteraciones` en sandbox | 0 iteraciones ejecutadas |
 | **Intervenciones del Supervisor** | 🛠️ `2 operaciones directas` | 2 ediciones registradas |
@@ -174,6 +175,11 @@ Operaciones directas de edición de código ejecutadas por el orquestador: **`2`
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | **71** | `cta.json` | Mutación Inline vía Shell (Supervisor Fix) | Mutación directa vía python -c / shell sobre cta.json ("& \".venv\\Scripts\\python.exe\" -c \"import json; p='courses/solow_m20_v1/work) | `run_command` | 3,193 |
 | **85** | `pre_shard_manifest.json` | Mutación Inline vía Shell (Supervisor Fix) | Mutación directa vía python -c / shell sobre pre_shard_manifest.json ("& \".venv\\Scripts\\python.exe\" -c \"import json; p='courses/solow_m20_v1/work) | `run_command` | 3,218 |
+
+### 4.3. Fricciones de Orquestación, Hooks y Gobernanza Híbrida
+- **Denegaciones de Pre-Tool Hooks:** `2` (Pasos: 50, 63)
+- **Llamadas Malformadas (`Malformed function call`):** `1` (Pasos: 64)
+- **Gobernanza Híbrida (`run_workflow` + `invoke_subagent` legado):** `Sí` (`run_workflow`: 7, `invoke_subagent`: 4, `manage_subagents(kill*)`: 0)
 
 ---
 
@@ -224,15 +230,15 @@ Operaciones directas de edición de código ejecutadas por el orquestador: **`2`
 | **Repair Engineer C-09** | 1 | 2,287 | 0 |
 | **Repair Engineer Hab-04** | 2 | 2,852 | 0 |
 | **Blind Judge 01** | 1 | 6,615 | 0 |
-| **Shard Author shard_01** | 2 | 9,139 | 0 |
-| **Shard Author shard_02** | 3 | 16,428 | 0 |
-| **Shard Author shard_03** | 3 | 11,450 | 0 |
-| **Shard Author shard_04** | 2 | 15,018 | 0 |
-| **Shard Author shard_05** | 3 | 10,253 | 0 |
-| **Shard Author shard_06** | 3 | 13,737 | ⚠️ 1 |
-| **Shard Author shard_07** | 3 | 18,070 | 0 |
-| **Shard Author shard_08** | 3 | 16,394 | 0 |
-| **Shard Author shard_09** | 3 | 11,343 | ⚠️ 1 |
+| **Shard Author shard_01** | 2 | 9,139 | ⚠️ 1 |
+| **Shard Author shard_02** | 3 | 16,428 | ⚠️ 2 |
+| **Shard Author shard_03** | 3 | 11,450 | ⚠️ 1 |
+| **Shard Author shard_04** | 2 | 15,018 | ⚠️ 1 |
+| **Shard Author shard_05** | 3 | 10,253 | ⚠️ 1 |
+| **Shard Author shard_06** | 3 | 13,737 | ⚠️ 2 |
+| **Shard Author shard_07** | 3 | 18,070 | ⚠️ 2 |
+| **Shard Author shard_08** | 3 | 16,394 | ⚠️ 1 |
+| **Shard Author shard_09** | 3 | 11,343 | ⚠️ 2 |
 
 ---
 *Reporte forense determinista emitido por `c2c-run-auditor`.*
