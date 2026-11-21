@@ -37,8 +37,9 @@ interface PersistedIronExamState {
   itemConfidences?: Record<string, MetacognitiveConfidence>;
   flaggedIds?: Record<string, boolean>;
   stage0Phases?: Record<string, 1 | 2 | 3>;
-  globalConfidence?: MetacognitiveConfidence;
+  globalConfidence?: MetacognitiveConfidence | null;
   elapsedSeconds?: number;
+  timeLimitSeconds?: number;
 }
 
 interface IronExamSessionProps {
@@ -46,6 +47,7 @@ interface IronExamSessionProps {
   questions: Question[];
   courseId?: string;
   courseTitle?: string;
+  timeLimitSeconds?: number;
   initialSnapshot?: ActiveSessionSnapshot | null;
   onComplete: (
     score: number,
@@ -68,6 +70,7 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   questions,
   courseId,
   courseTitle,
+  timeLimitSeconds,
   initialSnapshot,
   onComplete,
   onQuit,
@@ -93,8 +96,15 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   const [stage0Phases, setStage0Phases] = useState<Record<string, 1 | 2 | 3>>(
     () => restoredIron.stage0Phases || {}
   );
-  const [globalConfidence, setGlobalConfidence] = useState<MetacognitiveConfidence>(
-    () => restoredIron.globalConfidence || 'medium'
+  const [globalConfidence, setGlobalConfidence] = useState<MetacognitiveConfidence | null>(
+    () => restoredIron.globalConfidence ?? null
+  );
+  const effectiveTimeLimit = useMemo(
+    () =>
+      restoredIron.timeLimitSeconds ??
+      timeLimitSeconds ??
+      Math.max(180, questions.length * 120),
+    [restoredIron.timeLimitSeconds, timeLimitSeconds, questions.length]
   );
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(
     () => restoredIron.elapsedSeconds ?? initialSnapshot?.elapsedSeconds ?? 0
@@ -102,6 +112,9 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   const [showMetaModal, setShowMetaModal] = useState(false);
   const [scratchpadOpen, setScratchpadOpen] = useState(false);
   const [scratchpadBgMode, setScratchpadBgMode] = useState<ScratchBgMode>('transparent');
+
+  const remainingSeconds = Math.max(0, effectiveTimeLimit - elapsedSeconds);
+  const isTimeExpired = effectiveTimeLimit > 0 && remainingSeconds === 0;
 
   const questionEnterTimeRef = useRef<number>(Date.now());
   const spentByQidRef = useRef<Record<string, number>>({});
@@ -136,13 +149,24 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
     [questions, answeredMap]
   );
 
-  // Elapsed timer tick
+  // Countdown timer tick; halts once time expires
   useEffect(() => {
+    if (isTimeExpired) return;
     const id = window.setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
+      setElapsedSeconds((prev) => {
+        const next = prev + 1;
+        return effectiveTimeLimit > 0 ? Math.min(effectiveTimeLimit, next) : next;
+      });
     }, 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [isTimeExpired, effectiveTimeLimit]);
+
+  // Auto-open mandatory metacognitive modal when exam time expires
+  useEffect(() => {
+    if (isTimeExpired) {
+      setShowMetaModal(true);
+    }
+  }, [isTimeExpired]);
 
   // Persist Iron Exam snapshot across page reload (sessionStore v1)
   useEffect(() => {
@@ -176,6 +200,7 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
         stage0Phases,
         globalConfidence,
         elapsedSeconds,
+        timeLimitSeconds: effectiveTimeLimit,
       },
       results: [],
       telemetry: [],
@@ -195,6 +220,7 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
     stage0Phases,
     globalConfidence,
     elapsedSeconds,
+    effectiveTimeLimit,
   ]);
 
   const recordTimeForCurrentQuestion = () => {
@@ -214,7 +240,7 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   };
 
   const updateCurrentDraft = (updater: (prev: IronExamQuestionDraft) => IronExamQuestionDraft) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || isTimeExpired) return;
     setDrafts((prev) => {
       const existing = prev[currentQuestion.id] || createInitialIronDraft(currentQuestion);
       return {
@@ -225,12 +251,19 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   };
 
   const handleConfirmSubmit = () => {
+    const allItemsCalibrated =
+      questions.length > 0 && questions.every((q) => Boolean(itemConfidences[q.id]));
+    if (globalConfidence === null && !allItemsCalibrated) {
+      return;
+    }
+    const effectiveGlobalConfidence: MetacognitiveConfidence = globalConfidence ?? 'medium';
+
     recordTimeForCurrentQuestion();
     const { audit, deferredReview, gradedResults } = computeMetacognitiveAudit(
       questions,
       drafts,
       itemConfidences,
-      globalConfidence,
+      effectiveGlobalConfidence,
       flaggedIds
     );
 
@@ -271,7 +304,13 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
   }
 
   const isFlagged = Boolean(flaggedIds[currentQuestion.id]);
-  const activeConf = itemConfidences[currentQuestion.id] || globalConfidence;
+  const activeConf = itemConfidences[currentQuestion.id] ?? globalConfidence;
+  const timerColorClass =
+    remainingSeconds <= 30
+      ? 'text-rose-300 border-rose-500/60 bg-rose-950/60'
+      : remainingSeconds <= 120
+      ? 'text-amber-300 border-amber-500/50 bg-amber-950/40'
+      : 'text-emerald-300 border-slate-700 bg-slate-800';
 
   return (
     <div
@@ -320,9 +359,10 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
           </span>
           <span
             data-testid="iron-timer"
-            className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 font-mono text-xs sm:text-sm font-bold text-emerald-300"
+            aria-label={`Tiempo restante ${formatClock(remainingSeconds)}`}
+            className={`px-2.5 py-1 rounded border font-mono text-xs sm:text-sm font-bold ${timerColorClass}`}
           >
-            ⏱ {formatClock(elapsedSeconds)}
+            ⏱ {formatClock(remainingSeconds)}
           </span>
         </div>
       </header>
@@ -433,9 +473,10 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
           fillBlankValue={currentDraft.fillBlankValue}
           structuredAnswer={currentDraft.structuredAnswer}
           stage0Phase={stage0Phases[currentQuestion.id] || 1}
-          onSelectStage0Phase={(ph) =>
-            setStage0Phases((prev) => ({ ...prev, [currentQuestion.id]: ph }))
-          }
+          onSelectStage0Phase={(ph) => {
+            if (isTimeExpired) return;
+            setStage0Phases((prev) => ({ ...prev, [currentQuestion.id]: ph }));
+          }}
           isChecked={false}
           isCorrect={null}
           hintsRevealed={0}
@@ -523,11 +564,14 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
         flaggedMap={flaggedIds}
         itemConfidences={itemConfidences}
         globalConfidence={globalConfidence}
+        isTimeExpired={isTimeExpired}
         onSelectGlobalConfidence={setGlobalConfidence}
         onSelectItemConfidence={(qid, conf) =>
           setItemConfidences((prev) => ({ ...prev, [qid]: conf }))
         }
-        onCancel={() => setShowMetaModal(false)}
+        onCancel={() => {
+          if (!isTimeExpired) setShowMetaModal(false);
+        }}
         onConfirm={handleConfirmSubmit}
       />
     </div>

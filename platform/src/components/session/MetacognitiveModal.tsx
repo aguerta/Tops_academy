@@ -7,7 +7,8 @@ interface MetacognitiveModalProps {
   answeredMap: Record<string, boolean>;
   flaggedMap: Record<string, boolean>;
   itemConfidences: Record<string, MetacognitiveConfidence>;
-  globalConfidence: MetacognitiveConfidence;
+  globalConfidence: MetacognitiveConfidence | null;
+  isTimeExpired?: boolean;
   onSelectGlobalConfidence: (conf: MetacognitiveConfidence) => void;
   onSelectItemConfidence: (questionId: string, conf: MetacognitiveConfidence) => void;
   onCancel: () => void;
@@ -43,6 +44,7 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
   flaggedMap,
   itemConfidences,
   globalConfidence,
+  isTimeExpired = false,
   onSelectGlobalConfidence,
   onSelectItemConfidence,
   onCancel,
@@ -54,6 +56,9 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
   const answeredCount = questions.filter((q) => answeredMap[q.id]).length;
   const unansweredCount = total - answeredCount;
   const flaggedCount = questions.filter((q) => flaggedMap[q.id]).length;
+  const allItemsCalibrated =
+    total > 0 && questions.every((q) => Boolean(itemConfidences[q.id]));
+  const canConfirm = globalConfidence !== null || allItemsCalibrated;
 
   return (
     <div
@@ -83,6 +88,16 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
             <strong>dominio calibrado</strong>.
           </p>
         </div>
+
+        {isTimeExpired && (
+          <div
+            role="alert"
+            data-testid="iron-time-expired-banner"
+            className="p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-900 text-xs font-bold"
+          >
+            Tiempo agotado: el examen se cerró automáticamente. Selecciona tu nivel de certeza para calificar y ver resultados.
+          </div>
+        )}
 
         {/* Completeness summary */}
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -145,7 +160,7 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
             </div>
             <div className="max-h-40 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg bg-slate-50">
               {questions.map((q, idx) => {
-                const eff = itemConfidences[q.id] || globalConfidence;
+                const eff = itemConfidences[q.id] ?? globalConfidence;
                 return (
                   <div
                     key={q.id}
@@ -178,20 +193,32 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
           </div>
         )}
 
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t border-slate-200">
-          <button
-            type="button"
-            data-testid="metacognitive-cancel-btn"
-            onClick={onCancel}
-            className="px-4 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+        {!canConfirm && (
+          <p
+            data-testid="metacognitive-required-notice"
+            className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"
           >
-            Volver al examen
-          </button>
+            Selecciona tu nivel de certeza global o por ítem antes de ver resultados.
+          </p>
+        )}
+
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t border-slate-200">
+          {!isTimeExpired && (
+            <button
+              type="button"
+              data-testid="metacognitive-cancel-btn"
+              onClick={onCancel}
+              className="px-4 py-2 rounded-lg border border-slate-300 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+            >
+              Volver al examen
+            </button>
+          )}
           <button
             type="button"
             data-testid="metacognitive-confirm-btn"
+            disabled={!canConfirm}
             onClick={onConfirm}
-            className="px-5 py-2 rounded-lg bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold shadow-sm cursor-pointer"
+            className="px-5 py-2 rounded-lg bg-ka-blue hover:bg-ka-blue-hover disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold shadow-sm cursor-pointer"
           >
             Confirmar y ver resultados
           </button>

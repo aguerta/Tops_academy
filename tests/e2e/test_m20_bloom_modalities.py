@@ -607,7 +607,12 @@ def test_iron_exam_replaces_course_challenge_with_metacognitive_audit(m20_browse
         start_btn.click()
 
         expect(page.locator("[data-testid='iron-exam-session']")).to_be_visible(timeout=10000)
-        expect(page.locator("[data-testid='iron-timer']")).to_be_visible()
+        timer_loc = page.locator("[data-testid='iron-timer']")
+        expect(timer_loc).to_be_visible()
+        timer_text = timer_loc.inner_text()
+        assert re.search(r"\d{2}:\d{2}", timer_text) and "00:00" not in timer_text, (
+            f"Expected active countdown MM:SS in iron-timer, got {timer_text!r}"
+        )
         # Closed-book exam must not expose hints, curtain, immediate feedback, or Socratic tutor
         expect(page.locator("[data-testid='hints-toggle']")).to_have_count(0)
         expect(page.locator("[data-testid='blank-first-curtain']")).to_have_count(0)
@@ -647,12 +652,16 @@ def test_iron_exam_replaces_course_challenge_with_metacognitive_audit(m20_browse
             assert m["sw"] <= m["iw"] + 2, f"Overflow in IronExam at {w}x{h}: {m}"
         page.set_viewport_size({"width": 1280, "height": 800})
 
-        # Submit -> Metacognitive Modal -> Confirm
+        # Submit -> Metacognitive Modal -> Mandatory calibration before Confirm
         page.locator("[data-testid='iron-submit-exam-btn']").click()
         modal = page.locator("[data-testid='metacognitive-modal']")
         expect(modal).to_be_visible()
+        confirm_btn = page.locator("[data-testid='metacognitive-confirm-btn']")
+        expect(confirm_btn).to_be_disabled()
+        expect(page.locator("[data-testid='metacognitive-required-notice']")).to_be_visible()
         page.locator("[data-testid='meta-global-confidence-high']").click()
-        page.locator("[data-testid='metacognitive-confirm-btn']").click()
+        expect(confirm_btn).to_be_enabled()
+        confirm_btn.click()
 
         # CompletionScreen with Deferred Review & Metacognitive Audit Summary
         expect(page.locator("[data-testid='completion-screen']")).to_be_visible(timeout=10000)
