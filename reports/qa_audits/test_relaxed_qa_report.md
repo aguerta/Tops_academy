@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Relaxed Mode Test Course (`test_relaxed`)
 
-- **Fecha de Evaluación:** 2026-11-19
+- **Fecha de Evaluación:** 2026-11-21
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** OBSERVADO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
@@ -79,7 +79,7 @@ El curso **Relaxed Mode Test Course** queda en estado **OBSERVADO** (requiere co
     },
     "platform_status": "OBSERVADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-19"
+    "evaluation_date": "2026-11-21"
   },
   "dimension_scores": {},
   "penalties_applied": [

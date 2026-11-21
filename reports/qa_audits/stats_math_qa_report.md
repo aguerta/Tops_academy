@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Mathematical Statistics (`stats_math`)
 
-- **Fecha de Evaluación:** 2026-11-18
+- **Fecha de Evaluación:** 2026-11-21
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** RECHAZADO
 - **Calificación Final Certificada:** **11.4 / 20.0 pts**
@@ -79,7 +79,7 @@ El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en pl
     },
     "platform_status": "RECHAZADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-18"
+    "evaluation_date": "2026-11-21"
   },
   "dimension_scores": {
     "architecture_granularity": {

@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Certified Course (`cert_course`)
 
-- **Fecha de Evaluación:** 2026-11-18
+- **Fecha de Evaluación:** 2026-11-21
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
@@ -79,7 +79,7 @@ El curso **Certified Course** ha sido **certificado y aprobado** con calificaci�
     },
     "platform_status": "ACTIVO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-18"
+    "evaluation_date": "2026-11-21"
   },
   "dimension_scores": {},
   "penalties_applied": [],

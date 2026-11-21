@@ -1,7 +1,7 @@
 # Informe de Auditoría Arquitectónica Forense: Rendimiento, Shards y Telemetría Multi-Agente
 ## Curso: Solow M20 V1 (`solow_m20_v1`)
 
-**Fecha de Auditoría:** `2026-11-19 20:27:21 UTC`  
+**Fecha de Auditoría:** `2026-11-21 16:41:41 UTC`  
 **Conversación Orquestadora:** [`90285b08-71a7-43ca-bbe7-285cd65efaab`](conversation://90285b08-71a7-43ca-bbe7-285cd65efaab)  
 **Directorio de Trabajo Validado (Zero-Collision):** `D:\Augusto\personal_portfolio\Tops_academy\courses\solow_m20_v1\work` (`match=True`)  
 **Enfoque:** Telemetría Determinista de API, Subagentes, Shards, Latencias y Operaciones del Orquestador.
@@ -21,9 +21,9 @@
 | **Reactivos Finales Validados** | **`540 preguntas`** | Evaluadas en sandbox |
 | **Tokens Entrada (Subagentes)** | **`2,147,516` tokens** | Contexto acumulativo enviado a subagentes |
 | **Tokens Salida (Subagentes)** | **`666,167` tokens** | Código de plantillas y JSON generado |
-| **Tokens Caché (Leídos)** | **`13,051,175` tokens** | Caché de contexto reutilizado por la API |
-| **Gran Total Tokens Activos** | **`3,367,767` tokens** | Entrada + Salida neto (sin contar caché) |
-| **Gran Total Tokens (con Caché)** | **`16,418,942` tokens** | Consumo total de cuota facturable |
+| **Tokens Caché (Leídos)** | **`13,380,433` tokens** | Caché de contexto reutilizado por la API |
+| **Gran Total Tokens Activos** | **`3,376,491` tokens** | Entrada + Salida neto (sin contar caché) |
+| **Gran Total Tokens (con Caché)** | **`16,756,924` tokens** | Consumo total de cuota facturable |
 
 ---
 
@@ -33,14 +33,14 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 
 | Métrica Unitaria | Valor Obtenido | Interpretación de Eficiencia |
 | :--- | :--- | :--- |
-| **Tokens Totales por Pregunta** | **`30,405.4 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
-| **Tokens Activos por Pregunta** | **`6,236.6 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
-| **Tokens por Competencia (Global)** | **`746,315.5 tokens/comp`** | Densidad de diseño instruccional del curso |
+| **Tokens Totales por Pregunta** | **`31,031.3 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
+| **Tokens Activos por Pregunta** | **`6,252.8 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
+| **Tokens por Competencia (Global)** | **`761,678.4 tokens/comp`** | Densidad de diseño instruccional del curso |
 | **Tokens de Autor por Competencia** | **`56,152.5 tokens/comp`** | Costo puro de la etapa de autoría por competencia |
-| **Tokens Totales por Página / Slide** | **`456,081.7 tokens/pág`** | Esfuerzo cognitivo por diapositiva original |
-| **Segundos de Pared por Pregunta** | **`2.81 s/preg`** | Ritmo de entrega percibido |
-| **Rendimiento de Generación (QPM)** | **`21.34 preg/min`** | Velocidad de producción del pipeline |
-| **Factor de Aceleración Paralela** | **`3.53x`** | Relación tiempo cómputo vs tiempo de pared |
+| **Tokens Totales por Página / Slide** | **`465,470.1 tokens/pág`** | Esfuerzo cognitivo por diapositiva original |
+| **Segundos de Pared por Pregunta** | **`2.85 s/preg`** | Ritmo de entrega percibido |
+| **Rendimiento de Generación (QPM)** | **`21.08 preg/min`** | Velocidad de producción del pipeline |
+| **Factor de Aceleración Paralela** | **`3.5x`** | Relación tiempo cómputo vs tiempo de pared |
 
 ---
 
@@ -149,11 +149,11 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 | **Resultado al Primer Intento** | **`❌ Falló al primer intento`** | Ronda 1: 3 discrepancia(s); 0 violaciones iniciales |
 | **Resultado Final Post-Rejudge** | **`✅ Aprobado`** | `100.0%` acuerdo, `0` discrepancia(s) |
 | **Iteraciones de Auto-Reparación** | `0 iteraciones` en sandbox | 0 iteraciones ejecutadas |
-| **Intervenciones del Supervisor** | 🛠️ `0 operaciones directas` | Ninguna (ejecución autónoma) |
+| **Intervenciones del Supervisor** | 🛠️ `2 operaciones directas` | 2 ediciones registradas |
 
 #### Detalle de Acciones Registradas:
 - 1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 3 discrepancia(s) detectada(s).
-- 2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).
+- 2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (2 intervenciones de supervisor).
 - 3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos).
 
 ---
@@ -161,18 +161,19 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 ## 4. Auditoría Forense del Orquestador y Catálogo de Intervenciones Manuales
 
 ### 4.1. Descomposición del Tiempo Total del Orquestador
-- ⏱️ **Tiempo Total de Pared del Orquestador:** `25.3 min` (`1518.0s`)
-- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `1.8 min` (`110.0s`)
-- 🛠️ **Tiempo Gastado en Intervenciones Manuales (Supervisor Repair):** **`0.0 min`** (`0.0s`)
+- ⏱️ **Tiempo Total de Pared del Orquestador:** `25.62 min` (`1537.0s`)
+- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `1.7 min` (`103.0s`)
+- 🛠️ **Tiempo Gastado en Intervenciones Manuales (Supervisor Repair):** **`0.2 min`** (`11.0s`)
 - ⏳ **Tiempo Ocioso en Barreras de Sincronización (Esperando Subagentes):** `0.2 min` (`10.0s`)
-- 🧠 **Tiempo de Inferencia y Razonamiento del Modelo:** `2.1 min` (`125.0s`)
+- 🧠 **Tiempo de Inferencia y Razonamiento del Modelo:** `2.1 min` (`127.0s`)
 
 ### 4.2. Catálogo Cronológico de Reparaciones Manuales del Orquestador
-Operaciones directas de edición de código ejecutadas por el orquestador: **`0`**
+Operaciones directas de edición de código ejecutadas por el orquestador: **`2`**
 
 | Paso | Archivo Afectado | Tipo de Acción | Causa Raíz / Justificación Técnica | Herramienta | Tokens Paso |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| — | *Ninguna intervención registrada* | — | — | — | 0 |
+| **71** | `cta.json` | Mutación Inline vía Shell (Supervisor Fix) | Mutación directa vía python -c / shell sobre cta.json ("& \".venv\\Scripts\\python.exe\" -c \"import json; p='courses/solow_m20_v1/work) | `run_command` | 3,193 |
+| **85** | `pre_shard_manifest.json` | Mutación Inline vía Shell (Supervisor Fix) | Mutación directa vía python -c / shell sobre pre_shard_manifest.json ("& \".venv\\Scripts\\python.exe\" -c \"import json; p='courses/solow_m20_v1/work) | `run_command` | 3,218 |
 
 ---
 
@@ -186,9 +187,9 @@ Operaciones directas de edición de código ejecutadas por el orquestador: **`0`
 
 ## 6. Telemetría de Razonamiento Cognitivo (Thinking Traces)
 
-- **Total de Turnos con Razonamiento:** `124 turnos`
-- **Volumen Total de Razonamiento:** `302,634 caracteres`
-- **Razonamiento del Orquestador:** `25 turnos` (8,858 chars)
+- **Total de Turnos con Razonamiento:** `125 turnos`
+- **Volumen Total de Razonamiento:** `302,867 caracteres`
+- **Razonamiento del Orquestador:** `26 turnos` (9,091 chars)
 - **Razonamiento de Subagentes:** `99 turnos` (293,776 chars)
 
 | Agente / Subagente | Turnos de Thinking | Caracteres de Thinking | Trazas de Error Capturadas |
