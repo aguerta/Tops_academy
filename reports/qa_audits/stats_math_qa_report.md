@@ -6,7 +6,8 @@
 - **Estado en Plataforma:** RECHAZADO
 - **Calificación Final Certificada:** **11.4 / 20.0 pts**
 - **Quality Tier:** **DEFICIENTE (11.0 - 13.9 pts)**
-- **Mastery Path Readiness Index (MPRI):** **66.40 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Mastery Path Readiness Index (MPRI):** **70.40 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Índice Bloom Ponderado (1–5):** **0.00 / 5.0** (piso adaptativo 3.85 | Analyze+Evaluate: 100.0% | Tier: **N/A**)
 
 ---
 
@@ -36,10 +37,10 @@
 - Andamiaje formativo: 0.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 100.0% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0).
 
 #### D4. Alineación Instruccional y ZPD (2.4 / 4.0 pts)
-- Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente.
+- Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 0.00/5.0 (piso adaptativo 3.85, 100.0% Analyze+Evaluate, tier: N/A, incoherencias=0).
 
 #### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
-- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos.
+- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas y 0 formatos flotantes/asteriscos crudos.
 
 ---
 
@@ -47,19 +48,19 @@
 
 | Pilar Cognitivo | Puntaje | Máximo | Calificación |
 | :--- | :---: | :---: | :---: |
-| **1. Progresión Adaptativa ZPD y Bloom** | **12.00** | 20.0 | 60.0% |
+| **1. Progresión Adaptativa ZPD y Bloom** | **16.00** | 20.0 | 80.0% |
 | **2. Modalidad de Evocación y Anti-Gaming** | **20.00** | 20.0 | 100.0% |
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **0.00** | 25.0 | 0.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **15.00** | 15.0 | 100.0% |
 | **5. Topología DAG e Interleaving** | **9.40** | 10.0 | 94.0% |
 | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
-| **TOTAL MPRI** | **66.40** | **100.0** | **66.4% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
+| **TOTAL MPRI** | **70.40** | **100.0** | **70.4% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
 
 ---
 
 ### 4. Veredicto y Certificación
 
-El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en plataforma con calificación de **11.4 / 20.0** y MPRI de **66.40 / 100.0**. Debe corregir las brechas críticas y penalizaciones bloqueantes antes de reevaluar.
+El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en plataforma con calificación de **11.4 / 20.0** y MPRI de **70.40 / 100.0**. Debe corregir las brechas críticas y penalizaciones bloqueantes antes de reevaluar.
 
 ---
 
@@ -76,6 +77,15 @@ El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en pl
     "total_questions": 3,
     "question_types_distribution": {
       "unknown": 3
+    },
+    "bloom_index": {
+      "weighted_index": 0.0,
+      "adaptive_floor": 3.85,
+      "gap": 0.0,
+      "apply_plus_pct": 100.0,
+      "superior_pct": 100.0,
+      "tier": "N/A",
+      "coherence_violations_count": 0
     },
     "platform_status": "RECHAZADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
@@ -100,12 +110,12 @@ El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en pl
     "instructional_alignment": {
       "score": 2.4,
       "max": 4.0,
-      "feedback": "Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      "feedback": "Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 0.00/5.0 (piso adaptativo 3.85, 100.0% Analyze+Evaluate, tier: N/A, incoherencias=0)."
     },
     "technical_ergonomics": {
       "score": 2.0,
       "max": 2.0,
-      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos."
+      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas y 0 formatos flotantes/asteriscos crudos."
     }
   },
   "penalties_applied": [
@@ -124,12 +134,12 @@ El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en pl
   "final_score": 11.4,
   "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
   "mastery_path_readiness": {
-    "mpri_score": 66.4,
+    "mpri_score": 70.4,
     "mpri_max": 100.0,
     "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
     "pillars": {
       "zpd_adaptive_progression": {
-        "score": 12.0,
+        "score": 16.0,
         "max": 20.0
       },
       "retrieval_modality_and_anti_gaming": {
@@ -157,8 +167,7 @@ El curso **Mathematical Statistics** ha sido **RECHAZADO** para despliegue en pl
   "remediation_actions": [
     "Resolver penalización dura [bank_lt_3_exercises]: 2 competencia(s) tienen menos de 3 ejercicios prácticos.",
     "Resolver penalización dura [hints_zero]: 3 reactivo(s) carecen por completo de pistas progresivas (hints = 0).",
-    "Elevar calificación global (11.4/20.0 < 14.0 mínimo requerido) atendiendo dimensiones deficitarias.",
-    "Elevar Índice MPRI (66.40/100.0 < 70.0 mínimo requerido) fortaleciendo ZPD, modalidad activa y andamiaje."
+    "Elevar calificación global (11.4/20.0 < 14.0 mínimo requerido) atendiendo dimensiones deficitarias."
   ],
   "discovered_lint_rules": [],
   "platform_status": "RECHAZADO"

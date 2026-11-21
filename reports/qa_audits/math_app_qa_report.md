@@ -7,6 +7,7 @@
 - **Calificación Final Certificada:** **15.7 / 20.0 pts**
 - **Quality Tier:** **ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY**
 - **Mastery Path Readiness Index (MPRI):** **68.65 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Índice Bloom Ponderado (1–5):** **0.00 / 5.0** (piso adaptativo 3.85 | Analyze+Evaluate: 100.0% | Tier: **N/A**)
 
 ---
 
@@ -36,10 +37,10 @@
 - Andamiaje formativo: 100.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 4.76% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0).
 
 #### D4. Alineación Instruccional y ZPD (4.0 / 4.0 pts)
-- Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente.
+- Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 0.00/5.0 (piso adaptativo 3.85, 100.0% Analyze+Evaluate, tier: N/A, incoherencias=0).
 
 #### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
-- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos.
+- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas y 0 formatos flotantes/asteriscos crudos.
 
 ---
 
@@ -77,6 +78,15 @@ El curso **Math Course** queda en estado **OBSERVADO** (requiere correcciones an
     "question_types_distribution": {
       "multiple_choice_7_options": 21
     },
+    "bloom_index": {
+      "weighted_index": 0.0,
+      "adaptive_floor": 3.85,
+      "gap": 0.0,
+      "apply_plus_pct": 100.0,
+      "superior_pct": 100.0,
+      "tier": "N/A",
+      "coherence_violations_count": 0
+    },
     "platform_status": "OBSERVADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
     "evaluation_date": "2026-11-21"
@@ -100,12 +110,12 @@ El curso **Math Course** queda en estado **OBSERVADO** (requiere correcciones an
     "instructional_alignment": {
       "score": 4.0,
       "max": 4.0,
-      "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 0.00/5.0 (piso adaptativo 3.85, 100.0% Analyze+Evaluate, tier: N/A, incoherencias=0)."
     },
     "technical_ergonomics": {
       "score": 2.0,
       "max": 2.0,
-      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos."
+      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas y 0 formatos flotantes/asteriscos crudos."
     }
   },
   "penalties_applied": [
