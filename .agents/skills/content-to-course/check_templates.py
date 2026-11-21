@@ -701,6 +701,49 @@ def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
     return str(q.get("correct", "")).strip()
 
 
+_DIGIT_PLACEHOLDER_CONCAT_RE = re.compile(
+    r"(?:\d@[a-zA-Z_]\w*@|@[a-zA-Z_]\w*@\d|@[a-zA-Z_]\w*@@[a-zA-Z_]\w*@)"
+)
+
+
+def _check_digit_placeholder_concat(template: Dict[str, Any]) -> List[Tuple[str, str]]:
+    """Scan raw template text fields (and generate_py string literals) for digit-placeholder concatenation."""
+    hits: List[Tuple[str, str]] = []
+
+    def _scan_val(val: Any, path_label: str) -> None:
+        if isinstance(val, str):
+            m = _DIGIT_PLACEHOLDER_CONCAT_RE.search(val)
+            if m:
+                hits.append((path_label, m.group(0)))
+        elif isinstance(val, (list, tuple)):
+            for idx, item in enumerate(val):
+                _scan_val(item, f"{path_label}[{idx}]")
+        elif isinstance(val, dict):
+            for k, v in val.items():
+                _scan_val(v, f"{path_label}.{k}")
+
+    for field_name in ("stem", "stem_es", "stem_variants", "hints", "solution", "explanation_es", "sol", "rats"):
+        if template.get(field_name) is not None:
+            _scan_val(template.get(field_name), field_name)
+
+    gen_src = template.get("generate_py") or template.get("generator_code")
+    if isinstance(gen_src, str) and gen_src.strip():
+        try:
+            tree = ast.parse(gen_src)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    m = _DIGIT_PLACEHOLDER_CONCAT_RE.search(node.value)
+                    if m:
+                        hits.append(("generate_py", m.group(0)))
+                        break
+        except SyntaxError:
+            m = _DIGIT_PLACEHOLDER_CONCAT_RE.search(gen_src)
+            if m:
+                hits.append(("generate_py", m.group(0)))
+
+    return hits
+
+
 def check_single_template(
     template: Dict[str, Any],
     competency_id: str,
@@ -719,6 +762,23 @@ def check_single_template(
     generate_py = template.get("generate_py", "")
     cross_check_py = template.get("cross_check_py") or template.get("verifier_code") or ""
     distractor_ids = template.get("distractor_ids", [])
+
+    # Early static check: digit-placeholder concatenation ([TPL-DIGIT-PLACEHOLDER-CONCAT])
+    for concat_field, concat_tok in _check_digit_placeholder_concat(template):
+        errors.append(format_diagnostic_error(
+            "TPL-DIGIT-PLACEHOLDER-CONCAT: CONCATENACIÓN DÍGITO-PLACEHOLDER",
+            competency_id,
+            tpl_id,
+            tpl_id,
+            concat_field,
+            concat_tok,
+            f"[TPL-DIGIT-PLACEHOLDER-CONCAT] Digit-placeholder concatenation '{concat_tok}' detected in '{concat_field}'; "
+            f"precompute the product in vars or insert an explicit operator (\\cdot) so interpolation never concatenates digits (e.g. 2@c@ -> 21).",
+            [
+                "Precomputa el coeficiente compuesto dentro de 'vars' en generate_py (ej. coef=2*c) e interpola @coef@.",
+                "O inserta un operador explícito entre dígito y placeholder (ej. 2 \\cdot @c@) o entre dos placeholders (@a@ \\cdot @b@).",
+            ],
+        ))
 
     # Strict hint length check (>= 25 characters)
     if strict:

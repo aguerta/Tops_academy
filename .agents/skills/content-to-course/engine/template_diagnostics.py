@@ -834,6 +834,10 @@ def get_canonical_invariant_key(inv_err: str) -> str:
         return "Relleno artificial de longitud en opción"
     if "Corrupción matemática de cuantificador universal" in clean:
         return "Corrupción matemática de cuantificador universal"
+    if "[TPL-KATEX-SYMPY-LEAK]" in clean:
+        return "[TPL-KATEX-SYMPY-LEAK] Raw SymPy syntax leaked inside KaTeX math"
+    if "[TPL-TAUTOLOGICAL-IDENTITY]" in clean:
+        return "[TPL-TAUTOLOGICAL-IDENTITY] Redundant self-identity in solution/hints"
     m_var = re.search(r"Unsubstituted template variable '\{([^}]+)\}' detected in (.+)", clean)
     if m_var:
         return f"Unsubstituted variable '{{{m_var.group(1)}}}' in {m_var.group(2).rstrip('.')}"
@@ -1230,6 +1234,24 @@ def format_invariant_error_diagnostic(
             "Eliminar frases como 'Descarte las respuestas...' o 'Elimine opciones...' del texto de hints.",
         ]
         return format_diagnostic_error("R-19: FUGA DE RESPUESTA EN ANDAMIAJE", cid, tpl_id, q_id, "hints", snippet, cause, actions)
+
+    # Case A-pre7: Raw SymPy syntax leaked in KaTeX ([TPL-KATEX-SYMPY-LEAK])
+    if "[TPL-KATEX-SYMPY-LEAK]" in inv_clean:
+        cause = f"Sintaxis cruda de Python/SymPy ('**', '*' o 'sqrt(') filtrada dentro de KaTeX: {inv_clean}"
+        actions = [
+            "Formatea potencias y expresiones simbólicas en LaTeX con '^{...}' o sympy.latex(...) dentro de vars['ans'] y texto KaTeX.",
+            "Reserva el operador '**' de Python exclusivamente para los campos simbólicos de evaluación ('correct', 'accepted_equivalents').",
+        ]
+        return format_diagnostic_error("TPL-KATEX-SYMPY-LEAK: SINTAXIS SYMPY EN KATEX", cid, tpl_id, q_id, "text", inv_clean, cause, actions)
+
+    # Case A-pre8: Tautological self-identity ($X = X$) ([TPL-TAUTOLOGICAL-IDENTITY])
+    if "[TPL-TAUTOLOGICAL-IDENTITY]" in inv_clean:
+        cause = f"Identidad tautológica redundante ($X = X$) detectada en solución o pista: {inv_clean}"
+        actions = [
+            "Evita repetir la misma expresión simbólica o numérica idéntica a ambos lados de '=' en 'sol' o 'hints'.",
+            "Muestra el paso algebraico intermedio o la sustitución efectiva en lugar de una igualdad trivial.",
+        ]
+        return format_diagnostic_error("TPL-TAUTOLOGICAL-IDENTITY: IDENTIDAD TAUTOLÓGICA", cid, tpl_id, q_id, "solution / hints", inv_clean, cause, actions)
 
     # Fallback Invariant
     return format_diagnostic_error(

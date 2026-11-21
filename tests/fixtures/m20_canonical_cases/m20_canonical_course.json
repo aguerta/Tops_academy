@@ -7,7 +7,7 @@
   "title": "Microeconomía Avanzada M20 (Casos Canónicos)",
   "description": "Curso canónico compilado vía Content-to-Course para validar las 6 modalidades de Bloom Superior, distractores diagnósticos (ds) y Smart Blank-First del Milestone 20.",
   "language": "es",
-  "created_at": "2026-11-19T19:39:41.938328+00:00",
+  "created_at": "2026-11-21T19:23:55.963544+00:00",
   "competencies": [
     {
       "id": "Hab-01",
@@ -1120,7 +1120,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "¿En qué nivel productivo $x_{\\text{stat}}$ se anula la derivada del beneficio si $p = 9$ y $c'(x) = 99/\\sqrt{x}$?",
+      "stem": "¿En qué nivel productivo $x_{\\text{stat}}$ se anula la derivada del beneficio si $p = 9$ y $c'(x) = 99/\\sqrt{x}$ ($a = 198$)?",
       "hints": [
         "Iguale el precio exógeno $9$ a $99/\\sqrt{x}$.",
         "Despeje $\\sqrt{x} = 99/9 = 11$ antes de elevar.",
@@ -1681,7 +1681,7 @@
     {
       "id": "Q-Hab01-026",
       "competency_id": "Hab-01",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "adversarial_break",
       "type": "adversarial_break",
@@ -1763,7 +1763,7 @@
     {
       "id": "Q-Hab01-027",
       "competency_id": "Hab-01",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "adversarial_break",
       "type": "adversarial_break",
@@ -1845,7 +1845,7 @@
     {
       "id": "Q-Hab01-028",
       "competency_id": "Hab-01",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "adversarial_break",
       "type": "adversarial_break",
@@ -1927,7 +1927,7 @@
     {
       "id": "Q-Hab01-029",
       "competency_id": "Hab-01",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "adversarial_break",
       "type": "adversarial_break",
@@ -2009,7 +2009,7 @@
     {
       "id": "Q-Hab01-030",
       "competency_id": "Hab-01",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "adversarial_break",
       "type": "adversarial_break",
@@ -3806,7 +3806,7 @@
     {
       "id": "Q-Hab02-021",
       "competency_id": "Hab-02",
-      "bloom_taxonomy_level": "Apply",
+      "bloom_taxonomy_level": "Analyze",
       "difficulty": "easy",
       "interaction_type": "unstructured_model",
       "type": "unstructured_model",
@@ -3922,7 +3922,7 @@
     {
       "id": "Q-Hab02-022",
       "competency_id": "Hab-02",
-      "bloom_taxonomy_level": "Apply",
+      "bloom_taxonomy_level": "Analyze",
       "difficulty": "easy",
       "interaction_type": "unstructured_model",
       "type": "unstructured_model",
@@ -4038,7 +4038,7 @@
     {
       "id": "Q-Hab02-023",
       "competency_id": "Hab-02",
-      "bloom_taxonomy_level": "Apply",
+      "bloom_taxonomy_level": "Analyze",
       "difficulty": "easy",
       "interaction_type": "unstructured_model",
       "type": "unstructured_model",
@@ -4154,7 +4154,7 @@
     {
       "id": "Q-Hab02-024",
       "competency_id": "Hab-02",
-      "bloom_taxonomy_level": "Apply",
+      "bloom_taxonomy_level": "Analyze",
       "difficulty": "easy",
       "interaction_type": "unstructured_model",
       "type": "unstructured_model",
@@ -4270,7 +4270,7 @@
     {
       "id": "Q-Hab02-025",
       "competency_id": "Hab-02",
-      "bloom_taxonomy_level": "Apply",
+      "bloom_taxonomy_level": "Analyze",
       "difficulty": "easy",
       "interaction_type": "unstructured_model",
       "type": "unstructured_model",
@@ -7280,7 +7280,7 @@
     {
       "id": "Q-C02-004",
       "competency_id": "C-02",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "proof_dag",
       "type": "proof_dag",
@@ -7397,7 +7397,7 @@
     {
       "id": "Q-C02-005",
       "competency_id": "C-02",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "proof_dag",
       "type": "proof_dag",
@@ -7514,7 +7514,7 @@
     {
       "id": "Q-C02-006",
       "competency_id": "C-02",
-      "bloom_taxonomy_level": "Create",
+      "bloom_taxonomy_level": "Evaluate",
       "difficulty": "hard",
       "interaction_type": "proof_dag",
       "type": "proof_dag",
@@ -8340,15 +8340,15 @@
           }
         ],
         "correct_pairs": {
-          "E_shep": "C_shep",
           "E_umu": "C_umu",
+          "E_shep": "C_shep",
           "E_hom": "C_hom"
         }
       },
       "correct_answer": {
         "pairs": {
-          "E_shep": "C_shep",
           "E_umu": "C_umu",
+          "E_shep": "C_shep",
           "E_hom": "C_hom"
         }
       }
@@ -8426,15 +8426,15 @@
           }
         ],
         "correct_pairs": {
-          "E_shep": "C_shep",
           "E_umu": "C_umu",
+          "E_shep": "C_shep",
           "E_hom": "C_hom"
         }
       },
       "correct_answer": {
         "pairs": {
-          "E_shep": "C_shep",
           "E_umu": "C_umu",
+          "E_shep": "C_shep",
           "E_hom": "C_hom"
         }
       }
@@ -8512,15 +8512,15 @@
           }
         ],
         "correct_pairs": {
-          "E_shep": "C_shep",
           "E_umu": "C_umu",
+          "E_shep": "C_shep",
           "E_hom": "C_hom"
         }
       },
       "correct_answer": {
         "pairs": {
-          "E_shep": "C_shep",
           "E_umu": "C_umu",
+          "E_shep": "C_shep",
           "E_hom": "C_hom"
         }
       }
@@ -8528,7 +8528,7 @@
     {
       "id": "Q-C02-019",
       "competency_id": "C-02",
-      "bloom_taxonomy_level": "Evaluate",
+      "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
@@ -8610,7 +8610,7 @@
     {
       "id": "Q-C02-020",
       "competency_id": "C-02",
-      "bloom_taxonomy_level": "Evaluate",
+      "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
@@ -8692,7 +8692,7 @@
     {
       "id": "Q-C02-021",
       "competency_id": "C-02",
-      "bloom_taxonomy_level": "Evaluate",
+      "bloom_taxonomy_level": "Apply",
       "difficulty": "medium",
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",

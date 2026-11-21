@@ -15,7 +15,8 @@ for p in (str(ROOT_DIR), str(C2C_DIR), str(QA_SCRIPTS_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from engine.invariants import check_instance_invariants  # noqa: E402
+from check_templates import _check_digit_placeholder_concat  # noqa: E402
+from engine.invariants import check_instance_invariants, validate_katex_syntax  # noqa: E402
 from engine.template_diagnostics import get_canonical_invariant_key  # noqa: E402
 import run_platform  # noqa: E402
 from standardized_audit_engine import run_full_audit  # noqa: E402
@@ -217,3 +218,62 @@ def test_qa_engine_nested_latex_no_false_positive_and_phantom_detection():
         assert v2_res["dimension_summaries"]["phantom_numeric_rationale_linter"]["phantom_numeric_items_count"] >= 4
         assert "Q-Hab05-241" in v2_res["risk_clusters"]["phantom_numeric_rationale"]
         assert "Q-Hab06-271" in v2_res["risk_clusters"]["phantom_numeric_rationale"]
+
+
+def test_katex_rejects_python_pow_in_math_allows_markdown_bold():
+    errs_bad = validate_katex_syntax(r"Resulta $r^*=(s/n)**5$ exacto.", "detailed_solution")
+    assert any("[TPL-KATEX-SYMPY-LEAK]" in e for e in errs_bad)
+    assert get_canonical_invariant_key(errs_bad[0]) == "[TPL-KATEX-SYMPY-LEAK] Raw SymPy syntax leaked inside KaTeX math"
+
+    errs_good = validate_katex_syntax(r"**Paso 1:** Resulta $r^*=(s/n)^{5}$ exacto.", "detailed_solution")
+    assert errs_good == [], f"Expected valid LaTeX + Markdown bold to pass, got: {errs_good}"
+
+
+def test_tautological_self_identity_rejected_in_solution():
+    errs_bad = validate_katex_syntax(r"Evaluando: $0.11 r^{-0.65}=0.11 r^{-0.65}$ en equilibrio.", "detailed_solution")
+    assert any("[TPL-TAUTOLOGICAL-IDENTITY]" in e for e in errs_bad)
+    assert get_canonical_invariant_key(errs_bad[0]) == "[TPL-TAUTOLOGICAL-IDENTITY] Redundant self-identity in solution/hints"
+
+    errs_neq = validate_katex_syntax(r"Verifique que $0.11 r^{-0.65} \neq 0$ cuando $1=1$.", "detailed_solution")
+    assert not any("[TPL-TAUTOLOGICAL-IDENTITY]" in e for e in errs_neq)
+
+
+def test_digit_placeholder_concat_rejected_in_template():
+    bad_tpl = {
+        "id": "T-C01-01",
+        "stem": r"La productividad es $2@c@k^{-1/2}$.",
+        "stem_variants": [r"La productividad marginal vale $2@c@k^{-1/2}$."],
+        "hints": ["Calcule $f'(k)$.", "Evalúe en @x@.", "Multiplique por 2."],
+        "solution": r"El resultado es $2@c@k^{-1/2}$.",
+        "generate_py": "def g(r):\n return {'vars': {'c': 1, 'x': 2}, 'correct': '2'}",
+    }
+    hits = _check_digit_placeholder_concat(bad_tpl)
+    assert hits, "Expected 2@c@ concatenation to be flagged"
+    assert any("@c@" in tok for _, tok in hits)
+
+    bad_pair = {"stem": r"Producto $@a@@b@$.", "generate_py": "def g(r):\n return {}"}
+    assert _check_digit_placeholder_concat(bad_pair)
+
+    good_tpl = {
+        "stem": r"La productividad es $2 \cdot @c@ k^{-1/2}$.",
+        "hints": ["Derive.", "Sustituya.", "Simplifique."],
+        "solution": r"El coeficiente es $@coef@$.",
+        "generate_py": "def g(r):\n return {'vars': {'c': 1, 'coef': 2}, 'correct': '2'}",
+    }
+    assert _check_digit_placeholder_concat(good_tpl) == []
+
+
+def test_qa_engine_detects_v3_pow_tautology_and_no_cross_category_dup():
+    v3_path = ROOT_DIR / "courses" / "solow_m20_v3.json"
+    if not v3_path.is_file():
+        return
+    v3_res = run_full_audit(json.loads(v3_path.read_text(encoding="utf-8")))
+    assert "Q-Hab05-241" in v3_res["risk_clusters"]["sympy_in_katex"]
+    assert "Q-Hab10-475" in v3_res["risk_clusters"]["katex_ergonomics"]
+    assert not any(
+        "Hab-04" in iss["message"] and "C-08" in iss["message"]
+        for iss in v3_res["all_issues"]
+        if iss["linter"] == "architecture_dag_linter"
+    )
+    assert v3_res["dimension_summaries"]["zpd_progression_linter"]["bloom_weighted_index"] > 3.5
+

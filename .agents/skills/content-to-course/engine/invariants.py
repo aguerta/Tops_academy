@@ -971,7 +971,7 @@ def validate_katex_syntax(
         errors.append(f"Newtonian dot accent on digits detected in {context}: '{m_dot.group(0)}'.")
 
     # 18. Raw SymPy syntax leaked inside KaTeX math blocks ($...$ or $$...$$) [TPL-KATEX-SYMPY-LEAK]
-    _sympy_leak_re = re.compile(r"(?:\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
+    _sympy_leak_re = re.compile(r"(?:\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
     for mb_sym in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
         math_seg = mb_sym.group(1) if mb_sym.group(0).startswith("$$") else mb_sym.group(2)
         if not math_seg:
@@ -980,9 +980,26 @@ def validate_katex_syntax(
         if m_sym:
             errors.append(
                 f"[TPL-KATEX-SYMPY-LEAK] Raw SymPy syntax ('{m_sym.group(0).strip()}') leaked inside KaTeX math in {context}; "
-                f"format symbolic expressions with sympy.latex(...) instead of str(...)."
+                f"format symbolic expressions with sympy.latex(...) or '^{{...}}' instead of str(...)/'**'."
             )
             break
+
+    # 19. Tautological self-identity ($X = X$) in solution/hints [TPL-TAUTOLOGICAL-IDENTITY]
+    if any(k in context.lower() for k in ("solution", "hint")):
+        for mb_taut in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
+            taut_seg = mb_taut.group(1) if mb_taut.group(0).startswith("$$") else mb_taut.group(2)
+            if not taut_seg or "=" not in taut_seg:
+                continue
+            if any(op in taut_seg for op in ("\\neq", "\\ne ", "\\leq", "\\geq", "\\equiv", "!=", "<=", ">=")):
+                continue
+            sides = [re.sub(r"\s+", "", s) for s in taut_seg.split("=")]
+            for idx_s in range(len(sides) - 1):
+                if len(sides[idx_s]) >= 4 and sides[idx_s] == sides[idx_s + 1]:
+                    errors.append(
+                        f"[TPL-TAUTOLOGICAL-IDENTITY] Redundant self-identity ('{sides[idx_s]}={sides[idx_s + 1]}') "
+                        f"detected inside KaTeX math in {context}; avoid repeating the same expression on both sides of '='."
+                    )
+                    break
 
     return errors
 
