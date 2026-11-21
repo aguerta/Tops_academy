@@ -500,6 +500,33 @@ async def run_c2c_workflow() -> Dict[str, Any]:
         env_extra=cli_env,
     )
 
+    # Stage 5B: Adaptive Two-Stage LQAS micro-wave if any k=1 template triggered kernel_override=True
+    jr_path = work_path / "judge_report.json"
+    if _is_fresh_file(jr_path, stage5_start):
+        try:
+            jr_data = json.loads(jr_path.read_text(encoding="utf-8"))
+        except Exception:
+            jr_data = {}
+        if bool(jr_data.get("lqas_followup_required")) and (jr_data.get("single_seed_override_templates") or []):
+            phase("Stage 5B: Adaptive Two-Stage LQAS Confirmation")
+            _unlink_if_exists(judges_manifest)
+            lqas_start = time.time()
+            await run_cli(
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "lqas-rejudge", "--work-dir", work_dir_arg),
+                "C2C stage lqas-rejudge",
+                env_extra=cli_env,
+            )
+            if _is_fresh_file(judges_manifest, lqas_start):
+                await run_wave_from_manifest(
+                    str(judges_manifest),
+                    "Stage 5B: Adaptive LQAS Confirmation Wave",
+                )
+                await run_cli(
+                    _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "lqas-compare", "--work-dir", work_dir_arg),
+                    "C2C stage lqas-compare",
+                    env_extra=cli_env,
+                )
+
     phase("Stage 6: Quality Gates")
     _unlink_if_exists(work_path / "repair_matrix.json")
     _unlink_if_exists(dispatch_dir / "repair_matrix.json")

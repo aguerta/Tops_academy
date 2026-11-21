@@ -1919,6 +1919,9 @@ def dispatch_judges(
     max_judges: int = 10,
     ready_only: bool = False,
     ids: Optional[Union[str, List[Union[str, int]]]] = None,
+    samples_per_template: Optional[int] = None,
+    overlap_ratio: Optional[float] = None,
+    stem_variant_offset: int = 0,
 ) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Blind Judges (Load Inversion v3.21).
     
@@ -1947,11 +1950,25 @@ def dispatch_judges(
                             pass
 
     if ids or ready_only or not has_existing_batch:
-        from judge import generate_judge_batch, split_judge_batch
+        from judge import (
+            DEFAULT_OVERLAP_RATIO,
+            DEFAULT_TARGET_TOTAL_EVALUATIONS,
+            generate_judge_batch,
+            split_judge_batch,
+        )
         templates_path = work / "templates"
         if templates_path.is_dir() and any(templates_path.glob("*.json")):
             _purge_stale_judge_batches()
             cta_file = work / "cta.json"
+            eff_overlap = DEFAULT_OVERLAP_RATIO if overlap_ratio is None else overlap_ratio
+            target_unique: Optional[int] = None
+            if (
+                samples_per_template is None
+                and ids is None
+                and max_judges == 10
+                and max_items_per_judge == 20
+            ):
+                target_unique = int(round(DEFAULT_TARGET_TOTAL_EVALUATIONS / (1.0 + eff_overlap)))
             generate_judge_batch(
                 templates_path=templates_path,
                 work_dir=work,
@@ -1960,8 +1977,17 @@ def dispatch_judges(
                 max_judges=max_judges,
                 max_items_per_judge=max_items_per_judge,
                 ids=ids,
+                samples_per_template=samples_per_template,
+                target_unique_items=target_unique,
+                stem_variant_offset=stem_variant_offset,
             )
-            split_batches = split_judge_batch(work, max_judges=max_judges, items_per_judge=max_items_per_judge)
+            split_kwargs: Dict[str, Any] = {
+                "max_judges": max_judges,
+                "items_per_judge": max_items_per_judge,
+            }
+            if overlap_ratio is not None:
+                split_kwargs["overlap_ratio"] = overlap_ratio
+            split_batches = split_judge_batch(work, **split_kwargs)
 
     # Native Batch Slicing: ensure batches are sliced at <= max_items_per_judge (default 20) and <= max_judges (default 10)
     unsplit = work / "verification" / "judge_batch.json"

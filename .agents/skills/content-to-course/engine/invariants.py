@@ -1043,6 +1043,8 @@ def _check_diagnostic_distractors_invariants(
     correct_expr: str,
     effective_vars: Optional[Dict[str, Any]],
     errors: List[str],
+    interaction_type: str = "",
+    stem: str = "",
 ) -> None:
     diag_dists = instance.get("diagnostic_distractors")
     if diag_dists is None:
@@ -1075,6 +1077,15 @@ def _check_diagnostic_distractors_invariants(
             errors.append(f"diagnostic_distractors[{idx}] contains a generic placeholder 'error_rationale': '{rat}'")
         else:
             errors.extend(validate_katex_syntax(rat, f"diagnostic_distractors[{idx}].error_rationale", variables=effective_vars))
+            if interaction_type == "open_symbolic" and isinstance(stem, str):
+                allowed_context = f"{stem} {correct_expr} {expr}"
+                for num_tok in re.findall(r"(?<![a-zA-Z0-9_])\d+\.\d+(?![a-zA-Z0-9_])", rat):
+                    if num_tok not in allowed_context:
+                        errors.append(
+                            f"Phantom numeric leak in open_symbolic diagnostic_distractors[{idx}].error_rationale: "
+                            f"decimal '{num_tok}' does not appear in stem or expression."
+                        )
+                        break
 
 
 def check_instance_invariants(
@@ -1327,7 +1338,32 @@ def check_instance_invariants(
                         f"{type_label} correct answer '{clean_cand_fib}' leaked as direct assignment in stem text."
                     )
 
-        _check_diagnostic_distractors_invariants(instance, corr_expr_str, effective_vars, errors)
+        if interaction_type == "open_symbolic" and isinstance(effective_vars, dict):
+            sym_cfg = instance.get("symbolic_config") if isinstance(instance.get("symbolic_config"), dict) else {}
+            free_vars = set(
+                str(v).strip()
+                for v in (sym_cfg.get("variables") or instance.get("variables") or [])
+                if str(v).strip()
+            )
+            for fv in sorted(free_vars):
+                if fv in effective_vars:
+                    val = effective_vars[fv]
+                    is_num = isinstance(val, (int, float)) and not isinstance(val, bool)
+                    is_num_str = isinstance(val, str) and bool(re.fullmatch(r"-?\d+(?:\.\d+)?", val.strip()))
+                    if is_num or is_num_str:
+                        errors.append(
+                            f"open_symbolic variable collision: free symbolic variable '{fv}' is numerically bound "
+                            f"to '{val}' in vars. Remove '{fv}' from vars and reference it symbolically in error_rationale/hints."
+                        )
+
+        _check_diagnostic_distractors_invariants(
+            instance,
+            corr_expr_str,
+            effective_vars,
+            errors,
+            interaction_type=interaction_type,
+            stem=stem if isinstance(stem, str) else "",
+        )
 
     # 3. Multiple select
     elif interaction_type == "multiple_select":
@@ -1372,6 +1408,35 @@ def check_instance_invariants(
             ]
             bp_errors = check_synthetic_boilerplate_distractors(None, ms_distractors)
             errors.extend(bp_errors)
+
+            # Check length anti-giveaway symmetry for multiple_select [R-15-MS]:
+            # 0.85 <= avg(len(true)) / avg(len(false)) <= 1.15
+            if strict_length_bounds:
+                true_lens = [
+                    len(str(opt.get("content", "")).strip())
+                    for opt in options
+                    if isinstance(opt, dict) and opt.get("is_correct") is True
+                ]
+                false_lens = [
+                    len(str(opt.get("content", "")).strip())
+                    for opt in options
+                    if isinstance(opt, dict) and not opt.get("is_correct")
+                ]
+                if true_lens and false_lens:
+                    avg_t = sum(true_lens) / len(true_lens)
+                    avg_f = sum(false_lens) / len(false_lens)
+                    if min(avg_t, avg_f) >= 15.0 and avg_f > 0 and abs(avg_t - avg_f) >= 8.0:
+                        ratio = avg_t / avg_f
+                        if ratio > 1.15:
+                            errors.append(
+                                f"MS length anti-giveaway violation: correct options too long on average "
+                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x > 1.15x)."
+                            )
+                        elif ratio < 0.85:
+                            errors.append(
+                                f"MS length anti-giveaway violation: correct options too short on average "
+                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x < 0.85x)."
+                            )
 
             # Check answer leak in stem or early hints for multiple_select correct options
             for opt in options:

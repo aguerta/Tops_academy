@@ -36,6 +36,72 @@ logger = logging.getLogger("judge")
 MAX_CORRECTION_CYCLES = 3
 DEFAULT_MAX_JUDGES = 10
 DEFAULT_MAX_ITEMS_PER_JUDGE = 20
+DEFAULT_TARGET_TOTAL_EVALUATIONS = 165
+DEFAULT_OVERLAP_RATIO = 0.15
+DEFAULT_MAX_SEED_RETRIES = 1
+
+_HIGH_RISK_INTERACTION_TYPES: Set[str] = {
+    "open_symbolic",
+    "fill_in_the_blank",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+}
+_DOUBLE_READ_PRIORITY_TYPES: Set[str] = {
+    "multiple_choice_7_options",
+    "multiple_choice",
+    "multiple_select",
+}
+
+
+def _compute_template_risk_score(
+    t_obj: Dict[str, Any],
+    compile_history: Optional[Dict[str, int]] = None,
+) -> int:
+    """Computes a heuristic risk score for Neyman Allocation sampling in Stage 5."""
+    score = 0
+    itype = str(t_obj.get("interaction_type", "multiple_choice_7_options")).strip().lower()
+    if itype in _HIGH_RISK_INTERACTION_TYPES:
+        score += 2
+    v_code = t_obj.get("verifier_code") or t_obj.get("cross_check_py") or t_obj.get("verify_py") or ""
+    if not (v_code and str(v_code).strip()):
+        score += 2
+    stem_variants = t_obj.get("stem_variants") or []
+    if isinstance(stem_variants, list) and len(stem_variants) >= 3:
+        score += 1
+    if compile_history:
+        tid = str(t_obj.get("id", ""))
+        cid = str(t_obj.get("competency_id", ""))
+        if compile_history.get(tid, 0) >= 2 or compile_history.get(cid, 0) >= 2:
+            score += 2
+    return score
+
+
+def _compute_cohens_kappa(pairs: List[Tuple[bool, bool]]) -> Dict[str, Any]:
+    """Computes raw inter-judge agreement and Cohen's kappa on binary PASS/FAIL pairs."""
+    n = len(pairs)
+    if n == 0:
+        return {
+            "overlap_count": 0,
+            "raw_agreement": None,
+            "cohens_kappa": None,
+        }
+    both_true = sum(1 for a, b in pairs if a and b)
+    both_false = sum(1 for a, b in pairs if (not a) and (not b))
+    a_true = sum(1 for a, _ in pairs if a)
+    b_true = sum(1 for _, b in pairs if b)
+    po = (both_true + both_false) / n
+    pe = ((a_true / n) * (b_true / n)) + (((n - a_true) / n) * ((n - b_true) / n))
+    if abs(1.0 - pe) < 1e-12:
+        kappa = 1.0 if abs(po - 1.0) < 1e-12 else 0.0
+    else:
+        kappa = (po - pe) / (1.0 - pe)
+    return {
+        "overlap_count": n,
+        "raw_agreement": round(po, 4),
+        "cohens_kappa": round(kappa, 4),
+    }
 
 MC7_STEM_SOLUBILITY_INSTRUCTIONS = (
     "CRITICAL SOLUBILITY PROTOCOL (MC7): Before comparing against options A..G, you MUST: "
@@ -431,6 +497,9 @@ def generate_judge_batch(
     ids: Optional[Union[str, List[Union[str, int]]]] = None,
     samples_per_template: Optional[int] = None,
     num_samples: Optional[int] = None,
+    max_seed_retries: int = DEFAULT_MAX_SEED_RETRIES,
+    target_unique_items: Optional[int] = None,
+    stem_variant_offset: int = 0,
 ) -> Tuple[Path, Path]:
     """Generates work/judge_batch.json WITHOUT answer keys using stratified random sampling.
     
@@ -599,14 +668,36 @@ def generate_judge_batch(
         if len(planned_items) > max_total_items:
             planned_items = planned_items[:max_total_items]
     else:
-        # Stratified random selection across all templates:
+        # Stratified random selection across all templates with Neyman Allocation:
         # 1. Guarantee >= 1 random instance per template/competency in Round 0.
-        # 2. Fill subsequent rounds randomly and stratified by competency up to max_total_items (<= 200).
+        # 2. Allocate additional samples (k=2..3) to high-risk templates up to effective_unique_cap
+        #    (reserving room for ~15% double-read overlap within Option B target = 165 total evals).
+        compile_history: Dict[str, int] = {}
+        for ch_cand in (work / "compile_history.json", work / "verification" / "compile_history.json"):
+            if ch_cand.is_file():
+                try:
+                    raw_ch = json.loads(ch_cand.read_text(encoding="utf-8"))
+                    if isinstance(raw_ch, dict):
+                        for k, v in raw_ch.items():
+                            if isinstance(v, (int, float)):
+                                compile_history[str(k)] = int(v)
+                except Exception:
+                    pass
+
+        if target_unique_items is not None:
+            effective_unique_cap = min(max_total_items, max(1, int(target_unique_items)))
+        else:
+            effective_unique_cap = max_total_items
+
         seeds_per_tpl = len(seeds) if (seeds is not None and len(seeds) > 0) else 3
         comp_keys = list(comp_templates.keys())
         rng.shuffle(comp_keys)
 
+        tpl_risk_scores: Dict[int, int] = {}
+
         def _get_target_sample_count(t_obj: Dict[str, Any]) -> int:
+            risk = _compute_template_risk_score(t_obj, compile_history=compile_history)
+            tpl_risk_scores[id(t_obj)] = risk
             if samples_per_template is not None:
                 return samples_per_template
             if num_samples is not None:
@@ -614,9 +705,16 @@ def generate_judge_batch(
             if seeds is not None and len(seeds) > 0:
                 return len(seeds)
             v_code = t_obj.get("verifier_code") or t_obj.get("cross_check_py") or t_obj.get("verify_py") or ""
-            if v_code and str(v_code).strip():
+            has_verifier = bool(v_code and str(v_code).strip())
+            # Single-template verified batches keep k=1 deterministic default;
+            # multi-template courses allocate k=2..3 via Neyman Allocation on high-risk templates.
+            if has_verifier and len(templates) == 1:
                 return 1
-            return 3
+            if risk >= 4:
+                return 3
+            if risk >= 2:
+                return 2
+            return 1 if has_verifier else 2
 
         # Prepare per-template random seed lists
         tpl_seed_lists: Dict[int, List[int]] = {}
@@ -645,16 +743,19 @@ def generate_judge_batch(
                         if r_idx < len(t_seeds):
                             round_candidates.append((t, t_seeds[r_idx]))
             if r_idx > 0:
+                # Prioritize highest-risk templates first (Neyman Allocation), breaking ties randomly
                 rng.shuffle(round_candidates)
+                round_candidates.sort(key=lambda pair: tpl_risk_scores.get(id(pair[0]), 0), reverse=True)
             for cand in round_candidates:
-                if len(planned_items) >= max_total_items:
+                if len(planned_items) >= effective_unique_cap:
                     break
                 planned_items.append(cand)
-            if len(planned_items) >= max_total_items:
+            if len(planned_items) >= effective_unique_cap:
                 break
 
     template_counts: Dict[str, int] = {}
     refuted_templates: Dict[str, Dict[str, Any]] = {}
+    eff_max_retries = max(1, int(max_seed_retries))
 
     for template, seed in planned_items:
         template_id = template.get("id", "T-00")
@@ -664,15 +765,22 @@ def generate_judge_batch(
         gen_code = template.get("generate_py") or template.get("generator_code") or ""
         ver_code = template.get("verifier_code") or template.get("cross_check_py") or template.get("verify_py") or ""
 
-        # Pre-verify candidate seed, deterministically retrying next seed on collision or invariant failure
+        # Deterministic without-replacement stem_variants rotation across samples of the same template
+        stem_variants = template.get("stem_variants")
+        next_inst_idx = template_counts.get(template_id, 0) + 1
+        selected_var_idx: Optional[int] = None
+        if isinstance(stem_variants, list) and len(stem_variants) > 0:
+            base_var_offset = zlib.crc32(f"{template_id}:{random_seed or 0}".encode("utf-8")) % len(stem_variants)
+            selected_var_idx = (base_var_offset + int(stem_variant_offset) + (next_inst_idx - 1)) % len(stem_variants)
+
+        # Pre-verify candidate seed; default max_seed_retries=1 (zero-tolerance, eliminates survivorship bias)
         active_seed = seed
         gen_res = None
         assembled = None
         seed_passed = False
-        max_seed_retries = 5
         curr_try = 0
 
-        while curr_try < max_seed_retries and not seed_passed:
+        while curr_try < eff_max_retries and not seed_passed:
             curr_try += 1
             try:
                 cand_res = execute_sandbox_instance(gen_code, seed=active_seed, timeout=1.5)
@@ -683,7 +791,7 @@ def generate_judge_batch(
                         active_seed = (active_seed + 101) % 99991 + 100
                         continue
 
-                inst_idx = template_counts.get(template_id, 0) + 1
+                inst_idx = next_inst_idx
                 option_shuffle_seed = zlib.crc32(f"{template_id}:{inst_idx}:{active_seed}".encode("utf-8")) & 0xFFFFFFFF
                 cand_assembled = assemble_question(
                     template=template,
@@ -692,6 +800,7 @@ def generate_judge_batch(
                     question_index=inst_idx,
                     cta_distractors_map=cta_distractors_map,
                     seed=option_shuffle_seed,
+                    stem_variant_index=selected_var_idx,
                 )
 
                 is_inv, inv_errs = check_instance_invariants(cand_assembled, itype)
@@ -746,6 +855,8 @@ def generate_judge_batch(
             "interaction_type": itype,
             "kernel_verified": bool(ver_code and str(ver_code).strip()),
             "kernel_refuted": False,
+            "stem_variant_index": selected_var_idx,
+            "seed_attempts": curr_try,
         }
 
         if itype == "multiple_choice_7_options":
@@ -906,6 +1017,8 @@ def split_judge_batch(
     items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
     max_items_per_judge: Optional[int] = None,
     random_seed: Optional[int] = None,
+    overlap_ratio: Optional[float] = None,
+    max_total_evaluations: Optional[int] = None,
 ) -> Any:
     """Splits work/judge_batch.json or raw items list into batches with at most items_per_judge items each (default <= 20)
     and at most max_judges judges (default <= 10), using stratified random assignment.
@@ -993,8 +1106,31 @@ def split_judge_batch(
                     pass
 
     total_items = len(items)
-    # Strictly enforce both items_per_judge <= 20 and num_judges <= max_judges (10)
-    needed_judges = math.ceil(total_items / limit)
+    if overlap_ratio is None:
+        # Apply 15% double-read overlap by default only for standard production SLA (<=10 judges, <=20 items/judge)
+        if max_judges == DEFAULT_MAX_JUDGES and limit == DEFAULT_MAX_ITEMS_PER_JUDGE:
+            eff_overlap_ratio = DEFAULT_OVERLAP_RATIO
+        else:
+            eff_overlap_ratio = 0.0
+    else:
+        eff_overlap_ratio = max(0.0, min(0.5, float(overlap_ratio)))
+    # Determine effective evaluation budget (Option B default = 165 when using default 10x20 SLA)
+    if max_total_evaluations is not None:
+        eval_cap = max(total_items, int(max_total_evaluations))
+    elif max_judges == DEFAULT_MAX_JUDGES and limit == DEFAULT_MAX_ITEMS_PER_JUDGE:
+        eval_cap = max(total_items, DEFAULT_TARGET_TOTAL_EVALUATIONS)
+    else:
+        eval_cap = max_total if max_total > 0 else total_items + int(round(total_items * eff_overlap_ratio))
+    if max_total > 0:
+        eval_cap = min(eval_cap, max_total)
+
+    desired_overlap = 0
+    if eff_overlap_ratio > 0 and max_judges != 1 and total_items >= 2:
+        desired_overlap = min(max(0, eval_cap - total_items), max(1, int(round(total_items * eff_overlap_ratio))))
+
+    projected_total = total_items + desired_overlap
+    # Strictly enforce both items_per_judge <= limit and num_judges <= max_judges (10)
+    needed_judges = math.ceil(projected_total / limit)
     num_judges = min(max_judges, max(1, needed_judges)) if max_judges > 0 else max(1, needed_judges)
     num_judges = min(num_judges, total_items)
     num_judges = max(1, num_judges)
@@ -1006,13 +1142,39 @@ def split_judge_batch(
         comp_groups.setdefault(cid, []).append(item)
 
     buckets: List[List[Dict[str, Any]]] = [[] for _ in range(num_judges)]
+    item_primary_bucket: List[Tuple[int, Dict[str, Any]]] = []
     curr_j = 0
     for cid, c_items in comp_groups.items():
         c_shuffled = list(c_items)
         rng.shuffle(c_shuffled)
         for itm in c_shuffled:
-            buckets[curr_j % num_judges].append(itm)
+            b_idx = curr_j % num_judges
+            buckets[b_idx].append(itm)
+            item_primary_bucket.append((b_idx, itm))
             curr_j += 1
+
+    # Double-blind overlap injection (15-20%): assign copies to a DIFFERENT judge (j2 != j1)
+    overlap_added = 0
+    if num_judges >= 2 and desired_overlap > 0:
+        rng.shuffle(item_primary_bucket)
+        # Prioritize MC7 and MS where guessing/heuristic luck is higher
+        item_primary_bucket.sort(
+            key=lambda pair: 0 if str(pair[1].get("interaction_type", "")).lower() in _DOUBLE_READ_PRIORITY_TYPES else 1
+        )
+        for primary_idx, itm in item_primary_bucket:
+            if overlap_added >= desired_overlap:
+                break
+            # Find least-loaded distinct bucket with remaining capacity < limit
+            candidate_buckets = [
+                j for j in range(num_judges)
+                if j != primary_idx and len(buckets[j]) < limit
+            ]
+            if not candidate_buckets:
+                break
+            candidate_buckets.sort(key=lambda j: len(buckets[j]))
+            target_j = candidate_buckets[0]
+            buckets[target_j].append(dict(itm))
+            overlap_added += 1
 
     # Filter out empty buckets and randomize order within each judge's bucket
     non_empty_buckets = []
@@ -1886,6 +2048,7 @@ def compare_judge_responses(
     cycle: int = 1,
     work_dir: Optional[Union[str, Path]] = None,
     shards: Optional[Union[List[str], str]] = None,
+    prior_template_failures: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Any]:
     """Compares judge answers against ground truth answer keys and records discordances.
     
@@ -2080,6 +2243,25 @@ def compare_judge_responses(
     # First pass: evaluate raw judge agreement per item so we know failed seed counts per template
     pre_evals: List[Dict[str, Any]] = []
     template_raw_failures: Dict[str, int] = {}
+    inter_judge_pairs: List[Tuple[bool, bool]] = []
+
+    effective_prior_failures: Dict[str, int] = {}
+    if isinstance(prior_template_failures, dict):
+        for k, v in prior_template_failures.items():
+            try:
+                effective_prior_failures[str(k)] = int(v)
+            except (ValueError, TypeError):
+                pass
+    elif resolved_work_dir:
+        lqas_prior_p = resolved_work_dir / "verification" / "lqas_prior_failures.json"
+        if lqas_prior_p.is_file():
+            try:
+                raw_pf = json.loads(lqas_prior_p.read_text(encoding="utf-8"))
+                if isinstance(raw_pf, dict):
+                    for k, v in raw_pf.items():
+                        effective_prior_failures[str(k)] = int(v)
+            except Exception:
+                pass
 
     for item_id, gt in ground_truth.items():
         s_iid = str(item_id)
@@ -2135,6 +2317,20 @@ def compare_judge_responses(
                 isinstance(it, dict) and bool(it.get("flaw_detected"))
                 for it in items_to_check
             )
+
+            # Record independent double-blind pair verdicts for inter-judge Kappa telemetry
+            if len(rep_evals) >= 2:
+                def _rep_is_flaw(idx: int) -> bool:
+                    r_obj = reps[idx] if idx < len(reps) else None
+                    if isinstance(r_obj, dict) and r_obj.get("flaw_detected"):
+                        return True
+                    if idx < len(meta_raws) and isinstance(meta_raws[idx], dict) and meta_raws[idx].get("flaw_detected"):
+                        return True
+                    return False
+
+                v1 = bool(rep_evals[0][0]) and not _rep_is_flaw(0)
+                v2 = bool(rep_evals[1][0]) and not _rep_is_flaw(1)
+                inter_judge_pairs.append((v1, v2))
 
             if all(m_ok for m_ok, _ in rep_evals) and not flaw_detected:
                 is_match = True
@@ -2241,7 +2437,7 @@ def compare_judge_responses(
                 interaction_type=itype,
                 solver_answer=solver_ans,
                 correct_answer=correct_ans,
-                template_failed_seeds=template_raw_failures.get(tid, 0),
+                template_failed_seeds=template_raw_failures.get(tid, 0) + effective_prior_failures.get(tid, 0),
             )
             if neuro_verdict.get("kernel_override"):
                 is_match = True
@@ -2257,6 +2453,8 @@ def compare_judge_responses(
                 )
                 kernel_overridden_items.append({
                     "item_id": s_iid,
+                    "template_id": tid,
+                    "competency_id": cid,
                     "judge_response": user_ans,
                     "expected": exp_override,
                     "reason": reason,
@@ -2350,6 +2548,23 @@ def compare_judge_responses(
                 if p_clean and p_clean not in normalized_shards:
                     normalized_shards.append(p_clean)
 
+    # Inter-judge reliability (Cohen's kappa) & sensitivity-adjusted 95% upper defect bound
+    inter_judge_stats = _compute_cohens_kappa(inter_judge_pairs)
+    raw_po = inter_judge_stats.get("raw_agreement")
+    est_sensitivity = round(max(0.5, min(1.0, float(raw_po))) if raw_po is not None else 0.85, 4)
+    upper_bound_naive = round(min(1.0, 3.0 / total), 4) if total > 0 else 1.0
+    upper_bound_adjusted = round(min(1.0, 3.0 / (total * est_sensitivity)), 4) if total > 0 else 1.0
+
+    # Adaptive Two-Stage LQAS detection: templates with kernel_override=True on k=1 sample
+    single_seed_override_templates = sorted({
+        str(ov["template_id"])
+        for ov in kernel_overridden_items
+        if ov.get("template_id")
+        and len(tpl_items.get(str(ov["template_id"]), [])) == 1
+        and effective_prior_failures.get(str(ov["template_id"]), 0) == 0
+    })
+    lqas_followup_required = bool(single_seed_override_templates)
+
     report_data = {
         "cycle": cycle,
         "timestamp": now_iso,
@@ -2367,6 +2582,17 @@ def compare_judge_responses(
         "discordances": discordances,
         "kernel_overridden_items": kernel_overridden_items,
         "kernel_override_count": kernel_override_count,
+        "single_seed_override_templates": single_seed_override_templates,
+        "lqas_followup_required": lqas_followup_required,
+        "inter_judge_reliability": inter_judge_stats,
+        "statistical_certification": {
+            "unique_templates_covered": len(tpl_items),
+            "total_items_evaluated": total,
+            "inter_judge_overlap_count": inter_judge_stats["overlap_count"],
+            "estimated_sensitivity": est_sensitivity,
+            "upper_defect_bound_95_naive": upper_bound_naive,
+            "upper_defect_bound_95_adjusted": upper_bound_adjusted,
+        },
         "can_retry": (cycle < MAX_CORRECTION_CYCLES and not passed),
         "max_cycles_reached": (cycle >= MAX_CORRECTION_CYCLES),
     }

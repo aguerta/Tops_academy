@@ -1384,6 +1384,7 @@ def assemble_question(
     question_index: int,
     cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
     seed: Optional[int] = None,
+    stem_variant_index: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Assemble a single question JSON conforming to platform specification.
     
@@ -1394,6 +1395,8 @@ def assemble_question(
         question_index: 1-indexed counter.
         cta_distractors_map: Map of distractor_id -> distractor metadata from cta.json.
         seed: Random seed for option shuffling.
+        stem_variant_index: Optional explicit index into template['stem_variants'] for
+            deterministic without-replacement variant rotation.
     """
     rng = random.Random(seed) if seed is not None else random.Random()
     variables = gen_result.get("vars", {})
@@ -1402,7 +1405,10 @@ def assemble_question(
     stem_raw = template.get("stem", "")
     stem_variants = template.get("stem_variants")
     if stem_variants and len(stem_variants) > 0:
-        var_idx = (seed % len(stem_variants)) if seed is not None else 0
+        if stem_variant_index is not None:
+            var_idx = int(stem_variant_index) % len(stem_variants)
+        else:
+            var_idx = (seed % len(stem_variants)) if seed is not None else 0
         stem_raw = stem_variants[var_idx]
     stem = sanitize_katex_syntax(format_template_string(stem_raw, variables))
     if not isinstance(stem, str) or not stem.strip():

@@ -24,6 +24,7 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
 import re
 import subprocess
@@ -354,6 +355,8 @@ AUXILIARY_STAGES = {
     "repair-matrix": "run_stage_repair_matrix",
     "rejudge": "run_stage_rejudge",
     "rejudge-compare": "run_stage_rejudge_compare",
+    "lqas-rejudge": "run_stage_lqas_rejudge",
+    "lqas-compare": "run_stage_lqas_compare",
     "certify": "run_stage_certify",
     "gates": "run_stage_gates",
     "bootstrap": "run_stage_bootstrap",
@@ -2792,6 +2795,123 @@ class PipelineRunner:
         record_stage_timing(self.work_dir, "rejudge_compare", time.time() - t0)
         return merged
 
+    def run_stage_lqas_rejudge(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Two-Stage Adaptive LQAS follow-up for single-seed kernel_override templates.
+
+        Dispatches 2 additional rotated seeds per template that received kernel_override=True on k=1
+        so Anti-false-consensus Guard (c) (template_failed_seeds >= 2) can decide with statistical evidence.
+        """
+        import shutil
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: LQAS-REJUDGE] Adaptive Two-Stage LQAS confirmation for k=1 kernel_override templates")
+        print("=" * 70)
+        jr_p = self.work_dir / "judge_report.json"
+        if not jr_p.is_file():
+            print("  [+] No judge_report.json found. Nothing to confirm.")
+            return {"status": "nothing_to_rejudge", "ids": []}
+        jr_data = json.loads(jr_p.read_text(encoding="utf-8"))
+        target_tids = [str(x).strip() for x in (jr_data.get("single_seed_override_templates") or []) if str(x).strip()]
+        if not target_tids:
+            print("  [+] No single-seed kernel_override templates require LQAS confirmation.")
+            return {"status": "nothing_to_rejudge", "ids": []}
+
+        base_p = self.work_dir / "judge_report_baseline.json"
+        shutil.copy2(jr_p, base_p)
+
+        verif_dir = self.work_dir / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        (verif_dir / "lqas_prior_failures.json").write_text(
+            json.dumps({tid: 1 for tid in target_tids}, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        # Archive stale responses before micro-wave
+        archive = self.work_dir / "judge_archive" / f"lqas_{time.strftime('%Y%m%d_%H%M%S')}"
+        for d in (self.work_dir, verif_dir, self.work_dir / "judges"):
+            if d.is_dir():
+                for f in list(d.glob("judge_responses*.json")):
+                    archive.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(f), str(archive / f"{d.name}__{f.name}"))
+
+        (self.work_dir / "lqas_scope.json").write_text(
+            json.dumps({"template_ids": target_tids, "baseline": base_p.name}, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        max_j = 1 if len(target_tids) * 2 <= 20 else min(10, math.ceil((len(target_tids) * 2) / 20))
+        res = dispatch_judges(
+            self.work_dir,
+            ids=target_tids,
+            samples_per_template=2,
+            overlap_ratio=0.0,
+            stem_variant_offset=1,
+            max_judges=max_j,
+            pointer=not self.no_pointer,
+        )
+        n_sub = len(res.get("Subagents", []))
+        (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "dispatch" / "judges.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] LQAS micro-wave: confirming {len(target_tids)} template(s) ({', '.join(target_tids)}) x 2 seeds -> {n_sub} judge(s)")
+        print("  [>] After LQAS judge replies: run.py --stage lqas-compare")
+        record_stage_timing(self.work_dir, "lqas_rejudge", time.time() - t0)
+        return {"status": "dispatched", "ids": target_tids, "subagents_count": n_sub, "Subagents": res.get("Subagents", [])}
+
+    def run_stage_lqas_compare(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Compare LQAS confirmation responses with accumulated prior failure counts."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: LQAS-COMPARE] Evaluating Two-Stage LQAS confirmation with Guard (c)")
+        print("=" * 70)
+        scope_p = self.work_dir / "lqas_scope.json"
+        base_p = self.work_dir / "judge_report_baseline.json"
+        if not scope_p.is_file():
+            raise RuntimeError("No lqas_scope.json: run --stage lqas-rejudge first.")
+        target_tids = set(json.loads(scope_p.read_text(encoding="utf-8")).get("template_ids", []))
+        partial = compare_judge_responses(work_dir=self.work_dir)
+        (self.work_dir / "judge_report_lqas.json").write_text(json.dumps(partial, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        # Clean up prior failures marker after evaluation
+        prior_p = self.work_dir / "verification" / "lqas_prior_failures.json"
+        if prior_p.is_file():
+            try:
+                prior_p.unlink()
+            except Exception:
+                pass
+
+        base = json.loads(base_p.read_text(encoding="utf-8")) if base_p.is_file() else {"disagreements": [], "total_items": 0, "agreed_items": 0}
+        existing_disc = list(base.get("disagreements") or base.get("discordances") or [])
+        new_disc = list(partial.get("disagreements") or [])
+        discord = existing_disc + new_disc
+        total_items = int(base.get("total_items", base.get("total", 0)) or 0) + int(partial.get("total_items", 0) or 0)
+        agreed = max(0, total_items - len(discord))
+        failed_c = sorted({str(d.get("cid") or d.get("competency_id") or "") for d in discord if d.get("cid") or d.get("competency_id")})
+        failed_t = sorted({str(d.get("template_id")) for d in discord if d.get("template_id")})
+        complete = bool(partial.get("all_complete", False)) and total_items > 0
+        passed = complete and not discord
+        merged = dict(base)
+        merged.update({
+            "total": total_items,
+            "total_items": total_items,
+            "agreed_items": agreed,
+            "agreement_rate": round(agreed / total_items, 4) if total_items else 0.0,
+            "passed": passed,
+            "status": "passed" if passed else ("incomplete" if not complete else "disagreements"),
+            "all_complete": complete,
+            "failed_templates": failed_t,
+            "failed_competencies": failed_c,
+            "affected_template_ids": failed_t,
+            "disagreements": discord,
+            "discordances": discord,
+            "lqas_confirmed_templates": sorted(target_tids - set(failed_t)),
+            "lqas_rejected_templates": sorted(target_tids & set(failed_t)),
+            "lqas_followup_required": False,
+        })
+        (self.work_dir / "judge_report.json").write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
+        base_p.write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] LQAS confirmed={merged['lqas_confirmed_templates']} | rejected={merged['lqas_rejected_templates']}")
+        record_stage_timing(self.work_dir, "lqas_compare", time.time() - t0)
+        return merged
+
     def run_stage_certify(self) -> Dict[str, Any]:
         """Auxiliary Stage: Mandatory formal Director validation. Re-runs templates -> build -> verify -> publish and writes certification.json.
         It does NOT stop at the first failure: every non-destructive gate (templates, build, verify) runs so ALL findings are collected,
@@ -3267,7 +3387,7 @@ def main() -> None:
         "prepare", "ingest", "cta", "shard", "templates", "build", "verify", "publish",
         "0", "1", "2", "3", "4", "5", "6",
         "cta-merge", "cta-reduce", "cta-apply", "dispatch", "scope-check",
-        "define-types", "judge-compare", "repair-matrix", "gates", "rejudge", "rejudge-compare", "certify",
+        "define-types", "judge-compare", "repair-matrix", "gates", "rejudge", "rejudge-compare", "lqas-rejudge", "lqas-compare", "certify",
         "bootstrap", "unlock", "wave-status",
         "dispatch-cta", "dispatch-authors", "dispatch-judges", "judge-generate",
     ]

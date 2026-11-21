@@ -107,6 +107,71 @@ from engine.template_healing import (
 )
 
 
+def _extract_stem_placeholder_set(text: str) -> Set[str]:
+    """Extract all @var@ and {var} placeholder names from a stem or stem_variant string."""
+    if not isinstance(text, str) or not text:
+        return set()
+    found: Set[str] = set()
+    for m in re.finditer(r"@([A-Za-z_][A-Za-z0-9_]*)(?::[^@\s{}]+)?@", text):
+        found.add(m.group(1))
+    found.update(_extract_template_placeholders(text))
+    return found
+
+
+def _check_stem_variant_parity(template: Dict[str, Any]) -> List[Tuple[str, List[str]]]:
+    """Verify placeholder parity across stem_variants (costo 0 LLM).
+
+    Checks only across `stem_variants` (ignoring short/fallback `stem` headers) and flags
+    variants that completely omit placeholders shared by >= 50% of the other variants
+    leaving the variant with zero placeholders or missing core parameters when other
+    variants share >= 2 required parameters and the variant omits all of them.
+    """
+    raw_variants = template.get("stem_variants")
+    if not isinstance(raw_variants, list) or len(raw_variants) < 2:
+        return []
+
+    entries: List[Tuple[str, Set[str]]] = []
+    for idx, sv in enumerate(raw_variants):
+        if isinstance(sv, str) and sv.strip():
+            entries.append((f"stem_variants[{idx}]", _extract_stem_placeholder_set(sv)))
+
+    if len(entries) < 2:
+        return []
+
+    counts: Dict[str, int] = defaultdict(int)
+    for _, phs in entries:
+        for p in phs:
+            counts[p] += 1
+
+    if not counts:
+        return []
+
+    n_stems = len(entries)
+    majority_threshold = max(2, (n_stems + 1) // 2) if n_stems >= 3 else 2
+    required_phs = {p for p, c in counts.items() if c >= majority_threshold}
+
+    if not required_phs:
+        return []
+
+    itype = str(template.get("interaction_type", "")).strip().lower()
+    is_ms = itype in ("multiple_select", "ms")
+    violations: List[Tuple[str, List[str]]] = []
+    for label, phs in entries:
+        missing = sorted(required_phs - phs)
+        # Flag as hard parity error when a non-MS variant drops ALL parametric placeholders (len(phs) == 0)
+        # or omits the entire multi-variable core (len(required_phs) >= 2 and len(missing) == len(required_phs)).
+        # In multiple_select, variants can legitimately state conceptual prompts without placeholders because
+        # each option carries its own expressions; emit a WARNING instead.
+        if not is_ms and missing:
+            violations.append((label, missing))
+        elif missing:
+            print(
+                f"WARNING: [TPL-STEM-VARIANT-PARITY] En '{template.get('id', '?')}': '{label}' omite {missing} presente(s) en la mayoría de variantes.",
+                file=sys.stderr,
+            )
+    return violations
+
+
 def _check_stem_derivative_giveaway(text: str) -> Optional[Tuple[str, str]]:
     """Detect if stem defines an explicit function AND gives away its evaluated derivative.
     
@@ -697,6 +762,25 @@ def check_single_template(
                 ))
                 break
 
+    # Check deterministic placeholder parity across stem and all stem_variants ([TPL-STEM-VARIANT-PARITY])
+    parity_violations = _check_stem_variant_parity(template)
+    for pv_field, pv_missing in parity_violations:
+        missing_str = ", ".join(f"@{v}@" for v in pv_missing)
+        errors.append(format_diagnostic_error(
+            "TPL-STEM-VARIANT-PARITY: ASIMETRÍA DE PLACEHOLDERS EN STEM_VARIANTS",
+            competency_id,
+            tpl_id,
+            tpl_id,
+            pv_field,
+            f"Faltan placeholders: {missing_str}",
+            f"[-] [TPL-STEM-VARIANT-PARITY] violation in '{tpl_id}': '{pv_field}' omite los placeholders {missing_str} presentes en el stem base o en la mayoría de las demás variantes, lo que genera enunciados incompletos o con variables sin definir.",
+            [
+                f"Incluir explícitamente {missing_str} dentro de '{pv_field}' con su definición contextual clara.",
+                "Verificar que todas las variantes de 'stem_variants' inyecten el mismo conjunto de variables paramétricas requeridas para resolver el reactivo.",
+                "Si una variable realmente no aplica a esa variante, reformular 'stem_variants' para que sean equivalentes en información dada.",
+            ]
+        ))
+
     # Concise explanation check (blocking under strict=True)
     sol_text = str(template.get("solution") or template.get("sol") or template.get("explanation_es") or "").strip()
     if len(sol_text) < 60 and (strict or len(sol_text) > 0):
@@ -871,7 +955,11 @@ def check_single_template(
                     raw_inv_failures[canon_key][1].append(seed_tag)
 
         # Invariant check (Accumulate all failures: NO break)
-        is_valid, inv_errors = check_instance_invariants(assembled_q, interaction_type)
+        is_valid, inv_errors = check_instance_invariants(
+            assembled_q,
+            interaction_type,
+            variables=gen_res.get("vars", {}),
+        )
         if not is_valid:
             has_collision = any("Distractor identical to correct answer" in e for e in inv_errors)
             for inv_err in inv_errors:

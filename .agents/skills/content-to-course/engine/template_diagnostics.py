@@ -802,6 +802,14 @@ def get_canonical_invariant_key(inv_err: str) -> str:
         if "too short" in clean:
             return "Length anti-giveaway: correct option too short"
         return "Length anti-giveaway: correct option too long"
+    if "MS length anti-giveaway violation" in clean:
+        if "too short" in clean:
+            return "MS length anti-giveaway: correct options too short"
+        return "MS length anti-giveaway: correct options too long"
+    if "open_symbolic variable collision" in clean:
+        return "open_symbolic variable collision: symbolic variable numerically bound in vars"
+    if "Phantom numeric leak in open_symbolic" in clean:
+        return "Phantom numeric leak in open_symbolic diagnostic_distractors.error_rationale"
     if "leaked verbatim in stem text" in clean:
         return "Correct answer leaked verbatim in stem text"
     if "leaked verbatim in first hint" in clean:
@@ -1133,7 +1141,7 @@ def format_invariant_error_diagnostic(
         ]
         return format_diagnostic_error("TPL-D4: TPL-D4 violation: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", cid, tpl_id, q_id, "options", snippet, cause, actions)
 
-    # Case H: Length anti-giveaway violation (R-15)
+    # Case H: Length anti-giveaway violation (R-15 / R-15-MS)
     if "Length anti-giveaway violation" in inv_clean:
         cause = f"La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x): {inv_clean}"
         actions = [
@@ -1143,6 +1151,24 @@ def format_invariant_error_diagnostic(
             "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
         ]
         return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
+
+    if "MS length anti-giveaway violation" in inv_clean:
+        cause = f"La longitud promedio de las opciones verdaderas difiere de las falsas en multiple_select (fuera de 0.85x - 1.15x): {inv_clean}"
+        actions = [
+            f"Detalles observados: {inv_clean}",
+            "Equilibrar la extensión y nivel de detalle entre las afirmaciones verdaderas y falsas del ítem multiple_select.",
+            "Asegurar que 0.85 <= avg(len(true)) / avg(len(false)) <= 1.15.",
+        ]
+        return format_diagnostic_error("R-15-MS: EQUILIBRIO DE LONGITUD MS", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
+
+    if "open_symbolic variable collision" in inv_clean or "Phantom numeric leak in open_symbolic" in inv_clean:
+        cause = f"Fuga de valores numéricos fantasma en ítem open_symbolic: {inv_clean}"
+        actions = [
+            "Las variables declaradas en symbolic_config.variables (ej. 's', 'n') son simbólicas libres y NUNCA deben incluirse con valores numéricos en 'vars'.",
+            "No reutilices RATS con placeholders numéricos (@s@, @n@) en plantillas open_symbolic; escribe los símbolos literales (ej. $s$, $n$) en el error_rationale.",
+            "Verifica que ningún decimal ausente del enunciado aparezca en diagnostic_distractors[*].error_rationale.",
+        ]
+        return format_diagnostic_error("OPEN-SYM-DISJOINT: FUGA NUMÉRICA EN SIMBÓLICO", cid, tpl_id, q_id, "diagnostic_distractors", inv_clean, cause, actions)
 
     # Case I: Answer leak (R-19)
     if "leaked verbatim in" in inv_clean:
