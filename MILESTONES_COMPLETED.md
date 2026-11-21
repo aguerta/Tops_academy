@@ -4,7 +4,7 @@
 > **Hoja de Ruta Activa:** Lo pendiente, en curso o en backlog vive en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo en `docs/future_milestones/FUTURE_MILESTONES.md`)*.  
 > **Conocimiento Tribal y Arquitectura:** La explicación causal de por qué los sistemas funcionan así vive en [`CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/CONOCIMIENTO_TRIBAL.md).  
 > **Convención de Certificación:** Cada entrada declara *quién* certificó y *cómo*. «Certificado por el usuario» = prueba manual en sus equipos. «Verificado automáticamente» = tests unitarios, contratos o suites E2E con nombre y resultado.  
-> **Última Actualización:** 2026-11-14 (Branch: `main` / `optimizaciones_test` — Pipeline C2C v4.0 "Más con Menos", DSL Form-C y KaTeXAST, Shift-Left 4 Arquetipos, FSM Hook Guard y M1, 1-T, 2, 2a, 3, 4, 6, 7, 9 [Quick Wins], 10, 11 [núcleo], 12, 13, 14, 15 [F1], 16 [F1] cerrados).
+> **Última Actualización:** 2026-11-21 (Branch: `milestone_20` / `main` — Pipeline C2C v4.0 "Más con Menos", DSL Form-C y KaTeXAST, Shift-Left 4 Arquetipos, FSM Hook Guard y M1, 1-T, 2, 2a, 3, 4, 6, 7, 9 [Quick Wins], 10, 11 [núcleo], 12, 13, 14, 15 [F1], 16 [F1], **20 [Core + 20-B Modo Hierro]** cerrados).
 
 ---
 
@@ -28,6 +28,7 @@
 | **14** Motor de Maestría Integral 2.0 Estilo Khan Academy | Calibración bidireccional en Challenge/Test/Quiz, degradación por fallo, barra híbrida 80/20, Hint-Cap, Red Dot, fluidez de tiempos y motor 'Up Next for You' (5 niveles) | Automática (`tests/platform/test_mastery_calibration_bidirectional.py` [3/3 PASS], `tests/platform/test_mastery_progress_80_20.py` [5/5 PASS]) | `main` |
 | **15** Gobernanza Formal y FSM Multi-Agente (Fase 1 Isomórfica) | Matriz 2D `decidirEstrategiaEdicion` en `c2c_hook_guard.py` (bloqueo estricto de reescrituras globales si errores $< 6$, imposición de edición quirúrgica y modular splicing), tope duro síncrono (40 turnos / 5M tokens por subagente), y aislamiento AST en subprocesos | Automática (`tests/test_hook_post_pass_and_write_isolation.py`, `tests/test_watchdog_and_hooks.py`) | `e357df5`, `75bfde1`, `c81aaa6` |
 | **16** Certificación Matemática Shift-Left y 4 Arquetipos (Fase 1 Motor) | Stage Contract v4.0 (`engine/stage_contract.py`, `engine/invariants.py`), 4 arquetipos obligatorios en `compile_shard.py` (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`), supuestos explícitos obligatorios en `cta.json` (`assumptions` + `violation_consequence`), fix silencioso de `np.bool_` en sandbox AST, linters anti-gaming (`[DIAG-MAGIC-MULT]`) | Automática (`tests/test_validator.py`, `tests/test_m3_archetypes_semantic_gate.py`, `tests/test_c2c_author_speedups.py`) | `954a6c8`, `cee3e5d`, `9310ff7`, `75bfde1` |
+| **20** Arquitectura Epistémica de Excelencia (Core + 20-B Modo Hierro) | Reforma `TPL-D3` (`ds` en `FIB`/`open_symbolic`), cuota `[M20-MC7-CAP]` (`0 MC7` en `Skill`, $\le 1$ en `Concept`/`Fact`), `[M20-ACTIVE-QUOTA]` ($\ge 80\%$), 4 candados anti-clon, compiladores `proof_compiler.py` y `adversarial_generator.py`, 6 modalidades de Bloom Superior (`mathjs` AST, `0` `eval`), Smart `Blank-First` y **Modo Hierro (20-B)** (`IronExamSession.tsx` con cuenta regresiva y bloqueo a libro cerrado, `MetacognitiveModal.tsx` con calibración obligatoria pre-calificación, `ironExamGrading.ts`) | Automática (`tests/e2e/test_m20_bloom_modalities.py`, `tests/e2e/test_platform_assessments.py`, `tests/test_m20_validators.mjs`, `tests/platform/test_math_adversarial_suite.mjs` [81/81 PASS], build Vite limpio) | `8ab8ed7`, `5ed2543`, `milestone_20` |
 
 ---
 
@@ -265,9 +266,9 @@
 
 ---
 
-## Milestone 20 Core: Arquitectura Epistémica de Excelencia, 6 Modalidades de Bloom Superior, Reforma Anti-Descarte (`TPL-D3`) y Smart `Blank-First` en GitHub Pages ($0)
-* **Estado:** ✅ **Completado y verificado automáticamente al 100% (2026-11-18).** *(Modo Hierro — `IronExamSession.tsx` + `MetacognitiveModal.tsx` — diferido explícitamente a **Milestone 20-B** en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md#milestone-20-b-modo-hierro-simulador-a-libro-cerrado-y-calibración-metacognitiva-en-github-pages-0)).*
-* **Objetivo:** Erradicar la ilusión de competencia por reconocimiento o descarte en `MC7`, implementando evaluación activa y análisis paso a paso sin servidor (\$0 GitHub Pages / PWA offline) a través de toda la cadena C2C, validadores, QA y plataforma React.
+## Milestone 20 (Core + 20-B Modo Hierro): Arquitectura Epistémica de Excelencia, 6 Modalidades de Bloom Superior, Reforma Anti-Descarte (`TPL-D3`), Smart `Blank-First` y Modo Hierro en GitHub Pages ($0)
+* **Estado:** ✅ **Completado y verificado automáticamente al 100% (Core: 2026-11-18; Modo Hierro 20-B: implementado en `5ed2543`/`8ab8ed7` y endurecido con temporizador regresivo y calibración obligatoria el 2026-11-21).**
+* **Objetivo:** Erradicar la ilusión de competencia por reconocimiento o descarte en `MC7`, implementando evaluación activa, análisis paso a paso y entrenamiento bajo presión de examen a libro cerrado sin servidor (\$0 GitHub Pages / PWA offline) a través de toda la cadena C2C, validadores, QA y plataforma React.
 * **Componentes Técnicos Entregados:**
   1. **Reforma Anti-Descarte (`TPL-D3`) y Compiladores Shift-Left (Fase 1 Back-End C2C):**
      - `compile_cta.py`, `check_cta.py`, `cta_merge.py`, `compile_shard.py` y `check_templates.py`: desacople de `TPL-D3` contabilizando `diagnostic_distractors` (`ds`) en `fill_in_the_blank` y `open_symbolic` en `seed=42`, autonomía del CTA con $2 \le M \le 4$ modalidades canónicas en `recommended_modalities`, piso $K \ge 2$ plantillas por modalidad activa (`[CTA-MODALITY-PLAN]`), 4 candados deterministas anti-clon (`[TPL-CLONE-AST]`, `[TPL-CLONE-BAND]`, `[TPL-CLONE-STEM]`, `[TPL-CLONE-SYMPY]`), cumplimiento estricto de `[M20-MC7-CAP]` (**prohibido `MC7` en competencias `Skill` / `Hab-*`: `0 MC7`; máximo `1` plantilla `MC7` en `Concept`/`Fact`/`PRE-*`**) y `[M20-ACTIVE-QUOTA]` ($\ge 80\%$ activo con $K \ge 2$ o $N \ge 5$; $\ge 75\%$ en $N=4$ con $K=1$).
@@ -279,16 +280,18 @@
   3. **6 Modalidades de Bloom Superior en React + Smart `Blank-First`:**
      - `SymbolicInput.tsx` (`open_symbolic` con paleta ligera y preview KaTeX), `ProofDAG.tsx` + `StepTile.tsx` (`proof_dag` con órdenes topológicos múltiples, justificaciones y falacias), `AdversarialArena.tsx` (`find_fallacy` y `counterexample`), `Stage0Modeler.tsx` (`unstructured_model` con bloqueo estricto Fase 1 $\to$ 2 $\to$ 3 y conteo de fallos en intentos), `InvariantCanvas.tsx` (SVG cartesiano no convexo y árbol extensivo con conjuntos de información) y `ConceptMatching.tsx`.
      - Integración en `QuestionCard.tsx`, `FeedbackToast.tsx` y `PracticeSession.tsx` preservando retrocompatibilidad total con `courses/` existentes y mostrando `blank-first-curtain` únicamente en `MC7`, `MS`, `concept_matching` y `proof_dag`.
-     - Bundle App Shell (`index-LU3h7wbM.js` + `index-Cp3vBGVD.css`): `392,767 B` gzip (`+15,660 B` / **`+15.29 KB`** sobre línea base `377,107 B`, dentro del presupuesto `<= 120 KB`).
-  4. **Banco Canónico Compilado y Suite E2E Playwright (`courses/` intacto):**
-     - `tests/fixtures/m20_canonical_cases/build_canonical_course.py` compila los 4 casos canónicos reales (100 preguntas, `active=95.00%`, `bloom_superior=83` cubriendo las 6 modalidades y `ds`) a `tests/fixtures/m20_canonical_cases/m20_canonical_course.json`.
-     - `tests/e2e/test_m20_bloom_modalities.py`: verifica carga completa del curso canónico, Smart `Blank-First`, trampas `ds`, orden topológico alternativo + justificaciones en `proof_dag`, Stage 0, ambos submodos adversariales, canvas cartesiano/árbol, `concept_matching` y cero desborde horizontal en `1280x800` y `640x720` con 0 errores de consola/página.
+  4. **Modo Hierro (20-B — Simulador a Libro Cerrado y Calibración Metacognitiva):**
+     - `platform/src/components/session/IronExamSession.tsx`: reemplaza el `CourseChallenge` tradicional por examen integrador a libro cerrado (sin pistas, sin `FeedbackToast`, sin cortina `Blank-First` ni tutor socrático), con navegación libre, pizarra de borrador, persistencia en `sessionStore.ts` y temporizador de cuenta regresiva (`timeLimitSeconds` con alertas visuales a los 2 min / 30 s, bloqueo de edición y apertura automática del modal al expirar el tiempo).
+     - `platform/src/components/session/MetacognitiveModal.tsx`: auditoría metacognitiva obligatoria pre-calificación (botón de envío deshabilitado hasta seleccionar certeza global o calibrar todos los ítems; bloqueo de retorno tras tiempo agotado).
+     - `platform/src/utils/ironExamGrading.ts` y `CompletionScreen.tsx`: calificación diferida multi-modalidad (9 modalidades), cuadrantes metacognitivos (*Dominio Calibrado*, *Ilusiones de Competencia*, *Aciertos con Duda*, *Brechas Conocidas*) y revisión diferida pregunta por pregunta.
+  5. **Banco Canónico Compilado y Suite E2E Playwright (`courses/` intacto):**
+     - `tests/fixtures/m20_canonical_cases/build_canonical_course.py` compila los 4 casos canónicos reales (`tests/fixtures/m20_canonical_cases/m20_canonical_course.json`) cubriendo las 6 modalidades de Bloom Superior y `ds`.
+     - `tests/e2e/test_m20_bloom_modalities.py` y `tests/e2e/test_platform_assessments.py`: verifican carga completa del curso canónico, Smart `Blank-First`, trampas `ds`, orden topológico alternativo + justificaciones en `proof_dag`, Stage 0, ambos submodos adversariales, canvas cartesiano/árbol, `concept_matching`, Modo Hierro (cuenta regresiva, calibración obligatoria y auditoría diferida) y cero desborde horizontal en `1280x800` y `640x720` con 0 errores de consola/página.
 * **Pruebas Verificadas:**
-  - `pytest tests/engine tests/pipeline tests/platform tests/test_assemble_and_hook_hardening.py tests/test_qa_evaluator_hardening.py -q`: **1,465 passed, 6 skipped** (51.51 s).
-  - `pytest tests/e2e/test_m20_bloom_modalities.py -v -n 0`: **4 passed** (17.06 s).
+  - `pytest tests/e2e/test_m20_bloom_modalities.py tests/e2e/test_platform_assessments.py -v -n 0`: **PASS**.
   - `node tests/test_m20_validators.mjs`: **PASS**; `node tests/platform/test_math_adversarial_suite.mjs`: **81/81 Passed, 0 Failed**.
-  - `npm --prefix platform run build`: **exit 0** (`+15.29 KB` App Shell gzip delta).
-* **Commits:** `main`.
+  - `npm --prefix platform run build`: **exit 0**.
+* **Commits:** `8ab8ed7`, `5ed2543`, `milestone_20`.
 
 ---
 *Fin del Registro de Milestones Completados. Para consultar la hoja de ruta pendiente, ver `FUTURE_MILESTONES.md`.*
