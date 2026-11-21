@@ -1,0 +1,999 @@
+{
+  "course_id": "solow_m20_v1",
+  "conversation_id": "90285b08-71a7-43ca-bbe7-285cd65efaab",
+  "run_dir": "reports\\c2c_audits\\20261121_150814_solow_m20_v1_90285b08",
+  "total_shards": 9,
+  "total_repairs": 15,
+  "median_wall_time_s": 218.0,
+  "median_repair_wall_time_s": 78.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_05",
+    "label": "Shard Author shard_05",
+    "conversation_id": "461175b0-d88d-45cd-9cc8-351080c8a957",
+    "wall_time_s": 154.0,
+    "pre_1st_compile_s": 89.0,
+    "post_1st_compile_s": 65.0,
+    "compile_runs": 2,
+    "compile_fails": 1,
+    "edits_count": 2,
+    "turns_count": 10,
+    "active_tokens": 90503,
+    "thinking_tokens": 2562,
+    "competencies_count": 2,
+    "error_codes": [
+      "[TPL-VERIFIER-UNSOUND]",
+      "[TPL-STATIC-OPT]",
+      "[TPL-DRY]",
+      "[TPL-VAR]"
+    ],
+    "error_snippets": [
+      "</SYSTEM_MESSAGE>"
+    ],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": ""
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "4b6a71c5-2385-44f9-be44-713427e2fdc6",
+      "wall_time_s": 319.0,
+      "pre_1st_compile_s": 109.0,
+      "post_1st_compile_s": 210.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 12,
+      "active_tokens": 147070,
+      "thinking_tokens": 4106,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[INVARIANT]",
+        "[TPL-VAR]",
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "87716e1b-0861-4bc1-8652-8b7c701ec63f",
+      "wall_time_s": 245.0,
+      "pre_1st_compile_s": 109.0,
+      "post_1st_compile_s": 136.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 167289,
+      "thinking_tokens": 3433,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-ASM]",
+        "[TPL-D1]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C01-04' no esta declarado en cta.json (C-01).\r",
+        "ValueError: Distractor ID 'D-C01-04' no esta declarado en cta.json (C-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "4df85d42-a42c-462f-a6fe-ae47916130b8",
+      "wall_time_s": 236.0,
+      "pre_1st_compile_s": 119.0,
+      "post_1st_compile_s": 117.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 141355,
+      "thinking_tokens": 4098,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "dbe15305-90ac-4582-8f57-b57384224c01",
+      "wall_time_s": 223.0,
+      "pre_1st_compile_s": 100.0,
+      "post_1st_compile_s": 123.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 125097,
+      "thinking_tokens": 3754,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "8967f426-5d7f-4586-bce0-326110d5c65e",
+      "wall_time_s": 218.0,
+      "pre_1st_compile_s": 103.0,
+      "post_1st_compile_s": 115.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 195755,
+      "thinking_tokens": 2861,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "461175b0-d88d-45cd-9cc8-351080c8a957",
+      "wall_time_s": 154.0,
+      "pre_1st_compile_s": 89.0,
+      "post_1st_compile_s": 65.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 10,
+      "active_tokens": 90503,
+      "thinking_tokens": 2562,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "94ab6193-6201-400e-bcdd-7ea0b68e1e54",
+      "wall_time_s": 201.0,
+      "pre_1st_compile_s": 93.0,
+      "post_1st_compile_s": 108.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 125656,
+      "thinking_tokens": 2834,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D2]",
+        "[INVARIANT]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C04-04' no esta declarado en cta.json (C-04).\r",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).\r",
+        "ValueError: Distractor ID 'D-C04-04' no esta declarado en cta.json (C-04).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL >= 6 (12 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file("
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "4090f740-be43-4c47-a3a7-f68ce276c4d7",
+      "wall_time_s": 212.0,
+      "pre_1st_compile_s": 126.0,
+      "post_1st_compile_s": 86.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 5,
+      "turns_count": 8,
+      "active_tokens": 116059,
+      "thinking_tokens": 4516,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D2]",
+        "[R-15]",
+        "[INVARIANT]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C06-04' no esta declarado en cta.json (C-06).\r",
+        "ValueError: Distractor ID 'D-C06-04' no esta declarado en cta.json (C-06).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "a3c39bc1-ffac-4f19-8470-f21da15e08a2",
+      "wall_time_s": 215.0,
+      "pre_1st_compile_s": 88.0,
+      "post_1st_compile_s": 127.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 126570,
+      "thinking_tokens": 2284,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "8967f426-5d7f-4586-bce0-326110d5c65e",
+      "wall_time_s": 218.0,
+      "pre_1st_compile_s": 103.0,
+      "post_1st_compile_s": 115.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 195755,
+      "thinking_tokens": 2861,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "4b6a71c5-2385-44f9-be44-713427e2fdc6",
+      "wall_time_s": 319.0,
+      "pre_1st_compile_s": 109.0,
+      "post_1st_compile_s": 210.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 12,
+      "active_tokens": 147070,
+      "thinking_tokens": 4106,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[INVARIANT]",
+        "[TPL-VAR]",
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "87716e1b-0861-4bc1-8652-8b7c701ec63f",
+      "wall_time_s": 245.0,
+      "pre_1st_compile_s": 109.0,
+      "post_1st_compile_s": 136.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 167289,
+      "thinking_tokens": 3433,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-ASM]",
+        "[TPL-D1]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C01-04' no esta declarado en cta.json (C-01).\r",
+        "ValueError: Distractor ID 'D-C01-04' no esta declarado en cta.json (C-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "4df85d42-a42c-462f-a6fe-ae47916130b8",
+      "wall_time_s": 236.0,
+      "pre_1st_compile_s": 119.0,
+      "post_1st_compile_s": 117.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 141355,
+      "thinking_tokens": 4098,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "dbe15305-90ac-4582-8f57-b57384224c01",
+      "wall_time_s": 223.0,
+      "pre_1st_compile_s": 100.0,
+      "post_1st_compile_s": 123.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 125097,
+      "thinking_tokens": 3754,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "8967f426-5d7f-4586-bce0-326110d5c65e",
+      "wall_time_s": 218.0,
+      "pre_1st_compile_s": 103.0,
+      "post_1st_compile_s": 115.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 195755,
+      "thinking_tokens": 2861,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "a3c39bc1-ffac-4f19-8470-f21da15e08a2",
+      "wall_time_s": 215.0,
+      "pre_1st_compile_s": 88.0,
+      "post_1st_compile_s": 127.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 126570,
+      "thinking_tokens": 2284,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "4090f740-be43-4c47-a3a7-f68ce276c4d7",
+      "wall_time_s": 212.0,
+      "pre_1st_compile_s": 126.0,
+      "post_1st_compile_s": 86.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 5,
+      "turns_count": 8,
+      "active_tokens": 116059,
+      "thinking_tokens": 4516,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D2]",
+        "[R-15]",
+        "[INVARIANT]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C06-04' no esta declarado en cta.json (C-06).\r",
+        "ValueError: Distractor ID 'D-C06-04' no esta declarado en cta.json (C-06).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "94ab6193-6201-400e-bcdd-7ea0b68e1e54",
+      "wall_time_s": 201.0,
+      "pre_1st_compile_s": 93.0,
+      "post_1st_compile_s": 108.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 125656,
+      "thinking_tokens": 2834,
+      "competencies_count": 3,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D2]",
+        "[INVARIANT]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C04-04' no esta declarado en cta.json (C-04).\r",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).\r",
+        "ValueError: Distractor ID 'D-C04-04' no esta declarado en cta.json (C-04).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "[UMBRAL >= 6 (12 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file("
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "461175b0-d88d-45cd-9cc8-351080c8a957",
+      "wall_time_s": 154.0,
+      "pre_1st_compile_s": 89.0,
+      "post_1st_compile_s": 65.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 10,
+      "active_tokens": 90503,
+      "thinking_tokens": 2562,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "repairs": [
+    {
+      "shard_id": "Repair Engineer C-01",
+      "label": "Repair Engineer C-01",
+      "conversation_id": "0f104d35-9fba-4230-98d8-3a49803e8b47",
+      "wall_time_s": 134.0,
+      "pre_1st_compile_s": 23.0,
+      "post_1st_compile_s": 111.0,
+      "compile_runs": 3,
+      "compile_fails": 3,
+      "edits_count": 4,
+      "turns_count": 11,
+      "active_tokens": 89393,
+      "thinking_tokens": 1402,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D1]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C01-06' no esta declarado en cta.json (C-01).\r",
+        "ValueError: Distractor ID 'D-C01-06' no esta declarado en cta.json (C-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r",
+        "[CTA-MODALITY-PLAN]",
+        "[TPL-D2]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "Repair Engineer C-01",
+      "label": "Repair Engineer C-01",
+      "conversation_id": "148fb78e-cd34-4d89-9eb9-5e9361f00a60",
+      "wall_time_s": 110.0,
+      "pre_1st_compile_s": 63.0,
+      "post_1st_compile_s": 47.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 80866,
+      "thinking_tokens": 2021,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D2]",
+        "[TPL-D1]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C01-06' no esta declarado en cta.json (C-01).\r",
+        "ValueError: Distractor ID 'D-C01-06' no esta declarado en cta.json (C-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "Repair Engineer shard_09 (C-04, H-01)",
+      "label": "Repair Engineer shard_09 (C-04, H-01)",
+      "conversation_id": "99afb08d-9ca2-4bb6-9143-e7ea55e00e52",
+      "wall_time_s": 105.0,
+      "pre_1st_compile_s": 58.0,
+      "post_1st_compile_s": 47.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 8,
+      "turns_count": 9,
+      "active_tokens": 79717,
+      "thinking_tokens": 2291,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-D2]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).\r",
+        "ValueError: Distractor ID 'D-C04-04' no esta declarado en cta.json (C-04).\r",
+        "ValueError: Distractor ID 'D-C04-04' no esta declarado en cta.json (C-04).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "[UMBRAL >= 6 (12 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file("
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer shard_09 (C-04, C-05, H-01)",
+      "label": "Repair Engineer shard_09 (C-04, C-05, H-01)",
+      "conversation_id": "378e5460-175a-48be-a025-6636b40d9a03",
+      "wall_time_s": 92.0,
+      "pre_1st_compile_s": 25.0,
+      "post_1st_compile_s": 67.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 7,
+      "turns_count": 8,
+      "active_tokens": 134960,
+      "thinking_tokens": 1717,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-D2]",
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[TPL-ORPHAN-VARS]",
+        "[CTA-MODALITY-PLAN]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer shard_09 (C-04, H-01)",
+      "label": "Repair Engineer shard_09 (C-04, H-01)",
+      "conversation_id": "91099702-063f-4063-a356-c9141ca65d7b",
+      "wall_time_s": 90.0,
+      "pre_1st_compile_s": 33.0,
+      "post_1st_compile_s": 57.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 7,
+      "turns_count": 7,
+      "active_tokens": 63340,
+      "thinking_tokens": 1419,
+      "competencies_count": 0,
+      "error_codes": [
+        "[CTA-MODALITY-PLAN]",
+        "[TPL-D2]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).\r",
+        "ValueError: Distractor ID 'D-H01-04' no esta declarado en cta.json (H-01).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "[UMBRAL >= 6 (8 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer shard_09 (C-04, H-01)",
+      "label": "Repair Engineer shard_09 (C-04, H-01)",
+      "conversation_id": "cd5565a4-4fc9-4d1c-b041-54f640826b25",
+      "wall_time_s": 90.0,
+      "pre_1st_compile_s": 31.0,
+      "post_1st_compile_s": 59.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 8,
+      "turns_count": 7,
+      "active_tokens": 74994,
+      "thinking_tokens": 1446,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[CTA-MODALITY-PLAN]",
+        "[TPL-D2]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer shard_07 (C-06, C-07, C-08)",
+      "label": "Repair Engineer shard_07 (C-06, C-07, C-08)",
+      "conversation_id": "bfacb30f-1bc9-4cd6-a3ae-c3761ddd27b4",
+      "wall_time_s": 84.0,
+      "pre_1st_compile_s": 20.0,
+      "post_1st_compile_s": 64.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 7,
+      "turns_count": 7,
+      "active_tokens": 65141,
+      "thinking_tokens": 1367,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-D2]",
+        "[CTA-MODALITY-PLAN]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer shard_06 (C-01, C-02, C-03)",
+      "label": "Repair Engineer shard_06 (C-01, C-02, C-03)",
+      "conversation_id": "da623938-732b-4f6f-9aa1-7f14d01723e8",
+      "wall_time_s": 78.0,
+      "pre_1st_compile_s": 18.0,
+      "post_1st_compile_s": 60.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 4,
+      "turns_count": 7,
+      "active_tokens": 61871,
+      "thinking_tokens": 1669,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-D2]",
+        "[TPL-ORPHAN-VARS]",
+        "[CTA-MODALITY-PLAN]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reading the work order file to understand the task. Investigating potential compilation error logs and the corresponding Python file for clues. Initial step is to understand the scope and nature of the repair needed.   "
+    },
+    {
+      "shard_id": "Repair Engineer C-06",
+      "label": "Repair Engineer C-06",
+      "conversation_id": "69e3a78c-4744-4b5e-aa58-db603a2972a9",
+      "wall_time_s": 71.0,
+      "pre_1st_compile_s": 49.0,
+      "post_1st_compile_s": 22.0,
+      "compile_runs": 1,
+      "compile_fails": 1,
+      "edits_count": 5,
+      "turns_count": 6,
+      "active_tokens": 62870,
+      "thinking_tokens": 1835,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-D2]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "Repair Engineer C-06",
+      "label": "Repair Engineer C-06",
+      "conversation_id": "f790188b-c983-4750-8335-beae0466fd0a",
+      "wall_time_s": 69.0,
+      "pre_1st_compile_s": 21.0,
+      "post_1st_compile_s": 48.0,
+      "compile_runs": 2,
+      "compile_fails": 2,
+      "edits_count": 4,
+      "turns_count": 7,
+      "active_tokens": 52379,
+      "thinking_tokens": 1008,
+      "competencies_count": 0,
+      "error_codes": [
+        "[CTA-MODALITY-PLAN]",
+        "[TPL-D1]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "ValueError: Distractor ID 'D-C06-04' no esta declarado en cta.json (C-06).\r",
+        "ValueError: Distractor ID 'D-C06-04' no esta declarado en cta.json (C-06).. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "Repair Engineer Hab-04",
+      "label": "Repair Engineer Hab-04",
+      "conversation_id": "b3c59f1a-4dfa-4966-bfa9-4d97d730a084",
+      "wall_time_s": 56.0,
+      "pre_1st_compile_s": 30.0,
+      "post_1st_compile_s": 26.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 6,
+      "active_tokens": 44360,
+      "thinking_tokens": 712,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer C-01",
+      "label": "Repair Engineer C-01",
+      "conversation_id": "247a9e7a-a283-4901-8613-9d2a749b4e56",
+      "wall_time_s": 45.0,
+      "pre_1st_compile_s": 32.0,
+      "post_1st_compile_s": 13.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 8,
+      "active_tokens": 59151,
+      "thinking_tokens": 384,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer C-03",
+      "label": "Repair Engineer C-03",
+      "conversation_id": "74df1358-1dd2-4c75-8555-384306013d1a",
+      "wall_time_s": 41.0,
+      "pre_1st_compile_s": 26.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 2,
+      "turns_count": 5,
+      "active_tokens": 48028,
+      "thinking_tokens": 970,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer C-06",
+      "label": "Repair Engineer C-06",
+      "conversation_id": "7d882cd8-899e-47c0-aa5a-c43257d5dd9f",
+      "wall_time_s": 38.0,
+      "pre_1st_compile_s": 24.0,
+      "post_1st_compile_s": 14.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 6,
+      "active_tokens": 47164,
+      "thinking_tokens": 656,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer C-09",
+      "label": "Repair Engineer C-09",
+      "conversation_id": "968562db-97b5-4cfc-8cd4-ccfbafae3f77",
+      "wall_time_s": 34.0,
+      "pre_1st_compile_s": 19.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 5,
+      "active_tokens": 41319,
+      "thinking_tokens": 571,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ]
+}
