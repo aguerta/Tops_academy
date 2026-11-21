@@ -1440,7 +1440,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
     active_course_id = str(active_lock.get("course_id") or "").strip().lower()
     if active_course_id:
         course_ref_pattern = re.compile(
-            r"(?:^|[/\\'\"\s])courses[/\\]+([a-zA-Z0-9_-]+)",
+            r"(?:^|[/\\'\"\s])courses[/\\]+([^\s/\\'\"`;|&<>:*?]+)",
             re.IGNORECASE,
         )
         if tool_name in read_tools or tool_name in write_tools:

@@ -371,8 +371,11 @@ AUXILIARY_STAGES = {
 
 
 def sanitize_slug(name: str) -> str:
-    """Sanitizes a name into an alphanumeric slug with underscores."""
-    s = re.sub(r"[^\w\s-]", "", name.lower())
+    """Sanitizes a name into an ASCII alphanumeric slug with underscores."""
+    import unicodedata
+
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    s = re.sub(r"[^\w\s-]", "", ascii_name.lower())
     s = re.sub(r"[-\s]+", "_", s).strip("_")
     return s or "custom_course"
 

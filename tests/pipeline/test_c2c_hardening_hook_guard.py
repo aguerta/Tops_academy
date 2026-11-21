@@ -163,3 +163,47 @@ def test_c2c_wave_workflow_in_task_description_blocks_until_failed_or_finished(
     ):
         allowed = guard.process_hook(_make_cmd_payload(director_id, cmd), custom_lock_file=str(lock_path))
         assert allowed == {"decision": "allow"}
+
+
+def test_cross_course_isolation_allows_non_ascii_course_id(tmp_path):
+    """Non-ASCII characters (e.g., ó) in course_id must not be truncated by Cross-Course Isolation."""
+    guard._LOCK_CACHE.clear()
+    worker_id = "worker-nonascii-1"
+    lock_path = tmp_path / ".c2c_subagent_lock.json"
+    lock_path.write_text(
+        json.dumps(
+            {
+                "active": True,
+                "director_conversation_id": "director-nonascii",
+                "course_id": "mateco_4_optimización_v20",
+                "active_subagents": [worker_id],
+                "subagent_roles": {worker_id: "cta_harmonizer"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    own_read = {
+        "conversation_id": worker_id,
+        "toolCall": {
+            "name": "read_file",
+            "arguments": {
+                "Path": "d:/Augusto/personal_portfolio/Tops_academy/courses/mateco_4_optimización_v20/work/cta_parts/part_01.json"
+            },
+        },
+    }
+    assert guard.process_hook(own_read, custom_lock_file=str(lock_path)) == {"decision": "allow"}
+
+    sibling_read = {
+        "conversation_id": worker_id,
+        "toolCall": {
+            "name": "read_file",
+            "arguments": {
+                "Path": "d:/Augusto/personal_portfolio/Tops_academy/courses/other_course/work/cta_parts/part_01.json"
+            },
+        },
+    }
+    denied = guard.process_hook(sibling_read, custom_lock_file=str(lock_path))
+    assert denied["decision"] == "deny"
+    assert "Cross-Course Isolation" in denied["reason"]
+
