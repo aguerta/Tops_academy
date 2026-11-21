@@ -3778,5 +3778,67 @@
       "output_tokens_per_question": 1344.5
     },
     "bottlenecks_count": 1
+  },
+  {
+    "run_id": "20261121_132610_solow_m20_v3_995c8cfb",
+    "timestamp": "2026-11-21T18:26:10.544822+00:00",
+    "course_id": "solow_m20_v3",
+    "course_title": "Solow M20 v3",
+    "conversation_id": "995c8cfb-0f44-464a-a57b-bb799de9a09d",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 20,
+      "questions": 504,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 921.0,
+      "agent_compute_seconds": 4172.0,
+      "speedup": 4.53,
+      "total_tokens": 9498315,
+      "total_active_tokens": 2421983,
+      "input_tokens": 1615675,
+      "output_tokens": 619818,
+      "cache_read_tokens": 7076332,
+      "total_turns": 183,
+      "subagents_count": 29,
+      "tool_errors": 20,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 119.0,
+      "stage_3_max_wall": 359.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (124/124 REACTIVOS)",
+        "batch_items_count": 124,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 6 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 6 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 1 iteración(es) ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 124 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 263842.1,
+      "active_tokens_per_page": 67277.3,
+      "tokens_per_input_kb": 6237.1,
+      "tokens_per_competency": 474915.8,
+      "active_tokens_per_competency": 121099.1,
+      "author_tokens_per_competency": 67031.7,
+      "tokens_per_question": 18845.9,
+      "active_tokens_per_question": 4805.5,
+      "seconds_per_page": 25.58,
+      "seconds_per_question": 1.83,
+      "questions_per_minute": 32.83,
+      "agent_seconds_per_question": 8.28,
+      "output_tokens_per_question": 1317.4
+    },
+    "bottlenecks_count": 1
   }
 ]
