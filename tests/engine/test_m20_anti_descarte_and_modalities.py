@@ -288,7 +288,9 @@ def gen_2(rng):
     expr = f"{k}*x + {b}"
     return {
         "vars": {"k": k, "b": b, "a": k, "ans": expr},
-        "correct": {"expression": expr, "accepted_equivalents": [expr, f"{b} + {k}*x"], "tolerance": 0.001},
+        "correct": expr,
+        "accepted_equivalents": [expr, f"{b} + {k}*x"],
+        "tolerance": 0.001,
         "symbolic_config": {"variables": ["x"]},
         "ds": [
             ("D-Hab20-03", f"({k}+{b})*x", RATS["D-Hab20-03"]),
@@ -529,8 +531,8 @@ H3 = [r"Identifica la pendiente @n@ y desplazamiento @d@.", r"Multiplica la vari
 H4 = [r"Identifica el coeficiente frontera @n@ y resta @c@.", r"Escala la variable x por el factor @n@.", r"Resta la constante @c@ en la expresión simbólica."]
 S1 = [r"Calcula la respuesta directa $f(@n@) = @a@(@n@) + 5$:", r"Dado $@n@$ y pendiente $@a@$, evalúa $@a@ \cdot @n@ + 5$:", r"Obtén el valor lineal directo con coeficiente $@a@$ en $@n@$:", r"Determina $y = @a@x + 5$ evaluando en $x = @n@$:"]
 S2 = [r"Invierte la relación cuadrática hallando $@n@^2 - @b@$:", r"Con argumento $@n@$ y resta $@b@$, calcula la diferencia cuadrática:", r"Determina el valor inverso restando $@b@$ al cuadrado de $@n@$:", r"Resuelve $@n@^2 - @b@$ para los parámetros dados:"]
-S3 = [r"Bajo perturbación $+@d@$ y pendiente $@n@$, formule $@n@x + @d@$:", r"Exprese en función de $x$ la recta perturbada de pendiente $@n@$ e intercepto $@d@$:", r"Si la pendiente vale $@n@$ con choque $+@d@$, escriba la fórmula en $x$:", r"Modele simbólicamente la regla afín con pendiente $@n@$ y término $@d@$:"]
-S4 = [r"En frontera con desplazamiento $-@c@$ y pendiente $@n@$, formule $@n@x - @c@$:", r"Para el caso borde dado por $@n@$ y $@c@$, exprese en $x$ la regla $@n@x-@c@$:", r"Escriba la expresión simbólica límite con pendiente $@n@$ y resta $@c@$:", r"Formule en términos de $x$ la cota $@n@x - @c@$:"]
+S3 = [r"Bajo perturbación $+@d@$ y pendiente $@n@$, formule en variable $x$ la recta $@n@x + @d@$:", r"Exprese en función de $x$ la recta perturbada de pendiente $@n@$ e intercepto $@d@$:", r"Si la pendiente vale $@n@$ con choque $+@d@$, escriba la fórmula en $x$:", r"Modele simbólicamente en $x$ la regla afín con pendiente $@n@$ y término $@d@$:"]
+S4 = [r"En frontera con desplazamiento $-@c@$ y pendiente $@n@$, formule $@n@x - @c@$:", r"Para el caso borde dado por $@n@$ y $@c@$, exprese en $x$ la regla $@n@x-@c@$:", r"Escriba la expresión simbólica límite en variable $x$ con pendiente $@n@$ y resta $@c@$:", r"Formule en términos de $x$ la cota $@n@x - @c@$:"]
 SOL = r"Paso 1: Identificamos el parámetro @n@ de la instancia y su regla algebraica específica. Paso 2: Calculamos el resultado exacto @ans@ sin omitir términos."
 TEMPLATES = [
     {"id": "T-Hab-20-01", "cid": "Hab-20", "qtype": "FIB", "archetype": "direct", "band": ("easy", "Apply"), "gen": gen_1, "ver": ver_1, "stem_variants": S1, "hints": H1, "sol": SOL, "rats": RATS},

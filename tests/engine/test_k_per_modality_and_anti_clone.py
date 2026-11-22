@@ -422,7 +422,7 @@ def ver_4(c, v): return str(c).replace(" ", "") == f"{v['a']}*x+{v['b']}"
 S1 = [r"Evalúa $f(@x@)=@a@(@x@)+@b@$:", r"Calcula regla afín $@a@(@x@)+@b@$:", r"Obtén $y$ para $x=@x@$ con $@a@,@b@$:", r"Determina valor directo en $@x@$ con $@a@,@b@$:"]
 S2 = [r"Invierte expresión cuadrática $@x@^2+@a@-@b@$:", r"Calcula diferencia $@x@^2+@a@-@b@$:", r"Halla magnitud inversa usando $@x@,@a@,@b@$:", r"Resuelve $@x@^2+@a@-@b@$ exactamente:"]
 S3 = [r"Con choque $@d@$ calcula $(@a@+@d@)@b@+@a@$:", r"Perturba $@a@$ por $@d@$ y multiplica por $@b@$:", r"Evalúa variante desplazada con $@a@,@b@,@d@$:", r"Determina producto perturbado de $@a@+@d@$ y $@b@$:"]
-S4 = [r"Escribe fórmula simbólica de pendiente $@a@$ e intercepto $@b@$:", r"Expresa $f(x)$ con pendiente $@a@$ y término $@b@$:", r"Modela en variable $x$ la recta de parámetros $@a@,@b@$:", r"Define analíticamente recta lineal usando $@a@,@b@$:"]
+S4 = [r"Escribe fórmula simbólica en variable $x$ con pendiente $@a@$ e intercepto $@b@$:", r"Expresa $f(x)$ con pendiente $@a@$ y término $@b@$:", r"Modela en variable $x$ la recta de parámetros $@a@,@b@$:", r"Define analíticamente en $x$ la recta lineal usando $@a@,@b@$:"]
 H1 = [r"Identifica pendiente $@a@$ en la regla.", r"Aplica término independiente $@b@$.", r"Verifica signos al multiplicar."]
 H2 = [r"Eleva $@x@$ al cuadrado antes de sumar $@a@$.", r"Resta el parámetro $@b@$ al final.", r"Revisa la prioridad aritmética."]
 H3 = [r"Suma primero el desplazamiento $@d@$ a $@a@$.", r"Multiplica la suma por $@b@$.", r"Agrega $@a@$ tras el producto."]
@@ -723,7 +723,7 @@ def ver_4(r):
         and all(">" not in u["value"] and _pv(u["value"]) != pr for u in f),
     )
 S1 = [r"Escriba la forma factorizada multiplicando $@a@$ por $(x+1)$:", r"Exprese linealmente $@a@(x+1)$ en variable $x$:", r"Represente producto $@a@$ sobre binomio $(x+1)$:"]
-S2 = [r"Desarrolle polinomio expandido de pendiente $@b@$ e intercepto $@b@$:", r"Formule suma algebraica $@b@x + @b@$ en $x$:", r"Indique término completo con coeficiente $@b@$ y constante $@b@$:"]
+S2 = [r"Desarrolle polinomio expandido en $x$ de pendiente $@b@$ e intercepto $@b@$:", r"Formule suma algebraica $@b@x + @b@$ en $x$:", r"Indique término completo en variable $x$ con coeficiente $@b@$ y constante $@b@$:"]
 S3 = [r"Con $@a@,@k@>0$, seleccione identidades de suma:", r"Marque proposiciones válidas sobre $@a@+@k@$:", r"Identifique propiedades ciertas en $@a@,@k@$:"]
 S4 = [r"Para frontera $@a@,@m@>0$, escoja cotas válidas:", r"Determine relaciones ciertas del producto $@a@ \cdot @m@$:", r"Elija afirmaciones correctas en frontera $@a@,@m@$:"]
 H1 = [r"Conserve el factor $@a@$ fuera del paréntesis.", r"Incluya la unidad dentro del binomio.", r"Escriba multiplicación explícita."]

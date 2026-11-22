@@ -340,14 +340,7 @@ class TestCompileShardHealingR23:
 # 5. ZERO FALSE POSITIVES ON PUBLISHED REAL COURSES
 # =============================================================================
 class TestRealCoursesKaTeXZeroFalsePositives:
-    """Verifies that all questions with matrices across the 4 published courses have 0 R-23 errors."""
-
-    COURSES = [
-        "saul_control_optimo.json",
-        "solow_growth_model.json",
-        "saul_pre_parcial.json",
-        "estadistica_3_s9_vmapreduce5.json",
-    ]
+    """Verifies that all questions with matrices across active published courses have 0 R-23 errors."""
 
     MATRIX_KEYWORDS = ("matrix", "pmatrix", "bmatrix", "vmatrix", "Vmatrix", "cases", "aligned", "array")
 
@@ -359,9 +352,7 @@ class TestRealCoursesKaTeXZeroFalsePositives:
         total_questions_scanned = 0
         violations = []
 
-        for course_filename in self.COURSES:
-            if course_filename not in real_courses_parsed:
-                continue
+        for course_filename in sorted(real_courses_parsed.keys()):
             course_data = real_courses_parsed[course_filename]
 
             questions = course_data.get("questions", [])
