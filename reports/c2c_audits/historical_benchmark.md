@@ -1,12 +1,16 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-22 13:44:45`. Total de ejecuciones auditadas: **68**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-22 16:00:00`. Total de ejecuciones auditadas: **72**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Costo (USD) | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-22 21:00` | **solow_m20_v11** (`dc8545ff`) | 36 pág (1.49 MB) | 20 comp / 621 preg | 23.8 min (1427.0s) | **3.99x** | 10,942,792 | **`$9.87`** | **17,621.2** | **2.3s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
+| `2026-11-22 20:59` | **solow_m20_v10** (`764bd0f6`) | 36 pág (1.49 MB) | 17 comp / 402 preg | 16.5 min (992.0s) | **3.87x** | 7,470,923 | **`$6.80`** | **18,584.4** | **2.47s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
+| `2026-11-22 19:59` | **solow_m20_v7** (`80b15034`) | 36 pág (1.49 MB) | 20 comp / 470 preg | 15.9 min (955.0s) | **4.41x** | 8,411,953 | **`$7.61`** | **17,897.8** | **2.03s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
+| `2026-11-22 19:59` | **solow_m20_v8** (`15fa3433`) | 36 pág (1.49 MB) | 18 comp / 549 preg | 18.5 min (1108.0s) | **4.42x** | 9,551,216 | **`$8.77`** | **17,397.5** | **2.02s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
 | `2026-11-22 18:44` | **solow_m20_v6** (`bc7bba12`) | 36 pág (1.49 MB) | 19 comp / 440 preg | 16.3 min (980.0s) | **4.13x** | 8,269,086 | **`$7.20`** | **18,793.4** | **2.23s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
 | `2026-11-22 00:45` | **solow_m20_v5** (`58060ef0`) | 36 pág (1.49 MB) | 19 comp / 597 preg | 26.1 min (1565.0s) | **3.88x** | 16,565,044 | **`$11.31`** | **27,747.1** | **2.62s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-22 00:17` | **estadistica_3_pre_pc2_m20** (`76d10933`) | 129 pág (1.88 MB) | 58 comp / 1396 preg | 23.9 min (1436.0s) | **6.27x** | 24,102,638 | **`$17.08`** | **17,265.5** | **1.03s** | ❌ Falló | 🛠️ 2 | ⚠️ 2 |
@@ -80,11 +84,11 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.19x`
-- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$17.25 USD`
-- **Densidad de Tokens Promedio por Pregunta**: `52,341.5 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `5.66 s/pregunta`
-- **Rendimiento Promedio de Generación**: `25.21 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `5.13x`
+- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$16.75 USD`
+- **Densidad de Tokens Promedio por Pregunta**: `50,081.5 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `5.43 s/pregunta`
+- **Rendimiento Promedio de Generación**: `25.35 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*
