@@ -1544,8 +1544,20 @@ class ExecutionAuditor:
                         if compile_attempts_count == 1:
                             compile_first_passed = not is_comp_fail
                             if is_comp_fail:
+                                _non_warn_lines = [
+                                    ln for ln in content.splitlines()
+                                    if not ln.lstrip().startswith(("WARNING:", "INFO:", "[!]"))
+                                ]
+                                _warn_only_tags = {
+                                    "TPL-ORPHAN-VARS",
+                                    "PRECHECK",
+                                    "BLOOM-SUPERIOR-TARGET",
+                                    "CTA-OVERLAP-WARN",
+                                    "CTA-HINT-SHORT",
+                                }
+                                _raw_tags = re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", "\n".join(_non_warn_lines))
                                 first_compile_rules = list(dict.fromkeys(
-                                    re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", content)
+                                    t for t in _raw_tags if t not in _warn_only_tags
                                 ))[:8]
                 if "exited with code" in content:
                     code_match = re.search(r"exited with code\s+(-?\d+)", content)

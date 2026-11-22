@@ -154,6 +154,11 @@ Al recibir las notificaciones de finalización:
 2. Genera la **Matriz Comparativa Consolidada** en `reports/qa_audits/SUITE_QA_AUDIT_REPORT.md`.
 3. Revisa los campos `discovered_lint_rules` reportados por los subagentes para retroalimentar `scripts/standardized_audit_engine.py` en caso de nuevos patrones.
 
+#### Regla Obligatoria de Persistencia Histórica (QA Reports & Archive)
+Toda ejecución agéntica de QA (ya sea individual sobre un curso, en suite paralela, o disparada como verificación post-pipeline desde otra skill/conversación) **DEBE** persistir siempre sus entregables en el repositorio:
+1. Escribir o sobrescribir el reporte final completo en `reports/qa_audits/<course_id>_qa_report.md` (nunca dejarlo únicamente en un artifact de conversación ni en memoria).
+2. Conservar intactos todos los respaldos y trazas previas en `reports/audits_archive/<course_id>/` (archivando cualquier reporte previo antes de regenerar cuando se ejecuta una nueva ronda, sin borrar ni sobrescribir el historial archivado).
+
 ---
 
 ## 4. Definición del Subagente `course_qa_auditor`

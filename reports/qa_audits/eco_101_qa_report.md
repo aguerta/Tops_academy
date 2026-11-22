@@ -40,7 +40,7 @@
 - Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 2.05/5.0 (piso adaptativo 3.70, 0.0% Analyze+Evaluate, tier: BAJO, incoherencias=0).
 
 #### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
-- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas y 0 formatos flotantes/asteriscos crudos.
+- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas, 0 formatos flotantes/asteriscos crudos y 0 residuos de plantilla/reemplazo (template_vars=0, blind_repl=0).
 
 ---
 
@@ -115,7 +115,7 @@ El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** 
     "technical_ergonomics": {
       "score": 2.0,
       "max": 2.0,
-      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas y 0 formatos flotantes/asteriscos crudos."
+      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas, 0 formatos flotantes/asteriscos crudos y 0 residuos de plantilla/reemplazo (template_vars=0, blind_repl=0)."
     }
   },
   "penalties_applied": [],

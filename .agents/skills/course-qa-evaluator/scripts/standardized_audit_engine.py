@@ -349,6 +349,31 @@ class ScaffoldingHintsLinter(BaseLinter):
     STATIC_ARITH_EXAMPLE_PAT = re.compile(
         r"(?:\(\s*\d+(?:\^\d+)?\s*[+\-*/]\s*\d+(?:\^\d+)?\s*\)\s*/\s*\d+|\b\d+\.\d+\s*/\s*\d+)\s*=\s*(-?\d+(?:\.\d+)?)"
     )
+    MATH_SPAN_PAT = re.compile(r"\$\$(.+?)\$\$|\$([^\$]+?)\$", re.DOTALL)
+    STATIC_CONST_PAT = re.compile(r"(?<![_\^a-zA-Z0-9.])(?<![_\^]\{)(\d+(?:\.\d+)?)\b")
+
+    @classmethod
+    def _extract_static_warning_math_constants(cls, text: str) -> list[tuple[str, set[str]]]:
+        """Extract math spans containing non-trivial numeric constants (>=2 or decimal) for parameter-leak checks."""
+        out: list[tuple[str, set[str]]] = []
+        if not text:
+            return out
+        for m in cls.MATH_SPAN_PAT.finditer(text):
+            seg = (m.group(1) or m.group(2) or "").strip()
+            if not seg or not any(op in seg for op in ("=", "+", "-", "/", "*", "\\sqrt", "\\frac")):
+                continue
+            consts: set[str] = set()
+            for num_str in cls.STATIC_CONST_PAT.findall(seg):
+                try:
+                    val = float(num_str)
+                except ValueError:
+                    continue
+                if val >= 2.0 or "." in num_str:
+                    consts.add(num_str)
+            if consts:
+                norm_seg = re.sub(r"\s+", "", seg)
+                out.append((norm_seg, consts))
+        return out
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         questions = course_data.get("questions", [])
@@ -359,11 +384,13 @@ class ScaffoldingHintsLinter(BaseLinter):
         bare_formula_warning_items = []
         cloned_warning_items = []
         disconnected_example_warning_items = []
+        static_uninstantiated_warning_items = []
         missing_solutions = []
 
         generic_pats = [re.compile(p, re.IGNORECASE) for p in self.GENERIC_WARNING_PHRASES]
         warning_to_comps: dict[str, set[str]] = {}
         warning_to_qids: dict[str, list[tuple[str, str]]] = {}
+        comp_span_records: dict[tuple[str, str], list[tuple[str, str, set[str]]]] = {}
 
         for q in questions:
             qid = q.get("id", "unknown")
@@ -474,6 +501,10 @@ class ScaffoldingHintsLinter(BaseLinter):
                         if res_num not in stem_str:
                             disconnected_example_warning_items.append(qid)
 
+                    stem_for_warn = str(q.get("stem") or "")
+                    for norm_seg, consts in self._extract_static_warning_math_constants(misc_warning):
+                        comp_span_records.setdefault((cid, norm_seg), []).append((qid, stem_for_warn, consts))
+
         # Detect cross-competency cloned misconception warnings (shared across >= 3 distinct competencies)
         for norm_w, comps_set in warning_to_comps.items():
             qlist_w = warning_to_qids.get(norm_w, [])
@@ -521,6 +552,35 @@ class ScaffoldingHintsLinter(BaseLinter):
                 ),
             ))
 
+        # Detect repeated static equations/numbers in misconception_warning across different stems of a competency
+        emitted_static_keys: set[tuple[str, str]] = set()
+        for (cid_w, norm_seg), recs in comp_span_records.items():
+            if len(recs) < 2 or cid_w in {k[0] for k in emitted_static_keys}:
+                continue
+            distinct_stems = {re.sub(r"\s+", " ", s).strip() for _, s, _ in recs if s.strip()}
+            if len(distinct_stems) < 2:
+                continue
+            uninstantiated_qids: list[str] = []
+            for qid_r, stem_r, consts_r in recs:
+                if any(not re.search(rf"(?<!\d){re.escape(c)}(?!\d)", stem_r) for c in consts_r):
+                    uninstantiated_qids.append(qid_r)
+            if len(set(uninstantiated_qids)) >= 2:
+                static_uninstantiated_warning_items.extend(uninstantiated_qids)
+                emitted_static_keys.add((cid_w, norm_seg))
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="warning",
+                    item_id=uninstantiated_qids[0],
+                    competency_id=cid_w,
+                    message=(
+                        f"[static_misconception_warning_uninstantiated_params] Constante/ecuación estática '{norm_seg[:45]}' "
+                        f"repetida en misconception_warning sin instanciar parámetros del enunciado "
+                        f"({len(set(uninstantiated_qids))} reactivos de {cid_w})."
+                    ),
+                    snippet=norm_seg[:60],
+                ))
+
         return {
             "zero_hints_count": len(zero_hints_items),
             "zero_hints_items": zero_hints_items,
@@ -531,6 +591,7 @@ class ScaffoldingHintsLinter(BaseLinter):
             "bare_formula_misconception_count": len(set(bare_formula_warning_items)),
             "cloned_misconception_warning_count": len(set(cloned_warning_items)),
             "disconnected_warning_numbers_count": len(set(disconnected_example_warning_items)),
+            "static_misconception_warning_uninstantiated_count": len(set(static_uninstantiated_warning_items)),
             "missing_solutions_count": len(missing_solutions),
         }
 
@@ -2806,7 +2867,7 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
                         snippet=m_ast.group(0)[:50],
                     ))
 
-                if field_name in ("solution_steps", "solution_text"):
+                if field_name in ("solution_steps", "solution_text") or field_name.endswith("_rationale"):
                     clean_sol = txt.replace("\\$", "")
                     for mb_taut in self.MATH_SEG_PAT.finditer(clean_sol):
                         seg = mb_taut.group(1) if mb_taut.group(0).startswith("$$") else mb_taut.group(2)
@@ -2816,18 +2877,34 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
                             continue
                         sides = [re.sub(r"\s+", "", s) for s in seg.split("=")]
                         taut_pair = next(
-                            ((sides[i], sides[i + 1]) for i in range(len(sides) - 1) if len(sides[i]) >= 4 and sides[i] == sides[i + 1]),
+                            (
+                                (sides[i], sides[i + 1])
+                                for i in range(len(sides) - 1)
+                                if sides[i] == sides[i + 1]
+                                and (
+                                    len(sides[i]) >= 4
+                                    or (
+                                        field_name.endswith("_rationale")
+                                        and bool(sides[i] and sides[i].lstrip("-").replace(".", "", 1).isdigit())
+                                    )
+                                )
+                            ),
                             None,
                         )
                         if taut_pair:
                             tautological_identity_items.append(qid)
+                            tag_suffix = (
+                                " [R-TAUTOLOGICAL-PARAM-EQUALITY-IN-RATIONALE]"
+                                if field_name.endswith("_rationale")
+                                else ""
+                            )
                             issues.append(LintIssue(
                                 linter=self.name,
                                 dimension=self.dimension,
                                 severity="warning",
                                 item_id=qid,
                                 competency_id=cid,
-                                message=f"Identidad tautológica redundante '{taut_pair[0]}={taut_pair[1]}' en '{field_name}'",
+                                message=f"Identidad tautológica redundante '{taut_pair[0]}={taut_pair[1]}' en '{field_name}'{tag_suffix}",
                                 snippet=f"{taut_pair[0]}={taut_pair[1]}"[:50],
                             ))
                             break
@@ -3261,7 +3338,9 @@ def compute_deterministic_rubric_scores(
     concat_cnt = uninterp.get("string_concat_collision_items_count", 0)
     if concat_cnt > 0:
         d5 -= min(0.5, round(concat_cnt * 0.05, 2))
-    residues = tpl.get("template_variable_residue_count", 0) + blind.get("blind_string_replacement_count", 0)
+    tpl_res = tpl.get("template_variable_residue_count", 0)
+    blind_res = blind.get("blind_string_replacement_count", 0)
+    residues = tpl_res + blind_res
     if residues > 0:
         d5 -= min(0.5, round(residues * 0.1, 2))
     d5 = max(0.0, min(2.0, round(d5, 2)))
@@ -3269,7 +3348,9 @@ def compute_deterministic_rubric_scores(
     d5_fb = (
         f"Sintaxis KaTeX: {crit_katex} errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). "
         f"Ergonomía: {prose_cnt} observaciones de prosa en \\text{{...}}, {raw_ids} identificadores crudos, "
-        f"{concat_cnt} colisiones por concatenación, {taut_cnt} identidades tautológicas y {sci_ast} formatos flotantes/asteriscos crudos."
+        f"{concat_cnt} colisiones por concatenación, {taut_cnt} identidades tautológicas, "
+        f"{sci_ast} formatos flotantes/asteriscos crudos y {residues} residuos de plantilla/reemplazo "
+        f"(template_vars={tpl_res}, blind_repl={blind_res})."
     )
 
     raw_subtotal = round(d1 + d2 + d3 + d4 + d5, 2)
