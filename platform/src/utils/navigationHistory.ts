@@ -11,7 +11,8 @@ export type AppViewMode =
   | 'pre_exercise'
   | 'practice'
   | 'completed'
-  | 'challenge';
+  | 'challenge'
+  | 'progress_log';
 
 export interface NavigationState {
   viewMode: AppViewMode;
@@ -125,8 +126,8 @@ export function setupNavigationHistory(options: SetupNavigationOptions): () => v
       return;
     }
 
-    // 4. Desde 'completed' (pantalla de resultados), retroceder debe volver al curso ('overview').
-    if (currentView === 'completed') {
+    // 4. Desde 'completed' o 'progress_log', retroceder debe volver al curso ('overview').
+    if (currentView === 'completed' || currentView === 'progress_log') {
       const cur = options.getCurrentState();
       options.onNavigate({ viewMode: 'overview', courseId: cur.courseId });
       replaceNavState({ viewMode: 'overview', courseId: cur.courseId });
