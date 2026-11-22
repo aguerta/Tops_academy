@@ -1369,6 +1369,7 @@ def dispatch_authors(
     pointer: bool = True,
     wave_index: Optional[int] = None,
     ids: Optional[Union[str, List[Union[str, int]]]] = None,
+    templates_per_modality: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Shard Authors (Load Inversion v3.21).
     
@@ -1461,9 +1462,13 @@ def dispatch_authors(
     eff_tpl_per_mod = max(
         1,
         int(
-            (shard_manifest_data.get("stage4_contract") or {}).get("templates_per_modality")
-            or shard_manifest_data.get("templates_per_modality")
-            or DEFAULT_TEMPLATES_PER_MODALITY
+            templates_per_modality
+            if templates_per_modality is not None
+            else (
+                (shard_manifest_data.get("stage4_contract") or {}).get("templates_per_modality")
+                or shard_manifest_data.get("templates_per_modality")
+                or DEFAULT_TEMPLATES_PER_MODALITY
+            )
         ),
     )
     manifest_dirty = False
@@ -1591,12 +1596,20 @@ def dispatch_authors(
             norm_rec_mods = list(dict.fromkeys(str(m).strip().lower() for m in raw_rec_mods if str(m).strip()))
             num_mods = len(norm_rec_mods)
             has_mc7_comp = any(m in _MC7_MOD_ALIASES for m in norm_rec_mods) and not (is_skill_type(raw_type) or str(cid).startswith("Hab-"))
-            _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(
-                raw_type,
-                num_modalities=num_mods,
-                templates_per_modality=eff_tpl_per_mod,
-                has_mc7=has_mc7_comp,
-            )
+            if templates_per_modality is not None:
+                _s4c = competency_contract(
+                    raw_type,
+                    num_modalities=num_mods,
+                    templates_per_modality=eff_tpl_per_mod,
+                    has_mc7=has_mc7_comp,
+                )
+            else:
+                _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(
+                    raw_type,
+                    num_modalities=num_mods,
+                    templates_per_modality=eff_tpl_per_mod,
+                    has_mc7=has_mc7_comp,
+                )
             comp_k = max(1, int(_s4c.get("templates_per_modality") or eff_tpl_per_mod))
             min_tpls = int(
                 _s4c.get("min_templates_required")
@@ -2332,6 +2345,7 @@ def build_dispatch(
     ready_only: bool = False,
     pointer: bool = True,
     wave_index: Optional[int] = None,
+    templates_per_modality: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Generates invoke_subagent payload with strict SCOPE-LOCK for the given role."""
     use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
@@ -2344,7 +2358,13 @@ def build_dispatch(
         return dispatch_cta(work_dir, mode=mode, pointer=use_pointer)
 
     if role in ("author", "authors", "c2c_shard_author"):
-        return dispatch_authors(work_dir, pointer=use_pointer, wave_index=wave_index, ids=ids)
+        return dispatch_authors(
+            work_dir,
+            pointer=use_pointer,
+            wave_index=wave_index,
+            ids=ids,
+            templates_per_modality=templates_per_modality,
+        )
 
     if role in ("judge", "judges", "c2c_judge"):
         return dispatch_judges(work_dir, pointer=use_pointer, ready_only=ready_only, ids=ids)
@@ -3520,6 +3540,7 @@ def main() -> None:
     disp.add_argument("--ready-only", action="store_true", help="Dispatch only ready sections")
     disp.add_argument("--ids", "--failed-cid", nargs="*", dest="ids", help="Optional specific IDs to dispatch")
     disp.add_argument("--wave", "--wave-index", type=int, default=None, dest="wave", help="Wave index for author dispatch")
+    disp.add_argument("--templates-per-modality", type=int, default=None, help="Override templates per modality (K) for author dispatch")
     disp.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders referencing disk JSON (default: True)")
     disp.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
 
@@ -3552,6 +3573,7 @@ def main() -> None:
     da.add_argument("--work-dir", required=True, help="Course working directory")
     da.add_argument("--wave", "--wave-index", type=int, default=None, dest="wave", help="Wave index to filter author dispatch")
     da.add_argument("--ids", nargs="*", default=None, help="Optional specific shard or competency IDs to filter author dispatch")
+    da.add_argument("--templates-per-modality", type=int, default=None, help="Override templates per modality (K) for author dispatch")
     da.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders (default: True)")
     da.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
 
@@ -3562,7 +3584,7 @@ def main() -> None:
     dj.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
     dj.add_argument("--ready-only", action="store_true", default=False, help="Dispatch only ready evaluated items")
     dj.add_argument("--ids", nargs="*", default=None, help="Target competency IDs to arbitrate (default: all)")
-    dj.add_argument("--max-items-per-judge", type=int, default=12, help="Maximum items per judge batch (default: 12)")
+    dj.add_argument("--max-items-per-judge", type=int, default=20, help="Maximum items per judge batch (default: 20)")
 
     # dispatch-repair subcommand
     dr = subparsers.add_parser("dispatch-repair", help="Dispatch Targeted Repair Engineers")
@@ -3601,7 +3623,13 @@ def main() -> None:
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-authors":
-        res = dispatch_authors(args.work_dir, pointer=args.pointer, wave_index=args.wave, ids=args.ids)
+        res = dispatch_authors(
+            args.work_dir,
+            pointer=args.pointer,
+            wave_index=args.wave,
+            ids=args.ids,
+            templates_per_modality=args.templates_per_modality,
+        )
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-judges":
@@ -3634,6 +3662,7 @@ def main() -> None:
             ready_only=args.ready_only,
             pointer=args.pointer,
             wave_index=args.wave,
+            templates_per_modality=args.templates_per_modality,
         )
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 

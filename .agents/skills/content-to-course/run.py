@@ -2373,6 +2373,9 @@ class PipelineRunner:
             work_dir=self.work_dir,
             ids=self.ids,
             ready_only=self.ready_only,
+            pointer=not self.no_pointer,
+            wave_index=self.wave,
+            templates_per_modality=self.templates_per_modality,
         )
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, f"dispatch_{self.role}", elapsed)
@@ -3340,6 +3343,7 @@ class PipelineRunner:
             wave_index=self.wave,
             ids=self.ids,
             pointer=not self.no_pointer,
+            templates_per_modality=self.templates_per_modality,
         )
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, f"dispatch_authors_wave_{self.wave or 'all'}", elapsed)

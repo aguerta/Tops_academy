@@ -679,16 +679,6 @@ def partition_competencies_weighted(
     m = len(non_skills)
     while idx < m:
         remaining = m - idx
-        # Exception rule for target_max == 2 (legacy Case 2B):
-        # up to 3 competencies allowed ONLY when all 3 are 'fact' and total competencies N >= 30
-        if target_max == 2 and remaining >= 3 and total_n >= 30:
-            if all(is_fact_competency(non_skills[idx + j]) for j in range(3)):
-                if remaining == 3 or remaining >= 5:
-                    chunk = non_skills[idx:idx + 3]
-                    raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=False))
-                    idx += 3
-                    continue
-
         take = min(target_max, remaining)
         chunk = non_skills[idx:idx + take]
         raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=False))

@@ -925,7 +925,7 @@ def _find_pending_director_stage_tasks(active_lock: Dict[str, Any]) -> List[str]
     active_stage_tasks: Dict[str, str] = {}
     queued_task_labels: List[str] = []
     stage_or_workflow_re = re.compile(
-        r"(?:run\.py\b[^;|&\n]*--stage(?:\s+|=)[\"']?(gates|judge-compare|rejudge-compare|verify|build|templates|repair-matrix)[\"']?|\brun_workflow\b|\bc2c_wave_workflow\.py\b)",
+        r"(?:run\.py\b[^;|&\n]*--stage(?:\s+|=)[\"']?(gates|judge-compare|rejudge-compare|rejudge|lqas-rejudge|lqas-compare|verify|build|templates|repair-matrix)[\"']?(?=\s|$|[;|&])|\brun_workflow\b|\bc2c_wave_workflow\.py\b)",
         re.IGNORECASE,
     )
     try:
@@ -1315,7 +1315,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                     return {"decision": "deny", "reason": reason}
         if tool_name in cmd_tools and cmd:
             stage_m = re.search(
-                r"run\.py\b[^;|&\n]*--stage(?:\s+|=)[\"']?(cta|cta-reduce|cta-apply|cta-merge|shard|templates|build|verify|publish|repair-matrix|judge-compare|rejudge-compare|gates|certify|unlock)[\"']?",
+                r"run\.py\b[^;|&\n]*--stage(?:\s+|=)[\"']?(cta-reduce|cta-apply|cta-merge|cta|shard|templates|build|verify|publish|repair-matrix|judge-compare|rejudge-compare|rejudge|lqas-rejudge|lqas-compare|gates|certify|unlock)[\"']?(?=\s|$|[;|&])",
                 cmd,
                 re.IGNORECASE,
             )
