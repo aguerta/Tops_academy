@@ -301,7 +301,7 @@ class TestL4ConsolidatedRepairPackAndSplicing:
         data_file.write_text(
             'COURSE_ID = "splice_test"\n'
             'COMPETENCIES = [\n'
-            '    ("fact", "C-01", "Original Title", "Original Desc", "Remember", "doc.pdf", 1, [], [\n'
+            '    ("concept", "C-01", "Original Title", "Original Desc", "Remember", "doc.pdf", 1, [], [\n'
             '        ("D1", "$x=1$", "$x=2$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
             '        ("D2", "$y=1$", "$y=2$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
             '        ("D3", "$z=1$", "$z=2$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
@@ -313,7 +313,7 @@ class TestL4ConsolidatedRepairPackAndSplicing:
         # Override file in cta_fixes/C-01.py
         override_file = fixes_dir / "C-01.py"
         override_file.write_text(
-            'COMPETENCY = ("fact", "C-01", "SPLICED Correct Title", "SPLICED Desc", "Remember", "doc.pdf", 1, [], [\n'
+            'COMPETENCY = ("concept", "C-01", "SPLICED Correct Title", "SPLICED Desc", "Remember", "doc.pdf", 1, [], [\n'
             '    ("D1", "$x=10$", "$x=20$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
             '    ("D2", "$y=10$", "$y=20$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
             '    ("D3", "$z=10$", "$z=20$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
@@ -348,7 +348,7 @@ class TestL5DegradeAndFlagAndLedger:
         data_file.write_text(
             'COURSE_ID = "degrade_test"\n'
             'COMPETENCIES = [\n'
-            '    ("fact", "C-01", "Math Test", "Valor $\\\\invalidcommand{{{unclosed$", "Remember", "doc.pdf", 1, [], [\n'
+            '    ("fact", "H-01", "Math Test", "Valor $\\\\invalidcommand{{{unclosed$", "Remember", "doc.pdf", 1, [], [\n'
             '        ("D1", "$x=1$", "$x=2$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
             '        ("D2", "$y=1$", "$y=2$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'
             '        ("D3", "$z=1$", "$z=2$", "wb", "Revise minuciosamente la definicion formal y los pasos de derivacion algebraica antes de continuar.", None),\n'

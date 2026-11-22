@@ -231,6 +231,8 @@ def test_repair_close_guard_retries_missing_check_runs(tmp_path: Path) -> None:
                 }),
                 encoding="utf-8",
             )
+            fresh_ts = time.time() + 1.0
+            os.utime(repair_manifest, (fresh_ts, fresh_ts))
         return "ok"
 
     wf, _ = _load_workflow(
@@ -557,34 +559,30 @@ def test_check_cta_prefix_mismatch_and_d1_disambiguation() -> None:
         bloom="Evaluate", prereqs=["Fact-03"],
     )
 
-    # Both H- (Hecho) and Fact- pass with zero prefix warnings; F- passes prefix check in _validate_competencies_rules
-    ok_warns: List[str] = []
+    # Both H- (Hecho) and Fact- pass with zero prefix errors; F- passes prefix check in _validate_competencies_rules
     cta_ok = {"contract_version": 2, "competencies": [c_h, c_fact, c_c, c_skill]}
     ok_flag, ok_errs = check_cta.validate_cta_rules(
-        cta_ok, manifest_data=_make_manifest_data(cta_ok["competencies"]), enforce_bloom_gate=False, warnings_out=ok_warns,
+        cta_ok, manifest_data=_make_manifest_data(cta_ok["competencies"]), enforce_bloom_gate=False,
     )
     assert ok_flag, f"Expected H-/Fact- valid: {ok_errs}"
-    assert not any("[CTA-PREFIX-TYPE-MISMATCH]" in w for w in ok_warns)
+    assert not any("[CTA-PREFIX-TYPE-MISMATCH]" in e for e in ok_errs)
 
-    f_warns: List[str] = []
-    check_cta._validate_competencies_rules([c_f], require_assumptions=False, require_modalities=False, warnings=f_warns)
-    assert not any("[CTA-PREFIX-TYPE-MISMATCH]" in w for w in f_warns)
+    f_errs = check_cta._validate_competencies_rules([c_f], require_assumptions=False, require_modalities=False)
+    assert not any("[CTA-PREFIX-TYPE-MISMATCH]" in e for e in f_errs)
 
-    # H-02 typed as concept emits non-blocking WARNING: [CTA-PREFIX-TYPE-MISMATCH]
+    # H-02 typed as concept triggers hard blocking FAIL: [CTA-PREFIX-TYPE-MISMATCH]
     c_bad_prefix = _make_valid_comp(
         "H-02", "concept", "Geometria espectral de matrices simetricas",
         desc="Diagonalizacion ortogonal real mediante autovalores reales positivos.",
         bloom="Evaluate",
     )
-    pfx_warns: List[str] = []
-    pfx_flag, _ = check_cta.validate_cta_rules(
+    pfx_flag, pfx_errs = check_cta.validate_cta_rules(
         {"contract_version": 2, "competencies": [c_bad_prefix]},
         manifest_data=_make_manifest_data([c_bad_prefix]),
         enforce_bloom_gate=False,
-        warnings_out=pfx_warns,
     )
-    assert pfx_flag is True
-    assert any("WARNING: [CTA-PREFIX-TYPE-MISMATCH]" in w for w in pfx_warns)
+    assert pfx_flag is False
+    assert any("[CTA-PREFIX-TYPE-MISMATCH]" in e for e in pfx_errs)
 
     # Severe same-category overlap triggers [CTA-OVERLAP-HIGH]
     c_dup1 = _make_valid_comp("C-01", "concept", "Teorema del limite central asintotico", bloom="Evaluate")

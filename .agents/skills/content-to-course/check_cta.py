@@ -779,13 +779,10 @@ def _validate_competencies_rules(
             if cid_low.startswith(prefixes) and ctype in ("fact", "concept", "skill") and ctype not in valid_types:
                 line_no_pfx = locator.get_line(cid) if locator else None
                 line_tag_pfx = f" [Línea {line_no_pfx}]" if line_no_pfx else ""
-                warn_pfx = (
-                    f"WARNING: [CTA-PREFIX-TYPE-MISMATCH]{line_tag_pfx} Competency '{cid}' declares type='{ctype}' "
+                errors.append(
+                    f"[CTA-PREFIX-TYPE-MISMATCH]{line_tag_pfx} Competency '{cid}' declares type='{ctype}' "
                     f"incompatible with ID prefix (expected {expected_rule})."
                 )
-                if warnings is not None:
-                    warnings.append(warn_pfx)
-                print(warn_pfx, file=sys.stderr)
                 break
         distractors = comp.get("distractors", [])
 

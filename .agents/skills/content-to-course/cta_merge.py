@@ -2040,6 +2040,7 @@ def apply_harmonize(
             merges_directives.append(m_val)
 
     absorbed_to_root: Dict[str, str] = {}
+    promoted_survivor_ids: Dict[str, str] = {}
 
     if no_merge:
         decisions_log.append({
@@ -2467,6 +2468,56 @@ def apply_harmonize(
                             d["wrong_belief"] = str(d["omitted_step"])
                         d["omitted_step"] = None
 
+            # Promote survivor ID prefix to match finalized category when cross-tier merge upgrades type
+            final_type = str(comp_survivor.get("type") or "").strip().lower()
+            _TYPE_VALID_PREFIXES = {
+                "fact": ("h-", "f-", "fact-", "pre-"),
+                "concept": ("c-", "concept-", "pre-"),
+                "skill": ("hab-", "skill-"),
+            }
+            _TYPE_CANON_PREFIX = {"fact": "H-", "concept": "C-", "skill": "Hab-"}
+            old_id = str(comp_survivor.get("id") or "")
+            valid_pfxs = _TYPE_VALID_PREFIXES.get(final_type)
+            if valid_pfxs and old_id and not old_id.lower().startswith(valid_pfxs):
+                used_ids = {str(c.get("id")) for c in competencies if c is not comp_survivor} | set(existing_competency_ids)
+                new_id = next(
+                    (
+                        str(mid) for mid in members
+                        if str(mid).lower().startswith(valid_pfxs) and str(mid) not in used_ids
+                    ),
+                    None,
+                )
+                if not new_id:
+                    canon_pfx = _TYPE_CANON_PREFIX[final_type]
+                    seq_num = 1
+                    while f"{canon_pfx}{seq_num:02d}" in used_ids:
+                        seq_num += 1
+                    new_id = f"{canon_pfx}{seq_num:02d}"
+
+                new_code = new_id.replace("-", "")
+                comp_survivor["id"] = new_id
+                for d_idx, dist in enumerate(comp_survivor.get("distractors", []), start=1):
+                    if isinstance(dist, dict):
+                        dist["id"] = f"D-{new_code}-{d_idx:02d}"
+                for a_idx, asmp in enumerate(comp_survivor.get("assumptions", []), start=1):
+                    if isinstance(asmp, dict):
+                        asmp["id"] = f"A-{new_code}-{a_idx:02d}"
+                for c in competencies:
+                    c["prerequisites"] = list(dict.fromkeys(
+                        (new_id if pr == old_id else pr)
+                        for pr in c.get("prerequisites", [])
+                        if (new_id if pr == old_id else pr) != c["id"]
+                    ))
+                promoted_survivor_ids[old_id] = new_id
+                for k_abs, v_root in list(absorbed_to_root.items()):
+                    if v_root == old_id:
+                        absorbed_to_root[k_abs] = new_id
+                absorbed_to_root.pop(new_id, None)
+                for d_entry in decisions_log:
+                    if d_entry.get("operation") == "merge" and d_entry.get("survivor") == old_id:
+                        d_entry["survivor"] = new_id
+                        d_entry["survivor_renamed_from"] = old_id
+
     # 3b. Process optional 5th root key: adjust_modalities
     raw_adj = harmonize_data.get("adjust_modalities")
     adj_directives: List[Dict[str, Any]] = []
@@ -2499,6 +2550,7 @@ def apply_harmonize(
             or adj_item.get("id")
             or ""
         ).strip()
+        cid = promoted_survivor_ids.get(cid, cid)
         if not cid:
             validation_errors.append("adjust_modalities failed: missing 'competency' ID.")
             continue
@@ -2626,6 +2678,7 @@ def apply_harmonize(
     current_order_map = {c["id"]: idx for idx, c in enumerate(competencies)}
 
     for cid, reqs in prereq_directives:
+        cid = promoted_survivor_ids.get(cid, cid)
         if cid not in current_order_map:
             hint = (
                 f" (absorbed into '{absorbed_to_root[cid]}'; use '{absorbed_to_root[cid]}')"
@@ -2640,7 +2693,7 @@ def apply_harmonize(
         comp_prereqs = list(comp.get("prerequisites", []))
 
         for req_raw in reqs:
-            req = str(req_raw).strip()
+            req = promoted_survivor_ids.get(str(req_raw).strip(), str(req_raw).strip())
             if ":" in req:
                 prefix_part, bare_id = req.split(":", 1)
                 if prefix_part.lower() in ("base", "existing"):
