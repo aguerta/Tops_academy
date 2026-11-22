@@ -1,12 +1,12 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Modelo de Crecimiento de Solow (`solow_incremental`)
 
-- **Fecha de Evaluación:** 2026-11-21
+- **Fecha de Evaluación:** 2026-11-22
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **17.3 / 20.0 pts**
 - **Quality Tier:** **EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY**
-- **Mastery Path Readiness Index (MPRI):** **83.24 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Mastery Path Readiness Index (MPRI):** **83.23 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
 - **Índice Bloom Ponderado (1–5):** **3.80 / 5.0** (piso adaptativo 4.00 | Analyze+Evaluate: 86.9% | Tier: **SÓLIDO**)
 
 ---
@@ -48,19 +48,19 @@
 
 | Pilar Cognitivo | Puntaje | Máximo | Calificación |
 | :--- | :---: | :---: | :---: |
-| **1. Progresión Adaptativa ZPD y Bloom** | **14.41** | 20.0 | 72.0% |
+| **1. Progresión Adaptativa ZPD y Bloom** | **14.40** | 20.0 | 72.0% |
 | **2. Modalidad de Evocación y Anti-Gaming** | **13.74** | 20.0 | 68.7% |
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **25.00** | 25.0 | 100.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **10.09** | 15.0 | 67.3% |
 | **5. Topología DAG e Interleaving** | **10.00** | 10.0 | 100.0% |
 | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
-| **TOTAL MPRI** | **83.24** | **100.0** | **83.2% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
+| **TOTAL MPRI** | **83.23** | **100.0** | **83.2% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
 
 ---
 
 ### 4. Veredicto y Certificación
 
-El curso **Modelo de Crecimiento de Solow** ha sido **certificado y aprobado** con calificación de **17.3 / 20.0** y MPRI de **83.24 / 100.0**, acreditando el cumplimiento de los estándares Quality Matters, OSCQR y Mastery Learning.
+El curso **Modelo de Crecimiento de Solow** ha sido **certificado y aprobado** con calificación de **17.3 / 20.0** y MPRI de **83.23 / 100.0**, acreditando el cumplimiento de los estándares Quality Matters, OSCQR y Mastery Learning.
 
 ---
 
@@ -81,9 +81,9 @@ El curso **Modelo de Crecimiento de Solow** ha sido **certificado y aprobado** c
       "fill_in_the_blank": 4
     },
     "bloom_index": {
-      "weighted_index": 3.803,
+      "weighted_index": 3.8,
       "adaptive_floor": 4.0,
-      "gap": 0.197,
+      "gap": 0.2,
       "apply_plus_pct": 93.44,
       "superior_pct": 86.89,
       "tier": "SÓLIDO",
@@ -91,7 +91,7 @@ El curso **Modelo de Crecimiento de Solow** ha sido **certificado y aprobado** c
     },
     "platform_status": "ACTIVO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-21"
+    "evaluation_date": "2026-11-22"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -125,12 +125,12 @@ El curso **Modelo de Crecimiento de Solow** ha sido **certificado y aprobado** c
   "final_score": 17.28,
   "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY",
   "mastery_path_readiness": {
-    "mpri_score": 83.24,
+    "mpri_score": 83.23,
     "mpri_max": 100.0,
     "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
     "pillars": {
       "zpd_adaptive_progression": {
-        "score": 14.41,
+        "score": 14.4,
         "max": 20.0
       },
       "retrieval_modality_and_anti_gaming": {

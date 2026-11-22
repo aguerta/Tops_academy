@@ -3495,22 +3495,22 @@
       "total_output_tokens": 2224238,
       "cache_read_tokens": 75194646,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 38.4405,
+      "total_cost_usd": 38.44,
       "cost_breakdown_usd": {
-        "input_usd": 16.1191,
-        "output_usd": 16.6818,
-        "cache_read_usd": 5.6396,
-        "total_usd": 38.4405
+        "input_usd": 16.12,
+        "output_usd": 16.68,
+        "cache_read_usd": 5.64,
+        "total_usd": 38.44
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 1.8767,
-        "stage_3_authors": 16.3911,
-        "stage_3b_repairs": 11.1818,
-        "stage_5_judges": 2.997,
-        "orchestrator": 5.9938,
+        "stage_1b_cta": 1.88,
+        "stage_3_authors": 16.39,
+        "stage_3b_repairs": 11.18,
+        "stage_5_judges": 3.0,
+        "orchestrator": 5.99,
         "other_subagents": 0.0,
-        "total_usd": 38.4405
+        "total_usd": 38.44
       },
       "total_turns": 1206,
       "subagents_count": 103,
@@ -3548,9 +3548,9 @@
       "questions_per_minute": 11.05,
       "agent_seconds_per_question": 49.99,
       "output_tokens_per_question": 1600.2,
-      "usd_per_question": 0.0277,
-      "usd_per_competency": 0.6744,
-      "usd_per_page": 0.298
+      "usd_per_question": 0.03,
+      "usd_per_competency": 0.67,
+      "usd_per_page": 0.3
     },
     "bottlenecks_count": 3
   },
@@ -3580,22 +3580,22 @@
       "total_output_tokens": 1065857,
       "cache_read_tokens": 17602703,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 13.6417,
+      "total_cost_usd": 13.64,
       "cost_breakdown_usd": {
-        "input_usd": 4.3276,
-        "output_usd": 7.9939,
-        "cache_read_usd": 1.3202,
-        "total_usd": 13.6417
+        "input_usd": 4.33,
+        "output_usd": 7.99,
+        "cache_read_usd": 1.32,
+        "total_usd": 13.64
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 2.1627,
-        "stage_3_authors": 8.5657,
-        "stage_3b_repairs": 0.6838,
-        "stage_5_judges": 1.3091,
-        "orchestrator": 0.9203,
+        "stage_1b_cta": 2.16,
+        "stage_3_authors": 8.57,
+        "stage_3b_repairs": 0.68,
+        "stage_5_judges": 1.31,
+        "orchestrator": 0.92,
         "other_subagents": 0.0,
-        "total_usd": 13.6417
+        "total_usd": 13.64
       },
       "total_turns": 464,
       "subagents_count": 49,
@@ -3633,9 +3633,9 @@
       "questions_per_minute": 67.01,
       "agent_seconds_per_question": 6.0,
       "output_tokens_per_question": 826.2,
-      "usd_per_question": 0.0106,
-      "usd_per_competency": 0.2574,
-      "usd_per_page": 0.1057
+      "usd_per_question": 0.01,
+      "usd_per_competency": 0.26,
+      "usd_per_page": 0.11
     },
     "bottlenecks_count": 2
   },
@@ -3665,22 +3665,22 @@
       "total_output_tokens": 726055,
       "cache_read_tokens": 13380433,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 10.4246,
+      "total_cost_usd": 10.42,
       "cost_breakdown_usd": {
-        "input_usd": 3.9757,
-        "output_usd": 5.4454,
-        "cache_read_usd": 1.0035,
-        "total_usd": 10.4246
+        "input_usd": 3.98,
+        "output_usd": 5.45,
+        "cache_read_usd": 1.0,
+        "total_usd": 10.42
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 0.5387,
-        "stage_3_authors": 4.4724,
-        "stage_3b_repairs": 2.5984,
+        "stage_1b_cta": 0.54,
+        "stage_3_authors": 4.47,
+        "stage_3b_repairs": 2.6,
         "stage_5_judges": 1.16,
-        "orchestrator": 1.6552,
+        "orchestrator": 1.66,
         "other_subagents": 0.0,
-        "total_usd": 10.4246
+        "total_usd": 10.42
       },
       "total_turns": 286,
       "subagents_count": 39,
@@ -3718,9 +3718,9 @@
       "questions_per_minute": 21.08,
       "agent_seconds_per_question": 9.95,
       "output_tokens_per_question": 1344.5,
-      "usd_per_question": 0.0193,
-      "usd_per_competency": 0.4738,
-      "usd_per_page": 0.2896
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.47,
+      "usd_per_page": 0.29
     },
     "bottlenecks_count": 1
   },
@@ -3750,22 +3750,22 @@
       "total_output_tokens": 595210,
       "cache_read_tokens": 7393961,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 7.2348,
+      "total_cost_usd": 7.23,
       "cost_breakdown_usd": {
-        "input_usd": 2.2162,
-        "output_usd": 4.4641,
-        "cache_read_usd": 0.5545,
-        "total_usd": 7.2348
+        "input_usd": 2.22,
+        "output_usd": 4.46,
+        "cache_read_usd": 0.55,
+        "total_usd": 7.23
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 0.5645,
-        "stage_3_authors": 4.6216,
-        "stage_3b_repairs": 0.305,
-        "stage_5_judges": 1.0375,
-        "orchestrator": 0.7062,
+        "stage_1b_cta": 0.56,
+        "stage_3_authors": 4.62,
+        "stage_3b_repairs": 0.3,
+        "stage_5_judges": 1.04,
+        "orchestrator": 0.71,
         "other_subagents": 0.0,
-        "total_usd": 7.2348
+        "total_usd": 7.23
       },
       "total_turns": 175,
       "subagents_count": 26,
@@ -3803,9 +3803,9 @@
       "questions_per_minute": 35.06,
       "agent_seconds_per_question": 7.82,
       "output_tokens_per_question": 1144.6,
-      "usd_per_question": 0.0139,
-      "usd_per_competency": 0.3445,
-      "usd_per_page": 0.201
+      "usd_per_question": 0.01,
+      "usd_per_competency": 0.34,
+      "usd_per_page": 0.2
     },
     "bottlenecks_count": 0
   },
@@ -3835,22 +3835,22 @@
       "total_output_tokens": 666352,
       "cache_read_tokens": 7319121,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 8.1967,
+      "total_cost_usd": 8.2,
       "cost_breakdown_usd": {
-        "input_usd": 2.6501,
-        "output_usd": 4.9976,
-        "cache_read_usd": 0.5489,
-        "total_usd": 8.1967
+        "input_usd": 2.65,
+        "output_usd": 5.0,
+        "cache_read_usd": 0.55,
+        "total_usd": 8.2
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 0.5665,
+        "stage_1b_cta": 0.57,
         "stage_3_authors": 4.9,
-        "stage_3b_repairs": 0.5659,
-        "stage_5_judges": 1.4564,
-        "orchestrator": 0.7078,
+        "stage_3b_repairs": 0.57,
+        "stage_5_judges": 1.46,
+        "orchestrator": 0.71,
         "other_subagents": 0.0,
-        "total_usd": 8.1967
+        "total_usd": 8.2
       },
       "total_turns": 185,
       "subagents_count": 29,
@@ -3888,9 +3888,9 @@
       "questions_per_minute": 31.9,
       "agent_seconds_per_question": 8.33,
       "output_tokens_per_question": 1322.1,
-      "usd_per_question": 0.0163,
-      "usd_per_competency": 0.4098,
-      "usd_per_page": 0.2277
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.41,
+      "usd_per_page": 0.23
     },
     "bottlenecks_count": 1
   },
@@ -3920,22 +3920,22 @@
       "total_output_tokens": 944227,
       "cache_read_tokens": 11038683,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 11.6942,
+      "total_cost_usd": 11.69,
       "cost_breakdown_usd": {
-        "input_usd": 3.7846,
-        "output_usd": 7.0817,
-        "cache_read_usd": 0.8279,
-        "total_usd": 11.6942
+        "input_usd": 3.78,
+        "output_usd": 7.08,
+        "cache_read_usd": 0.83,
+        "total_usd": 11.69
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 1.4338,
-        "stage_3_authors": 5.8395,
-        "stage_3b_repairs": 1.7696,
-        "stage_5_judges": 1.7093,
-        "orchestrator": 0.942,
+        "stage_1b_cta": 1.43,
+        "stage_3_authors": 5.84,
+        "stage_3b_repairs": 1.77,
+        "stage_5_judges": 1.71,
+        "orchestrator": 0.94,
         "other_subagents": 0.0,
-        "total_usd": 11.6942
+        "total_usd": 11.69
       },
       "total_turns": 324,
       "subagents_count": 44,
@@ -3973,9 +3973,9 @@
       "questions_per_minute": 28.63,
       "agent_seconds_per_question": 9.29,
       "output_tokens_per_question": 1293.5,
-      "usd_per_question": 0.016,
-      "usd_per_competency": 0.3898,
-      "usd_per_page": 0.1799
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.39,
+      "usd_per_page": 0.18
     },
     "bottlenecks_count": 1
   },
@@ -4005,22 +4005,22 @@
       "total_output_tokens": 1016355,
       "cache_read_tokens": 12755073,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 12.4267,
+      "total_cost_usd": 12.43,
       "cost_breakdown_usd": {
-        "input_usd": 3.8474,
-        "output_usd": 7.6227,
-        "cache_read_usd": 0.9566,
-        "total_usd": 12.4267
+        "input_usd": 3.85,
+        "output_usd": 7.62,
+        "cache_read_usd": 0.96,
+        "total_usd": 12.43
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 2.1258,
-        "stage_3_authors": 8.2402,
-        "stage_3b_repairs": 0.0984,
-        "stage_5_judges": 1.1233,
-        "orchestrator": 0.8391,
+        "stage_1b_cta": 2.13,
+        "stage_3_authors": 8.24,
+        "stage_3b_repairs": 0.1,
+        "stage_5_judges": 1.12,
+        "orchestrator": 0.84,
         "other_subagents": 0.0,
-        "total_usd": 12.4267
+        "total_usd": 12.43
       },
       "total_turns": 280,
       "subagents_count": 42,
@@ -4058,9 +4058,9 @@
       "questions_per_minute": 45.0,
       "agent_seconds_per_question": 7.78,
       "output_tokens_per_question": 1293.1,
-      "usd_per_question": 0.0158,
-      "usd_per_competency": 0.4142,
-      "usd_per_page": 0.175
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.41,
+      "usd_per_page": 0.17
     },
     "bottlenecks_count": 1
   },
@@ -4090,22 +4090,22 @@
       "total_output_tokens": 1205620,
       "cache_read_tokens": 15403257,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 16.2156,
+      "total_cost_usd": 16.22,
       "cost_breakdown_usd": {
-        "input_usd": 6.0182,
-        "output_usd": 9.0421,
-        "cache_read_usd": 1.1552,
-        "total_usd": 16.2156
+        "input_usd": 6.02,
+        "output_usd": 9.04,
+        "cache_read_usd": 1.16,
+        "total_usd": 16.22
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 1.1193,
-        "stage_3_authors": 10.0657,
-        "stage_3b_repairs": 0.9493,
-        "stage_5_judges": 2.1314,
-        "orchestrator": 1.9499,
+        "stage_1b_cta": 1.12,
+        "stage_3_authors": 10.07,
+        "stage_3b_repairs": 0.95,
+        "stage_5_judges": 2.13,
+        "orchestrator": 1.95,
         "other_subagents": 0.0,
-        "total_usd": 16.2156
+        "total_usd": 16.22
       },
       "total_turns": 367,
       "subagents_count": 55,
@@ -4143,9 +4143,9 @@
       "questions_per_minute": 41.07,
       "agent_seconds_per_question": 7.78,
       "output_tokens_per_question": 1251.9,
-      "usd_per_question": 0.0168,
-      "usd_per_competency": 0.6006,
-      "usd_per_page": 0.2284
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.6,
+      "usd_per_page": 0.23
     },
     "bottlenecks_count": 2
   },
@@ -4175,22 +4175,22 @@
       "total_output_tokens": 1386017,
       "cache_read_tokens": 19219260,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 17.0826,
+      "total_cost_usd": 17.08,
       "cost_breakdown_usd": {
-        "input_usd": 5.246,
-        "output_usd": 10.3951,
-        "cache_read_usd": 1.4414,
-        "total_usd": 17.0826
+        "input_usd": 5.25,
+        "output_usd": 10.4,
+        "cache_read_usd": 1.44,
+        "total_usd": 17.08
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 1.584,
-        "stage_3_authors": 12.0895,
-        "stage_3b_repairs": 0.7058,
-        "stage_5_judges": 1.5957,
-        "orchestrator": 1.1076,
+        "stage_1b_cta": 1.58,
+        "stage_3_authors": 12.09,
+        "stage_3b_repairs": 0.71,
+        "stage_5_judges": 1.6,
+        "orchestrator": 1.11,
         "other_subagents": 0.0,
-        "total_usd": 17.0826
+        "total_usd": 17.08
       },
       "total_turns": 391,
       "subagents_count": 55,
@@ -4228,9 +4228,9 @@
       "questions_per_minute": 58.33,
       "agent_seconds_per_question": 6.45,
       "output_tokens_per_question": 992.8,
-      "usd_per_question": 0.0122,
-      "usd_per_competency": 0.2945,
-      "usd_per_page": 0.1324
+      "usd_per_question": 0.01,
+      "usd_per_competency": 0.29,
+      "usd_per_page": 0.13
     },
     "bottlenecks_count": 2
   },
@@ -4260,22 +4260,22 @@
       "total_output_tokens": 876693,
       "cache_read_tokens": 13193123,
       "pricing_model": "gemini-4-hydrogen",
-      "total_cost_usd": 11.3075,
+      "total_cost_usd": 11.31,
       "cost_breakdown_usd": {
-        "input_usd": 3.7428,
-        "output_usd": 6.5752,
-        "cache_read_usd": 0.9895,
-        "total_usd": 11.3075
+        "input_usd": 3.74,
+        "output_usd": 6.58,
+        "cache_read_usd": 0.99,
+        "total_usd": 11.31
       },
       "stage_costs_usd": {
         "stage_1a_vision": 0.0,
-        "stage_1b_cta": 0.5138,
-        "stage_3_authors": 6.861,
-        "stage_3b_repairs": 0.7408,
-        "stage_5_judges": 1.8837,
-        "orchestrator": 1.3082,
+        "stage_1b_cta": 0.51,
+        "stage_3_authors": 6.86,
+        "stage_3b_repairs": 0.74,
+        "stage_5_judges": 1.88,
+        "orchestrator": 1.31,
         "other_subagents": 0.0,
-        "total_usd": 11.3075
+        "total_usd": 11.31
       },
       "total_turns": 281,
       "subagents_count": 45,
@@ -4313,10 +4313,95 @@
       "questions_per_minute": 22.89,
       "agent_seconds_per_question": 10.17,
       "output_tokens_per_question": 1468.5,
-      "usd_per_question": 0.0189,
-      "usd_per_competency": 0.5951,
-      "usd_per_page": 0.3141
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.6,
+      "usd_per_page": 0.31
     },
     "bottlenecks_count": 1
+  },
+  {
+    "run_id": "20261122_134445_solow_m20_v6_bc7bba12",
+    "timestamp": "2026-11-22T18:44:45.918149+00:00",
+    "course_id": "solow_m20_v6",
+    "course_title": "Solow M20 V6",
+    "conversation_id": "bc7bba12-4176-4fc1-8f6e-1efba7e87b48",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 19,
+      "questions": 440,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 980.0,
+      "agent_compute_seconds": 4048.0,
+      "speedup": 4.13,
+      "total_tokens": 8269086,
+      "total_active_tokens": 2101780,
+      "input_tokens": 1360013,
+      "output_tokens": 550527,
+      "total_input_tokens": 1504980,
+      "total_output_tokens": 596800,
+      "cache_read_tokens": 6167306,
+      "pricing_model": "gemini-4-hydrogen",
+      "total_cost_usd": 7.2,
+      "cost_breakdown_usd": {
+        "input_usd": 2.26,
+        "output_usd": 4.48,
+        "cache_read_usd": 0.46,
+        "total_usd": 7.2
+      },
+      "stage_costs_usd": {
+        "stage_1a_vision": 0.0,
+        "stage_1b_cta": 0.51,
+        "stage_3_authors": 4.3,
+        "stage_3b_repairs": 0.39,
+        "stage_5_judges": 1.34,
+        "orchestrator": 0.66,
+        "other_subagents": 0.0,
+        "total_usd": 7.2
+      },
+      "total_turns": 171,
+      "subagents_count": 29,
+      "tool_errors": 14,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 115.0,
+      "stage_3_max_wall": 258.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (124/124 REACTIVOS)",
+        "batch_items_count": 124,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 3 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 3 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 3 ola(s) de jueces ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 124 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 229696.8,
+      "active_tokens_per_page": 58382.8,
+      "tokens_per_input_kb": 5429.9,
+      "tokens_per_competency": 435215.1,
+      "active_tokens_per_competency": 110620.0,
+      "author_tokens_per_competency": 60427.1,
+      "tokens_per_question": 18793.4,
+      "active_tokens_per_question": 4776.8,
+      "seconds_per_page": 27.22,
+      "seconds_per_question": 2.23,
+      "questions_per_minute": 26.94,
+      "agent_seconds_per_question": 9.2,
+      "output_tokens_per_question": 1356.4,
+      "usd_per_question": 0.02,
+      "usd_per_competency": 0.38,
+      "usd_per_page": 0.2
+    },
+    "bottlenecks_count": 0
   }
 ]

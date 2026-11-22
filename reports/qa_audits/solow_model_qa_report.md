@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Modelo de Solow (`solow_model`)
 
-- **Fecha de Evaluación:** 2026-11-21
+- **Fecha de Evaluación:** 2026-11-22
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** RECHAZADO
 - **Calificación Final Certificada:** **10.8 / 20.0 pts**
@@ -79,9 +79,9 @@ El curso **Modelo de Solow** ha sido **RECHAZADO** para despliegue en plataforma
       "multiple_choice_7_options": 28
     },
     "bloom_index": {
-      "weighted_index": 2.071,
-      "adaptive_floor": 3.696,
-      "gap": 1.625,
+      "weighted_index": 2.07,
+      "adaptive_floor": 3.7,
+      "gap": 1.63,
       "apply_plus_pct": 25.0,
       "superior_pct": 3.57,
       "tier": "BAJO",
@@ -89,7 +89,7 @@ El curso **Modelo de Solow** ha sido **RECHAZADO** para despliegue en plataforma
     },
     "platform_status": "RECHAZADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-21"
+    "evaluation_date": "2026-11-22"
   },
   "dimension_scores": {
     "architecture_granularity": {

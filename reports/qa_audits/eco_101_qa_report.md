@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Economía Abierta y Balanza de Pagos (`eco_101`)
 
-- **Fecha de Evaluación:** 2026-11-21
+- **Fecha de Evaluación:** 2026-11-22
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** OBSERVADO
 - **Calificación Final Certificada:** **12.8 / 20.0 pts**
@@ -79,9 +79,9 @@ El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** 
       "multiple_choice_7_options": 63
     },
     "bloom_index": {
-      "weighted_index": 2.048,
-      "adaptive_floor": 3.702,
-      "gap": 1.654,
+      "weighted_index": 2.05,
+      "adaptive_floor": 3.7,
+      "gap": 1.65,
       "apply_plus_pct": 28.57,
       "superior_pct": 0.0,
       "tier": "BAJO",
@@ -89,7 +89,7 @@ El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** 
     },
     "platform_status": "OBSERVADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-21"
+    "evaluation_date": "2026-11-22"
   },
   "dimension_scores": {
     "architecture_granularity": {
