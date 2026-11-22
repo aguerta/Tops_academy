@@ -10,6 +10,7 @@ Provides zero-bundle dispatch and non-truncating payloads for C2C pipeline subag
 from __future__ import annotations
 
 import argparse
+import ast
 import fnmatch
 import hashlib
 import json
@@ -25,11 +26,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union, Set
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine.stage_contract import (  # noqa: E402
+    DEFAULT_TEMPLATES_PER_MODALITY,
     competency_contract,
     contract_tokens as _s4_tokens,
     is_skill_type,
+    quota_for_competency,
     quota_for_type,
     render_contract_tokens,
+    required_templates_for_competency,
 )
 
 _S4 = _s4_tokens()
@@ -97,11 +101,11 @@ def _clean_str(val: Any) -> str:
 
 
 def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> str:
-    """Loads a system prompt markdown file.
-    
-    When lean=True (or C2C_LEAN_PROMPTS=1 env var is set), loads the lean static
-    system prompt (<= 5 KB) containing role and hard rules from system_prompts/lean/.
-    Otherwise loads the uncompressed prompt.
+    """Loads a system prompt markdown file and renders live Stage 4 contract tokens.
+
+    When lean=True (or C2C_LEAN_PROMPTS=1 env var is set), loads the prompt from
+    system_prompts/lean/ (synced with the M20 v4.3 full prompt, < 46,080 bytes).
+    Otherwise loads directly from system_prompts/.
     """
     use_lean = lean or os.getenv("C2C_LEAN_PROMPTS", "").lower() in ("1", "true", "yes")
     p = Path(name_or_path)
@@ -128,8 +132,8 @@ def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> st
 
 def get_type_definitions(lean: bool = True) -> List[Dict[str, Any]]:
     """Returns subagent type definitions for define_subagent registration.
-    
-    When lean=True (default), loads lean static system prompts strictly under 5 KB.
+
+    Loads M20 v4.3 system prompts (< 46,080 bytes) with rendered Stage 4 tokens.
     """
     repair_prompt = "prompt_repair.md"
     return [
@@ -515,6 +519,137 @@ def get_work_rel(work_dir: Union[str, Path]) -> str:
     return "work"
 
 
+def _resolve_posix_path(work: Path, work_rel: str, raw_path: str) -> str:
+    """Resolves a relative or absolute path to a canonical POSIX absolute path."""
+    if not raw_path:
+        return work.resolve().as_posix()
+    clean = str(raw_path).replace("\\", "/")
+    if "*" in clean:
+        return clean
+    p_obj = Path(clean)
+    if p_obj.is_absolute():
+        return p_obj.resolve().as_posix()
+    if work_rel and clean.startswith(f"{work_rel}/"):
+        return (work / clean[len(work_rel) + 1:]).resolve().as_posix()
+    if clean.startswith("work/"):
+        return (work / clean[5:]).resolve().as_posix()
+    for base in (work, work.parent, SKILL_DIR.parents[2]):
+        cand = base / clean
+        if cand.exists():
+            return cand.resolve().as_posix()
+    return (work.parent / clean).resolve().as_posix()
+
+
+def _locate_competency_line_range(shard_py: Path, cid: str) -> Tuple[Optional[int], Optional[int]]:
+    """Deterministically locates line_range (start, end) for cid in shard_XX_data.py (< 2 ms)."""
+    if not shard_py.is_file() or not cid:
+        return None, None
+    try:
+        text = shard_py.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None, None
+
+    cid_str = str(cid)
+    cid_norm = re.sub(r"[^\w]", "", cid_str).lower()
+    t_prefix_dash = f"T-{cid_str}-"
+    t_prefix_us = f"T-{cid_str}_"
+    t_exact = f"T-{cid_str}"
+
+    def _is_cid_str(val: Any) -> bool:
+        if not isinstance(val, str):
+            return False
+        return val == cid_str or val == t_exact or val.startswith(t_prefix_dash) or val.startswith(t_prefix_us)
+
+    def _fn_matches_cid(fn_name: str) -> bool:
+        if not (fn_name.startswith("gen_") or fn_name.startswith("ver_")):
+            return False
+        norm_fn = re.sub(r"[^\w]", "", fn_name).lower()
+        # Check bounded token match (e.g. gen_c01_01 matches c01, not c010)
+        return bool(
+            re.search(rf"^(?:gen|ver){re.escape(cid_norm)}(?:_|\D|$)", norm_fn)
+            or re.search(rf"(?:^|_)(?:gen|ver)_{re.escape(cid_norm)}(?:_|\D|$)", fn_name.lower().replace("-", "_"))
+        )
+
+    starts: List[int] = []
+    ends: List[int] = []
+
+    try:
+        tree = ast.parse(text)
+        fn_ranges: Dict[str, Tuple[int, int]] = {}
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef) and (node.name.startswith("gen_") or node.name.startswith("ver_")):
+                fn_s = getattr(node, "lineno", None)
+                fn_e = getattr(node, "end_lineno", fn_s)
+                if fn_s is not None:
+                    fn_ranges[node.name] = (fn_s, fn_e or fn_s)
+                    if _fn_matches_cid(node.name):
+                        starts.append(fn_s)
+                        ends.append(fn_e or fn_s)
+
+        for node in tree.body:
+            target_names: List[str] = []
+            val_node: Optional[ast.AST] = None
+            if isinstance(node, ast.Assign):
+                target_names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+                val_node = node.value
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                target_names = [node.target.id]
+                val_node = node.value
+
+            if "TEMPLATES" in target_names and isinstance(val_node, (ast.List, ast.Tuple)):
+                for elt in val_node.elts:
+                    matched_elt = False
+                    for sub in ast.walk(elt):
+                        if isinstance(sub, ast.Constant) and _is_cid_str(sub.value):
+                            matched_elt = True
+                            break
+                    if matched_elt:
+                        e_s = getattr(elt, "lineno", None)
+                        e_e = getattr(elt, "end_lineno", e_s)
+                        if e_s is not None:
+                            starts.append(e_s)
+                            ends.append(e_e or e_s)
+                        for sub in ast.walk(elt):
+                            if isinstance(sub, ast.Name) and sub.id in fn_ranges:
+                                fn_s, fn_e = fn_ranges[sub.id]
+                                starts.append(fn_s)
+                                ends.append(fn_e)
+
+        if starts and ends:
+            return min(starts), max(ends)
+    except SyntaxError:
+        pass
+
+    # Fast line-scan fallback (handles SyntaxError or non-AST templates)
+    lines = text.splitlines()
+    cid_esc = re.escape(cid_str)
+    tpl_pat = re.compile(
+        rf"""['"](?:cid)['"]\s*:\s*['"]{cid_esc}['"]|['"]T-{cid_esc}(?:[-_][^'"]*)?['"]|['"]{cid_esc}['"]"""
+    )
+    fn_pat = re.compile(r"^\s*def\s+((?:gen|ver)_[A-Za-z0-9_]+)\s*\(")
+    in_matching_fn = False
+    for lineno, line in enumerate(lines, start=1):
+        m_fn = fn_pat.match(line)
+        if m_fn:
+            in_matching_fn = _fn_matches_cid(m_fn.group(1))
+            if in_matching_fn:
+                starts.append(lineno)
+                ends.append(lineno)
+            continue
+        if in_matching_fn:
+            if line and not line[0].isspace() and not line.startswith("#"):
+                in_matching_fn = False
+            else:
+                ends.append(lineno)
+        if tpl_pat.search(line):
+            starts.append(lineno)
+            ends.append(lineno)
+
+    if starts and ends:
+        return min(starts), max(ends)
+    return None, None
+
+
 def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True) -> Dict[str, Any]:
     """Writes individual subagent type spec files in work/dispatch/types/<type_name>.json
     and the consolidated index in work/dispatch/subagent_types.json.
@@ -804,7 +939,7 @@ def dispatch_cta(
                 f"> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`{s_p}..{e_p}` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
                 "",
                 "## 3. DIRECTIVAS DE OPERACIÓN",
-                f"1. Lee `{doc_path}` con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 10 elementos, `CTA_CONTRACT_VERSION = 2`) en `{out_py}`.",
+                f"1. Lee `{doc_path}` con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 11 elementos —11.º obligatorio `recommended_modalities` con 2..4 modalidades canónicas—, `CTA_CONTRACT_VERSION = 2`) en `{out_py}`.",
                 f"2. Compila deterministamente: `{compile_cmd}`",
                 f"3. Con < 6 errores (1..5 errores), corrige con edit_file (replace_file_content) sobre `{out_py}` (PROHIBIDO write_file completo cuando hay < 6 errores); con >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
                 f"4. Cierre al aprobar: `{json_target}` (señal terminal DONE).",
@@ -844,40 +979,43 @@ def dispatch_cta(
             item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
             if use_pointer:
+                abs_out_py = _resolve_posix_path(work, work_rel, out_py)
                 if is_pdf_slice:
+                    abs_slice = _resolve_posix_path(work, work_rel, pdf_slice_candidate)
                     delta_hint = f" Delta: {next_ids_by_prefix}." if delta_info else ""
                     pointer_prompt = (
                         f"You are CTA Architect {subpart_id}. [SCOPE-LOCK] "
-                        f"READ: `{pdf_slice_candidate}`. Rango: `1..{total_p}` (orig `{s_p}..{e_p}`). "
-                        f"WRITE: `{out_py}`. COMPILE: `{compile_cmd}`.{delta_hint} "
+                        f"READ: `{abs_slice}`. Doc: `{doc_name}`. Rango: `1..{total_p}` (orig `{s_p}..{e_p}`). "
+                        f"WRITE: `{abs_out_py}`. COMPILE: `{compile_cmd}`.{delta_hint} "
                         f"DONE: `{json_target}`."
                     )
-                    if len(pointer_prompt.encode("utf-8")) > 600:
+                    if len(pointer_prompt.encode("utf-8")) > 650:
                         short_compile_cmd = compile_cmd.replace(f"{cmd_prefix} ", "python ", 1)
                         pointer_prompt = (
                             f"You are CTA Architect {subpart_id}. [SCOPE-LOCK] "
-                            f"READ: `{pdf_slice_candidate}`. Rango: `1..{total_p}`. "
-                            f"WRITE: `{out_py}`. COMPILE: `{short_compile_cmd}`. "
+                            f"READ: `{abs_slice}`. Doc: `{doc_name}`. Rango: `1..{total_p}`. "
+                            f"WRITE: `{abs_out_py}`. COMPILE: `{short_compile_cmd}`. "
                             f"DONE: `{json_target}`."
                         )
                 else:
-                    w_rel = f"{work_rel}/dispatch/items/{item_file.name}"
-                    extra = f"[SCOPE-LOCK] READ `{w_rel}`, `{doc_path}`; WRITE `{out_py}`; COMPILE `compile_cta.py`."
+                    w_abs = item_file.resolve().as_posix()
+                    abs_doc = _resolve_posix_path(work, work_rel, doc_path)
+                    extra = f"[SCOPE-LOCK] READ: `{w_abs}`, `{abs_doc}`; WRITE: `{abs_out_py}`; COMPILE: `.agents/skills/content-to-course/compile_cta.py`."
                     if delta_info:
                         cand_extra = extra + f" Delta: {next_ids_by_prefix}."
-                        if len(make_pointer_prompt(role_name=f"CTA Architect {subpart_id}", work_order_rel=w_rel, done_signal=f"DONE: {json_target}", extra_instructions=cand_extra).encode("utf-8")) <= 400:
+                        if len(make_pointer_prompt(role_name=f"CTA Architect {subpart_id}", work_order_rel=w_abs, done_signal=f"DONE: {json_target}", extra_instructions=cand_extra).encode("utf-8")) <= 650:
                             extra = cand_extra
                     pointer_prompt = make_pointer_prompt(
                         role_name=f"CTA Architect {subpart_id}",
-                        work_order_rel=w_rel,
+                        work_order_rel=w_abs,
                         done_signal=f"DONE: {json_target}",
                         extra_instructions=extra,
                     )
-                    if len(pointer_prompt.encode("utf-8")) > 400:
-                        extra = f"[SCOPE-LOCK] READ `{item_file.name}`; WRITE `{out_py}`; COMPILE `compile_cta.py`."
+                    if len(pointer_prompt.encode("utf-8")) > 650:
+                        extra = f"[SCOPE-LOCK] READ: `{w_abs}`; WRITE: `{abs_out_py}`; COMPILE: `.agents/skills/content-to-course/compile_cta.py`."
                         pointer_prompt = make_pointer_prompt(
                             role_name=f"CTA Architect {subpart_id}",
-                            work_order_rel=w_rel,
+                            work_order_rel=w_abs,
                             done_signal=f"DONE: {json_target}",
                             extra_instructions=extra,
                         )
@@ -984,7 +1122,7 @@ def dispatch_cta(
             "> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`1..N` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
             "",
             "## 3. DIRECTIVAS DE OPERACIÓN",
-            f"1. Lee el material fuente asignado con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 10 elementos, `CTA_CONTRACT_VERSION = 2`) en `{out_target}`.",
+            f"1. Lee el material fuente asignado con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 11 elementos —11.º obligatorio `recommended_modalities` con 2..4 modalidades canónicas—, `CTA_CONTRACT_VERSION = 2`) en `{out_target}`.",
             f"2. Compila deterministamente: `{compile_cmd}`",
             f"3. Con < 6 errores (1..5 errores), corrige con edit_file (replace_file_content) sobre `{out_target}` (PROHIBIDO write_file completo cuando hay < 6 errores); con >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
             f"4. Cierre al aprobar: `{json_target}` (señal terminal DONE).",
@@ -1020,24 +1158,26 @@ def dispatch_cta(
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
         if use_pointer:
-            w_rel = f"{work_rel}/dispatch/items/{item_file.name}"
+            w_abs = item_file.resolve().as_posix()
             first_doc = doc_rows[0][1] if doc_rows else "content/**"
-            extra = f"[SCOPE-LOCK] READ `{w_rel}`, `{first_doc}`; WRITE `{out_target}`; COMPILE `compile_cta.py`."
+            abs_first_doc = _resolve_posix_path(work, work_rel, first_doc)
+            abs_out_target = _resolve_posix_path(work, work_rel, out_target)
+            extra = f"[SCOPE-LOCK] READ: `{w_abs}`, `{abs_first_doc}`; WRITE: `{abs_out_target}`; COMPILE: `.agents/skills/content-to-course/compile_cta.py`."
             if delta_info:
                 cand_extra = extra + f" Delta: {next_ids_by_prefix}."
-                if len(make_pointer_prompt(role_name="Cognitive Task Analysis Architect", work_order_rel=w_rel, done_signal=f"DONE: {json_target}", extra_instructions=cand_extra).encode("utf-8")) <= 400:
+                if len(make_pointer_prompt(role_name="Cognitive Task Analysis Architect", work_order_rel=w_abs, done_signal=f"DONE: {json_target}", extra_instructions=cand_extra).encode("utf-8")) <= 650:
                     extra = cand_extra
             pointer_prompt = make_pointer_prompt(
                 role_name="Cognitive Task Analysis Architect",
-                work_order_rel=w_rel,
+                work_order_rel=w_abs,
                 done_signal=f"DONE: {json_target}",
                 extra_instructions=extra,
             )
-            if len(pointer_prompt.encode("utf-8")) > 400:
-                extra = f"[SCOPE-LOCK] READ `{item_file.name}`; WRITE `{out_target}`; COMPILE `compile_cta.py`."
+            if len(pointer_prompt.encode("utf-8")) > 650:
+                extra = f"[SCOPE-LOCK] READ: `{w_abs}`; WRITE: `{abs_out_target}`; COMPILE: `.agents/skills/content-to-course/compile_cta.py`."
                 pointer_prompt = make_pointer_prompt(
                     role_name="Cognitive Task Analysis Architect",
-                    work_order_rel=w_rel,
+                    work_order_rel=w_abs,
                     done_signal=f"DONE: {json_target}",
                     extra_instructions=extra,
                 )
@@ -1150,9 +1290,9 @@ def dispatch_cta_reduce(
     prompt_text = (
         f"# Asignación de Tarea: CTA Harmonizer (MapReduce Harmonization v4.1)\n\n"
         f"{scope_header}\n\n"
-        f"- **Insumos:** `{work_rel}/cta_outline.json`, `{work_rel}/duplicate_candidates.json`\n"
-        f"- **Salida JSON:** `{work_rel}/cta_harmonize.json` (`duplicate_decisions` [`keep_id`/`drop_id`], `add_prerequisites`, `rename`, `drop_duplicate_distractors`)\n"
-        f"- **Invariantes DAG:** `connected_components == 1`, `root_ratio <= 0.20`\n"
+        f"- **Insumos:** `{work_rel}/cta_outline.json` (incluye `bloom` y `bloom_portfolio_preview`), `{work_rel}/duplicate_candidates.json`\n"
+        f"- **Salida JSON:** `{work_rel}/cta_harmonize.json` (`duplicate_decisions` [`keep_id`/`drop_id`], `add_prerequisites`, `rename`, `drop_duplicate_distractors`, opc. `adjust_modalities`)\n"
+        f"- **Invariantes DAG y Bloom:** `connected_components == 1`, `root_ratio <= 0.20`, `[CTA-BLOOM-FLOOR]`\n"
         f"{delta_note}"
         f"- **Merge:** `{compile_cmd}`\n"
         f"- **Cierre al aprobar:** `{work_rel}/cta.json` (señal terminal DONE)\n"
@@ -1318,6 +1458,14 @@ def dispatch_authors(
                 doc_paths_by_name[dn] = dp
 
     shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+    eff_tpl_per_mod = max(
+        1,
+        int(
+            (shard_manifest_data.get("stage4_contract") or {}).get("templates_per_modality")
+            or shard_manifest_data.get("templates_per_modality")
+            or DEFAULT_TEMPLATES_PER_MODALITY
+        ),
+    )
     manifest_dirty = False
     if isinstance(shard_manifest_data, dict):
         if "min_archetypes" not in shard_manifest_data or shard_manifest_data.get("min_archetypes") != 4:
@@ -1380,6 +1528,8 @@ def dispatch_authors(
             if str(s.get("shard_id")) in ids_set or any(str(cid) in ids_set for cid in (s.get("competency_ids") or []))
         ]
 
+    _MC7_MOD_ALIASES = {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"}
+
     # Swift-Dispatch SLA: Sort shards heaviest unit first
     def _shard_weight(shard: Dict[str, Any]) -> int:
         if shard.get("estimated_questions"):
@@ -1392,7 +1542,12 @@ def dispatch_authors(
         for cid in c_ids:
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             t = str(c_obj.get("type", "knowledge")).lower()
-            w += quota_for_type(t)
+            rec_m = c_obj.get("recommended_modalities") or []
+            norm_m = list(dict.fromkeys(str(m).strip().lower() for m in rec_m if str(m).strip()))
+            n_m = len(norm_m)
+            has_mc7_m = any(m in _MC7_MOD_ALIASES for m in norm_m) and not (is_skill_type(t) or str(cid).startswith("Hab-"))
+            n_t = required_templates_for_competency(n_m, eff_tpl_per_mod, has_mc7=has_mc7_m)
+            w += quota_for_competency(t, n_t)
         return w if w > 0 else (len(c_ids) * 20)
 
     shard_list = sorted(shard_list, key=_shard_weight, reverse=True)
@@ -1432,11 +1587,25 @@ def dispatch_authors(
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             c_name = _clean_str(c_obj.get("name")) or cid
             raw_type = str(c_obj.get("type", "knowledge")).lower()
-            _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(raw_type)
-            quota = _s4c["quota"]
+            raw_rec_mods = c_obj.get("recommended_modalities") or []
+            norm_rec_mods = list(dict.fromkeys(str(m).strip().lower() for m in raw_rec_mods if str(m).strip()))
+            num_mods = len(norm_rec_mods)
+            has_mc7_comp = any(m in _MC7_MOD_ALIASES for m in norm_rec_mods) and not (is_skill_type(raw_type) or str(cid).startswith("Hab-"))
+            _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(
+                raw_type,
+                num_modalities=num_mods,
+                templates_per_modality=eff_tpl_per_mod,
+                has_mc7=has_mc7_comp,
+            )
+            comp_k = max(1, int(_s4c.get("templates_per_modality") or eff_tpl_per_mod))
+            min_tpls = int(
+                _s4c.get("min_templates_required")
+                or required_templates_for_competency(num_mods, comp_k, _s4c.get("min_archetypes", 4), has_mc7=has_mc7_comp)
+            )
+            quota = int(_s4c["quota"])
             comp_type = "skill" if is_skill_type(raw_type) else "knowledge"
-            req_uniq = _s4c["required_unique_stems"]
-            per_tpl = -(-req_uniq // _s4c["min_archetypes"])
+            req_uniq = int(_s4c["required_unique_stems"])
+            per_tpl = -(-req_uniq // max(1, min_tpls))
 
             desc_latex = _clean_str(c_obj.get("description_latex") or c_obj.get("description")) or "(Definición pedagógica según fuentes del curso)"
 
@@ -1517,11 +1686,36 @@ def dispatch_authors(
                 logger.warning(warn_msg)
 
             cb_line = f"- **Modelo/Fórmula Correcta Canónica (correct_belief):** {correct_belief}\n" if correct_belief else ""
+            if raw_rec_mods:
+                if has_mc7_comp and comp_k >= 2:
+                    mod_floor_desc = (
+                        f"M={num_mods}, exactamente 1 plantilla MC7 [tope M20-MC7-CAP <= 1] y >= {comp_k} plantillas distintas por cada modalidad activa [>= 80% activo M20-ACTIVE-QUOTA] => mínimo {min_tpls} plantillas"
+                    )
+                else:
+                    mod_floor_desc = (
+                        f"M={num_mods}, obligatorio >= {comp_k} plantillas distintas por modalidad => mínimo {min_tpls} plantillas"
+                    )
+                rec_mods_line = f"- **Modalidades decididas por CTA Architect ({mod_floor_desc}):** {', '.join(str(m) for m in raw_rec_mods)}\n"
+            else:
+                rec_mods_line = f"- **Modalidades decididas por CTA Architect (mínimo {min_tpls} plantillas):** Libre criterio epistémico dentro de modalidades válidas del contrato (sin cuotas rígidas por tipo).\n"
+            tpl_distrib_note = (
+                f"1 MC7 + >={comp_k}/modalidad activa" if (has_mc7_comp and comp_k >= 2) else f"{comp_k}/modalidad"
+            )
+            target_bloom = _clean_str(c_obj.get("bloom")) or ("Analyze" if is_skill_type(raw_type) else "Understand")
+            bloom_line = (
+                f"- **Techo Bloom objetivo (`target_bloom`):** `{target_bloom}` "
+                f"(al menos 1 plantilla —idealmente `boundary_or_edge_case` o `perturbation`— debe alcanzar el techo factible; "
+                f"coherencia `[M3-BLOOM-COHERENCE]`: `MC7<=Apply`, `concept_matching<=Analyze`, `FIB direct<=Apply`, "
+                f"`FIB<=Analyze`, `adversarial_break`/`unstructured_model>=Analyze`, `proof_dag>=Apply`)\n"
+            )
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
+                f"{rec_mods_line}"
+                f"{bloom_line}"
                 f"- **Umbrales Stage 4 (contrato exacto, se auditan al construir):** cuota **{quota}**; "
-                f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla x {_s4c['min_archetypes']} arquetipos); "
+                f"mínimo **{min_tpls} plantillas** ({tpl_distrib_note}, >= {_s4c['min_archetypes']} arquetipos); "
+                f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla); "
                 f"ratio de diversidad >= {_s4c['min_diversity_ratio']:.2f}\n"
                 f"- **Nombre:** {c_name}\n"
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
@@ -1555,7 +1749,7 @@ def dispatch_authors(
             done_signal=disk_done_signal,
         )
 
-        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4 --fail-total"
+        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4 --templates-per-modality {eff_tpl_per_mod} --fail-total"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -1580,7 +1774,7 @@ def dispatch_authors(
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
             f"1. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 contiene el 100% de competencias y distractores; NO abras ni leas los documentos fuente de content/ en Turno 1 y empieza directamente escribiendo {s_id}_data.py (`{out_py}`, <= 80-110 líneas por competencia, <= 180-220 líneas totales por shard).",
-            f"2. **Contrato Form-C (`min_archetypes = 4`, `[M3-ARCHETYPES]`):** Define 4 tuplas en `TEMPLATES` por competencia en bandas `'easy'`, `'medium'`, `'hard'` según tu SystemPrompt (`[TPL-DYNAMIC-RATIONALE]`: 1 `error_rationale` diagnóstico por slot `distractor_id` con `@var@`; `[KATEX-PROSE-OVERFLOW]`: `\\text{{}}` <= 45c; FIB sin `$`).",
+            f"2. **Contrato Form-C (`min_archetypes = 4`, `[M3-ARCHETYPES]`, `K={eff_tpl_per_mod}`/modalidad activa, `[M20-MC7-CAP]`, `[M20-ACTIVE-QUOTA]`):** Define el mínimo requerido de tuplas distintas en `TEMPLATES` por competencia (al menos `{eff_tpl_per_mod}` plantillas no-clon por cada modalidad activa en `'Modalidades decididas por CTA Architect'`; `0 MC7` en `Skill`, y `<= 1 MC7` en `Concept`/`Fact` —candados `[TPL-CLONE-AST]`, `[TPL-CLONE-BAND]`, `[TPL-CLONE-STEM]`, `[TPL-CLONE-SYMPY]`—) en bandas `'easy'`, `'medium'`, `'hard'` según tu SystemPrompt (`[TPL-DYNAMIC-RATIONALE]`, `[KATEX-TEXT-PROSE]`/`[KATEX-PROSE-OVERFLOW]`, FIB sin `$`).",
             f"3. **Compilación determinista:** `{compile_cmd}`",
             f"4. **Reparación (Matriz 2D):** Con < 6 errores (1..5 errores) usa `edit_file` quirúrgico (en >= 300 líneas NO reescribas todo el archivo desde cero con `write_file`); con >= 6 errores usa `{work_rel}/shards/shard_fixes/<CID>.py`.",
             f"5. **[Corte Inmediato Post-PASS]:** Cierre al aprobar: `{target_json}` (señal terminal DONE).",
@@ -1607,6 +1801,7 @@ def dispatch_authors(
             "compile_cmd": compile_cmd,
             "compile_command": compile_cmd,
             "min_archetypes": 4,
+            "templates_per_modality": eff_tpl_per_mod,
             "prompt_sha256": prompt_sha256,
         }
         if missing_assumptions_cids:
@@ -1623,6 +1818,7 @@ def dispatch_authors(
             "compile_command": compile_cmd,
             "compile_cmd": compile_cmd,
             "min_archetypes": 4,
+            "templates_per_modality": eff_tpl_per_mod,
             "Prompt": prompt_full,
             "work_order": work_order_meta,
         }
@@ -1633,6 +1829,13 @@ def dispatch_authors(
         data_file = items_dir / data_filename
         author_data_md = (
             f"# Shard `{s_id}`\n\n"
+            f"## 1. METADATOS DEL SHARD\n"
+            f"- **work_dir:** `{work_rel}`\n"
+            f"- **shard_id:** `{s_id}`\n"
+            f"- **output_python:** `{out_py}`\n"
+            f"- **output_json:** `{target_json}`\n"
+            f"- **templates_per_modality:** `{eff_tpl_per_mod}`\n"
+            f"- **compile_command:** `{compile_cmd}`\n\n"
             f"## 2. ESPECIFICACIÓN TURN-0 COMPLETA DE COMPETENCIAS Y DISTRACTORES\n"
             + "\n\n".join(comp_blocks)
             + "\n"
@@ -1640,19 +1843,20 @@ def dispatch_authors(
         data_file.write_text(author_data_md, encoding="utf-8")
 
         if use_pointer:
-            data_rel = f"{work_rel}/dispatch/items/{data_filename}"
-            extra = f"[SCOPE-LOCK] READ `{data_filename}` (not `{item_file.name}`); WRITE `{out_py}`; COMPILE `.agents/skills/content-to-course/compile_shard.py`."
+            data_abs = data_file.resolve().as_posix()
+            out_py_abs = _resolve_posix_path(work, work_rel, out_py)
+            extra = f"[SCOPE-LOCK] READ: `{data_abs}` (not `{item_file.name}`); WRITE: `{out_py_abs}`; COMPILE: `.agents/skills/content-to-course/compile_shard.py`."
             pointer_prompt = make_pointer_prompt(
                 role_name=f"Shard Author {s_id}",
-                work_order_rel=data_rel,
+                work_order_rel=data_abs,
                 done_signal=f"DONE: {target_json}",
                 extra_instructions=extra,
             )
-            if len(pointer_prompt.encode("utf-8")) > 400:
-                extra = f"[SCOPE-LOCK] READ `{data_filename}` (`{item_file.name}`); WRITE `{out_py}`; COMPILE `.agents/skills/content-to-course/compile_shard.py`."
+            if len(pointer_prompt.encode("utf-8")) > 650:
+                extra = f"[SCOPE-LOCK] READ: `{data_abs}`; WRITE: `{out_py_abs}`; COMPILE: `.agents/skills/content-to-course/compile_shard.py`."
                 pointer_prompt = make_pointer_prompt(
                     role_name=f"Shard Author {s_id}",
-                    work_order_rel=data_rel,
+                    work_order_rel=data_abs,
                     done_signal=f"DONE: {target_json}",
                     extra_instructions=extra,
                 )
@@ -1723,6 +1927,9 @@ def dispatch_judges(
     max_judges: int = 10,
     ready_only: bool = False,
     ids: Optional[Union[str, List[Union[str, int]]]] = None,
+    samples_per_template: Optional[int] = None,
+    overlap_ratio: Optional[float] = None,
+    stem_variant_offset: int = 0,
 ) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Blind Judges (Load Inversion v3.21).
     
@@ -1751,11 +1958,25 @@ def dispatch_judges(
                             pass
 
     if ids or ready_only or not has_existing_batch:
-        from judge import generate_judge_batch, split_judge_batch
+        from judge import (
+            DEFAULT_OVERLAP_RATIO,
+            DEFAULT_TARGET_TOTAL_EVALUATIONS,
+            generate_judge_batch,
+            split_judge_batch,
+        )
         templates_path = work / "templates"
         if templates_path.is_dir() and any(templates_path.glob("*.json")):
             _purge_stale_judge_batches()
             cta_file = work / "cta.json"
+            eff_overlap = DEFAULT_OVERLAP_RATIO if overlap_ratio is None else overlap_ratio
+            target_unique: Optional[int] = None
+            if (
+                samples_per_template is None
+                and ids is None
+                and max_judges == 10
+                and max_items_per_judge == 20
+            ):
+                target_unique = int(round(DEFAULT_TARGET_TOTAL_EVALUATIONS / (1.0 + eff_overlap)))
             generate_judge_batch(
                 templates_path=templates_path,
                 work_dir=work,
@@ -1764,8 +1985,17 @@ def dispatch_judges(
                 max_judges=max_judges,
                 max_items_per_judge=max_items_per_judge,
                 ids=ids,
+                samples_per_template=samples_per_template,
+                target_unique_items=target_unique,
+                stem_variant_offset=stem_variant_offset,
             )
-            split_batches = split_judge_batch(work, max_judges=max_judges, items_per_judge=max_items_per_judge)
+            split_kwargs: Dict[str, Any] = {
+                "max_judges": max_judges,
+                "items_per_judge": max_items_per_judge,
+            }
+            if overlap_ratio is not None:
+                split_kwargs["overlap_ratio"] = overlap_ratio
+            split_batches = split_judge_batch(work, **split_kwargs)
 
     # Native Batch Slicing: ensure batches are sliced at <= max_items_per_judge (default 20) and <= max_judges (default 10)
     unsplit = work / "verification" / "judge_batch.json"
@@ -1855,6 +2085,8 @@ def dispatch_judges(
                     it for it in raw_items
                     if (
                         str(it.get("competency_id", "")).strip().upper() in target_ids
+                        or str(it.get("template_id", "")).strip().upper() in target_ids
+                        or any(_matches_token(tid, str(it.get("item_id", "")).upper()) for tid in target_ids)
                         or any(_matches_token(tid, str(it.get("question_id", "")).upper()) for tid in target_ids)
                         or any(_matches_token(tid, str(it.get("id", "")).upper()) for tid in target_ids)
                     )
@@ -1923,6 +2155,18 @@ def dispatch_judges(
                         cleaned_item["answer_contract"] = item["answer_contract"]
                     if "graph" in item:
                         cleaned_item["graph"] = item["graph"]
+                    for m20_key in (
+                        "symbolic_config",
+                        "proof_dag",
+                        "adversarial_break",
+                        "unstructured_model",
+                        "invariant_canvas",
+                        "concept_matching",
+                        "judge_instructions",
+                        "response_schema",
+                    ):
+                        if m20_key in item:
+                            cleaned_item[m20_key] = item[m20_key]
                     items_payload.append(cleaned_item)
         except Exception as e:
             logger.warning("Could not read judge batch %s: %s", bf, e)
@@ -1968,7 +2212,7 @@ def dispatch_judges(
             done_signal=disk_done_signal,
         )
 
-        turn_header = "## 1. PROTOCOLO EN 3 TURNOS LLM (cierre terminal DONE)" if use_pointer else "## 1. PROTOCOLO ZERO-WARMUP EN 1 SOLO TURNO"
+        turn_header = "## 1. PROTOCOLO EN 2 TURNOS LLM (cierre terminal DONE)" if use_pointer else "## 1. PROTOCOLO ZERO-WARMUP EN 1 SOLO TURNO"
         prompt_lines = [
             f"# Asignación de Evaluación a Ciegas: Blind Judge `{j_tag}` (C2C v3.21 Zero-Warmup Load Inversion)",
             "",
@@ -2154,7 +2398,7 @@ def build_dispatch(
             f"## 1. FRAGMENTOS CTA A FUSIONAR Y ARMONIZAR\n"
             f"{shard_json_lines}\n\n"
             f"## 2. INSTRUCCIONES DE EJECUCIÓN\n"
-            f"0. FAST-PATH: lee en paralelo SOLO `cta_outline.json` + `duplicate_candidates.json`, escribe `cta_harmonize.json` de una vez y ejecuta el merge. PROHIBIDO listar/buscar directorios o leer los shards. Si el merge falla, corrige `cta_harmonize.json` con `edit_file` y re-ejecuta.\n"
+            f"0. FAST-PATH: lee en paralelo SOLO `cta_outline.json` (incluye `bloom` y `bloom_portfolio_preview`) + `duplicate_candidates.json`, escribe `cta_harmonize.json` (4 claves obligatorias + 5.ª opcional `adjust_modalities` si falla `[CTA-BLOOM-FLOOR]`) y ejecuta el merge. PROHIBIDO listar/buscar directorios o leer los shards. Si el merge falla, corrige `cta_harmonize.json` con `edit_file` y re-ejecuta.\n"
             f"1. Analiza los fragmentos curriculares y deduplica competencias.\n"
             f"2. Emite la armonización en `{work_rel}/cta_harmonize.json` y luego EJECUTA TÚ el merge oficial (obligatorio, el orquestador NO lo ejecuta):\n"
             f"   ```bash\n"
@@ -2187,12 +2431,21 @@ def build_dispatch(
         # 1. Build comp_to_shard and shard_to_comps mapping FIRST
         shard_map: Dict[str, str] = {}
         shard_to_comps: Dict[str, List[str]] = {}
+        eff_repair_k = DEFAULT_TEMPLATES_PER_MODALITY
         pre_shard_manifest = work / "shards" / "pre_shard_manifest.json"
         if not pre_shard_manifest.is_file():
             pre_shard_manifest = work / "pre_shard_manifest.json"
         if pre_shard_manifest.is_file():
             try:
                 sm_data = json.loads(pre_shard_manifest.read_text(encoding="utf-8"))
+                eff_repair_k = max(
+                    1,
+                    int(
+                        (sm_data.get("stage4_contract") or {}).get("templates_per_modality")
+                        or sm_data.get("templates_per_modality")
+                        or DEFAULT_TEMPLATES_PER_MODALITY
+                    ),
+                )
                 shards_info = sm_data.get("shards", [])
                 if isinstance(shards_info, list):
                     for s in shards_info:
@@ -2279,7 +2532,7 @@ def build_dispatch(
                         for known_cid in shard_map.keys():
                             if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(known_cid)}(?![A-Za-z0-9_-])", err_str):
                                 matched_cids.add(known_cid)
-                        for m in re.finditer(r"\b(?:C|H|Hab)-\d+\b", err_str):
+                        for m in re.finditer(r"\b(?:PRE|Aut|C|H|Hab|COMP)-[A-Za-z0-9_-]+\b", err_str):
                             cand_cid = m.group(0)
                             if cand_cid in shard_map:
                                 matched_cids.add(cand_cid)
@@ -2697,16 +2950,24 @@ def build_dispatch(
             shard_fix_path = f"{work_rel}/shards/shard_fixes/{shard_id}/{cid}.py"
             compile_cmd = (
                 f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py "
-                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4 --fail-total"
+                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4 --templates-per-modality {eff_repair_k} --fail-total"
             )
 
             # Generate compact Competence Slice (< 2 KB) for isolated Turn-0 repair
             comp_info = cta_comps_by_id.get(cid, {})
             spec_locs = diag.get("specific_error_locations") or []
+            shard_py_path = work / "shards" / f"{shard_id}_data.py"
+            if spec_locs:
+                lr_start = spec_locs[0].get("offending_line_start")
+                lr_end = spec_locs[0].get("offending_line_end")
+            else:
+                lr_start, lr_end = _locate_competency_line_range(shard_py_path, cid)
             slice_data = {
                 "id": cid,
                 "title": str(comp_info.get("name") or comp_info.get("title") or cid)[:100],
                 "description": str(comp_info.get("description_latex") or comp_info.get("description") or "")[:200],
+                "recommended_modalities": comp_info.get("recommended_modalities") or [],
+                "templates_per_modality": eff_repair_k,
                 "assumptions": comp_info.get("assumptions", [])[:4],
                 "distractors": [
                     {
@@ -2723,8 +2984,8 @@ def build_dispatch(
                     "disagreements": (diag.get("judge_disagreements") or [])[:4],
                 },
                 "line_range": {
-                    "start": spec_locs[0].get("offending_line_start") if spec_locs else None,
-                    "end": spec_locs[0].get("offending_line_end") if spec_locs else None,
+                    "start": lr_start,
+                    "end": lr_end,
                     "locations_count": len(spec_locs),
                 },
             }
@@ -2734,14 +2995,17 @@ def build_dispatch(
                 slice_json_str = json.dumps(slice_data, indent=2, ensure_ascii=False)
 
             safe_cid = re.sub(r"[^\w-]", "_", str(cid))
+            cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()
             slice_file = repair_slices_dir / f"{shard_id}_{cid}.json"
             slice_safe_file = repair_slices_dir / f"{shard_id}_{safe_cid}.json"
+            slice_norm_file = repair_slices_dir / f"{shard_id}_{cid_norm}.json"
             slice_file.write_text(slice_json_str, encoding="utf-8")
             if slice_safe_file != slice_file:
                 slice_safe_file.write_text(slice_json_str, encoding="utf-8")
+            if slice_norm_file not in (slice_file, slice_safe_file):
+                slice_norm_file.write_text(slice_json_str, encoding="utf-8")
             slice_rel = f"{work_rel}/dispatch/repair_slices/{slice_file.name}"
-
-            cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()
+            slice_abs = slice_file.resolve().as_posix()
             disk_done_signal = f"Cierre al aprobar: {out_json} (señal terminal DONE)"
             scope_header = build_scope_header(
                 role="repair",
@@ -2879,12 +3143,20 @@ def build_dispatch(
             prompts_idx_file.write_text(item_json_str, encoding="utf-8")
 
             # Pure-data payload file for live Repair Engineer (zero wrapper bloat)
+            rec_mods_str = ", ".join(str(m) for m in (comp_info.get("recommended_modalities") or []))
+            mods_meta_line = (
+                f"- **Modalidades recomendadas (CTA Architect, K={eff_repair_k}/modalidad activa, 0 MC7 en Skill, <=1 MC7 en Concept/Fact):** {rec_mods_str}\n"
+                if rec_mods_str
+                else f"- **Modalidades recomendadas (CTA Architect, K={eff_repair_k}):** libre según criterio epistémico sin cuotas rígidas\n"
+            )
             prompts_cid_data_file = prompts_repair_dir / f"repair_{cid_norm}_data.md"
             repair_data_md = (
                 f"# Repair `{cid}` (`{shard_id}`)\n\n"
+                f"{mods_meta_line}"
+                f"- **Comando compile:** `{compile_cmd}`\n\n"
                 f"## 2. DIAGNÓSTICO DEL FALLO & COMPETENCE SLICE\n"
                 f"{error_bullets}"
-                f"Consulta el slice de competencia en `{slice_rel}` con `read_file` para ver la especificación completa.\n"
+                f"Consulta el slice de competencia en `{slice_abs}` con `read_file` para ver la especificación completa.\n"
             )
             prompts_cid_data_file.write_text(repair_data_md, encoding="utf-8")
 
@@ -2903,6 +3175,7 @@ def build_dispatch(
                 "out_json": out_json,
                 "shard_fix_path": shard_fix_path,
                 "slice_rel": slice_rel,
+                "slice_abs": slice_abs,
                 "compile_cmd": compile_cmd,
                 "prompts_cid_file": prompts_cid_file,
                 "prompts_cid_data_file": prompts_cid_data_file,
@@ -2930,10 +3203,10 @@ def build_dispatch(
                     done_signal=done_sig,
                     extra_instructions=ext if ext else None,
                 )
-                if len(cand.encode("utf-8")) <= 400:
+                if len(cand.encode("utf-8")) <= 650:
                     return cand
             logger.warning(
-                "Repair pointer prompt exceeds 400 bytes (%d B) due to long work_rel: %s",
+                "Repair pointer prompt exceeds 650 bytes (%d B) due to long work_rel: %s",
                 len(cand.encode("utf-8")),
                 w_rel_path,
             )
@@ -2943,18 +3216,21 @@ def build_dispatch(
             if len(group_entries) == 1:
                 ent = group_entries[0]
                 if use_pointer:
-                    w_rel = f"{work_rel}/prompts/repair/{ent['prompts_cid_data_file'].name}"
+                    w_abs = ent["prompts_cid_data_file"].resolve().as_posix()
+                    slice_abs_ent = ent["slice_abs"]
+                    out_py_abs = _resolve_posix_path(work, work_rel, ent["out_py"])
+                    fix_abs = _resolve_posix_path(work, work_rel, ent["shard_fix_path"])
                     extra_full = (
-                        f"[SCOPE-LOCK] READ `{w_rel}`, `{ent['slice_rel']}`, `{ent['out_py']}`; "
-                        f"WRITE `{ent['out_py']}`, `{ent['shard_fix_path']}`; COMPILE `.agents/skills/content-to-course/compile_shard.py`."
+                        f"[SCOPE-LOCK] READ: `{w_abs}`, `{slice_abs_ent}`, `{out_py_abs}`; "
+                        f"WRITE: `{out_py_abs}`, `{fix_abs}`; COMPILE: `.agents/skills/content-to-course/compile_shard.py`."
                     )
                     extra_mid = (
-                        f"[SCOPE-LOCK] READ `{ent['prompts_cid_data_file'].name}`; "
-                        f"WRITE `{shard_id}_data.py`; COMPILE `.agents/skills/content-to-course/compile_shard.py`."
+                        f"[SCOPE-LOCK] READ: `{w_abs}`, `{slice_abs_ent}`; "
+                        f"WRITE: `{out_py_abs}`; COMPILE: `.agents/skills/content-to-course/compile_shard.py`."
                     )
                     pointer_prompt = _bounded_repair_pointer(
                         role_label=f"Repair Engineer {ent['cid']}",
-                        w_rel_path=w_rel,
+                        w_rel_path=w_abs,
                         done_sig=f"DONE: {ent['out_json']}",
                         extra_opts=[extra_full, extra_mid],
                     )
@@ -3013,19 +3289,21 @@ def build_dispatch(
                     item_files.append(cons_resolved)
 
                 if use_pointer:
-                    w_rel = f"{work_rel}/prompts/repair/{consolidated_data_file.name}"
+                    w_abs = consolidated_data_file.resolve().as_posix()
+                    out_py_abs = _resolve_posix_path(work, work_rel, out_py)
+                    fix_dir_abs = (work / "shards" / "shard_fixes" / shard_id).resolve().as_posix()
                     cid_data_names = ", ".join(e["prompts_cid_data_file"].name for e in group_entries)
                     extra_full = (
-                        f"[SCOPE-LOCK] READ `{w_rel}` ({cid_data_names}), `{out_py}`; "
-                        f"WRITE `{out_py}`, `{work_rel}/shards/shard_fixes/{shard_id}/*.py`; COMPILE `.agents/skills/content-to-course/compile_shard.py`."
+                        f"[SCOPE-LOCK] READ: `{w_abs}` ({cid_data_names}), `{out_py_abs}`; "
+                        f"WRITE: `{out_py_abs}`, `{fix_dir_abs}/*.py`; COMPILE: `.agents/skills/content-to-course/compile_shard.py`."
                     )
                     extra_mid = (
-                        f"[SCOPE-LOCK] READ `{consolidated_data_file.name}`; "
-                        f"WRITE `{shard_id}_data.py`; COMPILE `.agents/skills/content-to-course/compile_shard.py`."
+                        f"[SCOPE-LOCK] READ: `{w_abs}`; "
+                        f"WRITE: `{out_py_abs}`; COMPILE: `.agents/skills/content-to-course/compile_shard.py`."
                     )
                     pointer_prompt = _bounded_repair_pointer(
                         role_label=f"Repair Engineer {shard_id}",
-                        w_rel_path=w_rel,
+                        w_rel_path=w_abs,
                         done_sig=f"DONE: {out_json}",
                         extra_opts=[extra_full, extra_mid],
                     )

@@ -531,6 +531,59 @@ export interface CourseManifest {
   courses: CourseSummary[];
 }
 
+export type SessionType =
+  | 'practice'
+  | 'quiz'
+  | 'test'
+  | 'challenge'
+  | 'mastery_challenge'
+  | 'misconception_drill';
+
+export type FsrsRating = 1 | 2 | 3 | 4; // 1=Again, 2=Hard, 3=Good, 4=Easy
+
+export type ReviewReason = 'error' | 'decay';
+
+export interface FsrsCardState {
+  due: string;
+  stability: number;
+  difficulty: number;
+  elapsed_days?: number;
+  scheduled_days: number;
+  learning_steps?: number;
+  reps: number;
+  lapses: number;
+  state: 0 | 1 | 2 | 3; // 0=New, 1=Learning, 2=Review, 3=Relearning
+  last_review?: string;
+}
+
+export interface MisconceptionEntry {
+  distractor_id: string;
+  competency_id: string;
+  rationale: string;
+  count: number;
+  last_seen: string;
+  resolved_streak: number;
+}
+
+export interface SrsReviewTelemetry {
+  date: string;
+  competency_id: string;
+  delta_t_days: number;
+  predicted_r: number;
+  actual_correct: boolean;
+  rating: FsrsRating;
+}
+
+export interface CalibrationMetrics {
+  n: number;
+  brierScore: number | null;
+  logLoss: number | null;
+  meanPredictedR: number | null;
+  meanActual: number | null;
+  bias: number | null;
+  isReliable: boolean;
+}
+
 export type MasteryTier =
   | 'Not started'
   | 'Attempted'
@@ -559,6 +612,12 @@ export interface QuestionTelemetry {
   hints_used: number;
   seconds_spent: number;
   question_text?: string;
+  question_type?: QuestionType;
+  wrong_attempts?: number;
+  matched_distractor_ids?: string[];
+  matched_distractor_rationales?: Record<string, string>;
+  carried_distractor_ids?: string[];
+  metacognitive_quadrant?: MetacognitiveItemAudit['quadrant'];
 }
 
 export interface ChallengeSkillResult {
@@ -570,6 +629,7 @@ export interface ChallengeSkillResult {
   new_tier: MasteryTier;
   direction: 'up' | 'down' | 'maintained';
   delta_points: number;
+  cooldown_remaining_ms?: number;
 }
 
 export interface ChallengeExecutionSummary {
@@ -600,7 +660,7 @@ export interface CompetencyMastery {
     date: string;
     score: number;
     total: number;
-    type: 'practice' | 'quiz' | 'test' | 'challenge';
+    type: SessionType;
     total_seconds?: number;
     avg_seconds_per_question?: number;
     previous_tier?: MasteryTier;
@@ -612,6 +672,10 @@ export interface CompetencyMastery {
     test?: TimingStats;
   };
   needs_review?: boolean;
+  review_reason?: ReviewReason;
+  last_tier_promotion_at?: string;
+  fsrs?: FsrsCardState;
+  modality_latencies?: Partial<Record<QuestionType, number[]>>;
   recent_misconceptions?: Array<{
     date: string;
     question_id: string;
@@ -623,6 +687,9 @@ export interface CourseMasteryRecord {
   course_id: string;
   mastery_points: number;
   competencies: Record<string, CompetencyMastery>;
+  last_mastery_challenge_at?: string;
+  misconception_ledger?: Record<string, MisconceptionEntry>;
+  srs_telemetry?: SrsReviewTelemetry[];
   course_challenge?: {
     completed: boolean;
     last_score: number;
@@ -694,4 +761,34 @@ export interface IronDeferredReviewItem {
   flagged: boolean;
   user_summary: string;
   diagnostic_rationale?: string;
+}
+
+export type AdaptiveModuleTier = 'diagnostic' | 'standard' | 'advanced';
+
+export interface AdaptiveModuleResult {
+  moduleIndex: 1 | 2;
+  tier: AdaptiveModuleTier;
+  score: number;
+  total: number;
+  percentage: number;
+  elapsedSeconds: number;
+}
+
+export interface AdaptiveUnitBreakdownItem {
+  competencyId: string;
+  competencyName: string;
+  correct: number;
+  total: number;
+  percentage: number;
+  avgSeconds: number;
+}
+
+export interface AdaptiveExamSummary {
+  module1: AdaptiveModuleResult;
+  module2: AdaptiveModuleResult;
+  routedTier: 'standard' | 'advanced';
+  cutoffPercentage: number;
+  projectedGrade20: number;
+  avgSecondsPerQuestion: number;
+  unitBreakdown: AdaptiveUnitBreakdownItem[];
 }

@@ -79,6 +79,15 @@ except ImportError:
         def validate_katex_syntax(s: str) -> List[str]:
             return []
 
+try:
+    from engine.stage_contract import (
+        MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+        MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+    )
+except ImportError:
+    _MIN_MODALITIES_PER_COMPETENCY = 2
+    _MAX_MODALITIES_PER_COMPETENCY = 4
+
 logger = logging.getLogger("compile_cta")
 
 
@@ -302,6 +311,7 @@ class CtaDataLineLocator:
                                     7: ["prerequisites"],
                                     8: ["distractors"],
                                     9: ["assumptions"],
+                                    10: ["recommended_modalities"],
                                 }
                                 if isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
                                     d_elts = c_node.elts[8].elts
@@ -626,9 +636,9 @@ class CtaDataLineLocator:
         for fld in (
             "manifestation", "remediation_hint", "wrong_belief", "correct_belief",
             "omitted_step", "statement_latex", "statement", "violation_consequence",
-            "consequence", "role_in_proof", "assumptions", "description_latex",
-            "description", "name", "evidence", "page", "prerequisites", "bloom",
-            "session", "type"
+            "consequence", "role_in_proof", "assumptions", "recommended_modalities",
+            "description_latex", "description", "name", "evidence", "page",
+            "prerequisites", "bloom", "session", "type"
         ):
             if re.search(rf"\b{fld}\b", err_msg, re.IGNORECASE) or f"'{fld}'" in err_msg:
                 field_match = fld
@@ -650,6 +660,8 @@ class CtaDataLineLocator:
         if not target_range and found_cid:
             if "CTA-ASSUMPTIONS-MISSING" in err_msg:
                 target_range = self.get_range(found_cid, "assumptions") or self.get_range(found_cid)
+            elif "CTA-MODALITY-" in err_msg or "M20-MC7-CAP" in err_msg:
+                target_range = self.get_range(found_cid, "recommended_modalities") or self.get_range(found_cid)
             else:
                 target_range = self.get_range(found_cid, field_match)
 
@@ -1141,6 +1153,66 @@ def count_evaluated_fields(cta_dict: Dict[str, Any]) -> int:
     return max(1, total)
 
 
+_MODALITY_ALIASES: Dict[str, str] = {
+    "mc7": "multiple_choice_7_options",
+    "mc": "multiple_choice_7_options",
+    "multiple_choice": "multiple_choice_7_options",
+    "multiple_choice_7_options": "multiple_choice_7_options",
+    "ms": "multiple_select",
+    "multiple_select": "multiple_select",
+    "fib": "fill_in_the_blank",
+    "open_ended": "fill_in_the_blank",
+    "fill_in_the_blank": "fill_in_the_blank",
+    "sym": "open_symbolic",
+    "symbolic": "open_symbolic",
+    "open_symbolic": "open_symbolic",
+    "proof": "proof_dag",
+    "parsons": "proof_dag",
+    "proof_dag": "proof_dag",
+    "adversarial": "adversarial_break",
+    "fallacy": "adversarial_break",
+    "adversarial_break": "adversarial_break",
+    "stage0": "unstructured_model",
+    "stage_0": "unstructured_model",
+    "modeling": "unstructured_model",
+    "unstructured_model": "unstructured_model",
+    "canvas": "invariant_canvas",
+    "graph_manipulator": "invariant_canvas",
+    "invariant_canvas": "invariant_canvas",
+    "matching": "concept_matching",
+    "concept_matching": "concept_matching",
+}
+
+_CANONICAL_MODALITIES = frozenset(_MODALITY_ALIASES.values())
+
+
+def _normalize_recommended_modalities(raw_mods: Any, cid: str = "", strict: bool = True) -> List[str]:
+    """Normalize optional CTA-Architect modality recommendations preserving order."""
+    if not raw_mods:
+        return []
+    if isinstance(raw_mods, str):
+        items = [x.strip() for x in raw_mods.split(",") if x.strip()]
+    elif isinstance(raw_mods, (list, tuple, set)):
+        items = [str(x).strip() for x in raw_mods if x is not None and str(x).strip()]
+    else:
+        return []
+    out: List[str] = []
+    for raw in items:
+        norm = _MODALITY_ALIASES.get(raw.lower())
+        if (norm is None or norm not in _CANONICAL_MODALITIES) and not strict:
+            if raw not in out:
+                out.append(raw)
+            continue
+        if norm is None or norm not in _CANONICAL_MODALITIES:
+            raise ValueError(
+                f"[CTA-MODALITY-INVALID] Competency '{cid}': unrecognized modality '{raw}'. "
+                f"Allowed: {sorted(_CANONICAL_MODALITIES)}"
+            )
+        if norm not in out:
+            out.append(norm)
+    return out
+
+
 def compile_cta_module(
     competencies_data: Any,
     course_id: str = "custom_course",
@@ -1150,10 +1222,12 @@ def compile_cta_module(
     existing_competency_ids: Optional[Set[str]] = None,
     require_assumptions: bool = False,
     contract_version: Optional[int] = None,
+    require_modalities: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Compiles tabular positional tuples into formal cta.json dictionary.
 
-    Supports tuples (6 to 10 elements) and dicts with 'assumptions' or spliced from cta_fixes/.
+    Supports tuples (6 to 11 elements; 11th element = recommended_modalities, mandatory in v2)
+    and dicts with 'assumptions' or spliced from cta_fixes/.
     """
     if hasattr(competencies_data, "COMPETENCIES"):
         competencies_tuples = getattr(competencies_data, "COMPETENCIES")
@@ -1170,6 +1244,8 @@ def compile_cta_module(
         competencies_tuples = competencies_data
         if contract_version is None:
             contract_version = 2 if require_assumptions else 1
+
+    eff_require_modalities = (int(contract_version or 1) >= 2) if require_modalities is None else bool(require_modalities)
 
     competencies_tuples = heal_control_chars_in_obj(competencies_tuples)
     title = heal_control_chars_in_str(str(title))
@@ -1237,8 +1313,9 @@ def compile_cta_module(
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
         raw_assumptions = []
+        raw_rec_mods: Any = []
         if isinstance(item, dict):
-            if "assumptions" in item or item.get("_is_spliced"):
+            if "assumptions" in item or "recommended_modalities" in item or item.get("_is_spliced"):
                 raw_type = str(item.get("type", "concept")).strip().lower()
                 norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
                 user_id = str(item.get("id", "")).strip() or None
@@ -1257,11 +1334,15 @@ def compile_cta_module(
                 if isinstance(ev_list, list) and ev_list:
                     ev0 = ev_list[0]
                     if isinstance(ev0, dict):
-                        doc = str(ev0.get("doc", doc)).strip()
+                        doc = str(ev0.get("doc") or ev0.get("pdf") or doc).strip()
                         page = int(ev0.get("page", 1))
+                    elif isinstance(ev0, (list, tuple)) and len(ev0) >= 2:
+                        doc = str(ev0[0] or doc).strip()
+                        page = int(ev0[1]) if str(ev0[1]).strip().isdigit() else 1
                 prereqs = list(item.get("prerequisites", []))
                 raw_distractors = item.get("distractors", [])
                 raw_assumptions = item.get("assumptions", [])
+                raw_rec_mods = item.get("recommended_modalities", [])
             else:
                 raise TypeError(
                     f"[compile_cta] Competencia en índice {comp_idx} es un diccionario. "
@@ -1431,6 +1512,16 @@ def compile_cta_module(
                     prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple, set)) else []
                     raw_distractors = item[8] if len(item) > 8 else []
                     raw_assumptions = item[9] if len(item) > 9 else []
+                    if (
+                        len(item) == 10
+                        and isinstance(item[9], (list, tuple, set))
+                        and item[9]
+                        and all(isinstance(x, str) and x.strip().lower() in _MODALITY_ALIASES for x in item[9])
+                    ):
+                        raw_rec_mods = item[9]
+                        raw_assumptions = []
+                    if len(item) >= 11 and item[10] is not None:
+                        raw_rec_mods = item[10]
                 elif len(item) == 9:
                     doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
                     page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
@@ -1473,6 +1564,25 @@ def compile_cta_module(
             raw_assumptions=raw_assumptions,
             cid_clean=cid_clean,
         )
+        recommended_modalities = _normalize_recommended_modalities(raw_rec_mods, cid=raw_id, strict=bool(eff_require_modalities))
+        is_skill_comp = (norm_type == "skill") or str(raw_id).startswith("Hab-")
+        if eff_require_modalities and is_skill_comp and "multiple_choice_7_options" in recommended_modalities:
+            raise ValueError(
+                f"[M20-MC7-CAP] Competency '{raw_id}' (skill): 'multiple_choice_7_options' (MC7) is prohibited "
+                f"in Skill competencies (0 MC7 allowed; use active modalities)."
+            )
+        if eff_require_modalities:
+            if len(recommended_modalities) == 0:
+                raise ValueError(
+                    f"[CTA-MODALITY-MISSING] Competency '{raw_id}': contract v2 requires "
+                    f"{_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} canonical recommended_modalities."
+                )
+            if not (_MIN_MODALITIES_PER_COMPETENCY <= len(recommended_modalities) <= _MAX_MODALITIES_PER_COMPETENCY):
+                raise ValueError(
+                    f"[CTA-MODALITY-RANGE] Competency '{raw_id}': declares {len(recommended_modalities)} "
+                    f"recommended_modalities ({recommended_modalities}); required range is "
+                    f"{_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY}."
+                )
 
         comp_dict = {
             "id": raw_id,
@@ -1492,6 +1602,8 @@ def compile_cta_module(
             "distractors": compiled_distractors,
             "assumptions": compiled_assumptions,
         }
+        if recommended_modalities:
+            comp_dict["recommended_modalities"] = recommended_modalities
         if raw_id.upper().startswith("PRE-") or (isinstance(item, dict) and item.get("is_prerequisite")):
             comp_dict["is_prerequisite"] = True
         sanitize_competency_math(comp_dict)
@@ -1826,6 +1938,7 @@ def compile_cta(
     is_part: Optional[bool] = None,
     allow_degrade: bool = True,
     require_assumptions: bool = False,
+    require_modalities: Optional[bool] = None,
 ) -> Tuple[bool, Dict[str, Any], List[str], float]:
     """Compiles cta_data.py into cta.json and cta.md, validating all constraints in < 5ms."""
     t0 = time.perf_counter()
@@ -2119,6 +2232,7 @@ def compile_cta(
 
     # 3. Compile to dict with continuous IDs
     cta_contract_ver = int(getattr(mod, "CTA_CONTRACT_VERSION", getattr(mod, "CONTRACT_VERSION", 2 if require_assumptions else 1)))
+    eff_require_modalities = (cta_contract_ver >= 2) if require_modalities is None else bool(require_modalities)
     try:
         cta_dict = compile_cta_module(
             competencies_data=competencies,
@@ -2129,10 +2243,14 @@ def compile_cta(
             existing_competency_ids=existing_comp_ids,
             require_assumptions=require_assumptions,
             contract_version=cta_contract_ver,
+            require_modalities=False,
         )
     except ValueError as ve:
         elapsed = (time.perf_counter() - t0) * 1000.0
-        return False, {}, [f"[CTA-TUPLE-STRUCTURE] {ve}"], elapsed
+        err_str = str(ve)
+        if err_str.startswith("[CTA-MODALITY-") or err_str.startswith("[M20-MC7-CAP]"):
+            return False, {}, [err_str], elapsed
+        return False, {}, [f"[CTA-TUPLE-STRUCTURE] {err_str}"], elapsed
     cta_dict = heal_control_chars_in_obj(cta_dict)
 
     # 3b. Auto-normalize page numbers before calling validate_cta_rules
@@ -2155,6 +2273,7 @@ def compile_cta(
             file_path=target_json_path,
             locator=locator,
             require_assumptions=require_assumptions,
+            require_modalities=eff_require_modalities,
             warnings_out=cta_warnings,
         )
     else:
@@ -2165,6 +2284,7 @@ def compile_cta(
             locator=locator,
             allowed_prereq_ids=existing_comp_ids,
             require_assumptions=require_assumptions,
+            require_modalities=eff_require_modalities,
             warnings_out=cta_warnings,
         )
 
@@ -2286,6 +2406,7 @@ def compile_cta(
                 file_path=target_json_path,
                 locator=locator,
                 require_assumptions=require_assumptions,
+                require_modalities=eff_require_modalities,
                 warnings_out=cta_warnings,
             )
         else:
@@ -2296,6 +2417,7 @@ def compile_cta(
                 locator=locator,
                 allowed_prereq_ids=existing_comp_ids,
                 require_assumptions=require_assumptions,
+                require_modalities=eff_require_modalities,
                 warnings_out=cta_warnings,
             )
 
@@ -2677,6 +2799,41 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
             "CTA-ASSUMPTIONS-MISSING",
             detail,
             "Agregar al menos 1 supuesto con 'statement_latex' y 'violation_consequence' de >= 10 caracteres en cada Skill/Concept",
+        )
+
+    # 3e. CTA-MODALITY-MISSING / CTA-MODALITY-RANGE / CTA-MODALITY-INVALID
+    if "CTA-MODALITY-MISSING" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-MODALITY-MISSING\]\s*")
+        return (
+            "CTA-MODALITY-MISSING: MODALIDADES RECOMENDADAS OBLIGATORIAS",
+            "CTA-MODALITY-MISSING",
+            detail,
+            f"Agregar elemento 10 (11.º campo) con {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} modalidades canónicas",
+        )
+    if "CTA-MODALITY-RANGE" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-MODALITY-RANGE\]\s*")
+        return (
+            "CTA-MODALITY-RANGE: NUMERO DE MODALIDADES FUERA DE RANGO",
+            "CTA-MODALITY-RANGE",
+            detail,
+            f"Declarar entre {_MIN_MODALITIES_PER_COMPETENCY} y {_MAX_MODALITIES_PER_COMPETENCY} modalidades canónicas únicas",
+        )
+    if "CTA-MODALITY-INVALID" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-MODALITY-INVALID\]\s*")
+        return (
+            "CTA-MODALITY-INVALID: MODALIDAD NO RECONOCIDA",
+            "CTA-MODALITY-INVALID",
+            detail,
+            "Usar exclusivamente las 9 modalidades canónicas (o shorthands MC7, MS, FIB)",
+        )
+
+    if "M20-MC7-CAP" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[M20-MC7-CAP\]\s*")
+        return (
+            "M20-MC7-CAP: MC7 PROHIBIDO EN COMPETENCIAS SKILL",
+            "M20-MC7-CAP",
+            detail,
+            "Quitar MC7/multiple_choice_7_options de recommended_modalities en competencias skill (Hab-XX)",
         )
 
     # 4. DAG / Prerequisites & root ratio
@@ -3134,6 +3291,7 @@ def main() -> None:
     parser.add_argument("--part", default=None, help="Optional subpart id (e.g. part_01) to compile work/cta_parts/<part_id>_data.py -> work/cta_parts/<part_id>.json")
     parser.add_argument("--manifest", default=None, help="Optional path to pre_cta_manifest.json or ingestion_manifest.json")
     parser.add_argument("--require-assumptions", action="store_true", default=False, help="Require explicit mathematical assumptions on concepts/skills")
+    parser.add_argument("--no-require-modalities", action="store_true", default=False, help="Allow omitting recommended_modalities in contract v2 (legacy v1 compatibility)")
     args = parser.parse_args()
 
     eff_input = args.input_path or args.cta_data_path
@@ -3193,6 +3351,7 @@ def main() -> None:
         output_json_name=target_json_name,
         is_part=True if args.part else None,
         require_assumptions=args.require_assumptions,
+        require_modalities=False if args.no_require_modalities else None,
     )
 
     if not valid:

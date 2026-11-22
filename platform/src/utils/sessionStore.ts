@@ -1,4 +1,4 @@
-import { Question, QuestionTelemetry, StructuredUserAnswer } from '../types';
+import { Question, QuestionTelemetry, SessionType, StructuredUserAnswer } from '../types';
 
 export const ACTIVE_SESSION_STORAGE_KEY = 'tops_active_session_v1';
 
@@ -11,7 +11,7 @@ export interface PersistedQuestionResult {
 export interface ActiveSessionSnapshot {
   version: 1;
   courseId: string;
-  sessionType: 'practice' | 'quiz' | 'test' | 'challenge';
+  sessionType: SessionType;
   competencyId: string | null;
   unitIndex: number | null;
   sessionTitle: string;

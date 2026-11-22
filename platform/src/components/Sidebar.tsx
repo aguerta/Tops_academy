@@ -8,8 +8,11 @@ interface SidebarProps {
   course: Course;
   selectedUnitIndex: number | null;
   isCourseChallengeActive: boolean;
+  isProgressLogActive?: boolean;
+  activeMisconceptionCount?: number;
   onSelectUnit: (index: number) => void;
   onSelectCourseChallenge: () => void;
+  onSelectProgressLog?: () => void;
   onBackToLibrary: () => void;
   mastery?: CourseMasteryRecord | null;
 }
@@ -18,8 +21,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   course,
   selectedUnitIndex,
   isCourseChallengeActive,
+  isProgressLogActive = false,
+  activeMisconceptionCount = 0,
   onSelectUnit,
   onSelectCourseChallenge,
+  onSelectProgressLog,
   onBackToLibrary,
   mastery,
 }) => {
@@ -151,6 +157,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleSelectCourseChallenge = () => {
     setIsOpen(false);
     onSelectCourseChallenge();
+  };
+
+  const handleSelectProgressLog = () => {
+    setIsOpen(false);
+    onSelectProgressLog?.();
   };
 
   const handleBackToLibrary = () => {
@@ -337,11 +348,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
 
+          {onSelectProgressLog && (
+            <button
+              type="button"
+              data-testid="sidebar-progress-log-btn"
+              onClick={handleSelectProgressLog}
+              tabIndex={itemTabIndex}
+              className={`w-full text-left px-6 py-3 mt-2 border-t border-ka-border-subtle transition-colors flex items-start gap-3 focus:outline-none focus:bg-slate-100 ${
+                isProgressLogActive
+                  ? 'bg-ka-blue-light border-l-4 border-l-ka-blue text-ka-blue'
+                  : 'hover:bg-slate-50 text-ka-text-primary'
+              }`}
+            >
+              <span className="text-xl leading-none shrink-0">📈</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="block text-sm font-bold text-ka-text-primary">
+                    Bitácora de Fluidez
+                  </span>
+                  {activeMisconceptionCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-extrabold shrink-0">
+                      {activeMisconceptionCount}
+                    </span>
+                  )}
+                </div>
+                <span className="block text-xs text-ka-text-secondary mt-0.5 line-clamp-1">
+                  Retención FSRS, tiempos y trampas.
+                </span>
+              </div>
+            </button>
+          )}
+
           {/* Course Challenge Item */}
           <button
             onClick={handleSelectCourseChallenge}
             tabIndex={itemTabIndex}
-            className={`w-full text-left px-6 py-3 mt-2 border-t border-b border-ka-border-subtle transition-colors flex items-start gap-3 focus:outline-none focus:bg-slate-100 ${
+            className={`w-full text-left px-6 py-3 ${onSelectProgressLog ? '' : 'mt-2'} border-t border-b border-ka-border-subtle transition-colors flex items-start gap-3 focus:outline-none focus:bg-slate-100 ${
               isCourseChallengeActive
                 ? 'bg-ka-blue-light border-l-4 border-l-ka-blue text-ka-blue'
                 : 'hover:bg-slate-50 text-ka-text-primary'

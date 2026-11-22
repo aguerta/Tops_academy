@@ -29,9 +29,10 @@ En `PracticeSession.tsx`, el estudiante dispone de **3 intentos (3-Strikes Safeg
   - **Desconexión Diagnóstica en `FeedbackToast`** (reciclaje $>90\%$ de `error_rationale` estáticos de `cta.json`, ej. explicar matrices $k\times k$ cuando el alumno cometió un error escalar aritmético): **-0.5 a -1.0 pt adicional**.
 
 ### Dimensión 4: Alineación Instruccional, Taxonomía de Bloom y Pureza de Dominio (0 a 4.0 puntos)
-- **4.0 pts (Excelente)**: Congruencia absoluta entre objetivos, rigor matemático del dominio y evaluación; competencias de Habilidad `[Hab]` evaluadas y etiquetadas genuinamente en niveles superiores de Bloom (`Apply`, `Analyze`, `Evaluate`); enunciados redactados en registro disciplinar auténtico.
+- **4.0 pts (Excelente)**: Congruencia absoluta entre objetivos, rigor matemático del dominio y evaluación; competencias de Habilidad `[Hab]` evaluadas y etiquetadas genuinamente en niveles superiores de Bloom (`Apply+`), **Índice Bloom Ponderado (`1–5`) en banda Élite (`>= piso adaptativo`, típicamente `3.85 – 4.15` según mezcla `Skill=4.00 / Concept=3.75 / Fact=3.25`, con `>= 65%` en `Analyze + Evaluate` y `0` violaciones de coherencia `modalidad × bloom`)**; enunciados redactados en registro disciplinar auténtico.
 - **2.2 - 3.4 pts (Aceptable con Desalineación)**:
   - **Colapso declarativo de Bloom** (`100%` de reactivos —incluyendo Habilidades `[Hab]`— etiquetados como `Understand`): **-0.5 a -0.8 pts**.
+  - **Déficit de Índice Bloom Ponderado** (`bloom_weighted_index < adaptive_bloom_floor` en cursos `>= 20` ítems): **deducción proporcional `-min(0.8, brecha * 1.2)`**, y **hasta `-0.4 pts`** si hay *label inflation/degradation* (`concept_matching`/`FIB` en `Evaluate` o `adversarial_break`/`unstructured_model` por debajo de `Analyze`).
   - **Contaminación léxica inter-dominio por prefijos robóticos** (ej. `"Teniendo en consideración los fundamentos del equilibrio"`, `"condiciones de frontera"`, `"ecuaciones fundamentales del régimen"` inyectados desde plantillas de Solow/EDP en un curso de Estadística): **-0.5 a -0.8 pts**.
   - Desacuerdos latentes de jueces ciegos (`stage5_judge_audit`) o ambigüedad matemática entre distractores y clave: **-0.5 a -1.2 pts**.
 - **0.0 - 2.0 pts (Crítico)**: Preguntas huérfanas, teoremas falsos enseñados como verdaderos o desconexión severa con el sílabo fuente.
@@ -63,7 +64,7 @@ Se aplican deducciones directas acumulativas sobre la suma de las 5 dimensiones:
 ## 3. Índice de Preparación para el Dominio — Mastery Path Readiness Index (`MPRI`: 0 a 100)
 
 Complementariamente a la nota QM-OSCQR (`/20.0`), toda auditoría reporta el **`MPRI` (`/100.0`)** calculado sobre 6 pilares cognitivos y de plataforma:
-1. **`zpd_adaptive_progression` (20 pts)**: Multibanda `easy`/`medium`/`hard` + alineación Bloom `Apply+` en Habilidades.
+1. **`zpd_adaptive_progression` (20 pts)**: Multibanda `easy`/`medium`/`hard` (12 pts) + alineación Bloom `Apply+` en Habilidades (4 pts) + **Índice Bloom Ponderado frente a piso adaptativo (4 pts)**.
 2. **`retrieval_modality_and_anti_gaming` (20 pts)**: Presencia de generación activa (`FIB`) / selección múltiple (`MS`), entropía de respuestas y ausencia de relleno `[R-15]` o cuantificadores vacuos.
 3. **`socratic_scaffolding_lifeline` (25 pts)**: Pistas socráticas genuinas libres de boilerplate Mad-Libs y libres de envenenamiento anti-socrático.
 4. **`diagnostic_remediation_alignment` (15 pts)**: Cobertura, unicidad y fidelidad diagnóstica de `error_rationale` sin distractores `1.333x` arbitrarios.
@@ -93,7 +94,16 @@ Cada auditoría debe generar **únicamente** un archivo Markdown autocontenido (
     "unit_title": "string",
     "detected_objective": "string",
     "total_competencies": 0,
-    "total_questions": 0
+    "total_questions": 0,
+    "bloom_index": {
+      "weighted_index": 0.0,
+      "adaptive_floor": 3.85,
+      "gap": 0.0,
+      "apply_plus_pct": 0.0,
+      "superior_pct": 0.0,
+      "tier": "ÉLITE | SÓLIDO | BAJO",
+      "coherence_violations_count": 0
+    }
   },
   "dimension_scores": {
     "architecture_granularity": { "score": 0.0, "max": 4.0, "feedback": "string" },

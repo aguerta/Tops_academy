@@ -20,6 +20,11 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
+_skill_dir = Path(__file__).resolve().parent
+if str(_skill_dir) not in sys.path:
+    sys.path.insert(0, str(_skill_dir))
+
+from engine import fast_json
 from validator.core import validate_course_content
 from validator.models import ValidationResult
 
@@ -338,8 +343,8 @@ def _resolve_linter_remediation(
             f"ZPD-TRI-BAND / {linter_name}",
             f"Cobertura incompleta de bandas ZPD (`easy`, `medium`, `hard`), arquetipos estructurales (< 3), niveles de Bloom o modalidades activas en `{cid}` ({file_label}).",
             (
-                f"En `{file_label}` ({line_range_label}), define al menos 3 tuplas ortogonales en `TEMPLATES` para `{cid}` cubriendo "
-                f"`('easy', ...)`, `('medium', ...)`, `('hard', ...)` con >= 2 niveles de Bloom, enunciados estructuralmente distintos y la cuota de `fill_in_the_blank` / `multiple_select`."
+                f"En `{file_label}` ({line_range_label}), define al menos 4 tuplas ortogonales en `TEMPLATES` para `{cid}` cubriendo "
+                f"`('easy', ...)`, `('medium', ...)`, `('hard', ...)` con >= 2 niveles de Bloom, enunciados estructuralmente distintos y las modalidades recomendadas por el CTA (M20 / FIB / MS / MC7)."
             ),
         )
 
@@ -387,13 +392,13 @@ def build_specific_error_report(
         if cid:
             q_by_cid.setdefault(cid, []).append(q)
 
-    # Import ShardDataLineLocator dynamically from compile_shard.py
+    # Import ShardDataLineLocator dynamically from engine.shard_locator
     ShardDataLineLocator = None
     curr_dir = Path(__file__).resolve().parent
     if str(curr_dir) not in sys.path:
         sys.path.insert(0, str(curr_dir))
     try:
-        from compile_shard import ShardDataLineLocator as _SDLL
+        from engine.shard_locator import ShardDataLineLocator as _SDLL
         ShardDataLineLocator = _SDLL
     except Exception:
         pass
@@ -858,9 +863,9 @@ class CoursePublisher:
 
         # 1. Parse incoming course data
         if isinstance(course_data, str):
-            parsed = json.loads(course_data)
+            parsed = fast_json.loads(course_data)
         else:
-            parsed = json.loads(json.dumps(course_data))
+            parsed = fast_json.loads(fast_json.dumps_bytes(course_data, indent=False))
 
         course_id = parsed.get("course_id", "course_demo")
         course_title = parsed.get("course_title") or parsed.get("title") or "Curso Top's Academy"
@@ -871,7 +876,7 @@ class CoursePublisher:
             logger.warning("Course title contains corrupted Unicode character ('\\ufffd'): %r.", course_title)
             if append and json_path.is_file():
                 try:
-                    ex_data = json.loads(json_path.read_text(encoding="utf-8"))
+                    ex_data = fast_json.read_json(json_path)
                     ex_title = ex_data.get("course_title") or ex_data.get("title")
                     if ex_title and not is_corrupted_unicode(ex_title):
                         logger.info("Recovered course title from existing course: %r", ex_title)
@@ -885,7 +890,7 @@ class CoursePublisher:
                     work_cta = cand_dir / "cta.json"
                     if work_cta.is_file():
                         try:
-                            c_data = json.loads(work_cta.read_text(encoding="utf-8"))
+                            c_data = fast_json.read_json(work_cta)
                             c_title = c_data.get("course_title") or c_data.get("title")
                             if c_title and not is_corrupted_unicode(c_title):
                                 logger.info("Recovered course title from cta.json: %r", c_title)
@@ -901,7 +906,7 @@ class CoursePublisher:
         distractor_id_remap: dict[str, str] = {}
         if append and json_path.is_file():
             try:
-                existing_data = json.loads(json_path.read_text(encoding="utf-8"))
+                existing_data = fast_json.read_json(json_path)
                 existing_comp_by_id: dict[str, dict[str, Any]] = {}
                 max_num_by_prefix: dict[str, int] = {}
                 width_by_prefix: dict[str, int] = {}
@@ -1260,7 +1265,7 @@ class CoursePublisher:
             parsed["metadata"]["contract_version"] = 2
             parsed["metadata"]["min_archetypes"] = effective_min_arch
 
-        raw_text = json.dumps(parsed, ensure_ascii=False, indent=2)
+        raw_text = fast_json.dumps_str(parsed, indent=True)
 
         # 2. Programmatic validation
         v_res = validate_course_content(raw_text, strict=strict)
@@ -1276,7 +1281,7 @@ class CoursePublisher:
                     if isinstance(parsed.get("metadata"), dict):
                         parsed["metadata"]["contract_version"] = 2
                         parsed["metadata"]["min_archetypes"] = effective_min_arch
-                    raw_text = json.dumps(parsed, ensure_ascii=False, indent=2)
+                    raw_text = fast_json.dumps_str(parsed, indent=True)
                     v_res = validate_course_content(raw_text, strict=strict)
             except Exception as rx:
                 logger.debug("Auto-repair during publish failed: %s", rx)

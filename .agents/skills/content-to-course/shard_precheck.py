@@ -75,7 +75,7 @@ def precheck_source(source: str) -> List[str]:
     except SyntaxError:
         return out  # the compiler reports syntax errors with exact lines
 
-    func_defs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+    func_defs = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
     gen_reachable = set()
     for fn_name, fn_node in func_defs.items():
         if fn_name.startswith("gen_") or fn_name.startswith("_gen"):
@@ -94,7 +94,7 @@ def precheck_source(source: str) -> List[str]:
                                 queue.append(c_id)
 
     for node in tree.body:
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             if node.name in gen_reachable:
                 for n in ast.walk(node):
                     if isinstance(n, ast.While) and not is_bounded_while(n):
@@ -122,9 +122,33 @@ def precheck_source(source: str) -> List[str]:
                 args = node.args
                 n_req = len(args.args) - len(args.defaults)
                 if len(args.args) == 2 and n_req == 1:
-                    out.append(f"L{node.lineno} [VER-SIGNATURE] '{node.name}(res, v=None)': usa ver(c, v) (MC/FIB) o ver(res) (MS), sin parametros opcionales.")
+                    out.append(f"L{node.lineno} [VER-SIGNATURE] '{node.name}(res, v=None)': usa ver(c, v) (MC/FIB/open_symbolic) o ver(res) (MS/M20 estructurado), sin parametros opcionales.")
                 if isinstance(node.body[-1], ast.Return) and isinstance(node.body[-1].value, ast.Constant) and node.body[-1].value.value is True and len(node.body) == 1:
                     out.append(f"L{node.lineno} [TPL-VERIFIER] '{node.name}' trivial (return True).")
+                assump_kw = {"positive", "real", "negative", "nonnegative", "integer", "nonzero"}
+                assump_sym_lineno = None
+                sympify_no_locals = False
+                for n in ast.walk(node):
+                    if isinstance(n, ast.Call):
+                        callee_name = (
+                            n.func.id if isinstance(n.func, ast.Name)
+                            else (n.func.attr if isinstance(n.func, ast.Attribute) else "")
+                        )
+                        if callee_name in ("Symbol", "symbols"):
+                            if any(kw.arg in assump_kw for kw in n.keywords):
+                                assump_sym_lineno = assump_sym_lineno or n.lineno
+                        elif callee_name == "sympify":
+                            has_locals = (
+                                len(n.args) >= 2
+                                or any(kw.arg == "locals" for kw in n.keywords)
+                            )
+                            if not has_locals:
+                                sympify_no_locals = True
+                if assump_sym_lineno is not None and sympify_no_locals:
+                    out.append(
+                        f"L{assump_sym_lineno} [VER-SYMPY-ASSUMPTIONS] '{node.name}': Symbol(..., positive=True/asunciones) "
+                        f"no coincide con sympify() sin locals={{...}}. Usa Symbol('x') sin asunciones o pasa locals={{'x': x_sym}} a sympify()."
+                    )
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Name) and node.value.id.startswith("ver_"):
             for t in node.targets:
                 if isinstance(t, ast.Name) and t.id.startswith("ver_"):

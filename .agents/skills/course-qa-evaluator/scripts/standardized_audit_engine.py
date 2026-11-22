@@ -121,6 +121,8 @@ class KaTeXSyntaxLinter(BaseLinter):
     UNESCAPED_LATEX_CMD = re.compile(r"(?<!\$)(?<!\\)\\(dot|bar|vec|hat|tilde|ddot)\{[a-zA-Z0-9]+\}(?!\$)")
     TRIPLE_DOLLAR = re.compile(r"\${3,}")
     DOUBLE_BRACE = re.compile(r"\{\{[a-zA-Z0-9_]+\}\}")
+    MATH_SEG_PAT = re.compile(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", re.DOTALL)
+    SYMPY_IN_KATEX = re.compile(r"(?:(?<![{^])\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         unclosed_braces = []
@@ -128,6 +130,7 @@ class KaTeXSyntaxLinter(BaseLinter):
         double_braces = []
         unbalanced_dollars = []
         orphan_latex = []
+        sympy_in_katex = []
 
         questions = course_data.get("questions", [])
 
@@ -216,6 +219,25 @@ class KaTeXSyntaxLinter(BaseLinter):
                         snippet=m_orph.group(0),
                     ))
 
+                # 6. Raw SymPy syntax leaked inside KaTeX math delimiters
+                for mb_sym in self.MATH_SEG_PAT.finditer(text_no_escaped):
+                    math_seg = mb_sym.group(1) if mb_sym.group(0).startswith("$$") else mb_sym.group(2)
+                    if not math_seg:
+                        continue
+                    m_sym = self.SYMPY_IN_KATEX.search(math_seg)
+                    if m_sym:
+                        sympy_in_katex.append(qid)
+                        issues.append(LintIssue(
+                            linter=self.name,
+                            dimension=self.dimension,
+                            severity="warning",
+                            item_id=qid,
+                            competency_id=cid,
+                            message=f"Sintaxis cruda de SymPy filtrada en KaTeX ('{mb_sym.group(0)[:40]}') en '{field_name}'",
+                            snippet=mb_sym.group(0)[:50],
+                        ))
+                        break
+
         return {
             "unclosed_braces_count": len(set(unclosed_braces)),
             "unclosed_braces_items": list(set(unclosed_braces))[:15],
@@ -223,6 +245,8 @@ class KaTeXSyntaxLinter(BaseLinter):
             "double_braces_count": len(set(double_braces)),
             "unbalanced_dollars_count": len(set(unbalanced_dollars)),
             "orphan_latex_plain_text_count": len(set(orphan_latex)),
+            "sympy_in_katex_count": len(set(sympy_in_katex)),
+            "sympy_in_katex_items": list(set(sympy_in_katex))[:15],
         }
 
 
@@ -325,6 +349,31 @@ class ScaffoldingHintsLinter(BaseLinter):
     STATIC_ARITH_EXAMPLE_PAT = re.compile(
         r"(?:\(\s*\d+(?:\^\d+)?\s*[+\-*/]\s*\d+(?:\^\d+)?\s*\)\s*/\s*\d+|\b\d+\.\d+\s*/\s*\d+)\s*=\s*(-?\d+(?:\.\d+)?)"
     )
+    MATH_SPAN_PAT = re.compile(r"\$\$(.+?)\$\$|\$([^\$]+?)\$", re.DOTALL)
+    STATIC_CONST_PAT = re.compile(r"(?<![_\^a-zA-Z0-9.])(?<![_\^]\{)(\d+(?:\.\d+)?)\b")
+
+    @classmethod
+    def _extract_static_warning_math_constants(cls, text: str) -> list[tuple[str, set[str]]]:
+        """Extract math spans containing non-trivial numeric constants (>=2 or decimal) for parameter-leak checks."""
+        out: list[tuple[str, set[str]]] = []
+        if not text:
+            return out
+        for m in cls.MATH_SPAN_PAT.finditer(text):
+            seg = (m.group(1) or m.group(2) or "").strip()
+            if not seg or not any(op in seg for op in ("=", "+", "-", "/", "*", "\\sqrt", "\\frac")):
+                continue
+            consts: set[str] = set()
+            for num_str in cls.STATIC_CONST_PAT.findall(seg):
+                try:
+                    val = float(num_str)
+                except ValueError:
+                    continue
+                if val >= 2.0 or "." in num_str:
+                    consts.add(num_str)
+            if consts:
+                norm_seg = re.sub(r"\s+", "", seg)
+                out.append((norm_seg, consts))
+        return out
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         questions = course_data.get("questions", [])
@@ -335,11 +384,13 @@ class ScaffoldingHintsLinter(BaseLinter):
         bare_formula_warning_items = []
         cloned_warning_items = []
         disconnected_example_warning_items = []
+        static_uninstantiated_warning_items = []
         missing_solutions = []
 
         generic_pats = [re.compile(p, re.IGNORECASE) for p in self.GENERIC_WARNING_PHRASES]
         warning_to_comps: dict[str, set[str]] = {}
         warning_to_qids: dict[str, list[tuple[str, str]]] = {}
+        comp_span_records: dict[tuple[str, str], list[tuple[str, str, set[str]]]] = {}
 
         for q in questions:
             qid = q.get("id", "unknown")
@@ -450,6 +501,10 @@ class ScaffoldingHintsLinter(BaseLinter):
                         if res_num not in stem_str:
                             disconnected_example_warning_items.append(qid)
 
+                    stem_for_warn = str(q.get("stem") or "")
+                    for norm_seg, consts in self._extract_static_warning_math_constants(misc_warning):
+                        comp_span_records.setdefault((cid, norm_seg), []).append((qid, stem_for_warn, consts))
+
         # Detect cross-competency cloned misconception warnings (shared across >= 3 distinct competencies)
         for norm_w, comps_set in warning_to_comps.items():
             qlist_w = warning_to_qids.get(norm_w, [])
@@ -497,6 +552,35 @@ class ScaffoldingHintsLinter(BaseLinter):
                 ),
             ))
 
+        # Detect repeated static equations/numbers in misconception_warning across different stems of a competency
+        emitted_static_keys: set[tuple[str, str]] = set()
+        for (cid_w, norm_seg), recs in comp_span_records.items():
+            if len(recs) < 2 or cid_w in {k[0] for k in emitted_static_keys}:
+                continue
+            distinct_stems = {re.sub(r"\s+", " ", s).strip() for _, s, _ in recs if s.strip()}
+            if len(distinct_stems) < 2:
+                continue
+            uninstantiated_qids: list[str] = []
+            for qid_r, stem_r, consts_r in recs:
+                if any(not re.search(rf"(?<!\d){re.escape(c)}(?!\d)", stem_r) for c in consts_r):
+                    uninstantiated_qids.append(qid_r)
+            if len(set(uninstantiated_qids)) >= 2:
+                static_uninstantiated_warning_items.extend(uninstantiated_qids)
+                emitted_static_keys.add((cid_w, norm_seg))
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="warning",
+                    item_id=uninstantiated_qids[0],
+                    competency_id=cid_w,
+                    message=(
+                        f"[static_misconception_warning_uninstantiated_params] Constante/ecuación estática '{norm_seg[:45]}' "
+                        f"repetida en misconception_warning sin instanciar parámetros del enunciado "
+                        f"({len(set(uninstantiated_qids))} reactivos de {cid_w})."
+                    ),
+                    snippet=norm_seg[:60],
+                ))
+
         return {
             "zero_hints_count": len(zero_hints_items),
             "zero_hints_items": zero_hints_items,
@@ -507,6 +591,7 @@ class ScaffoldingHintsLinter(BaseLinter):
             "bare_formula_misconception_count": len(set(bare_formula_warning_items)),
             "cloned_misconception_warning_count": len(set(cloned_warning_items)),
             "disconnected_warning_numbers_count": len(set(disconnected_example_warning_items)),
+            "static_misconception_warning_uninstantiated_count": len(set(static_uninstantiated_warning_items)),
             "missing_solutions_count": len(missing_solutions),
         }
 
@@ -551,18 +636,41 @@ class ArchitectureDAGLinter(BaseLinter):
         return symbols
 
     @classmethod
+    def _canon_comp_category(cls, c: dict) -> str:
+        raw = str(c.get("category") or c.get("type") or "").strip().lower()
+        if raw in ("skill", "hab", "habilidad"):
+            return "skill"
+        if raw in ("concept", "concepto"):
+            return "concept"
+        if raw in ("fact", "hecho", "prerequisite"):
+            return "fact"
+        cid = str(c.get("id") or "")
+        if cid.startswith("Hab-"):
+            return "skill"
+        if cid.startswith(("H-", "PRE-")):
+            return "fact"
+        return raw or "concept"
+
+    @classmethod
     def _are_competencies_duplicate(cls, c1: dict, c2: dict) -> bool:
         n1 = str(c1.get("name") or c1.get("title") or "").strip().lower()
         n2 = str(c2.get("name") or c2.get("title") or "").strip().lower()
         if n1 and n2 and n1 == n2:
             return True
+        same_category = cls._canon_comp_category(c1) == cls._canon_comp_category(c2)
         stems_n1 = cls._extract_content_stems(n1)
         stems_n2 = cls._extract_content_stems(n2)
-        if not (stems_n1 & stems_n2):
+        shared_n = stems_n1 & stems_n2
+        if not shared_n:
             return False
-        min_name_len = min(len(stems_n1), len(stems_n2))
-        if min_name_len >= 2 and len(stems_n1 & stems_n2) / min_name_len >= 0.75:
-            return True
+        if same_category:
+            min_name_len = min(len(stems_n1), len(stems_n2))
+            if min_name_len >= 2 and len(shared_n) / min_name_len >= 0.75:
+                return True
+        else:
+            union_n = stems_n1 | stems_n2
+            if len(shared_n) >= 3 and union_n and (len(shared_n) / len(union_n)) >= 0.65:
+                return True
         t1 = f"{c1.get('name') or ''} {c1.get('description') or c1.get('description_latex') or ''}"
         t2 = f"{c2.get('name') or ''} {c2.get('description') or c2.get('description_latex') or ''}"
         s1 = cls._extract_content_stems(t1)
@@ -573,7 +681,9 @@ class ArchitectureDAGLinter(BaseLinter):
         m1 = cls._extract_math_symbols(t1)
         m2 = cls._extract_math_symbols(t2)
         math_j = (len(m1 & m2) / len(m1 | m2)) if (m1 and m2) else 0.0
-        return stem_j >= 0.35 or (stem_j >= 0.25 and math_j >= 0.45)
+        if same_category:
+            return stem_j >= 0.35 or (stem_j >= 0.25 and math_j >= 0.45)
+        return stem_j >= 0.40 and math_j >= 0.50
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         competencies = course_data.get("competencies", [])
@@ -1019,7 +1129,9 @@ class UninterpolatedMathVariableLinter(BaseLinter):
     dimension = "D5_katex"
 
     BRACE_VAR_PAT = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
-    LATEX_ARG_PREFIX_PAT = re.compile(r"(?:\\[a-zA-Z]+\s*(?:\[[^\]]*\])?(?:\s*\{[^}]*\})*|[_^])\s*$")
+    LATEX_ARG_PREFIX_PAT = re.compile(
+        r"(?:\\[a-zA-Z]+\s*(?:\[[^\]]*\])?(?:\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\})*|[_^])\s*$"
+    )
     CONSECUTIVE_SIGNS_PAT = re.compile(r"(?:\+\s*-\d+|-\s*-\d+)")
     KNOWN_LATEX_SINGLE_LETTER_OR_MACRO = {
         "n", "i", "j", "k", "t", "x", "y", "z", "p", "d", "R", "C", "N", "E", "P", "F", "V",
@@ -1144,6 +1256,29 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
     dimension = "D1_architecture"
 
     HIGHER_BLOOM = {"apply", "analyze", "evaluate", "create", "aplicar", "analizar", "evaluar", "crear"}
+    BLOOM_WEIGHTS = {
+        "remember": 1.0, "recordar": 1.0,
+        "understand": 2.0, "comprender": 2.0,
+        "apply": 3.0, "aplicar": 3.0,
+        "analyze": 4.0, "analizar": 4.0,
+        "evaluate": 5.0, "evaluar": 5.0,
+        "create": 5.0, "crear": 5.0,
+    }
+    FLOOR_BY_CATEGORY = {"skill": 4.00, "concept": 3.75, "fact": 3.25}
+    M20_MODALITIES = {
+        "open_symbolic", "proof_dag", "adversarial_break",
+        "unstructured_model", "invariant_canvas", "concept_matching",
+    }
+
+    @classmethod
+    def _comp_bucket(cls, cid: str, raw_cat: str) -> str:
+        c = str(raw_cat or "").strip().lower()
+        cid_s = str(cid or "").strip()
+        if c in ("skill", "hab", "habilidad") or cid_s.startswith("Hab-"):
+            return "skill"
+        if c in ("fact", "hecho", "prerequisite") or cid_s.startswith(("H-", "PRE-")):
+            return "fact"
+        return "concept"
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         competencies = course_data.get("competencies", [])
@@ -1157,7 +1292,19 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
         skill_total = 0
         skill_higher_bloom = 0
 
+        bloom_weight_sum = 0.0
+        bloom_evaluated = 0
+        bloom_apply_plus = 0
+        bloom_superior = 0
+        floor_weight_sum = 0.0
+        has_m20_course = any(
+            str(q.get("interaction_type") or q.get("type") or "").strip().lower() in self.M20_MODALITIES
+            for q in questions
+        )
+        coherence_violations: list[tuple[str, str, str]] = []
+
         for q in questions:
+            qid = q.get("id", "unknown")
             cid = q.get("competency_id", "unassigned")
             q_by_comp.setdefault(cid, []).append(q)
             raw_diff = str(q.get("difficulty") or "medium").lower().strip()
@@ -1166,12 +1313,37 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
 
             bloom = str(q.get("bloom_taxonomy_level") or q.get("bloom") or "unspecified").strip()
             bloom_counts[bloom] = bloom_counts.get(bloom, 0) + 1
+            b_low = bloom.lower()
+            b_w = self.BLOOM_WEIGHTS.get(b_low)
 
-            is_skill = comp_cat.get(cid) == "Skill" or str(cid).lower().startswith("hab")
+            bucket = self._comp_bucket(str(cid), str(comp_cat.get(cid, "")))
+            is_skill = bucket == "skill"
             if is_skill:
                 skill_total += 1
-                if bloom.lower() in self.HIGHER_BLOOM:
+                if b_low in self.HIGHER_BLOOM:
                     skill_higher_bloom += 1
+
+            if b_w is not None:
+                bloom_evaluated += 1
+                bloom_weight_sum += b_w
+                floor_weight_sum += self.FLOOR_BY_CATEGORY.get(bucket, 3.75)
+                if b_w >= 3.0:
+                    bloom_apply_plus += 1
+                if b_w >= 4.0:
+                    bloom_superior += 1
+
+                qtype = str(q.get("interaction_type") or q.get("type") or "").strip().lower()
+                coh_reason = None
+                if qtype == "concept_matching" and b_w > 4.0:
+                    coh_reason = f"concept_matching etiquetado como '{bloom}' (> Analyze)"
+                elif qtype in ("fill_in_the_blank", "fib") and b_w > 4.0:
+                    coh_reason = f"fill_in_the_blank etiquetado como '{bloom}' (> Analyze)"
+                elif qtype in ("adversarial_break", "unstructured_model") and b_w < 4.0:
+                    coh_reason = f"{qtype} degradado a '{bloom}' (< Analyze)"
+                elif has_m20_course and qtype in ("multiple_choice_7_options", "multiple_choice", "mc7") and b_w > 3.0:
+                    coh_reason = f"MC7 en curso M20 etiquetado como '{bloom}' (> Apply)"
+                if coh_reason:
+                    coherence_violations.append((qid, str(cid), coh_reason))
 
         eligible_comps = 0
         zpd_dead_comps = []
@@ -1228,6 +1400,46 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
                 ),
             ))
 
+        bloom_weighted_index = round(bloom_weight_sum / bloom_evaluated, 3) if bloom_evaluated else 0.0
+        adaptive_bloom_floor = round(floor_weight_sum / bloom_evaluated, 3) if bloom_evaluated else 3.85
+        bloom_index_gap = round(max(0.0, adaptive_bloom_floor - bloom_weighted_index), 3) if bloom_evaluated else 0.0
+        bloom_apply_plus_pct = round((bloom_apply_plus / bloom_evaluated * 100.0) if bloom_evaluated else 100.0, 2)
+        bloom_superior_pct = round((bloom_superior / bloom_evaluated * 100.0) if bloom_evaluated else 100.0, 2)
+
+        if bloom_evaluated == 0:
+            bloom_tier = "N/A"
+        elif bloom_weighted_index + 1e-9 >= adaptive_bloom_floor:
+            bloom_tier = "ÉLITE"
+        elif bloom_weighted_index >= 3.60:
+            bloom_tier = "SÓLIDO"
+        else:
+            bloom_tier = "BAJO"
+
+        if len(questions) >= 20 and bloom_evaluated >= 20 and bloom_weighted_index + 1e-9 < adaptive_bloom_floor:
+            rep_q = questions[0] if questions else {}
+            issues.append(LintIssue(
+                linter=self.name,
+                dimension="D4_alignment",
+                severity="warning",
+                item_id=rep_q.get("id", "course_bloom"),
+                competency_id=rep_q.get("competency_id", "global"),
+                message=(
+                    f"Índice Bloom ponderado por debajo del piso adaptativo: {bloom_weighted_index:.2f}/5.0 "
+                    f"(piso {adaptive_bloom_floor:.2f}, brecha -{bloom_index_gap:.2f}; Analyze+Evaluate={bloom_superior_pct:.1f}%)."
+                ),
+            ))
+
+        if len(questions) >= 20 and coherence_violations:
+            for v_qid, v_cid, v_msg in coherence_violations[:10]:
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension="D4_alignment",
+                    severity="warning",
+                    item_id=v_qid,
+                    competency_id=v_cid,
+                    message=f"Incoherencia Bloom modalidad x nivel: {v_msg}.",
+                ))
+
         return {
             "difficulty_distribution": diff_counts,
             "bloom_distribution": bloom_counts,
@@ -1241,6 +1453,15 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
             "skill_questions_total": skill_total,
             "skill_higher_bloom_count": skill_higher_bloom,
             "skill_higher_bloom_pct": round((skill_higher_bloom / skill_total * 100.0) if skill_total else 100.0, 2),
+            "bloom_evaluated_count": bloom_evaluated,
+            "bloom_weighted_index": bloom_weighted_index,
+            "adaptive_bloom_floor": adaptive_bloom_floor,
+            "bloom_index_gap": bloom_index_gap,
+            "bloom_apply_plus_pct": bloom_apply_plus_pct,
+            "bloom_superior_pct": bloom_superior_pct,
+            "bloom_tier": bloom_tier,
+            "bloom_coherence_violations_count": len(coherence_violations),
+            "bloom_coherence_sample_items": [qid for qid, _, _ in coherence_violations[:15]],
         }
 
 
@@ -1260,9 +1481,19 @@ class RetrievalModalityDiversityLinter(BaseLinter):
         questions = course_data.get("questions", [])
         comp_cat = {c.get("id"): (c.get("category") or c.get("type") or "Other") for c in competencies}
 
+        bloom_sup_types = {
+            "open_symbolic",
+            "proof_dag",
+            "adversarial_break",
+            "unstructured_model",
+            "invariant_canvas",
+            "concept_matching",
+        }
         mc_count = 0
         fib_count = 0
         ms_count = 0
+        bloom_superior_count = 0
+        bloom_superior_breakdown: dict[str, int] = {k: 0 for k in sorted(bloom_sup_types)}
         other_count = 0
         q_by_comp: dict[str, list[dict]] = {}
 
@@ -1276,22 +1507,84 @@ class RetrievalModalityDiversityLinter(BaseLinter):
                 fib_count += 1
             elif "multiple_select" in qtype:
                 ms_count += 1
+            elif qtype in bloom_sup_types:
+                bloom_superior_count += 1
+                bloom_superior_breakdown[qtype] = bloom_superior_breakdown.get(qtype, 0) + 1
             else:
                 other_count += 1
 
         total_q = len(questions)
+        is_m20_course = (
+            bloom_superior_count > 0
+            or course_data.get("contract_version") == 2
+            or (isinstance(course_data.get("metadata"), dict) and course_data["metadata"].get("contract_version") == 2)
+            or any(bool(c.get("recommended_modalities")) for c in competencies if isinstance(c, dict))
+        )
         recognition_only_skills = []
+        skill_mc7_violations = []
+        low_active_quota_competencies = []
+        active_prod_types = {"fill_in_the_blank", "open_ended", "fib"} | (bloom_sup_types - {"concept_matching"})
+        all_active_types = {"fill_in_the_blank", "open_ended", "fib", "multiple_select"} | bloom_sup_types
+
         for cid, qlist in q_by_comp.items():
-            is_skill = comp_cat.get(cid) == "Skill" or str(cid).lower().startswith("hab")
+            is_skill = str(comp_cat.get(cid) or "").lower() == "skill" or str(cid).lower().startswith("hab")
+            qtypes_c = [str(q.get("interaction_type") or q.get("type") or "").lower().strip() for q in qlist]
             if is_skill and len(qlist) >= 10:
-                has_fib = any(
-                    "fill_in_the_blank" in qt or "open_ended" in qt or qt == "fib"
-                    for qt in (str(q.get("interaction_type") or q.get("type") or "").lower().strip() for q in qlist)
+                has_active_prod = any(
+                    ("fill_in_the_blank" in qt or "open_ended" in qt or qt in active_prod_types)
+                    for qt in qtypes_c
                 )
-                if not has_fib:
+                if not has_active_prod:
                     recognition_only_skills.append(cid)
 
-        if total_q >= 20 and fib_count == 0 and ms_count == 0:
+            c_total = len(qlist)
+            c_mc7 = sum(1 for qt in qtypes_c if "multiple_choice" in qt or qt in ("mc", "mc7"))
+            c_active = sum(
+                1 for qt in qtypes_c
+                if ("fill_in_the_blank" in qt or "open_ended" in qt or "multiple_select" in qt or qt in all_active_types)
+            )
+            c_active_pct = round((c_active / c_total * 100.0) if c_total else 0.0, 2)
+
+            if is_skill and c_mc7 > 0:
+                skill_mc7_violations.append(cid)
+                if is_m20_course:
+                    first_mc7_id = next(
+                        (
+                            q.get("id", cid)
+                            for q, qt in zip(qlist, qtypes_c)
+                            if "multiple_choice" in qt or qt in ("mc", "mc7")
+                        ),
+                        cid,
+                    )
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="critical",
+                        item_id=first_mc7_id,
+                        competency_id=cid,
+                        message=(
+                            f"[M20-MC7-CAP] Competencia Skill '{cid}' contiene {c_mc7}/{c_total} reactivos "
+                            f"de opción múltiple (MC7); M20 exige estrictamente 0 MC7 en competencias Skill."
+                        ),
+                    ))
+
+            below_active_quota = (c_total >= 5 and c_active_pct < 80.0) or (c_total == 4 and c_active_pct < 75.0)
+            if below_active_quota:
+                low_active_quota_competencies.append(cid)
+                if is_m20_course:
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="warning",
+                        item_id=qlist[0].get("id", cid) if qlist else cid,
+                        competency_id=cid,
+                        message=(
+                            f"[M20-ACTIVE-QUOTA] Competencia '{cid}' alcanza solo {c_active}/{c_total} "
+                            f"({c_active_pct:.1f}%) en modalidades activas (mínimo requerido >= 80% en M20)."
+                        ),
+                    ))
+
+        if total_q >= 20 and fib_count == 0 and ms_count == 0 and bloom_superior_count == 0:
             issues.append(LintIssue(
                 linter=self.name,
                 dimension=self.dimension,
@@ -1300,20 +1593,29 @@ class RetrievalModalityDiversityLinter(BaseLinter):
                 competency_id=questions[0].get("competency_id", "global"),
                 message=(
                     f"Monocultivo absoluto de reconocimiento pasivo: {mc_count}/{total_q} (100%) son "
-                    f"opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select."
+                    f"opción múltiple (MC7), con 0% fill_in_the_blank, 0% multiple_select y 0% modalidades Bloom Superior."
                 ),
             ))
 
+        active_total = fib_count + ms_count + bloom_superior_count
         return {
             "mc7_count": mc_count,
             "fib_count": fib_count,
             "ms_count": ms_count,
+            "bloom_superior_count": bloom_superior_count,
+            "bloom_superior_breakdown": bloom_superior_breakdown,
             "mc7_share_pct": round((mc_count / total_q * 100.0) if total_q else 0.0, 2),
             "fib_share_pct": round((fib_count / total_q * 100.0) if total_q else 0.0, 2),
             "ms_share_pct": round((ms_count / total_q * 100.0) if total_q else 0.0, 2),
-            "active_generation_or_discrimination_pct": round(((fib_count + ms_count) / total_q * 100.0) if total_q else 0.0, 2),
+            "bloom_superior_share_pct": round((bloom_superior_count / total_q * 100.0) if total_q else 0.0, 2),
+            "active_generation_or_discrimination_pct": round((active_total / total_q * 100.0) if total_q else 0.0, 2),
             "recognition_only_skill_competencies_count": len(recognition_only_skills),
             "recognition_only_skill_competencies": recognition_only_skills[:20],
+            "m20_contract_active": is_m20_course,
+            "skill_mc7_violations_count": len(skill_mc7_violations),
+            "skill_mc7_violations": skill_mc7_violations[:20],
+            "low_active_quota_competencies_count": len(low_active_quota_competencies),
+            "low_active_quota_competencies": low_active_quota_competencies[:20],
         }
 
 
@@ -1886,7 +2188,15 @@ class AntiGamingPsychometricLinter(BaseLinter):
                         ans_set.add(json.dumps(ans_val, sort_keys=True))
                 else:
                     ans_val = q.get("correct_answer") if q.get("correct_answer") is not None else q.get("answer")
-                    ans_set.add(json.dumps(ans_val, sort_keys=True))
+                    m20_spec = None
+                    for m20_k in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+                        if isinstance(q.get(m20_k), dict):
+                            m20_spec = q[m20_k]
+                            break
+                    if m20_spec is not None:
+                        ans_set.add(json.dumps({"ans": ans_val, "spec": m20_spec}, sort_keys=True, default=str))
+                    else:
+                        ans_set.add(json.dumps(ans_val, sort_keys=True, default=str))
             if len(ans_set) <= 4:
                 memorizable_comps.append({"competency_id": cid, "unique_answers": len(ans_set), "total_items": len(qlist)})
                 issues.append(LintIssue(
@@ -2158,12 +2468,15 @@ class FibRoundingContractLinter(BaseLinter):
 
 class MsLengthBiasLinter(BaseLinter):
     """Audits average option length ratio len(true_options) / len(false_options)
-    in multiple_select items and flags courses where > 60% exceed 1.08x.
+    in multiple_select items and flags courses where > 60% exceed 1.15x
+    (aligned with pipeline [R-15-MS] bounds and >= 8-char noise guard).
     """
     name = "ms_length_bias_linter"
     dimension = "D2_assessment"
 
-    RATIO_THRESHOLD = 1.08
+    RATIO_THRESHOLD = 1.15
+    MIN_AVG_LEN = 15.0
+    MIN_ABS_DIFF = 8.0
     ITEM_PCT_THRESHOLD = 0.60
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
@@ -2192,7 +2505,11 @@ class MsLengthBiasLinter(BaseLinter):
 
             evaluated_ms += 1
             ratio = avg_true / avg_false
-            if ratio > self.RATIO_THRESHOLD:
+            if (
+                min(avg_true, avg_false) >= self.MIN_AVG_LEN
+                and abs(avg_true - avg_false) >= self.MIN_ABS_DIFF
+                and ratio > self.RATIO_THRESHOLD
+            ):
                 qid = q.get("id", "unknown")
                 cid = q.get("competency_id", "unassigned")
                 biased_items.append((qid, cid, round(ratio, 3)))
@@ -2217,6 +2534,67 @@ class MsLengthBiasLinter(BaseLinter):
             "biased_ms_items_count": len(biased_items),
             "biased_ms_pct": biased_pct,
             "biased_ms_sample_items": [qid for qid, _, _ in biased_items[:15]],
+        }
+
+
+class PhantomNumericRationaleLinter(BaseLinter):
+    """Detects phantom numeric literals leaked into error_rationale of open_symbolic items."""
+    name = "phantom_numeric_rationale_linter"
+    dimension = "D3_scaffolding"
+
+    DECIMAL_PAT = re.compile(r"(?<![a-zA-Z0-9_])\d+\.\d+(?![a-zA-Z0-9_])")
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        evaluated_symbolic = 0
+        affected_items: list[str] = []
+
+        for q in questions:
+            qtype = str(q.get("interaction_type") or q.get("type") or "").strip().lower()
+            if qtype != "open_symbolic":
+                continue
+            evaluated_symbolic += 1
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+            stem = str(q.get("stem") or "")
+            ca = q.get("correct_answer")
+            if isinstance(ca, dict):
+                ca_str = str(ca.get("expression") or ca.get("value") or ca.get("canonical_algebraic") or "")
+            else:
+                ca_str = str(ca or "")
+
+            for dd_idx, dd in enumerate(q.get("diagnostic_distractors") or []):
+                if not isinstance(dd, dict):
+                    continue
+                rat = str(dd.get("error_rationale") or "")
+                expr = str(dd.get("expression") or dd.get("value") or "")
+                allowed = f"{stem} {ca_str} {expr}"
+                phantom_tok = None
+                for tok in self.DECIMAL_PAT.findall(rat):
+                    if tok not in allowed:
+                        phantom_tok = tok
+                        break
+                if phantom_tok is not None:
+                    if qid not in affected_items:
+                        affected_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="warning",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=(
+                            f"Fuga numérica fantasma en open_symbolic diagnostic_distractors[{dd_idx}].error_rationale: "
+                            f"el decimal '{phantom_tok}' no aparece en el enunciado ni en la expresión simbólica."
+                        ),
+                        snippet=rat[:120],
+                    ))
+                    break
+
+        return {
+            "total_open_symbolic": evaluated_symbolic,
+            "phantom_numeric_items_count": len(affected_items),
+            "phantom_numeric_sample_items": affected_items[:15],
         }
 
 
@@ -2420,6 +2798,7 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
     RAW_IDENT_MATH_PAT = re.compile(r"\$[a-zA-Z]+_(?:hat|bar|tilde|vec|star|dot|sq|ols|mle|var|est)\b")
     RAW_SCI_FLOAT_MATH_PAT = re.compile(r"(\${1,2})(?:\\.|[^$\\])*\b-?\d+(?:\.\d+)?e[+-]0?\d+\b(?:\\.|[^$\\])*\1")
     RAW_ASTERISK_MATH_PAT = re.compile(r"(\${1,2})(?:\\.|[^$\\])*\d\s*\*\s*\d(?:\\.|[^$\\])*\1")
+    MATH_SEG_PAT = re.compile(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", re.DOTALL)
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         questions = course_data.get("questions", [])
@@ -2427,6 +2806,7 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
         raw_ident_items = []
         raw_sci_float_items = []
         raw_asterisk_items = []
+        tautological_identity_items = []
 
         for q in questions:
             qid = q.get("id", "unknown")
@@ -2487,6 +2867,48 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
                         snippet=m_ast.group(0)[:50],
                     ))
 
+                if field_name in ("solution_steps", "solution_text") or field_name.endswith("_rationale"):
+                    clean_sol = txt.replace("\\$", "")
+                    for mb_taut in self.MATH_SEG_PAT.finditer(clean_sol):
+                        seg = mb_taut.group(1) if mb_taut.group(0).startswith("$$") else mb_taut.group(2)
+                        if not seg or "=" not in seg:
+                            continue
+                        if any(op in seg for op in ("\\neq", "\\ne ", "\\leq", "\\geq", "\\equiv", "!=", "<=", ">=")):
+                            continue
+                        sides = [re.sub(r"\s+", "", s) for s in seg.split("=")]
+                        taut_pair = next(
+                            (
+                                (sides[i], sides[i + 1])
+                                for i in range(len(sides) - 1)
+                                if sides[i] == sides[i + 1]
+                                and (
+                                    len(sides[i]) >= 4
+                                    or (
+                                        field_name.endswith("_rationale")
+                                        and bool(sides[i] and sides[i].lstrip("-").replace(".", "", 1).isdigit())
+                                    )
+                                )
+                            ),
+                            None,
+                        )
+                        if taut_pair:
+                            tautological_identity_items.append(qid)
+                            tag_suffix = (
+                                " [R-TAUTOLOGICAL-PARAM-EQUALITY-IN-RATIONALE]"
+                                if field_name.endswith("_rationale")
+                                else ""
+                            )
+                            issues.append(LintIssue(
+                                linter=self.name,
+                                dimension=self.dimension,
+                                severity="warning",
+                                item_id=qid,
+                                competency_id=cid,
+                                message=f"Identidad tautológica redundante '{taut_pair[0]}={taut_pair[1]}' en '{field_name}'{tag_suffix}",
+                                snippet=f"{taut_pair[0]}={taut_pair[1]}"[:50],
+                            ))
+                            break
+
         return {
             "prose_in_katex_text_items_count": len(set(prose_in_text_items)),
             "prose_in_katex_text_sample_items": list(set(prose_in_text_items))[:15],
@@ -2496,6 +2918,8 @@ class KaTeXFrontendErgonomicsLinter(BaseLinter):
             "raw_scientific_float_sample_items": list(set(raw_sci_float_items))[:15],
             "raw_asterisk_math_items_count": len(set(raw_asterisk_items)),
             "raw_asterisk_math_sample_items": list(set(raw_asterisk_items))[:15],
+            "tautological_identity_items_count": len(set(tautological_identity_items)),
+            "tautological_identity_sample_items": list(set(tautological_identity_items))[:15],
         }
 
 
@@ -2546,7 +2970,14 @@ def compute_mastery_path_readiness(summaries: dict[str, Any], total_comps: int, 
         band_score = 12.0 * ((three_b * 1.0 + two_b * 0.6) / elig_c)
     else:
         band_score = 12.0
-    bloom_score = 8.0 * (zpd.get("skill_higher_bloom_pct", 100.0) / 100.0)
+    bloom_idx = zpd.get("bloom_weighted_index", 0.0)
+    bloom_floor = zpd.get("adaptive_bloom_floor", 3.85)
+    bloom_eval_cnt = zpd.get("bloom_evaluated_count", 0)
+    if total_questions >= 20 and bloom_eval_cnt >= 20 and bloom_idx > 0:
+        bloom_index_attainment = min(1.0, max(0.0, (bloom_idx - 2.50) / max(0.5, bloom_floor - 2.50)))
+    else:
+        bloom_index_attainment = 1.0
+    bloom_score = 4.0 * (zpd.get("skill_higher_bloom_pct", 100.0) / 100.0) + 4.0 * bloom_index_attainment
     p1_zpd = round(max(0.0, min(20.0, band_score + bloom_score)), 2)
 
     # Pillar 2: Retrieval Modality & Anti-Memorization (20 pts)
@@ -2800,8 +3231,13 @@ def compute_deterministic_rubric_scores(
     d2 = max(0.0, min(5.0, round(d2, 2)))
 
     active_gen = mod.get("active_generation_or_discrimination_pct", 0.0)
+    bloom_sup_str = (
+        f", BloomSup={mod.get('bloom_superior_share_pct', 0.0)}%"
+        if mod.get("bloom_superior_count", 0) > 0
+        else ""
+    )
     d2_fb = (
-        f"Modalidad: MC7={mod.get('mc7_share_pct', 0.0)}%, FIB={mod.get('fib_share_pct', 0.0)}%, MS={mod.get('ms_share_pct', 0.0)}% "
+        f"Modalidad: MC7={mod.get('mc7_share_pct', 0.0)}%, FIB={mod.get('fib_share_pct', 0.0)}%, MS={mod.get('ms_share_pct', 0.0)}%{bloom_sup_str} "
         f"({active_gen}% evocación activa/discriminación). "
         f"Distractores: {dist.get('total_distractors_evaluated', 0)} evaluados con {cov}% cobertura de error_rationale "
         f"(imposibles por dominio={dom_cnt}, claves corruptas={corrupt_key_cnt}, sesgo MS={ms_bias.get('biased_ms_pct', 0.0)}%)."
@@ -2856,6 +3292,16 @@ def compute_deterministic_rubric_scores(
     bloom_skill_pct = zpd.get("skill_higher_bloom_pct", 100.0)
     if bloom_skill_pct < 80.0:
         d4 -= round((80.0 - bloom_skill_pct) * 0.02, 2)
+    bloom_idx = zpd.get("bloom_weighted_index", 0.0)
+    bloom_floor = zpd.get("adaptive_bloom_floor", 3.85)
+    bloom_sup_pct = zpd.get("bloom_superior_pct", 0.0)
+    bloom_tier = zpd.get("bloom_tier", "N/A")
+    bloom_coh_cnt = zpd.get("bloom_coherence_violations_count", 0)
+    bloom_eval_cnt = zpd.get("bloom_evaluated_count", 0)
+    if total_questions >= 20 and bloom_eval_cnt >= 20 and bloom_idx > 0 and bloom_idx < bloom_floor:
+        d4 -= min(0.8, round((bloom_floor - bloom_idx) * 1.2, 2))
+    if total_questions >= 20 and bloom_coh_cnt > 0:
+        d4 -= min(0.4, round(bloom_coh_cnt * 0.05, 2))
     cd_cnt = ag.get("cross_domain_prefix_items_count", 0)
     if cd_cnt > 0:
         d4 -= min(0.8, round((cd_cnt / total_q) * 10.0, 2))
@@ -2868,8 +3314,9 @@ def compute_deterministic_rubric_scores(
     d4 = max(0.0, min(4.0, round(d4, 2)))
 
     d4_fb = (
-        f"Alineación cognitiva de Bloom: {bloom_skill_pct}% de habilidades prácticas en niveles superiores (Apply+). "
-        f"Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        f"Alineación cognitiva de Bloom: {bloom_skill_pct}% de habilidades prácticas en Apply+; "
+        f"Índice Bloom ponderado: {bloom_idx:.2f}/5.0 (piso adaptativo {bloom_floor:.2f}, "
+        f"{bloom_sup_pct:.1f}% Analyze+Evaluate, tier: {bloom_tier}, incoherencias={bloom_coh_cnt})."
     )
 
     # Dimensión 5: Accesibilidad, Ergonomía Cognitiva en UI y Sintaxis KaTeX (0 a 2.0 pts)
@@ -2885,10 +3332,15 @@ def compute_deterministic_rubric_scores(
     sci_ast = erg.get("raw_scientific_float_items_count", 0) + erg.get("raw_asterisk_math_items_count", 0)
     if sci_ast > 0:
         d5 -= min(0.3, round(sci_ast * 0.02, 2))
+    taut_cnt = erg.get("tautological_identity_items_count", 0)
+    if taut_cnt > 0:
+        d5 -= min(0.2, round(taut_cnt * 0.03, 2))
     concat_cnt = uninterp.get("string_concat_collision_items_count", 0)
     if concat_cnt > 0:
         d5 -= min(0.5, round(concat_cnt * 0.05, 2))
-    residues = tpl.get("template_variable_residue_count", 0) + blind.get("blind_string_replacement_count", 0)
+    tpl_res = tpl.get("template_variable_residue_count", 0)
+    blind_res = blind.get("blind_string_replacement_count", 0)
+    residues = tpl_res + blind_res
     if residues > 0:
         d5 -= min(0.5, round(residues * 0.1, 2))
     d5 = max(0.0, min(2.0, round(d5, 2)))
@@ -2896,7 +3348,9 @@ def compute_deterministic_rubric_scores(
     d5_fb = (
         f"Sintaxis KaTeX: {crit_katex} errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). "
         f"Ergonomía: {prose_cnt} observaciones de prosa en \\text{{...}}, {raw_ids} identificadores crudos, "
-        f"{concat_cnt} colisiones por concatenación y {sci_ast} formatos flotantes/asteriscos crudos."
+        f"{concat_cnt} colisiones por concatenación, {taut_cnt} identidades tautológicas, "
+        f"{sci_ast} formatos flotantes/asteriscos crudos y {residues} residuos de plantilla/reemplazo "
+        f"(template_vars={tpl_res}, blind_repl={blind_res})."
     )
 
     raw_subtotal = round(d1 + d2 + d3 + d4 + d5, 2)
@@ -2961,6 +3415,16 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
     mpri_score = mpri_data.get("mpri_score", 100.0)
     mpri_tier = mpri_data.get("mpri_tier", "GOLD MASTERY PATH")
     mpri_pillars = mpri_data.get("pillars", {})
+    zpd_sum = telemetry.get("dimension_summaries", {}).get("zpd_progression_linter", {})
+    bloom_index_meta = {
+        "weighted_index": zpd_sum.get("bloom_weighted_index", 0.0),
+        "adaptive_floor": zpd_sum.get("adaptive_bloom_floor", 3.85),
+        "gap": zpd_sum.get("bloom_index_gap", 0.0),
+        "apply_plus_pct": zpd_sum.get("bloom_apply_plus_pct", 100.0),
+        "superior_pct": zpd_sum.get("bloom_superior_pct", 100.0),
+        "tier": zpd_sum.get("bloom_tier", "N/A"),
+        "coherence_violations_count": zpd_sum.get("bloom_coherence_violations_count", 0),
+    }
 
     today_str = datetime.date.today().isoformat()
     is_empty_course = total_comps == 0 or total_questions == 0
@@ -3026,6 +3490,7 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
             "total_competencies": total_comps,
             "total_questions": total_questions,
             "question_types_distribution": types_count,
+            "bloom_index": bloom_index_meta,
             "platform_status": platform_status,
             "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
             "evaluation_date": today_str,
@@ -3061,6 +3526,7 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
         f"- **Calificación Final Certificada:** **{final_score:.1f} / 20.0 pts**",
         f"- **Quality Tier:** **{quality_tier}**",
         f"- **Mastery Path Readiness Index (MPRI):** **{mpri_score:.2f} / 100.0** ({mpri_tier})",
+        f"- **Índice Bloom Ponderado (1–5):** **{bloom_index_meta['weighted_index']:.2f} / 5.0** (piso adaptativo {bloom_index_meta['adaptive_floor']:.2f} | Analyze+Evaluate: {bloom_index_meta['superior_pct']:.1f}% | Tier: **{bloom_index_meta['tier']}**)",
         "",
         "---",
         "",
@@ -3160,6 +3626,7 @@ class AuditLinterRegistry:
             DomainImpossibleDistractorLinter(),
             FibRoundingContractLinter(),
             MsLengthBiasLinter(),
+            PhantomNumericRationaleLinter(),
         ]
         self.domain_linters: dict[str, list[BaseLinter]] = {}
 
@@ -3285,6 +3752,15 @@ class AuditLinterRegistry:
             "string_concat_collisions": [],
             "disconnected_numeric_rationales": [],
             "duplicate_competencies": [],
+            "sympy_in_katex": [],
+            "phantom_numeric_rationale": [],
+            "bloom_alignment": [],
+            "ms_length_bias": (
+                list(summaries.get("ms_length_bias_linter", {}).get("biased_ms_sample_items", []))
+                if summaries.get("ms_length_bias_linter", {}).get("total_ms_items", 0) >= 5
+                and summaries.get("ms_length_bias_linter", {}).get("biased_ms_pct", 0.0) >= 30.0
+                else []
+            ),
         }
 
         issues_by_item: dict[str, list[str]] = {}
@@ -3295,7 +3771,10 @@ class AuditLinterRegistry:
                 issues_by_item[qid] = []
             issues_by_item[qid].append(f"[{iss.severity.upper()}] {iss.message}")
 
-            if iss.linter == "katex_frontend_ergonomics_linter":
+            if iss.linter == "zpd_progression_linter" and iss.dimension == "D4_alignment":
+                if qid not in risk_clusters["bloom_alignment"]:
+                    risk_clusters["bloom_alignment"].append(qid)
+            elif iss.linter == "katex_frontend_ergonomics_linter":
                 if qid not in risk_clusters["katex_ergonomics"]:
                     risk_clusters["katex_ergonomics"].append(qid)
                 if qid not in risk_clusters["katex_issues"]:
@@ -3303,6 +3782,11 @@ class AuditLinterRegistry:
             elif iss.linter == "uninterpolated_math_variable_linter" and "concatenación" in iss.message.lower():
                 if qid not in risk_clusters["string_concat_collisions"]:
                     risk_clusters["string_concat_collisions"].append(qid)
+                if qid not in risk_clusters["katex_issues"]:
+                    risk_clusters["katex_issues"].append(qid)
+            elif iss.linter == "katex_syntax_linter" and "sympy" in iss.message.lower():
+                if qid not in risk_clusters["sympy_in_katex"]:
+                    risk_clusters["sympy_in_katex"].append(qid)
                 if qid not in risk_clusters["katex_issues"]:
                     risk_clusters["katex_issues"].append(qid)
             elif iss.dimension == "D5_katex" and qid not in risk_clusters["katex_issues"]:
@@ -3326,6 +3810,14 @@ class AuditLinterRegistry:
                         risk_clusters["boilerplate_hints"].append(qid)
                 if qid not in risk_clusters["scaffolding_flaws"]:
                     risk_clusters["scaffolding_flaws"].append(qid)
+            elif iss.linter == "phantom_numeric_rationale_linter":
+                if qid not in risk_clusters["phantom_numeric_rationale"]:
+                    risk_clusters["phantom_numeric_rationale"].append(qid)
+                if qid not in risk_clusters["scaffolding_flaws"]:
+                    risk_clusters["scaffolding_flaws"].append(qid)
+            elif iss.linter == "ms_length_bias_linter":
+                if qid not in risk_clusters["ms_length_bias"]:
+                    risk_clusters["ms_length_bias"].append(qid)
             elif iss.dimension == "D3_scaffolding" and qid not in risk_clusters["scaffolding_flaws"]:
                 risk_clusters["scaffolding_flaws"].append(qid)
             elif iss.linter == "diagnostic_rationale_alignment_linter":

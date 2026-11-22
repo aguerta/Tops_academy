@@ -15,6 +15,7 @@ import ast
 import copy
 import hashlib
 import json
+import logging
 import os
 import re
 import sys
@@ -30,6 +31,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import jsonschema
 
+_logger = logging.getLogger(__name__)
+
 # Add skills root and project src to sys.path so engine and validator can be imported directly
 _skills_root = Path(__file__).parent.resolve()
 if str(_skills_root) not in sys.path:
@@ -42,11 +45,16 @@ if str(_src_dir) not in sys.path and _src_dir.is_dir():
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
+from engine import fast_json
 from engine.assemble import assemble_question, format_template_string
 from engine.diversity import (
     evaluate_competency_diversity,
     evaluate_slot_rationale_diversity,
     mask_stem_numbers,
+)
+from engine.epistemic_closure import (
+    check_epistemic_closure,
+    check_open_symbolic_answer_closure,
 )
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
@@ -65,515 +73,128 @@ from engine.sandbox import (
 )
 from validator.core import validate_course_content
 
-try:
-    from compile_shard import ShardDataLineLocator
-except ImportError:
-    try:
-        from .compile_shard import ShardDataLineLocator
-    except Exception:
-        ShardDataLineLocator = None
+from engine.shard_locator import ShardDataLineLocator
 
 
-AGENT_WARNING_NOTE = (
-    "NOTA PARA EL AGENTE: NO abras ni inspecciones el código de check_templates.py ni rules.py. "
-    "Corrige directamente el texto en tu script generador."
+from engine.template_diagnostics import (
+    AGENT_WARNING_NOTE,
+    DiagnosticError,
+    build_compact_diagnostic_groups,
+    count_distinct_shard_error_hunks,
+    extract_diagnostic_metadata,
+    find_lines_in_file,
+    find_template_field_line,
+    format_diagnostic_error,
+    format_invariant_error_diagnostic,
+    format_parity_error,
+    get_canonical_invariant_key,
+    normalize_error_string_for_hash,
+    render_compact_aggregated_errors,
+    _format_dry_failure,
+)
+from engine.template_healing import (
+    COMBINED_LATEX,
+    LATEX_PREFIX_PATTERNS,
+    _CONTROL_CHAR_CODE_MAP,
+    _CONTROL_CHAR_LATEX_MAP,
+    _CONTROL_CHAR_TEXT_MAP,
+    _GIVEAWAY_PREFIX_RE,
+    _GIVEAWAY_PREFIX_STR_RE,
+    _atomic_write_bytes,
+    _build_distractor_lookup_from_cta,
+    _extract_template_placeholders,
+    _heal_code_control_chars,
+    _scan_latex_balanced_span,
+    _strip_giveaway_prefix,
+    _wrap_bare_latex_in_rationale,
+    auto_heal_template_data,
+    auto_heal_template_file,
+    check_ast_rf_triple_braces,
+    heal_control_chars_in_obj,
+    heal_control_chars_in_str,
 )
 
 
-class DiagnosticError(str):
-    """Enriched diagnostic error string with structured metadata for canonical aggregation."""
-    rule_tag: str
-    competency: str
-    template: str
-    item_id: Union[str, List[str]]
-    field_name: str
-    snippet: str
-    cause: str
-    actions: List[str]
-    lines: List[int]
-    file_path: Optional[str]
-
-    def __new__(
-        cls,
-        content: str,
-        rule_tag: str = "",
-        competency: str = "",
-        template: str = "",
-        item_id: Union[str, List[str]] = "",
-        field_name: str = "",
-        snippet: str = "",
-        cause: str = "",
-        actions: Optional[List[str]] = None,
-        lines: Optional[List[int]] = None,
-        file_path: Optional[str] = None,
-    ):
-        obj = super().__new__(cls, content)
-        obj.rule_tag = rule_tag
-        obj.competency = competency
-        obj.template = template
-        obj.item_id = item_id
-        obj.field_name = field_name
-        obj.snippet = snippet
-        obj.cause = cause
-        obj.actions = actions or []
-        obj.lines = list(lines) if lines else []
-        obj.file_path = file_path
-        return obj
-
-
-def format_diagnostic_error(
-    rule_tag: str,
-    competency: str,
-    template: str,
-    item_id: Union[str, List[str]],
-    field_name: str,
-    snippet: str,
-    cause: str,
-    actions: List[str],
-    lines: Optional[List[int]] = None,
-    file_path: Optional[str] = None,
-) -> DiagnosticError:
-    """Format validation error with enriched surgical and prescriptive diagnostics."""
-    if isinstance(item_id, list):
-        if not item_id:
-            items_str = "N/A"
-        elif len(item_id) > 5 and all(str(x).startswith("seed=") for x in item_id):
-            seed_ints = sorted(int(str(x).split("=")[1]) for x in item_id if "=" in str(x))
-            items_str = f"semillas {seed_ints[0]}..{seed_ints[-1]} ({len(item_id)} semillas)"
-        elif len(item_id) > 6:
-            items_str = f"{item_id[0]}, {item_id[1]}, ... {item_id[-1]} ({len(item_id)} reactivos)"
-        elif len(item_id) > 1:
-            items_str = ", ".join(str(x) for x in item_id)
-        elif len(item_id) == 1:
-            items_str = str(item_id[0])
-        else:
-            items_str = str(item_id)
-
-        if len(item_id) > 1 or "semillas" in items_str or "reactivos" in items_str:
-            reactivo_label = "Reactivos"
-        else:
-            reactivo_label = "Reactivo"
-    else:
-        items_str = str(item_id)
-        reactivo_label = "Reactivo"
-
-    if lines:
-        unique_lines = sorted(set(lines))
-        if len(unique_lines) == 1:
-            lines_str = f", Línea: {unique_lines[0]}"
-        else:
-            lines_str = f", Líneas: {', '.join(str(l) for l in unique_lines)} ({len(lines)} ocurrencias)"
-    else:
-        lines_str = ""
-
-    actions_formatted = "\n".join(f"      {idx + 1}. {act}" for idx, act in enumerate(actions))
-    primary_action = actions[0] if actions else "Corrige el archivo generador."
-    raw_str = (
-        f"[-] [{rule_tag}]\n"
-        f"    UBICACIÓN: Competencia: '{competency}', Plantilla: '{template}', {reactivo_label}: '{items_str}'{lines_str}, Campo: '{field_name}'\n"
-        f"    FRAGMENTO INFRACTOR: {snippet}\n"
-        f"    CAUSA: {cause}\n"
-        f"    ACTION REQUIRED: {primary_action}\n"
-        f"    ACCIONES CORRECTIVAS:\n"
-        f"{actions_formatted}\n"
-        f"    {AGENT_WARNING_NOTE}"
-    )
-    return DiagnosticError(
-        raw_str,
-        rule_tag=rule_tag,
-        competency=competency,
-        template=template,
-        item_id=item_id,
-        field_name=field_name,
-        snippet=snippet,
-        cause=cause,
-        actions=actions,
-        lines=lines or [],
-        file_path=file_path,
-    )
-
-
-def find_lines_in_file(fpath: Path, pattern: str) -> List[int]:
-    """Scan file lines for a pattern or snippet to dynamically identify offending lines."""
-    if not fpath.is_file() or not pattern:
-        return []
-    try:
-        lines = fpath.read_text(encoding="utf-8", errors="replace").splitlines()
-        clean_pat = pattern.strip()
-        if len(clean_pat) > 50:
-            clean_pat = clean_pat[:50].strip()
-        found = []
-        for idx, line in enumerate(lines, start=1):
-            if clean_pat in line:
-                found.append(idx)
-        return found
-    except Exception:
-        return []
-
-
-def find_template_field_line(fpath: Path, tpl_id: str, field_name: Optional[str] = None) -> List[int]:
-    """Scan file lines to locate template ID block and optionally field_name within that block."""
-    if not fpath.is_file() or not tpl_id:
-        return []
-    try:
-        lines = fpath.read_text(encoding="utf-8", errors="replace").splitlines()
-        tpl_idx = -1
-        # Find template id line
-        for idx, l in enumerate(lines, start=1):
-            if f'"{tpl_id}"' in l or f"'{tpl_id}'" in l:
-                tpl_idx = idx
-                break
-        if tpl_idx == -1:
-            return []
-        if not field_name:
-            return [tpl_idx]
-        # Search forward for field_name until next template id or end of object
-        field_target = f'"{field_name}"'
-        field_target_alt = f"'{field_name}'"
-        for idx in range(tpl_idx, min(tpl_idx + 150, len(lines) + 1)):
-            line_str = lines[idx - 1]
-            if field_target in line_str or field_target_alt in line_str:
-                return [idx]
-            # Stop if we hit the next template
-            if idx > tpl_idx and ('"id":' in line_str or "'id':" in line_str):
-                break
-        return [tpl_idx]
-    except Exception:
-        return []
-
-
-def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, Any]:
-    """Extract canonical diagnostic metadata from DiagnosticError or traditional formatted string."""
-    if isinstance(err, DiagnosticError) and getattr(err, "rule_tag", None):
-        return {
-            "rule_tag": err.rule_tag,
-            "competency": err.competency,
-            "template": err.template,
-            "field_name": err.field_name,
-            "snippet": err.snippet,
-            "cause": err.cause,
-            "action": err.actions[0] if err.actions else "Corregir archivo",
-            "lines": list(err.lines),
-            "file_path": err.file_path,
-        }
-
-    err_str = str(err)
-    if "[M3-ARCHETYPES]" in err_str:
-        rule_tag = "M3-ARCHETYPES"
-        m_cid = (
-            re.search(r"competencia\s+'([^']+)'", err_str, re.IGNORECASE)
-            or re.search(r"tuplas\s+de\s+'([^']+)'", err_str, re.IGNORECASE)
-            or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
-        )
-        comp = m_cid.group(1).strip() if m_cid else ""
-        tpl = f"T-{comp}" if comp else ""
-        field_name = "TEMPLATES"
-        m_cause_m3 = re.search(r"\[M3-ARCHETYPES\]\s*(.+?)(?:\s*Nota:|\Z)", err_str)
-        cause = m_cause_m3.group(1).strip() if m_cause_m3 else err_str.splitlines()[0]
-        if "clones idénticos" in err_str:
-            action = (
-                f"Cada uno de los arquetipos de '{comp}' debe tener su propio enunciado y wrapper/generador disjunto (gen_1..4)."
-                if comp else "Diversificar enunciados y generadores de cada arquetipo."
-            )
-        else:
-            action = (
-                f"Agregar tuplas faltantes para '{comp}' en TEMPLATES usando helper parametrizado def _gen_{comp.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
-                if comp else "Agregar tuplas de arquetipos faltantes en TEMPLATES usando helper parametrizado."
-            )
-        snippet = f"TEMPLATES[{comp}]" if comp else "TEMPLATES"
-        return {
-            "rule_tag": rule_tag,
-            "competency": comp,
-            "template": tpl,
-            "field_name": field_name,
-            "snippet": snippet,
-            "cause": cause,
-            "action": action,
-            "lines": [],
-            "file_path": None,
-        }
-
-    if "[STEM-DIVERSITY-GATE]" in err_str or "[DIAG-MAGIC-MULT]" in err_str or "[PSYCHOMETRIC-OPTIONS" in err_str or "[VERIFIER-TAUTOLOGY-DETECTED]" in err_str:
-        if "[STEM-DIVERSITY-GATE]" in err_str:
-            rule_tag = "STEM-DIVERSITY-GATE"
-        elif "[DIAG-MAGIC-MULT]" in err_str:
-            rule_tag = "DIAG-MAGIC-MULT"
-        elif "[VERIFIER-TAUTOLOGY-DETECTED]" in err_str:
-            rule_tag = "VERIFIER-TAUTOLOGY-DETECTED"
-        elif "parenthetical_telltale_linter" in err_str:
-            rule_tag = "PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter"
-        else:
-            rule_tag = "PSYCHOMETRIC-OPTIONS"
-        m_cid = (
-            re.search(r"competency\s+'([^']+)'", err_str, re.IGNORECASE)
-            or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
-        )
-        comp = m_cid.group(1).strip() if m_cid else ""
-        m_tpl = re.search(r"[Ee]n\s+'([^']+)'", err_str)
-        tpl = m_tpl.group(1).strip() if m_tpl else (f"T-{comp}" if comp else "")
-        m_body = re.search(r"\[(?:STEM-DIVERSITY-GATE|DIAG-MAGIC-MULT|PSYCHOMETRIC-OPTIONS|VERIFIER-TAUTOLOGY-DETECTED)(?:[ /A-Za-z0-9_-]*)\]\s*(.+)", err_str)
-        body_txt = m_body.group(1).strip() if m_body else err_str
-        lines: List[int] = []
-        m_line_direct = re.search(r"L[íi]neas?\s*(\d+)", err_str)
-        if m_line_direct:
-            lines = [int(m_line_direct.group(1))]
-
-        if rule_tag == "VERIFIER-TAUTOLOGY-DETECTED":
-            m_fn = re.search(r"ver_fn\s*'([^']+)'", err_str)
-            fn_name = m_fn.group(1).strip() if m_fn else "ver_fn"
-            m_dist = re.search(r"distractor falso\s*'([^']*)'", err_str)
-            dist_val = m_dist.group(1).strip() if m_dist else ""
-            line_str = f" (Línea {lines[0]})" if lines else ""
-            dist_str = f" '{dist_val}'" if dist_val else " incorrecto"
-            cause = f"[{rule_tag}] Verificador ver_fn '{fn_name}' en '{tpl}'{line_str} no refuta distractor{dist_str}."
-            action = "Modificar ver_fn para refutar este distractor falso (verificar propiedades analíticas reales, sin tautología)."
-        elif "Provide >=" in body_txt:
-            parts = body_txt.split("Provide >=", 1)
-            cause = f"[{rule_tag}] {parts[0].strip()}"
-            action = f"Provide >= {parts[1].strip()}"
-        elif "PROHIBIDO ajustar multiplicadores" in body_txt or "Reemplaza los multiplicadores" in body_txt:
-            parts = re.split(r"(?:PROHIBIDO ajustar multiplicadores.*?|Reemplaza los multiplicadores.*)", body_txt)
-            cause = f"[{rule_tag}] {parts[0].strip()}"
-            action = "PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
-        elif "Elimina coletillas parentéticas" in body_txt:
-            parts = body_txt.split("Elimina coletillas parentéticas", 1)
-            cause = f"[{rule_tag}] {parts[0].strip()}"
-            action = f"Elimina coletillas parentéticas {parts[1].strip()}"
-        else:
-            cause = f"[{rule_tag}] {body_txt}"
-            action = "Corregir en las líneas indicadas de shard_XX_data.py."
-        return {
-            "rule_tag": rule_tag,
-            "competency": comp,
-            "template": tpl,
-            "field_name": "TEMPLATES",
-            "snippet": tpl or comp,
-            "cause": cause,
-            "action": action,
-            "lines": lines,
-            "file_path": None,
-        }
-
-    m_rule = re.search(r"^\[-\]\s*\[([^\]]+)\]", err_str, re.MULTILINE)
-    m_loc = re.search(r"UBICACI[ÓO]N:\s*Competencia:\s*'([^']*)',\s*Plantilla:\s*'([^']*)'.*?Campo:\s*'([^']*)'", err_str)
-    m_lines = re.search(r"L[íi]neas?:\s*([0-9,\s]+)", err_str)
-    m_cause = re.search(r"CAUSA:\s*(.+)", err_str)
-    m_act = re.search(r"ACTION REQUIRED:\s*(.+)", err_str)
-    m_snip = re.search(r"FRAGMENTO INFRACTOR:\s*(.+)", err_str)
-
-    rule_tag = m_rule.group(1).strip() if m_rule else "GENERAL: VALIDATION_ERROR"
-    comp = m_loc.group(1).strip() if m_loc else ""
-    tpl = m_loc.group(2).strip() if m_loc else ""
-    field_name = m_loc.group(3).strip() if m_loc else ""
-    cause = m_cause.group(1).strip() if m_cause else err_str.splitlines()[0]
-    action = m_act.group(1).strip() if m_act else "Corregir el archivo infractor."
-    snippet = m_snip.group(1).strip() if m_snip else ""
-
-    lines: List[int] = []
-    if m_lines:
-        for num in re.findall(r"\d+", m_lines.group(1)):
-            lines.append(int(num))
-
-    return {
-        "rule_tag": rule_tag,
-        "competency": comp,
-        "template": tpl,
-        "field_name": field_name,
-        "snippet": snippet,
-        "cause": cause,
-        "action": action,
-        "lines": lines,
-        "file_path": None,
-    }
-
-
-# Auto-curación de caracteres de control ASCII: previene escapes corruptos de LaTeX (\frac, \beta, \alpha, \vec) cuando alguien edita JSON directo
-_CONTROL_CHAR_TEXT_MAP = {
-    "\x0c": r"\f",   # \frac, \forall -> 1 backslash in text (len 2: '\', 'f')
-    "\x08": r"\b",   # \beta, \bar, \binom, \begin -> 1 backslash in text (len 2: '\', 'b')
-    "\x07": r"\a",   # \alpha, \approx -> 1 backslash in text (len 2: '\', 'a')
-    "\x0b": r"\v",   # \vec, \varepsilon -> 1 backslash in text (len 2: '\', 'v')
-    "\x0d": r"\r",   # \rho, \right, \Rightarrow, \rightarrow -> 1 backslash in text (len 2: '\', 'r')
-}
-
-_CONTROL_CHAR_CODE_MAP = {
-    "\x0c": r"\\f",   # In standard Python string literal, \\f escapes backslash for compiler
-    "\x08": r"\\b",
-    "\x07": r"\\a",
-    "\x0b": r"\\v",
-    "\x0d": r"\\r",
-}
-
-_CONTROL_CHAR_LATEX_MAP = _CONTROL_CHAR_TEXT_MAP
-
-LATEX_PREFIX_PATTERNS = [
-    r"rho\b|right\b|Rightarrow\b|rightarrow\b|ightharpoondown\b|ightharpoonup\b|rightleftharpoons\b|rangle\b|rceil\b|rfloor\b|rgroup\b|rhd\b|rule\b|rVert\b",
-    r"frac\b|forall\b|flat\b|frown\b|fbox\b",
-    r"alpha\b|approx\b|angle\b|alert\b|arrow\b|asymp\b|acute\b",
-    r"beta\b|bar\b|begin\b|binom\b|big\b|boldsymbol\b|backslash\b|boxed\b|bullet\b|bot\b|mathbb\b",
-    r"tau\b|theta\b|text\b|times\b|to\b|triangle\b|tilde\b|tanh\b|tan\b|top\b",
-    r"nu\b|neq\b|nabla\b|ni\b|not\b|natural\b",
-    r"vec\b|varepsilon\b|vartheta\b|varphi\b|varpi\b|varrho\b|varsigma\b|vdots\b|vdash\b|vee\b|vert\b",
-]
-COMBINED_LATEX = "|".join(LATEX_PREFIX_PATTERNS)
-
-
-def heal_control_chars_in_str(s: str) -> str:
-    """Heals ASCII control characters resulting from unescaped LaTeX backslashes."""
-    if not isinstance(s, str) or not s:
-        return s
-
-    s = s.replace("\r\n", "\n")
-
-    # 1. LaTeX prefixes collided with control characters
-    s = re.sub(r"\x07(lpha|pprox|ngle|lert|rrow|symp|cute)", r"\\a\1", s)
-    s = re.sub(r"\x08(eta|ar|egin|inom|ig|oldsymbol|ackslash|oxed|ullet|ot)", r"\\b\1", s)
-    s = re.sub(r"\x0b(ec|arepsilon|artheta|arphi|arpi|arrho|arsigma|dots|dash|ee|ert)", r"\\v\1", s)
-    s = re.sub(r"\x0c(rac|orall|lat|rown|box)", r"\\f\1", s)
-    s = re.sub(r"\x0d(ho|ight|ightarrow|ightharpoondown|ightharpoonup|ightleftharpoons|angle|ceil|floor|group|hd|ule|Vert)", r"\\r\1", s)
-    s = re.sub(r"\x09(au|heta|ext|imes|o\b|riangle|tilde|tanh|tan\b|top\b)", r"\\t\1", s)
-    s = re.sub(r"\x0a(u\b|eq\b|abla|i\b|ot\b|atural)", r"\\n\1", s)
-
-    # 2. Bare control characters
-    s = (
-        s.replace("\x07", r"\a")
-        .replace("\x08", r"\b")
-        .replace("\x0b", r"\v")
-        .replace("\x0c", r"\f")
-        .replace("\x0d", r"\r")
-    )
-    return s
-
-
-def heal_control_chars_in_obj(obj: Any) -> Any:
-    """Recursively traverses dictionaries, lists, tuples and heals control chars in all strings."""
-    if isinstance(obj, str):
-        return heal_control_chars_in_str(obj)
-    elif isinstance(obj, dict):
-        return {
-            (heal_control_chars_in_str(k) if isinstance(k, str) else k): heal_control_chars_in_obj(v)
-            for k, v in obj.items()
-        }
-    elif isinstance(obj, list):
-        return [heal_control_chars_in_obj(elem) for elem in obj]
-    elif isinstance(obj, tuple):
-        return tuple(heal_control_chars_in_obj(elem) for elem in obj)
-    return obj
-
-
-def _heal_code_control_chars(code_str: str) -> str:
-    """Restores corrupted ASCII control characters in Python code strings.
-    Distinguishes raw string literals (r'...') where single backslash is needed
-    from standard string literals ('...') where double backslash is needed for AST.
-    """
-    if not any(c in code_str for c in _CONTROL_CHAR_TEXT_MAP):
-        return code_str
-
-    try:
-        import io, tokenize
-        tokens = list(tokenize.tokenize(io.BytesIO(code_str.encode("utf-8")).readline))
-        new_tokens = []
-        token_modified = False
-        for tok in tokens:
-            if tok.type == tokenize.STRING:
-                val = tok.string
-                if any(c in val for c in _CONTROL_CHAR_TEXT_MAP):
-                    is_raw = val.startswith(("r", "R", "fr", "rf", "FR", "RF", "br", "rb", "BR", "RB"))
-                    mapping = _CONTROL_CHAR_TEXT_MAP if is_raw else _CONTROL_CHAR_CODE_MAP
-                    new_val = val
-                    for ctrl, repl in mapping.items():
-                        new_val = new_val.replace(ctrl, repl)
-                    new_tokens.append(tokenize.TokenInfo(tok.type, new_val, tok.start, tok.end, tok.line))
-                    token_modified = True
-                    continue
-            new_tokens.append(tok)
-        if token_modified:
-            res = tokenize.untokenize(new_tokens).decode("utf-8")
-            ast.parse(res)
-            return res
-    except Exception:
-        pass
-
-    # Fallback to standard code mapping
-    new_code = code_str
-    for ctrl, repl in _CONTROL_CHAR_CODE_MAP.items():
-        new_code = new_code.replace(ctrl, repl)
-    try:
-        ast.parse(new_code)
-        return new_code
-    except Exception:
-        return code_str
-
-
-def normalize_error_string_for_hash(text: str) -> str:
-    """Normalize volatile elements in error messages (hex addresses, module uuids, temp paths, timestamps, CRLF) for deterministic hashing."""
-    if not isinstance(text, str):
-        text = str(text)
-    # Normalize CRLF and backslashes
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    text = text.replace("\\", "/")
-    # Strip memory addresses
-    text = re.sub(r"at 0x[0-9a-fA-F]+", "at 0xHEX", text)
-    # Strip ephemeral module names generated with random UUIDs
-    text = re.sub(r"c2c_(?:shard|fix)_mod_[a-zA-Z0-9_-]+_[0-9a-fA-F]{6,8}", "c2c_mod", text)
-    # Strip timestamps (ISO, RFC, or common date formats)
-    text = re.sub(r"\b\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?\b", "<TIMESTAMP>", text)
-    # Strip temp paths and staging paths
-    text = re.sub(r"(?:[A-Za-z]:)?/[^\s:]*?/(?:\.?tmp|temp|\.check_attempts/_staged)[^\s:]*", "<TEMP_PATH>", text, flags=re.IGNORECASE)
-    # Strip ephemeral tmp file names
-    text = re.sub(r"\.[a-zA-Z0-9_-]+\.tmp\.\d+_[0-9a-fA-F]+", "<TMP_FILE>", text)
-    return text.strip()
-
-
-def _extract_template_placeholders(text: str) -> Set[str]:
-    """Extract template variable placeholders {var} or {var:spec} excluding LaTeX macro arguments like \\text{x}, \\begin{env}, \\dot{k}."""
-    placeholders: Set[str] = set()
+def _extract_stem_placeholder_set(text: str) -> Set[str]:
+    """Extract all @var@ and {var} placeholder names from a stem or stem_variant string."""
     if not isinstance(text, str) or not text:
-        return placeholders
+        return set()
+    found: Set[str] = set()
+    for m in re.finditer(r"@([A-Za-z_][A-Za-z0-9_]*)(?::[^@\s{}]+)?@", text):
+        found.add(m.group(1))
+    found.update(_extract_template_placeholders(text))
+    return found
 
-    # 1. PrairieLearn tokens: @var@ or @var:fmt@
-    for m in re.finditer(r"@([a-zA-Z_][a-zA-Z0-9_]*)(?::([^@\s{}]+))?@", text):
-        placeholders.add(m.group(1))
 
-    # 2. Python-style {var} tokens
-    for m in re.finditer(r"(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}(?!\})", text):
-        var_name = m.group(1)
-        fmt_spec = m.group(2)
-        start = m.start()
-        prefix = text[:start].rstrip()
+def _check_stem_variant_parity(template: Dict[str, Any]) -> List[Tuple[str, List[str]]]:
+    """Verify placeholder parity across stem_variants (costo 0 LLM).
 
-        # If it has a format spec like {x:.2f}, it is unconditionally a Python template placeholder
-        if fmt_spec:
-            placeholders.add(var_name)
-            continue
+    Checks only across `stem_variants` (ignoring short/fallback `stem` headers) and flags
+    variants that completely omit placeholders shared by >= 50% of the other variants
+    leaving the variant with zero placeholders or missing core parameters when other
+    variants share >= 2 required parameters and the variant omits all of them.
+    """
+    raw_variants = template.get("stem_variants")
+    if not isinstance(raw_variants, list) or len(raw_variants) < 2:
+        return []
 
-        # Check if preceded by a LaTeX command e.g. \text{var}, \sqrt{var}, \dot{var}, \begin{var}
-        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
-            continue
+    entries: List[Tuple[str, Set[str]]] = []
+    for idx, sv in enumerate(raw_variants):
+        if isinstance(sv, str) and sv.strip():
+            entries.append((f"stem_variants[{idx}]", _extract_stem_placeholder_set(sv)))
 
-        # Check if preceded by second argument of 2-arg macro e.g. \frac{a}{b}
-        if prefix.endswith("}"):
-            depth = 0
-            idx = len(prefix) - 1
-            while idx >= 0:
-                if prefix[idx] == "}":
-                    depth += 1
-                elif prefix[idx] == "{":
-                    depth -= 1
-                    if depth == 0:
-                        break
-                idx -= 1
-            if depth == 0 and idx >= 0:
-                before_first_arg = prefix[:idx].rstrip()
-                if re.search(r"\\(frac|dfrac|tfrac|cfrac|binom|dbinom|tbinom|overset|underset|stackrel)\s*$", before_first_arg):
-                    continue
+    if len(entries) < 2:
+        return []
 
-        # Check if subscript or superscript single letter without format spec: e.g. x_{i} or x^{k}
-        if (prefix.endswith("_") or prefix.endswith("^")) and len(var_name) <= 2:
-            continue
+    counts: Dict[str, int] = defaultdict(int)
+    for _, phs in entries:
+        for p in phs:
+            counts[p] += 1
 
-        placeholders.add(var_name)
-    return placeholders
+    if not counts:
+        return []
+
+    n_stems = len(entries)
+    if n_stems == 2:
+        # With 2 variants, flag if one variant carries parametric placeholders while the other drops all of them
+        (lbl0, phs0), (lbl1, phs1) = entries
+        if bool(phs0) == bool(phs1):
+            return []
+        empty_label = lbl0 if not phs0 else lbl1
+        other_phs = sorted(phs1 if not phs0 else phs0)
+        itype = str(template.get("interaction_type", "")).strip().lower()
+        is_ms = itype in ("multiple_select", "ms")
+        if not is_ms:
+            return [(empty_label, other_phs)]
+        print(
+            f"WARNING: [TPL-STEM-VARIANT-PARITY] En '{template.get('id', '?')}': '{empty_label}' omite {other_phs} presente(s) en la otra variante.",
+            file=sys.stderr,
+        )
+        return []
+
+    majority_threshold = max(2, (n_stems + 1) // 2)
+    required_phs = {p for p, c in counts.items() if c >= majority_threshold}
+
+    if not required_phs:
+        return []
+
+    itype = str(template.get("interaction_type", "")).strip().lower()
+    is_ms = itype in ("multiple_select", "ms")
+    violations: List[Tuple[str, List[str]]] = []
+    for label, phs in entries:
+        missing = sorted(required_phs - phs)
+        # Flag as hard parity error when a non-MS variant drops ALL parametric placeholders (len(phs) == 0)
+        # or omits the entire multi-variable core (len(required_phs) >= 2 and len(missing) == len(required_phs)).
+        # In multiple_select, variants can legitimately state conceptual prompts without placeholders because
+        # each option carries its own expressions; emit a WARNING instead.
+        if not is_ms and missing:
+            violations.append((label, missing))
+        elif missing:
+            print(
+                f"WARNING: [TPL-STEM-VARIANT-PARITY] En '{template.get('id', '?')}': '{label}' omite {missing} presente(s) en la mayoría de variantes.",
+                file=sys.stderr,
+            )
+    return violations
 
 
 def _check_stem_derivative_giveaway(text: str) -> Optional[Tuple[str, str]]:
@@ -721,584 +342,6 @@ def _check_orphan_vars(
     return raw_vars_keys - used_tokens - cross_keys - allowlist
 
 
-_GIVEAWAY_PREFIX_RE = re.compile(
-    r"^(?:Inversión de roles|Omisión de límites|Asumiendo erróneamente|Confusión de conceptos|Falsa generalización|Error de signo):\s*",
-    re.IGNORECASE,
-)
-_GIVEAWAY_PREFIX_STR_RE = re.compile(
-    r"(['\"])(?:Inversión de roles|Omisión de límites|Asumiendo erróneamente|Confusión de conceptos|Falsa generalización|Error de signo):\s*",
-    re.IGNORECASE,
-)
-
-
-def _scan_latex_balanced_span(text: str, start: int) -> int:
-    """Starting at start (index of backslash of LaTeX command), scans forward balancing nested braces."""
-    n = len(text)
-    if start >= n or text[start] != "\\":
-        return start
-
-    pos = start + 1
-    while pos < n and text[pos].isalpha():
-        pos += 1
-
-    # Loop over arguments, subscripts, superscripts, or attached math symbols
-    while pos < n:
-        if text[pos] == "{":
-            depth = 1
-            pos += 1
-            while pos < n and depth > 0:
-                if text[pos] == "{":
-                    depth += 1
-                elif text[pos] == "}":
-                    depth -= 1
-                elif text[pos] == "\\" and pos + 1 < n and text[pos + 1] in "{}":
-                    pos += 1
-                pos += 1
-            if depth > 0:
-                break
-        elif text[pos] in ("_", "^"):
-            pos += 1
-            if pos < n and text[pos] == "{":
-                depth = 1
-                pos += 1
-                while pos < n and depth > 0:
-                    if text[pos] == "{":
-                        depth += 1
-                    elif text[pos] == "}":
-                        depth -= 1
-                    elif text[pos] == "\\" and pos + 1 < n and text[pos + 1] in "{}":
-                        pos += 1
-                    pos += 1
-                if depth > 0:
-                    break
-            elif pos < n and text[pos] == "\\":
-                pos += 1
-                while pos < n and text[pos].isalpha():
-                    pos += 1
-            elif pos < n and (text[pos].isalnum() or text[pos] in "+-"):
-                pos += 1
-            else:
-                pos -= 1
-                break
-        elif text[pos] == "\\":
-            cand_pos = pos + 1
-            while cand_pos < n and text[cand_pos].isalpha():
-                cand_pos += 1
-            if cand_pos > pos + 1:
-                pos = cand_pos
-            else:
-                break
-        else:
-            break
-
-    # Optional relational operator or equals: e.g. \beta = 0 or \le 0.05
-    rel_m = re.match(r"^\s*(?:=|<|>|\\le|\\ge|\\neq|\\approx)\s*", text[pos:])
-    if rel_m:
-        rel_end = pos + rel_m.end()
-        rhs_pos = rel_end
-        while rhs_pos < n and text[rhs_pos] not in ",;.$)":
-            if text[rhs_pos] == "{":
-                depth = 1
-                rhs_pos += 1
-                while rhs_pos < n and depth > 0:
-                    if text[rhs_pos] == "{":
-                        depth += 1
-                    elif text[rhs_pos] == "}":
-                        depth -= 1
-                    rhs_pos += 1
-                if depth > 0:
-                    break
-            elif text[rhs_pos].isspace() and (rhs_pos + 1 >= n or not (text[rhs_pos + 1].isalnum() or text[rhs_pos + 1] in "\\+-/*")):
-                break
-            else:
-                rhs_pos += 1
-        if rhs_pos > rel_end:
-            pos = rhs_pos
-
-    return pos
-
-
-def _wrap_bare_latex_in_rationale(text: str) -> str:
-    """Wraps bare or orphan LaTeX expressions in $...$ within rationale strings.
-
-    Leaves existing $...$ and $$...$$ blocks intact.
-    Detects LaTeX commands (e.g. \\frac, \\beta, \\hat, \\sigma, \\times) and math symbols
-    that appear without $ delimiters and encloses them safely in KaTeX inline math,
-    robustly balancing arbitrarily nested braces in subscripts and superscripts.
-    """
-    if not isinstance(text, str) or not text.strip():
-        return text if isinstance(text, str) else ""
-
-    text = heal_control_chars_in_str(text)
-
-    # 1. Identify existing math spans: $...$ or $$...$$
-    math_spans = []
-    for m in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$\n]*?\$", text):
-        math_spans.append((m.start(), m.end()))
-
-    def is_in_math(pos: int) -> bool:
-        return any(s <= pos < e for s, e in math_spans)
-
-    # 2. Find bare LaTeX command sequences scanning balanced nested braces
-    matches = []
-    cmd_iter = re.finditer(r"\\[a-zA-Z]+", text)
-    curr_end = 0
-    for m in cmd_iter:
-        if m.start() < curr_end:
-            continue
-        if is_in_math(m.start()):
-            continue
-        span_end = _scan_latex_balanced_span(text, m.start())
-        if span_end > m.start():
-            matches.append((m.start(), span_end, text[m.start():span_end]))
-            curr_end = span_end
-
-    if not matches:
-        return text
-
-    out_parts = []
-    last_idx = 0
-    for start, end, s in matches:
-        if start < last_idx:
-            continue
-        out_parts.append(text[last_idx:start])
-        clean_s = s.rstrip(".,;")
-        trailing = s[len(clean_s):]
-        out_parts.append(f"${clean_s}${trailing}")
-        last_idx = end
-    out_parts.append(text[last_idx:])
-
-    return "".join(out_parts)
-
-
-def _strip_giveaway_prefix(text: str) -> str:
-    cleaned = _GIVEAWAY_PREFIX_RE.sub("", text).strip()
-    if cleaned:
-        cleaned = cleaned[0].upper() + cleaned[1:]
-    return cleaned
-
-
-def _build_distractor_lookup_from_cta(
-    cta_comp: Optional[Dict[str, Any]] = None,
-    target_cid: Optional[str] = None,
-) -> Dict[str, str]:
-    """Extract clean KaTeX-wrapped giveaway-free rationales keyed by distractor_id from CTA context."""
-    distractor_lookup: Dict[str, str] = {}
-    if not cta_comp or not isinstance(cta_comp, dict):
-        return distractor_lookup
-
-    def _extract_rat(d: Dict[str, Any]) -> str:
-        wb = d.get("wrong_belief") or d.get("manifestation") or ""
-        om = d.get("omitted_step") or ""
-        rem = d.get("remediation_hint") or ""
-        if wb and om:
-            rat = f"{wb.rstrip('.')}. Se debe considerar: {om.rstrip('.')}."
-        elif wb:
-            rat = wb
-        elif rem:
-            rat = rem
-        elif om:
-            rat = f"Error procedimental: {om}."
-        else:
-            rat = d.get("name") or ""
-        if rat:
-            return _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(str(rat)))
-        return ""
-
-    if isinstance(cta_comp.get("distractors"), list):
-        for d in cta_comp["distractors"]:
-            if isinstance(d, dict) and d.get("id"):
-                r = _extract_rat(d)
-                if r:
-                    distractor_lookup[str(d["id"])] = r
-    elif isinstance(cta_comp.get("competencies"), list):
-        for c in cta_comp["competencies"]:
-            if not target_cid or c.get("id") == target_cid:
-                for d in c.get("distractors", []):
-                    if isinstance(d, dict) and d.get("id"):
-                        r = _extract_rat(d)
-                        if r:
-                            distractor_lookup[str(d["id"])] = r
-    elif all(isinstance(v, dict) for v in cta_comp.values()):
-        for did, d in cta_comp.items():
-            if isinstance(d, dict):
-                r = _extract_rat(d)
-                if r:
-                    distractor_lookup[str(did)] = r
-
-    return distractor_lookup
-
-
-def auto_heal_template_data(
-    data: Dict[str, Any],
-    cta_comp: Optional[Dict[str, Any]] = None,
-) -> Tuple[bool, List[str]]:
-    """Applies strictly mechanical, non-semantic auto-healing to a loaded template dict:
-    1. Restores corrupted ASCII control chars in text (single backslash) and code (AST safe).
-    2. Auto-exports local variables computed in generate(rng) into 'vars' dict
-       when referenced as {var_name} in stem, stem_variants, hints, or solution.
-    3. Populates missing error_rationale in multiple_select and multiple_choice_7_options from cta_comp distractors.
-    4. Strips obvious R-18 giveaway prefixes from rationales and options.
-    """
-    modified = False
-    fixes: List[str] = []
-
-    # Build distractor lookup from cta_comp / cta_data
-    target_cid = data.get("competency_id") if isinstance(data, dict) else None
-    distractor_lookup: Dict[str, str] = _build_distractor_lookup_from_cta(cta_comp, target_cid=target_cid)
-
-    templates_list: List[Dict[str, Any]] = []
-    if isinstance(data, dict):
-        if "templates" in data and isinstance(data["templates"], list):
-            templates_list = data["templates"]
-        elif "interaction_type" in data:
-            templates_list = [data]
-    elif isinstance(data, list):
-        templates_list = data
-
-    for tpl in templates_list:
-        if not isinstance(tpl, dict):
-            continue
-        tid = tpl.get("id", "T-XX")
-
-        # 1. Heal control characters in stem, stem_es, solution, explanation_es, detailed_solution
-        for s_field in ("stem", "stem_es", "solution", "explanation_es", "detailed_solution"):
-            val = tpl.get(s_field)
-            if isinstance(val, str):
-                new_val = heal_control_chars_in_str(val)
-                if new_val != val:
-                    tpl[s_field] = new_val
-                    modified = True
-                    fixes.append(f"{tid}.{s_field}: restored ASCII control char to LaTeX backslash")
-
-        # Heal control characters in Python code fields
-        for c_field in ("generate_py", "cross_check_py", "generator_code", "verifier_code"):
-            c_val = tpl.get(c_field)
-            if isinstance(c_val, str) and any(ctrl in c_val for ctrl in _CONTROL_CHAR_TEXT_MAP):
-                new_c_val = _heal_code_control_chars(c_val)
-                if new_c_val != c_val:
-                    tpl[c_field] = new_c_val
-                    modified = True
-                    fixes.append(f"{tid}.{c_field}: restored ASCII control char to LaTeX backslash in Python code")
-
-        # Heal control characters in list fields: stem_variants, hints
-        for list_field in ("stem_variants", "hints"):
-            items = tpl.get(list_field)
-            if isinstance(items, list):
-                for i, item in enumerate(items):
-                    if isinstance(item, str):
-                        new_item = heal_control_chars_in_str(item)
-                        if new_item != item:
-                            items[i] = new_item
-                            modified = True
-                            fixes.append(f"{tid}.{list_field}[{i}]: restored ASCII control char")
-
-        # 2. Auto-export local variables in generate_py referenced as {var} in text fields
-        gen_py = tpl.get("generate_py", "")
-        if isinstance(gen_py, str) and "def generate" in gen_py:
-            text_blob = " ".join(
-                [str(tpl.get("stem", "")), str(tpl.get("solution", "")), str(tpl.get("detailed_solution", ""))]
-                + [str(x) for x in tpl.get("stem_variants", [])]
-                + [str(x) for x in tpl.get("hints", [])]
-            )
-            referenced_vars = _extract_template_placeholders(text_blob)
-            if referenced_vars:
-                try:
-                    tree = ast.parse(gen_py)
-                    assigned_locals: Set[str] = set()
-
-                    def _collect_target_names(tgt: ast.AST) -> None:
-                        if isinstance(tgt, ast.Name):
-                            assigned_locals.add(tgt.id)
-                        elif isinstance(tgt, (ast.Tuple, ast.List)):
-                            for elt in tgt.elts:
-                                _collect_target_names(elt)
-                        elif isinstance(tgt, ast.Starred):
-                            _collect_target_names(tgt.value)
-
-                    gen_func_node = next(
-                        (
-                            n for n in ast.walk(tree)
-                            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "generate"
-                        ),
-                        None,
-                    )
-                    if gen_func_node is not None:
-                        scope_stack: List[ast.AST] = list(gen_func_node.body)
-                        while scope_stack:
-                            node = scope_stack.pop()
-                            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                                continue
-                            if isinstance(node, ast.Assign):
-                                for target in node.targets:
-                                    _collect_target_names(target)
-                            elif isinstance(node, ast.AnnAssign):
-                                _collect_target_names(node.target)
-                            elif isinstance(node, (ast.For, ast.AsyncFor)):
-                                _collect_target_names(node.target)
-                            elif isinstance(node, (ast.With, ast.AsyncWith)):
-                                for item in node.items:
-                                    if item.optional_vars is not None:
-                                        _collect_target_names(item.optional_vars)
-                            for child in ast.iter_child_nodes(node):
-                                if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                                    scope_stack.append(child)
-
-                    missing_vars = (referenced_vars & assigned_locals) - {"rng"}
-                    if missing_vars:
-                        # AST-safe helper to convert (lineno, col_offset) to character index in gen_py
-                        gp_lines = gen_py.splitlines(keepends=True)
-                        line_offsets = [0]
-                        for _ln in gp_lines:
-                            line_offsets.append(line_offsets[-1] + len(_ln))
-
-                        def _ast_pos_to_idx(lineno: int, col_offset: int) -> int:
-                            line_str = gp_lines[lineno - 1]
-                            byte_prefix = line_str.encode("utf-8")[:col_offset]
-                            return line_offsets[lineno - 1] + len(byte_prefix.decode("utf-8", errors="replace"))
-
-                        def _inject_into_ast_dict(dict_node: ast.Dict, extra_existing: Optional[Set[str]] = None, label: str = "vars") -> bool:
-                            existing_keys = {
-                                k.value for k in dict_node.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
-                            }
-                            if extra_existing:
-                                existing_keys |= extra_existing
-                            missing_export = sorted(missing_vars - existing_keys)
-                            if not missing_export:
-                                return True
-                            if dict_node.end_lineno is None or dict_node.end_col_offset is None:
-                                return False
-                            end_idx = _ast_pos_to_idx(dict_node.end_lineno, dict_node.end_col_offset)
-                            # Locate the exact closing '}' of this ast.Dict
-                            close_brace_idx = end_idx - 1
-                            if close_brace_idx < 0 or close_brace_idx >= len(gen_py) or gen_py[close_brace_idx] != "}":
-                                return False
-                            start_idx = _ast_pos_to_idx(dict_node.lineno, dict_node.col_offset)
-                            inner_body = gen_py[start_idx + 1:close_brace_idx]
-                            add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                            if inner_body.strip():
-                                sep = " " if inner_body.rstrip().endswith(",") else ", "
-                            else:
-                                sep = ""
-                            new_gp = gen_py[:close_brace_idx] + f"{sep}{add_pairs}" + gen_py[close_brace_idx:]
-                            try:
-                                ast.parse(new_gp)
-                                tpl["generate_py"] = new_gp
-                                nonlocal modified
-                                modified = True
-                                fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into '{label}'")
-                                return True
-                            except Exception:
-                                return False
-
-                        # Locate 'vars' entry in AST Dicts (handling both inline dict and assigned dict variable)
-                        vars_val_node = None
-                        for dnode in ast.walk(tree):
-                            if isinstance(dnode, ast.Dict):
-                                for dk, dv in zip(dnode.keys, dnode.values):
-                                    if isinstance(dk, ast.Constant) and dk.value == "vars" and dv is not None:
-                                        vars_val_node = dv
-                                        break
-                            if vars_val_node is not None:
-                                break
-
-                        if isinstance(vars_val_node, ast.Dict):
-                            # Case 2A: 'vars': { ... } inline dict literal (f-string / nested-brace safe via AST)
-                            _inject_into_ast_dict(vars_val_node, label="vars")
-                        elif isinstance(vars_val_node, ast.Name):
-                            # Case 2B: 'vars': var_name where var_name = { ... } (never splits inside f"{b:.1f}")
-                            vname = vars_val_node.id
-                            target_dict_node: Optional[ast.Dict] = None
-                            subscript_keys: Set[str] = set()
-                            for anode in ast.walk(tree):
-                                if isinstance(anode, ast.Assign):
-                                    for tgt in anode.targets:
-                                        if isinstance(tgt, ast.Name) and tgt.id == vname and isinstance(anode.value, ast.Dict):
-                                            target_dict_node = anode.value
-                                        elif (
-                                            isinstance(tgt, ast.Subscript)
-                                            and isinstance(tgt.value, ast.Name)
-                                            and tgt.value.id == vname
-                                            and isinstance(tgt.slice, ast.Constant)
-                                            and isinstance(tgt.slice.value, str)
-                                        ):
-                                            subscript_keys.add(tgt.slice.value)
-                            if target_dict_node is not None:
-                                _inject_into_ast_dict(target_dict_node, extra_existing=subscript_keys, label=vname)
-                        elif vars_val_node is None:
-                            # Case 2C: 'vars' key is completely missing from return { ... }
-                            m_ret = re.search(r"(\breturn\s*\{)(.*)", gen_py, re.DOTALL)
-                            if m_ret:
-                                missing_export = sorted(missing_vars)
-                                if missing_export:
-                                    add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                    inject_str = f"\n        'vars': {{{add_pairs}}},"
-                                    new_gp = gen_py[:m_ret.start(1) + len(m_ret.group(1))] + inject_str + gen_py[m_ret.start(1) + len(m_ret.group(1)):]
-                                    try:
-                                        ast.parse(new_gp)
-                                        tpl["generate_py"] = new_gp
-                                        gen_py = new_gp
-                                        modified = True
-                                        fixes.append(f"{tid}.generate_py: injected missing 'vars' dict with {missing_export}")
-                                    except Exception:
-                                        pass
-                except Exception:
-                    pass
-
-        # 3. Auto-fill missing error_rationale in multiple_select and multiple_choice_7_options from CTA distractor lookup
-        if tpl.get("interaction_type") in ("multiple_select", "multiple_choice_7_options", "multiple_choice") and distractor_lookup and isinstance(tpl.get("generate_py"), str):
-            gp = tpl["generate_py"]
-            for did, rat in distractor_lookup.items():
-                safe_rat = rat.replace("\\", "\\\\").replace("'", "\\'")
-
-                # Pattern 1: distractor_id followed by error_rationale: None or "" or ''
-                p1 = rf"(['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"]\s*,\s*['\"]error_rationale['\"]\s*:\s*)(None|['\"]['\"])"
-                new_gp = re.sub(p1, lambda m: f"{m.group(1)}'{safe_rat}'", gp)
-
-                # Pattern 2: error_rationale: None or "" or '' followed by distractor_id
-                p2 = rf"(['\"]error_rationale['\"]\s*:\s*)(None|['\"]['\"])(\s*,\s*['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"])"
-                new_gp = re.sub(p2, lambda m: f"{m.group(1)}'{safe_rat}'{m.group(3)}", new_gp)
-
-                # Pattern 3: option dict contains distractor_id, but error_rationale is missing entirely
-                def _inject_missing_rat(m: re.Match) -> str:
-                    d_str = m.group(0)
-                    if "error_rationale" not in d_str and "'rationale'" not in d_str and '"rationale"' not in d_str:
-                        return re.sub(
-                            rf"(['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"])",
-                            lambda m2: f"{m2.group(1)}, 'error_rationale': '{safe_rat}'",
-                            d_str,
-                            count=1,
-                        )
-                    return d_str
-
-                new_gp = re.sub(
-                    rf"\{{[^{{}}]*['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"][^{{}}]*\}}",
-                    _inject_missing_rat,
-                    new_gp,
-                )
-
-                if new_gp != gp:
-                    try:
-                        ast.parse(new_gp)
-                        gp = new_gp
-                        modified = True
-                        fixes.append(f"{tid}.generate_py: auto-populated error_rationale for {did} from CTA")
-                    except Exception:
-                        pass
-            tpl["generate_py"] = gp
-
-        # 4. Strip R-18 giveaway prefixes and wrap bare LaTeX in distractor_archetypes and options
-        if "distractor_archetypes" in tpl and isinstance(tpl["distractor_archetypes"], list):
-            for da in tpl["distractor_archetypes"]:
-                if isinstance(da, dict):
-                    for rkey in ("rationale", "manifestation", "description"):
-                        if isinstance(da.get(rkey), str):
-                            old_r = da[rkey]
-                            new_r = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r))
-                            if new_r != old_r:
-                                da[rkey] = new_r
-                                modified = True
-                                fixes.append(f"{tid}.distractor_archetypes: sanitized {rkey}")
-
-        if "options" in tpl and isinstance(tpl["options"], list):
-            for opt in tpl["options"]:
-                if isinstance(opt, dict) and not opt.get("is_correct"):
-                    did = opt.get("distractor_id") or opt.get("id")
-                    cur_rat = opt.get("error_rationale")
-                    if not cur_rat or str(cur_rat).strip() in ("", "None", "placeholder", "N/A", "error", "distractor"):
-                        if did and did in distractor_lookup:
-                            opt["error_rationale"] = distractor_lookup[did]
-                            modified = True
-                            fixes.append(f"{tid}.options: auto-populated error_rationale for {did} from CTA")
-                    elif isinstance(cur_rat, str):
-                        old_r = cur_rat
-                        new_r = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r))
-                        if new_r != old_r:
-                            opt["error_rationale"] = new_r
-                            modified = True
-                            fixes.append(f"{tid}.options: sanitized error_rationale")
-
-        if isinstance(tpl.get("generate_py"), str):
-            gp_curr = tpl["generate_py"]
-            gp_clean = _GIVEAWAY_PREFIX_STR_RE.sub(r"\1", gp_curr)
-            if gp_clean != gp_curr:
-                try:
-                    ast.parse(gp_clean)
-                    tpl["generate_py"] = gp_clean
-                    modified = True
-                    fixes.append(f"{tid}.generate_py: stripped giveaway prefixes")
-                except Exception:
-                    pass
-
-    return modified, fixes
-
-
-def _atomic_write_bytes(target_path: Path, data: bytes) -> None:
-    """Atomically write bytes to target_path via tempfile + os.replace."""
-    target_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path: Optional[Path] = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="wb",
-            dir=str(target_path.parent),
-            prefix=f".{target_path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as tmp_f:
-            tmp_path = Path(tmp_f.name)
-            tmp_f.write(data)
-        os.replace(tmp_path, target_path)
-    except Exception:
-        if tmp_path is not None and tmp_path.exists():
-            try:
-                tmp_path.unlink()
-            except Exception:
-                pass
-        raise
-
-
-def auto_heal_template_file(
-    tpl_path: Path,
-    cta_comp: Optional[Dict[str, Any]] = None,
-    cta_distractors_map: Optional[Dict[str, Any]] = None,
-) -> Tuple[bool, List[str]]:
-    """Applies strictly mechanical, non-semantic auto-healing in-place to a template JSON file.
-
-    1. Restores corrupted ASCII control chars (\\x0c -> \\\\f, \\x08 -> \\\\b, etc.)
-    2. Auto-exports local variables computed in generate(rng) to 'vars' dict when used in {placeholders}
-    3. Auto-fills missing error_rationale in multiple_select options from CTA distractor lookup
-
-    Returns (was_modified, list_of_applied_fixes).
-    """
-    p = Path(tpl_path)
-    if not p.is_file():
-        return False, []
-
-    try:
-        content = json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
-        return False, []
-
-    comp_context = cta_comp if cta_comp is not None else cta_distractors_map
-    modified, fixes = auto_heal_template_data(content, cta_comp=comp_context)
-    if modified:
-        _atomic_write_bytes(p, json.dumps(content, indent=2, ensure_ascii=False).encode("utf-8"))
-    return modified, fixes
-
-
-def check_ast_rf_triple_braces(source_text: str) -> List[str]:
-    """Check for rf'...' or fr'...' strings containing '{{{' which corrupts KaTeX braces."""
-    warnings = []
-    if not source_text or not isinstance(source_text, str):
-        return warnings
-    for m in re.finditer(r"(?i)\b(rf|fr)(['\"]{1,3})([\s\S]*?)\2", source_text):
-        if "{{{" in m.group(3):
-            snippet = m.group(0)
-            warnings.append(
-                f"[!] Warning: Se detectó {m.group(1)}{m.group(2)}...{m.group(2)} conteniendo '{{{{{{' ({snippet}). "
-                "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
-            )
-    return warnings
 
 
 _MATH_SPAN_RE = re.compile(r"\$\$(.+?)\$\$|\$(.+?)\$", re.S)
@@ -1376,1155 +419,6 @@ def check_unrendered_placeholders_in_instance(
         errs.extend(check_unrendered_placeholders(text, ctx, variables=variables))
     return list(dict.fromkeys(errs))
 
-
-def _format_dry_failure(
-    competency_id: str = "UNKNOWN",
-    tpl_id: str = "UNKNOWN",
-    generate_py: str = "",
-    failing_seed: int = 100,
-    cross_check_py: Optional[str] = None,
-    shard_py: Optional[Union[str, Path]] = None,
-    exc: Optional[Exception] = None,
-    params: Optional[Dict[str, Any]] = None,
-    print_output: bool = True,
-    raw_error: Optional[str] = None,
-) -> str:
-    """Format and print TPL-DRY failure diagnostics with line-mapped traceback frames.
-
-    Reports:
-    - First failing seed
-    - Generator parameters for that seed
-    - type(exc).__name__: str(exc)
-    - Last 3 traceback frames mapped to shard_XX_data.py source lines
-    """
-    import inspect
-    import traceback
-    from engine.sandbox import build_sandbox_globals, _LazyNPRNG
-
-    extracted_params: Dict[str, Any] = dict(params) if params else {}
-
-    # If exc or params not provided, execute generate(rng) for failing_seed to capture live state
-    if (exc is None or not extracted_params) and generate_py:
-        try:
-            env = build_sandbox_globals()
-            import random
-            random.seed(failing_seed)
-            rng = random.Random(failing_seed)
-            rng.np = _LazyNPRNG(failing_seed)
-            compiled = compile(generate_py, "<generate_py>", "exec")
-            exec(compiled, env)
-            gen_fn = env.get("generate")
-            if gen_fn:
-                try:
-                    res = call_with_timeout(gen_fn, args=(rng,), timeout=0.4, seed=failing_seed)
-                    if isinstance(res, dict) and "vars" in res and isinstance(res["vars"], dict):
-                        if not extracted_params:
-                            extracted_params = {k: v for k, v in res["vars"].items()}
-                    if cross_check_py:
-                        cc_env = build_sandbox_globals()
-                        cc_compiled = compile(cross_check_py, "<cross_check_py>", "exec")
-                        exec(cc_compiled, cc_env)
-                        ver_fn = cc_env.get("verify")
-                        if ver_fn:
-                            cc_res = call_with_timeout(ver_fn, args=(res,), timeout=0.4, seed=failing_seed)
-                            if cc_res is False:
-                                raise AssertionError("cross_check verification returned False")
-                except Exception as run_e:
-                    if exc is None:
-                        exc = run_e
-                    if not extracted_params:
-                        tb = run_e.__traceback__
-                        while tb:
-                            f = tb.tb_frame
-                            if f.f_code.co_name == "generate":
-                                for k, v in f.f_locals.items():
-                                    if k not in ("rng", "__builtins__") and not callable(v) and not inspect.ismodule(v):
-                                        extracted_params[k] = v
-                                break
-                            tb = tb.tb_next
-        except Exception as comp_e:
-            if exc is None:
-                exc = comp_e
-
-    # Format exception name and message
-    if exc is not None:
-        exc_str = f"{type(exc).__name__}: {exc}"
-    elif raw_error:
-        exc_str = str(raw_error)
-    else:
-        exc_str = "Exception: Unknown error during dry-run execution"
-
-    # Extract traceback frames
-    tb_frames = []
-    if exc is not None and exc.__traceback__ is not None:
-        tb_frames = traceback.extract_tb(exc.__traceback__)
-
-    # Strip internal frames (compile_shard.py, check_templates.py, engine/)
-    clean_frames = []
-    for fr in tb_frames:
-        fn = str(fr.filename).replace("\\", "/").lower()
-        if any(skip in fn for skip in ("check_templates.py", "compile_shard.py", "engine/sandbox.py", "engine/assemble.py")):
-            continue
-        if fr.name in ("_format_dry_failure", "execute_sandbox_batch", "check_single_template"):
-            continue
-        clean_frames.append(fr)
-    if not clean_frames and tb_frames:
-        clean_frames = [tb_frames[-1]]
-    if not clean_frames:
-        clean_frames = [traceback.FrameSummary("<sandbox>", 1, "generate", line="")]
-
-    last_frames = clean_frames[-3:] if len(clean_frames) >= 3 else clean_frames
-
-    # Map frames to shard_XX_data.py or modular shard_fixes/<CID>.py source lines
-    shard_obj = Path(shard_py).resolve() if shard_py and Path(shard_py).is_file() else None
-    fix_obj = None
-    if shard_py:
-        sp = Path(shard_py).resolve()
-        shards_dir = sp.parent if sp.parent.name == "shards" else sp.parent / "shards"
-        fixes_dir = shards_dir / "shard_fixes"
-        if fixes_dir.is_dir():
-            # Check shard-specific subdirectory first, then flat fallback
-            shard_id_hint = sp.stem.replace("_data", "")
-            cand_dirs = [fixes_dir / shard_id_hint, fixes_dir]
-            for c_dir in cand_dirs:
-                if c_dir.is_dir():
-                    for f in c_dir.glob("*.py"):
-                        if f.stem in (competency_id, competency_id.replace("-", "_")):
-                            fix_obj = f
-                            break
-                if fix_obj:
-                    break
-    if fix_obj:
-        shard_obj = fix_obj
-
-    locator = None
-    if shard_obj and ShardDataLineLocator:
-        try:
-            locator = ShardDataLineLocator(shard_obj)
-        except Exception:
-            locator = None
-
-    frame_lines = []
-    for fr in last_frames:
-        fr_lineno = fr.lineno or 1
-        fr_name = fr.name
-        fr_line = fr.line or ""
-
-        rel_fix_str = str(fix_obj.relative_to(shards_dir)).replace("\\", "/") if (fix_obj and 'shards_dir' in locals()) else (f"shard_fixes/{shard_obj.name}" if fix_obj else (shard_obj.name if shard_obj else fr.filename))
-        mapped_file = rel_fix_str if fix_obj else (shard_obj.name if shard_obj else fr.filename)
-        mapped_lineno = fr_lineno
-        mapped_code = fr_line
-
-        if locator:
-            if fr_name in locator.functions:
-                fn_start, _ = locator.functions[fr_name]
-                mapped_lineno = fn_start + fr_lineno - 1
-            else:
-                t_info = locator.get_tuple_info(competency_id) or locator.get_tuple_info(tpl_id)
-                if t_info:
-                    gen_fn_name = t_info.get("gen_fn_name")
-                    if gen_fn_name and gen_fn_name in locator.functions:
-                        fn_start, _ = locator.functions[gen_fn_name]
-                        mapped_lineno = fn_start + fr_lineno - 1
-                    else:
-                        gen_elt = t_info.get("elements", {}).get("generator_code", {})
-                        gen_start = gen_elt.get("start_line", t_info.get("start_line", 1))
-                        mapped_lineno = gen_start + fr_lineno - 1
-            if 1 <= mapped_lineno <= len(locator.lines):
-                mapped_code = locator.lines[mapped_lineno - 1].strip()
-
-        frame_lines.append(
-            f"      File \"{mapped_file}\", line {mapped_lineno}, in {fr_name}\n        {mapped_code}"
-        )
-
-    shard_label = str(fix_obj.relative_to(shards_dir)).replace("\\", "/") if (fix_obj and 'shards_dir' in locals()) else (f"shard_fixes/{shard_obj.name}" if fix_obj else (shard_obj.name if shard_obj else "shard_XX_data.py"))
-    report_lines = [
-        f"[-] [TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN]",
-        f"    Competencia: {competency_id} | Plantilla: {tpl_id}",
-        f"    Primer seed fallido: {failing_seed}",
-        f"    Parámetros: {extracted_params}",
-        f"    Excepción: {exc_str}",
-        f"    Traceback (últimos {len(frame_lines)} frames mapeados a {shard_label}):",
-    ]
-    report_lines.extend(frame_lines)
-
-    formatted_msg = "\n".join(report_lines)
-    if print_output:
-        print(formatted_msg, file=sys.stderr)
-    return formatted_msg
-
-
-def build_compact_diagnostic_groups(
-    errors: List[Union[str, DiagnosticError]],
-    targets: Optional[List[Path]] = None,
-    shard_py: Optional[Union[str, Path]] = None,
-) -> Tuple[Dict[str, Dict[Tuple[str, str], Dict[Tuple[str, str], List[int]]]], int]:
-    """Group diagnostic errors canonicalized by rule_tag, file_path/shard_ref, and cause/action.
-
-    Returns:
-        (grouped_dict, total_items_count)
-    """
-    if not errors:
-        return {}, 0
-
-    # Build or lookup ShardDataLineLocator
-    locators_by_path: Dict[str, Any] = {}
-    default_locator = None
-    if shard_py and Path(shard_py).is_file() and ShardDataLineLocator:
-        default_locator = ShardDataLineLocator(shard_py)
-        locators_by_path[str(Path(shard_py).resolve())] = default_locator
-
-    cid_to_shard_path: Dict[str, Path] = {}
-    manifest_candidates = [
-        Path("work/shards/pre_shard_manifest.json"),
-        Path("shards/pre_shard_manifest.json"),
-        Path("work/pre_shard_manifest.json"),
-    ]
-    if targets and targets[0].parent:
-        manifest_candidates.insert(0, targets[0].parent.parent / "shards" / "pre_shard_manifest.json")
-        manifest_candidates.insert(1, targets[0].parent / "pre_shard_manifest.json")
-
-    for mc in manifest_candidates:
-        if mc.is_file():
-            try:
-                m_data = json.loads(mc.read_text(encoding="utf-8"))
-                for s in m_data.get("shards", []):
-                    sp = s.get("shard_data_path")
-                    if sp and Path(sp).is_file():
-                        sp_obj = Path(sp).resolve()
-                        for cid_item in s.get("competency_ids", []):
-                            cid_to_shard_path[str(cid_item)] = sp_obj
-                        for c_item in s.get("competencies", []):
-                            if isinstance(c_item, dict) and "id" in c_item:
-                                cid_to_shard_path[str(c_item["id"])] = sp_obj
-                break
-            except Exception:
-                pass
-
-    records = []
-    for err in errors:
-        rec = extract_diagnostic_metadata(err)
-        fpath = rec["file_path"]
-        if not fpath and rec["competency"]:
-            cid = rec["competency"]
-            # Prioritize matching target path first
-            matched_target: Optional[Path] = None
-            if targets:
-                for t in targets:
-                    t_path = Path(t)
-                    if t_path.is_file() and (t_path.stem == cid or cid in t_path.stem):
-                        matched_target = t_path
-                        break
-                    elif t_path.is_dir() and (t_path / f"{cid}.json").is_file():
-                        matched_target = t_path / f"{cid}.json"
-                        break
-                    elif t_path.stem == cid:
-                        matched_target = t_path
-                        break
-            if matched_target:
-                try:
-                    fpath = matched_target.resolve().relative_to(Path.cwd().resolve()).as_posix()
-                except Exception:
-                    fpath = matched_target.as_posix()
-            else:
-                cand1 = Path("work/templates") / f"{cid}.json"
-                cand2 = Path("templates") / f"{cid}.json"
-                if cand1.is_file():
-                    fpath = str(cand1.as_posix())
-                elif cand2.is_file():
-                    fpath = str(cand2.as_posix())
-                elif targets and targets[0].parent:
-                    cand_t = targets[0].parent / f"{cid}.json"
-                    try:
-                        fpath = cand_t.resolve().relative_to(Path.cwd().resolve()).as_posix()
-                    except Exception:
-                        fpath = cand_t.as_posix()
-                elif targets:
-                    try:
-                        fpath = Path(targets[0]).resolve().relative_to(Path.cwd().resolve()).as_posix()
-                    except Exception:
-                        fpath = str(targets[0].as_posix())
-                else:
-                    fpath = f"work/templates/{cid}.json"
-        elif not fpath and targets:
-            try:
-                fpath = Path(targets[0]).resolve().relative_to(Path.cwd().resolve()).as_posix()
-            except Exception:
-                fpath = str(targets[0].as_posix())
-        else:
-            fpath = fpath or "work/templates"
-
-        if fpath:
-            try:
-                p_fpath = Path(fpath)
-                if p_fpath.is_absolute() and p_fpath.is_relative_to(Path.cwd()):
-                    fpath = p_fpath.relative_to(Path.cwd()).as_posix()
-            except Exception:
-                pass
-
-        rec["file_path"] = fpath
-
-        # Locate lines dynamically if not present
-        if not rec["lines"] and rec["file_path"]:
-            p = Path(rec["file_path"])
-            if p.is_file():
-                search_term = rec["snippet"] or rec["template"]
-                if search_term and len(search_term) >= 3:
-                    rec["lines"] = find_lines_in_file(p, search_term)
-                if not rec["lines"] and rec.get("template"):
-                    rec["lines"] = find_template_field_line(p, rec["template"], rec.get("field_name"))
-
-        # Map to shard_XX_data.py line range
-        cid_val = rec["competency"]
-        shard_ref = ""
-        target_locator = default_locator
-        if not target_locator and cid_val and cid_val in cid_to_shard_path and ShardDataLineLocator:
-            sp_obj = cid_to_shard_path[cid_val]
-            sp_key = str(sp_obj)
-            if sp_key not in locators_by_path:
-                locators_by_path[sp_key] = ShardDataLineLocator(sp_obj)
-            target_locator = locators_by_path[sp_key]
-
-        if target_locator:
-            lookup_key = cid_val or rec.get("template") or ""
-            t_info = target_locator.get_tuple_info(lookup_key) if lookup_key else None
-            if not t_info and rec.get("template"):
-                t_cand = rec["template"].replace("T-", "")
-                t_info = target_locator.get_tuple_info(t_cand)
-            if not t_info and len(target_locator.tuples) == 1:
-                t_info = target_locator.tuples[0]
-            if t_info:
-                s_l = t_info["start_line"]
-                e_l = t_info["end_line"]
-                shard_ref = f" [Tupla en {target_locator.file_path.name}: Líneas {s_l}..{e_l} (StartLine: {s_l}, EndLine: {e_l})]"
-
-        rec["shard_ref"] = shard_ref
-        records.append(rec)
-
-    # Group by rule_tag -> (file_path, shard_ref) -> (cause, action) -> lines
-    grouped: Dict[str, Dict[Tuple[str, str], Dict[Tuple[str, str], List[int]]]] = defaultdict(
-        lambda: defaultdict(lambda: defaultdict(list))
-    )
-
-    for r in records:
-        rtag = r["rule_tag"]
-        fp = r["file_path"]
-        s_ref = r.get("shard_ref", "")
-        # Zero artificial limits: causes and actions are preserved 100% in full
-        scause = r["cause"]
-        sact = r["action"]
-
-        grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
-
-    total_items = sum(len(err_map) for file_map in grouped.values() for err_map in file_map.values())
-    return grouped, total_items
-
-
-def count_distinct_shard_error_hunks(
-    raw_errors: List[Union[str, DiagnosticError]],
-    targets: Optional[List[Path]] = None,
-    shard_py: Optional[Union[str, Path]] = None,
-) -> int:
-    """Count the number of deduplicated/consolidated diagnostic hunks.
-
-    Guarantees >= 1 when raw_errors is not empty, representing distinct logical issues
-    rather than per-seed duplicates.
-    """
-    if not raw_errors:
-        return 0
-    _, total_items = build_compact_diagnostic_groups(raw_errors, targets=targets, shard_py=shard_py)
-    return max(1, total_items)
-
-
-def render_compact_aggregated_errors(
-    errors: List[Union[str, DiagnosticError]],
-    targets: Optional[List[Path]] = None,
-    max_output_lines: int = 60,
-    shard_py: Optional[Union[str, Path]] = None,
-) -> str:
-    """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
-    if not errors:
-        return ""
-
-    has_cb = any("CIRCUIT BREAKER" in str(e) for e in errors)
-    header = (
-        f"FAIL: CIRCUIT BREAKER TRIPPED ({len(errors)} errores en templates):"
-        if has_cb
-        else f"FAIL: {len(errors)} validaciones fallidas en templates:"
-    )
-
-    grouped, total_items = build_compact_diagnostic_groups(errors, targets=targets, shard_py=shard_py)
-    hunk_count = max(1, total_items)
-
-    if hunk_count < 6:
-        directive_line = f"[UMBRAL < 6 ({hunk_count}/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tiene < 300 líneas para corregir todo en 1 turno atómico."
-    else:
-        directive_line = f"[UMBRAL >= 6 ({hunk_count} errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True) completo."
-
-    out_lines = [header, ""]
-    truncated = False
-    total_rendered_items = 0
-
-    # Reserve room for truncation message (1 line) and directive_line (1 line)
-    line_limit = max(2, max_output_lines - 3)
-
-    for rtag, file_map in grouped.items():
-        if len(out_lines) >= line_limit:
-            truncated = True
-            break
-        m_rid = re.match(r"^([A-Za-z0-9_-]+)", rtag)
-        short_rid = m_rid.group(1) if m_rid else rtag
-        out_lines.append(f"[-] [{rtag}]")
-
-        for (fp, s_ref), err_map in file_map.items():
-            if len(out_lines) >= line_limit:
-                truncated = True
-                break
-            for (cause, act), l_list in err_map.items():
-                if len(out_lines) >= line_limit:
-                    truncated = True
-                    break
-                uniq_lines = sorted(set(l_list))
-                if uniq_lines:
-                    if len(uniq_lines) > 5:
-                        lines_str = f":L{uniq_lines[0]}-{uniq_lines[-1]} ({len(uniq_lines)} líneas)"
-                    else:
-                        lines_str = f":L{','.join(str(x) for x in uniq_lines)}"
-                else:
-                    lines_str = ""
-
-                # Canonical single-line output containing: RULE, FILE, LINES, SHARD_TUPLE_REF, CAUSE, ACTION
-                out_lines.append(f"  • [{short_rid}] {fp}{lines_str}{s_ref} -> Causa: {cause} | Acción: {act}")
-                total_rendered_items += 1
-        out_lines.append("")
-
-    if truncated or total_rendered_items < total_items:
-        remaining = total_items - total_rendered_items
-        if remaining > 0:
-            out_lines.append(f"  ... y {remaining} diagnósticos adicionales consolidados.")
-
-    out_lines.append(directive_line)
-
-    res_str = "\n".join(out_lines).strip()
-    res_lines = res_str.splitlines()
-    if len(res_lines) > max_output_lines:
-        if max_output_lines >= 3:
-            res_lines = res_lines[:max_output_lines - 2] + [
-                f"  ... ({len(errors)} errores totales consolidados en formato compacto < 30 líneas).",
-                directive_line,
-            ]
-        elif max_output_lines == 2:
-            res_lines = [res_lines[0], directive_line]
-        else:
-            res_lines = [directive_line]
-        res_str = "\n".join(res_lines)
-    return res_str
-
-
-def get_canonical_invariant_key(inv_err: str) -> str:
-    """Derive canonical grouping key for invariant errors to aggregate dynamic values across seeds."""
-    clean = inv_err.strip()
-    if "Distractor identical to correct answer" in clean:
-        return "Distractor identical to correct answer"
-    if "Duplicate option content detected" in clean:
-        return "Duplicate option content detected"
-    if "Length anti-giveaway violation" in clean:
-        if "too short" in clean:
-            return "Length anti-giveaway: correct option too short"
-        return "Length anti-giveaway: correct option too long"
-    if "leaked verbatim in stem text" in clean:
-        return "Correct answer leaked verbatim in stem text"
-    if "leaked verbatim in first hint" in clean:
-        return "Correct answer leaked verbatim in first hint"
-    if "Synthetic boilerplate distractor" in clean:
-        return "Synthetic boilerplate distractor pattern detected"
-    if "Scaffolding answer leak" in clean:
-        return "Scaffolding answer leak detected in hint"
-    if "Metainformación delatora en distractor visible" in clean:
-        return "Metainformación delatora en distractor visible"
-    if "Metainformación delatora parentética" in clean:
-        return "Metainformación delatora parentética en opción visible"
-    if "Distractor con prefijo sintético de clonación" in clean:
-        return "Distractor con prefijo sintético de clonación"
-    if "Envenenamiento anti-socrático" in clean:
-        return "Envenenamiento anti-socrático en pista"
-    if "Fuga prematura de clave correcta" in clean:
-        return "Fuga prematura de clave correcta en pista"
-    if "palabra clave stub" in clean or "ID de competencia stub" in clean:
-        return "Pista stub en lugar de andamiaje socrático"
-    if "Relleno artificial de longitud" in clean:
-        return "Relleno artificial de longitud en opción"
-    if "Corrupción matemática de cuantificador universal" in clean:
-        return "Corrupción matemática de cuantificador universal"
-    m_var = re.search(r"Unsubstituted template variable '\{([^}]+)\}' detected in (.+)", clean)
-    if m_var:
-        return f"Unsubstituted variable '{{{m_var.group(1)}}}' in {m_var.group(2).rstrip('.')}"
-    m_math = re.search(r"(Unbalanced curly braces in LaTeX math expression in [^:]+)", clean)
-    if m_math:
-        return m_math.group(1)
-    norm = re.sub(r"'[^']*'", "'...'", clean)
-    norm = re.sub(r"\b\d+\b", "N", norm)
-    return norm
-
-
-def format_invariant_error_diagnostic(
-    cid: str,
-    tpl_id: str,
-    q_id: Union[str, List[str]],
-    inv_err: str,
-    q_obj: Optional[Dict[str, Any]] = None,
-) -> str:
-    """Formats an error from check_instance_invariants into the enriched diagnostic structure."""
-    inv_clean = inv_err.strip()
-
-    # Case A-pre: Parenthetical telltale clue in visible options
-    if "parenthetical_telltale_linter" in inv_clean or "Metainformación delatora parentética" in inv_clean:
-        m_tt = re.search(r"'(.*?)'", inv_clean)
-        snippet = m_tt.group(1) if m_tt else inv_clean
-        cause = f"Metainformación delatora parentética en opción visible: '{snippet}'."
-        actions = [
-            "Elimina coletillas parentéticas del texto visible de la opción.",
-            "Traslada explicaciones conceptuales a 'error_rationale' o 'sol'.",
-            "Asegura que el estudiante deduzca la respuesta por razonamiento matemático.",
-        ]
-        return format_diagnostic_error("PSYCHOMETRIC-OPTIONS", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case A-pre2: Telltale cues / Distractor confession in visible options
-    if "distractor_integrity_linter" in inv_clean or "Metainformación delatora en distractor visible" in inv_clean:
-        m_tt = re.search(r"'(.*?)'", inv_clean)
-        snippet = m_tt.group(1) if m_tt else inv_clean
-        cause = f"Metainformación delatora en distractor visible: '{snippet}'."
-        actions = [
-            "Elimina palabras y frases delatoras ('erróneamente', 'incorrectamente', 'falsamente', etc.) del texto visible del distractor.",
-            "Formula la opción de forma neutral y afirmativa presentando el procedimiento matemático erróneo sin calificarlo.",
-            "Traslada la justificación diagnóstica de la concepción errónea a 'error_rationale'.",
-        ]
-        return format_diagnostic_error("PSYCHOMETRIC-OPTIONS / DISTRACTOR-INTEGRITY", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case A-pre3: Cloned distractor prefix / value
-    if "cloned_distractor_value_linter" in inv_clean or "prefijo sintético de clonación" in inv_clean or "clonado con valor idéntico" in inv_clean:
-        m_cl = re.search(r"'(.*?)'", inv_clean)
-        snippet = m_cl.group(1) if m_cl else inv_clean
-        cause = f"Distractor sintético o clonado: '{snippet}'."
-        actions = [
-            "Elimina prefijos sintéticos como 'Opción alterna N:' o 'Variante N:'.",
-            "Formula cada distractor a partir de una concepción errónea o error de cálculo verosímil y auténtico.",
-        ]
-        return format_diagnostic_error("PSYCHOMETRIC-OPTIONS / CLONED-DISTRACTOR", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case A-pre4: Anti-Socratic hint poisoning / Answer leak in hints
-    if "socratic_scaffolding_integrity_linter" in inv_clean or "Envenenamiento anti-socrático" in inv_clean or "Fuga prematura de clave" in inv_clean or "Pista" in inv_clean and "stub" in inv_clean:
-        m_sc = re.search(r"'(.*?)'", inv_clean)
-        snippet = m_sc.group(1) if m_sc else inv_clean
-        cause = f"Fallo de andamiaje socrático en pistas: {inv_clean}"
-        actions = [
-            "No incluyas distractores ni errores conceptuales bajo frases como 'asegurando considerar adecuadamente'.",
-            "Evita revelar la solución exacta en las primeras pistas (Pista 1 o 2).",
-            "Formula pistas socráticas progresivas que guíen el razonamiento del estudiante.",
-        ]
-        return format_diagnostic_error("SCAFFOLDING-INTEGRITY", cid, tpl_id, q_id, "hints", snippet, cause, actions)
-
-    # Case A-pre5: Artificial length padding
-    if "Relleno artificial de longitud" in inv_clean:
-        m_pad = re.search(r"'(.*?)'", inv_clean)
-        snippet = m_pad.group(1) if m_pad else inv_clean
-        cause = f"Relleno artificial de longitud en opción visible: '{snippet}'."
-        actions = [
-            "Elimina coletillas burocráticas o cláusulas de relleno en opciones.",
-            "Asegura que la longitud de las opciones sea natural y coherente con el contenido matemático.",
-        ]
-        return format_diagnostic_error("ANTI-GAMING-PADDING", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case A-pre6: Vacuous universal quantifier
-    if "Corrupción matemática de cuantificador universal" in inv_clean:
-        cause = f"Corrupción matemática de cuantificador universal: {inv_clean}."
-        actions = [
-            "No sustituyas 'epsilon' por una constante fija mientras mantienes 'para todo epsilon > 0'.",
-            "Verifica la coherencia lógica de las proposiciones universales cuantificadas.",
-        ]
-        return format_diagnostic_error("MATHEMATICAL-INTEGRITY", cid, tpl_id, q_id, "options", "forall eps", cause, actions)
-
-    # Case A0: Unescaped LaTeX math command
-    if "Unescaped LaTeX math command" in inv_clean:
-        m_cmd = re.search(r"Unescaped LaTeX math command '([^']+)' detected in (.+?)\.", inv_clean)
-        snippet = m_cmd.group(1) if m_cmd else "cmd{var}"
-        field_name = m_cmd.group(2).rstrip(".") if m_cmd else "text"
-        cause = f"Comando matemático LaTeX '{snippet}' sin barra invertida '\\' o sin delimitadores '$...$' detectado en '{field_name}'."
-        actions = [
-            f"Reemplazar por notación KaTeX válida delimitada por '$' (ej. '$\\{snippet}$').",
-            "PROHIBIDO declarar variables matemáticas en el diccionario 'vars' retornado por generate_py.",
-            "Asegurar que todas las expresiones matemáticas estén estrictamente delimitadas por '$...$'.",
-        ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case A: Unsubstituted template variable '{var}'
-    m_var = re.search(r"Unsubstituted template variable '\{([^}]+)\}' detected in (.+)", inv_clean)
-    if m_var:
-        var_name = m_var.group(1)
-        field_name = m_var.group(2).rstrip(".")
-        snippet = f"{{{var_name}}}"
-        is_distractor_context = "option" in field_name.lower() or "rationale" in field_name.lower()
-        if is_distractor_context:
-            cause = (
-                f"Subcadena '{{{var_name}}}' detectada dentro del texto del distractor/opción en '{field_name}'. "
-                f"NO corresponde a un parámetro dinámico de generate_py, sino a sintaxis matemática o texto de distractor."
-            )
-            actions = [
-                f"Si '{{{var_name}}}' es parte de notación matemática, delimítela en '$...$' (ej. '$\\dot{{{var_name}}}$' o '$\\bar{{{var_name}}}$') en el template.",
-                f"PROHIBIDO declarar '{var_name}' en el diccionario 'vars' retornado por generate_py (provoca aberraciones sintácticas en cascada).",
-                f"Quitar las llaves '{{}}' si es texto plano literal no paramétrico.",
-            ]
-        else:
-            cause = f"Llaves '{{{var_name}}}' no declaradas en el diccionario 'vars' generado en generate_py o no sustituidas en el campo '{field_name}'."
-            actions = [
-                f"Usar '${var_name}$' si se trata de notación matemática en LaTeX.",
-                "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
-                f"Declarar '{var_name}' en el diccionario 'vars' retornado por generate_py (SOLO si es un parámetro dinámico del stem o hints, NUNCA para distractores).",
-            ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case B: Triple dollar delimiter '$$$'
-    if "$$$" in inv_clean:
-        m_ctx = re.search(r"detected in (.+)", inv_clean)
-        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
-        snippet = "$$$"
-        cause = f"Delimitador matemático triple '$$$' inválido detectado en '{field_name}'."
-        actions = [
-            "Reemplazar '$$$' por '$$' si se trata de un bloque matemático en display mode.",
-            "Reemplazar '$$$' por '$' si es matemática inline.",
-            "Asegurar que los delimitadores de apertura y cierre coincidan sin signos de dólar redundantes.",
-        ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case C: Unbalanced display math delimiter '$$'
-    if "Unbalanced display math delimiter '$$'" in inv_clean:
-        m_ctx = re.search(r"in (.+)", inv_clean)
-        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
-        snippet = "$$"
-        cause = f"Delimitadores '$$' de display math no balanceados en '{field_name}' (número impar de '$$')."
-        actions = [
-            "Asegurarse de que cada '$$' de apertura tenga un '$$' de cierre.",
-            "No mezclar '$$' con '$' en la misma expresión matemática.",
-            "Escapar cualquier símbolo de dólar literal como '\\$'.",
-        ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case D: Unbalanced inline math delimiter '$'
-    if "Unbalanced inline math delimiter '$'" in inv_clean:
-        m_ctx = re.search(r"in (.+)", inv_clean)
-        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
-        snippet = "$"
-        cause = f"Delimitadores '$' de matemática inline no balanceados en '{field_name}' (número impar de '$')."
-        actions = [
-            "Verificar que cada '$' de apertura cuente con su correspondiente '$' de cierre.",
-            "Escapar cualquier símbolo de dólar literal o de moneda como '\\$'.",
-            "Evitar saltos de línea o texto no matemático dentro del bloque '$...$'.",
-        ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case E: Residual double curly braces '{{' or '}}'
-    if "Residual double curly braces" in inv_clean:
-        m_ctx = re.search(r"detected in (.+)", inv_clean)
-        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
-        snippet = "{{ o }}"
-        cause = f"Llaves dobles residuales '{{' o '}}' provenientes de formato o f-string de Python en '{field_name}'."
-        actions = [
-            "Usar llaves simples '{...}' para grupos en LaTeX en lugar de llaves dobles '{{...}}'.",
-            "Revisar el escape de llaves en f-strings dentro de generate_py.",
-            "Utilizar raw strings r'...' para expresiones KaTeX.",
-        ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case F: Unbalanced curly braces in LaTeX math expression
-    if "Unbalanced curly braces in LaTeX math expression" in inv_clean or ("LaTeX math expression in" in inv_clean and "unbalanced braces" in inv_clean) or "unbalanced braces" in inv_clean.lower():
-        m_field = re.search(r"in\s+([^:]+?)(?::|\s+has\s+unbalanced)", inv_clean, re.IGNORECASE)
-        raw_field = m_field.group(1).strip() if m_field else "math expression"
-
-        # Check if option error_rationale or content
-        m_opt = re.search(r"option\s+(\d+)\s*(error_rationale|content)?", raw_field, re.IGNORECASE)
-        field_name = raw_field
-        if m_opt:
-            opt_num = int(m_opt.group(1))
-            opt_idx = opt_num - 1 if opt_num >= 1 else opt_num
-            opt_type = m_opt.group(2).lower() if m_opt.group(2) else ("error_rationale" if "rationale" in raw_field.lower() else "content")
-            field_name = f"options[{opt_idx}].{opt_type}"
-            did_found = None
-            if q_obj and isinstance(q_obj, dict):
-                opts = q_obj.get("options", [])
-                if 0 <= opt_idx < len(opts):
-                    did_found = opts[opt_idx].get("distractor_id") or opts[opt_idx].get("id")
-            if not did_found:
-                m_did = re.search(r"\b(D-[A-Za-z0-9_-]+)\b", inv_clean)
-                if m_did:
-                    did_found = m_did.group(1)
-            if did_found:
-                field_name = f"{field_name} (distractor {did_found})"
-        elif "stem" in raw_field.lower():
-            field_name = "stem"
-        elif "solution" in raw_field.lower() or "explanation" in raw_field.lower():
-            field_name = "solution"
-
-        # Extract snippet
-        m_snip = re.search(r"['\"]([^'\"]*)['\"]", inv_clean)
-        if not m_snip:
-            m_snip = re.search(r":\s*(\$?[^$]+\$?.*)", inv_clean)
-        snippet = m_snip.group(1).strip() if m_snip else "{ o }"
-
-        # Analyze balance and patterns
-        open_c = snippet.count("{")
-        close_c = snippet.count("}")
-        pattern_notes = []
-        if "_}{" in snippet or "^}{" in snippet:
-            pattern_notes.append("patrón invertido '_}{' o '^}{'")
-        if open_c != close_c:
-            pattern_notes.append(f"open={open_c} vs close={close_c}")
-
-        pattern_str = f" ({', '.join(pattern_notes)})" if pattern_notes else ""
-        cause = f"Llaves '{{' y '}}' desbalanceadas{pattern_str} dentro de la fórmula LaTeX en '{field_name}': '{snippet}'."
-
-        action_detail = (
-            f"Faltan {open_c - close_c} llave(s) de cierre '}}'." if open_c > close_c else
-            f"Sobran {close_c - open_c} llave(s) de cierre '}}'." if close_c > open_c else
-            "Revisar el orden de apertura y cierre de llaves '{' y '}'."
-        )
-        actions = [
-            f"Balancear las llaves en '{field_name}' ({action_detail}).",
-            "Verificar que subíndices y superíndices sigan la sintaxis KaTeX '_{sub}' o '^{sup}' y no '_}{' o '^}{'.",
-            "Si se usaron llaves literales escapadas '\\{', asegurar que la barra invertida esté presente.",
-            "Revisar macros de LaTeX con múltiples argumentos como \\frac{a}{b} donde falte una llave de cierre.",
-        ]
-        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
-
-    # Case F2: Unclosed nested LaTeX macro or accent
-    if "Unclosed nested macro brace detected" in inv_clean or "nested macro" in inv_clean:
-        m_ctx = re.search(r"in ([^:]+):", inv_clean)
-        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
-        return format_diagnostic_error(
-            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
-            f"Acento o macro anidado de LaTeX sin cerrar correctamente en '{field_name}'.",
-            [
-                "Asegurar que macros anidados como \\hat{\\boldsymbol{\\beta}} tengan ambas llaves de cierre '}}'.",
-                "Revisar expresiones matemáticas con acentos combinados con estilos vectoriales o matriciales.",
-                "Balancear todas las llaves en la fórmula.",
-            ],
-        )
-
-    # Case F3: Macro arity / unclosed argument
-    if "requires 2 arguments" in inv_clean or "unclosed first argument" in inv_clean or "unclosed second argument" in inv_clean or "missing argument brackets" in inv_clean:
-        m_ctx = re.search(r"in ([^.]+)", inv_clean)
-        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
-        return format_diagnostic_error(
-            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
-            f"Macro de LaTeX (como \\frac, \\binom, \\overset) con aridad incorrecta o argumento incompleto en '{field_name}'.",
-            [
-                "Comprobar que \\frac posea tanto numerador como denominador: \\frac{num}{den}.",
-                "Cerrar adecuadamente cada bloque de llaves '{...}'.",
-                "Evitar macros con argumentos incompletos antes del cierre del delimitador '$'.",
-            ],
-        )
-
-    # Case F4: Unclosed or mismatched LaTeX environment
-    if "LaTeX environment" in inv_clean:
-        m_ctx = re.search(r"in ([^.]+)", inv_clean)
-        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
-        return format_diagnostic_error(
-            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
-            f"Entorno LaTeX sin cerrar o con cierre discordante en '{field_name}'.",
-            [
-                "Asegurar que cada \\begin{env} tenga su correspondiente \\end{env}.",
-                "Verificar entornos matriciales o de casos como pmatrix, bmatrix, cases, aligned.",
-                "Comprobar que no haya errores tipográficos en el nombre del entorno.",
-            ],
-        )
-
-    # Case F5: Unclosed or unmatched scalable delimiter
-    if "scalable delimiter" in inv_clean:
-        m_ctx = re.search(r"in ([^.]+)", inv_clean)
-        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
-        return format_diagnostic_error(
-            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
-            f"Delimitador escalable \\left o \\right sin emparejar en '{field_name}'.",
-            [
-                "Emparejar cada \\left( con \\right), \\left[ con \\right], \\left\\{ con \\right\\}.",
-                "Si se requiere un delimitador invisible, usar \\left. o \\right..",
-                "Verificar la simetría de paréntesis y corchetes en las fórmulas matemáticas.",
-            ],
-        )
-
-    # Case G: Distractor identical to correct answer (TPL-D4)
-    if "Distractor identical to correct answer" in inv_clean:
-        m_d = re.search(r"Distractor identical to correct answer:\s*'(.*)'", inv_clean)
-        snippet = m_d.group(1) if m_d else inv_clean
-        cause = f"TPL-D4 violation in '{tpl_id}': distractor matches correct answer '{snippet}' (invariant violation). Un distractor generado en generate_py es idéntico a la respuesta correcta."
-        actions = [
-            "Verificar en generate_py que los distractores nunca tomen el valor de la clave correcta.",
-            "Añadir una guarda en generate_py que desplace o regenere el distractor si colisiona con 'correct'.",
-            "Comprobar casos particulares donde parámetros aleatorios anulen la diferencia.",
-        ]
-        return format_diagnostic_error("TPL-D4: TPL-D4 violation: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case H: Length anti-giveaway violation (R-15)
-    if "Length anti-giveaway violation" in inv_clean:
-        cause = f"La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x): {inv_clean}"
-        actions = [
-            f"Detalles observados: {inv_clean}",
-            "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
-            "Homogeneizar el nivel de detalle y formato matemático entre todas las opciones.",
-            "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
-        ]
-        return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
-
-    # Case I: Answer leak (R-19)
-    if "leaked verbatim in" in inv_clean:
-        cause = "El valor o texto de la respuesta correcta aparece textualmente en el stem o en la primera pista, revelando la clave."
-        actions = [
-            "Remover la mención textual de la respuesta del enunciado de la pregunta o de la primera pista.",
-            "Reformular la primera pista para que oriente sobre el método conceptual sin dar el resultado numérico/algebraico.",
-            "Verificar que la consigna plantee el problema requiriendo el cálculo en lugar de enunciar la solución.",
-        ]
-        return format_diagnostic_error("R-19: FUGA DE RESPUESTA", cid, tpl_id, q_id, "stem / hints[0]", inv_clean, cause, actions)
-
-    # Case J: Missing error_rationale
-    if "must possess a non-empty 'error_rationale'" in inv_clean:
-        is_ms = "MS option" in inv_clean
-        rule_tag = "R-22: RATIONALE EN MULTIPLE_SELECT" if is_ms else "R-17: RATIONALE FALTANTE EN DISTRACTOR"
-        m_opt = re.search(r"option\s+(\d+)", inv_clean, re.IGNORECASE)
-        opt_idx = m_opt.group(1) if m_opt else "X"
-        field_name = f"options[{opt_idx}].error_rationale"
-        cause = f"La opción distractora {opt_idx} con is_correct=False carece de un 'error_rationale' explicativo."
-        actions = [
-            "Agregar una explicación diagnóstica en 'error_rationale' para cada opción con is_correct=False.",
-            "Describir la falacia conceptual o error procedimental que lleva a seleccionar dicha opción.",
-            "Asegurar que el texto de rationale no sea una cadena vacía ni un placeholder genérico.",
-        ]
-        return format_diagnostic_error(rule_tag, cid, tpl_id, q_id, field_name, "(vacío o ausente)", cause, actions)
-
-    # Case K: Duplicate options
-    if "Duplicate option content detected" in inv_clean:
-        m_opt = re.search(r"detected(?:\s+in\s+MS)?:\s*'(.*)'", inv_clean)
-        snippet = m_opt.group(1) if m_opt else inv_clean
-        cause = f"Dos o más opciones tienen contenido idéntico ('{snippet}')."
-        actions = [
-            "Garantizar que todos los distractores generados en generate_py sean disjuntos y únicos.",
-            "Agregar una comprobación en generate_py que descarte o regenere opciones repetidas.",
-            "Variar las fórmulas de perturbación para producir valores distintos.",
-        ]
-        return format_diagnostic_error("TPL-D4: OPCIONES DUPLICADAS", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case L: Synthetic boilerplate distractor pattern
-    if "Synthetic boilerplate distractor" in inv_clean:
-        m_s = re.search(r"pattern detected:\s*(.*)", inv_clean)
-        snippet = m_s.group(1) if m_s else inv_clean
-        cause = "Opciones distractoras generadas mediante plantilla sintética repetitiva o inversión simétrica trivial ('converge' vs 'diverge')."
-        actions = [
-            "Reemplazar distractores boilerplate por modelos de error y confusiones conceptuales reales.",
-            "Diversificar la redacción y argumentos analíticos de cada opción distractora.",
-            "Evitar variaciones triviales donde solo se cambie un término opuesto o un parámetro numérico.",
-        ]
-        return format_diagnostic_error("R-18: DISTRACTORES BOILERPLATE SINTÉTICOS", cid, tpl_id, q_id, "options", snippet, cause, actions)
-
-    # Case M: Scaffolding answer leak in hints
-    if "Scaffolding answer leak" in inv_clean:
-        m_s = re.search(r"hint\s+\d+:\s*(.*)", inv_clean)
-        snippet = m_s.group(1) if m_s else inv_clean
-        cause = "La pista (scaffolding) proporciona una regla mecánica de descarte que delata directamente la respuesta correcta."
-        actions = [
-            "Reescribir la pista para proporcionar guía pedagógica sin dar instrucciones explícitas de descarte mecánico.",
-            "Fomentar la deducción del estudiante a partir de ecuaciones y principios teóricos.",
-            "Eliminar frases como 'Descarte las respuestas...' o 'Elimine opciones...' del texto de hints.",
-        ]
-        return format_diagnostic_error("R-19: FUGA DE RESPUESTA EN ANDAMIAJE", cid, tpl_id, q_id, "hints", snippet, cause, actions)
-
-    # Fallback Invariant
-    return format_diagnostic_error(
-        rule_tag="INVARIANT: invariant violation",
-        competency=cid,
-        template=tpl_id,
-        item_id=q_id,
-        field_name="instance",
-        snippet=inv_clean,
-        cause=f"Template '{tpl_id}' invariant violation ({q_id}): {inv_clean}",
-        actions=[
-            "Revisar la salida de generate_py para cumplir con los requerimientos estructurales del reactivo.",
-            "Asegurar que todos los campos requeridos estén presentes y sean del tipo esperado.",
-            "Verificar que el reactivo cumpla con la especificación de interaction_type.",
-        ],
-    )
-
-
-def format_parity_error(
-    cid: str,
-    err: Any,
-    questions_by_id: Dict[str, Dict[str, Any]],
-    item_ids: Optional[Union[str, List[str]]] = None,
-) -> str:
-    """Formats a ValidationError from production parity check with prescriptive diagnosis."""
-    rule_id = getattr(err, "rule_id", "PARITY")
-    msg = getattr(err, "message", str(err))
-    if item_ids is not None:
-        item_id = item_ids
-        rep_id = item_ids[0] if isinstance(item_ids, list) and item_ids else (item_ids if isinstance(item_ids, str) else "UNKNOWN")
-    else:
-        item_id = getattr(err, "item_id", None) or "UNKNOWN"
-        rep_id = item_id
-
-    q = questions_by_id.get(rep_id, {})
-    tpl_id = q.get("template_id") or "UNKNOWN"
-
-    # Rule R-20
-    if rule_id == "R-20":
-        m_field = re.search(r"in\s+([a-zA-Z0-9_.\[\]]+):", msg)
-        field_name = m_field.group(1) if m_field else "stem / options / text"
-
-        if "Unreplaced template variable" in msg:
-            m_s = re.search(r"Unreplaced template variable\(s\) found:\s*(.*)", msg)
-            snippet = m_s.group(1) if m_s else "{var}"
-            is_distractor_context = "option" in field_name.lower() or "rationale" in field_name.lower()
-            clean_var = snippet.replace('{','').replace('}','')
-            if is_distractor_context:
-                cause = (
-                    f"Subcadena '{snippet}' detectada dentro del texto del distractor/opción en '{field_name}'. "
-                    f"NO corresponde a un parámetro dinámico de generate_py."
-                )
-                actions = [
-                    f"Si '{snippet}' es notación matemática, delimítela en '$...$' (ej. '$\\dot{{{clean_var}}}$' o '$\\bar{{{clean_var}}}$') en el template.",
-                    f"PROHIBIDO declarar '{clean_var}' en el diccionario 'vars' retornado por generate_py (provoca aberraciones sintácticas en cascada).",
-                    "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
-                ]
-            else:
-                cause = f"Llaves '{snippet}' no declaradas en el diccionario 'vars' retornado por generate_py o no reemplazadas en '{field_name}'."
-                actions = [
-                    f"Usar '${clean_var}$' si se trata de notación matemática en LaTeX.",
-                    "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
-                    f"Agregar la clave sin llaves al diccionario 'vars' retornado por generate_py (SOLO si es parámetro dinámico del stem/hints, NUNCA para distractores).",
-                ]
-            return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet, cause, actions)
-
-        if "Unbalanced display math delimiters '$$'" in msg:
-            return format_diagnostic_error(
-                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "$$",
-                f"Delimitadores '$$' de display math no balanceados en '{field_name}' (número impar de '$$').",
-                [
-                    "Asegurarse de que cada '$$' de apertura tenga un '$$' de cierre.",
-                    "No mezclar '$$' con '$' en la misma expresión.",
-                    "Escapar cualquier símbolo de dólar literal como '\\$'.",
-                ]
-            )
-
-        if "Unbalanced inline math delimiters '$'" in msg:
-            return format_diagnostic_error(
-                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "$",
-                f"Delimitadores '$' de matemática en línea no balanceados en '{field_name}' (número impar de '$').",
-                [
-                    "Verificar que cada '$' de apertura cuente con su correspondiente '$' de cierre.",
-                    "Escapar cualquier símbolo de dólar literal como '\\$'.",
-                    "Comprobar que no haya saltos de línea dentro del bloque '$...$'.",
-                ]
-            )
-
-        if "Forbidden triple math delimiter '$$$'" in msg:
-            return format_diagnostic_error(
-                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "$$$",
-                f"Delimitador matemático triple '$$$' inválido detectado en '{field_name}'.",
-                [
-                    "Reemplazar '$$$' por '$$' si es bloque matemático en display mode.",
-                    "Reemplazar '$$$' por '$' si es matemática inline.",
-                    "Asegurar que los delimitadores de apertura y cierre coincidan.",
-                ]
-            )
-
-        if "Residual double braces" in msg:
-            return format_diagnostic_error(
-                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "{{ o }}",
-                f"Llaves dobles residuales '{{' o '}}' provenientes de f-strings en Python dentro de '{field_name}'.",
-                [
-                    "Usar llaves simples '{...}' para grupos en LaTeX en lugar de llaves dobles '{{...}}'.",
-                    "Revisar el escape de llaves en f-strings dentro de generate_py.",
-                    "Utilizar raw strings r'...' para expresiones KaTeX.",
-                ]
-            )
-
-        if "Unbalanced curly braces in LaTeX math block" in msg:
-            m_s = re.search(r"LaTeX math block:\s*'(.*)'", msg)
-            snippet = m_s.group(1) if m_s else "{ o }"
-            return format_diagnostic_error(
-                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet,
-                f"Llaves curvas '{{' y '}}' desbalanceadas dentro de la fórmula LaTeX en '{field_name}': '{snippet}'.",
-                [
-                    "Contar y balancear las llaves '{' y '}' en la expresión LaTeX.",
-                    "Asegurar que llaves literales estén escapadas como '\\{'.",
-                    "Revisar macros de LaTeX como \\frac{a}{b} donde falte una llave de cierre.",
-                ]
-            )
-
-        if "Leaked raw code variable identifier" in msg:
-            m_s = re.search(r"identifier\(s\) found:\s*(.*)", msg)
-            snippet = m_s.group(1) if m_s else "identificador de código"
-            return format_diagnostic_error(
-                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet,
-                f"Identificador interno de código filtrado al texto del reactivo ({snippet}).",
-                [
-                    "Eliminar o formatear las variables internas de código antes de insertarlas en el texto.",
-                    "Reemplazar identificadores crudos (_val, _num, _str) por su valor formateado o símbolo matemático.",
-                    "Verificar que el texto dirigido al estudiante sea completamente natural y pedagógico.",
-                ]
-            )
-
-        return format_diagnostic_error(
-            "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, msg,
-            f"Error de sintaxis KaTeX o delimitadores en '{field_name}'.",
-            [
-                "Revisar la sintaxis de KaTeX y los delimitadores '$' y '$$'.",
-                "Asegurar que todas las llaves '{' y '}' estén balanceadas.",
-                "Verificar que no queden placeholders sin sustituir.",
-            ]
-        )
-
-    # Rule R-18
-    if rule_id == "R-18":
-        if "boilerplate" in msg.lower() or "antonym" in msg.lower() or "synthetic" in msg.lower():
-            m_q = re.search(r"Question '([^']+)'", msg)
-            field_name = "options"
-            snippet = msg
-            cause = f"Patrón sintético / boilerplate o pares antónimos detectados en opciones de '{m_q.group(1) if m_q else item_id}': {msg}"
-            actions = [
-                "Variar la formulación y estructura de cada distractor basándose en errores conceptuales reales del estudiante en lugar de invertir palabras clave o usar plantillas repetitivas.",
-                "Evitar pares simétricos mecánicos (ej. 'estable' vs 'inestable') sin explicación física/matemática diferenciada.",
-                "Asegurar que cada opción distractora corresponda a un misconception específico de cta.json.",
-            ]
-            return format_diagnostic_error("R-18: BOILERPLATE / PATRÓN SINTÉTICO", cid, tpl_id, item_id, field_name, snippet, cause, actions)
-        m_field = re.search(r"Option '([^']+)'", msg)
-        opt_id = m_field.group(1) if m_field else "option"
-        field_name = f"options[{opt_id}].content"
-        m_s = re.search(r"visible content:\s*'(.*)'", msg)
-        snippet = m_s.group(1) if m_s else msg
-        cause = "Uso de términos metalingüísticos o autocríticos ('confundiendo', 'asumiendo erróneamente', etc.) en el texto visible de la opción que revelan al estudiante que es un distractor."
-        actions = [
-            "Reescribir el contenido de la opción como una afirmación objetiva o resultado alternativo plausible sin juzgar su veracidad en el texto visible.",
-            "Mover la justificación del error ('confundiendo...', 'asumiendo erróneamente...') exclusivamente al campo 'error_rationale'.",
-            "Asegurar que todas las opciones mantengan una apariencia neutra y verosímil sin dar pistas psicométricas.",
-        ]
-        return format_diagnostic_error("R-18: META-INFORMACIÓN / GIVEAWAY", cid, tpl_id, item_id, field_name, snippet, cause, actions)
-
-    # Rule R-19
-    if rule_id == "R-19":
-        field_name = "stem"
-        m_s = re.search(r"answer '([^']+)' leaked", msg)
-        snippet = m_s.group(1) if m_s else msg
-        cause = "El valor o clave de la respuesta correcta aparece textualmente dentro del stem del reactivo (fuga de respuesta), o hay sustitución que corrompió un operador (ej. \\dot<número>)."
-        actions = [
-            "Remover el valor o expresión de respuesta del enunciado (stem) reemplazándolo por una consigna neutra o línea de completación.",
-            "Asegurar que las variables de LaTeX no sustituyan números directamente dentro de macros sin llaves.",
-            "Verificar que la consigna plantee el problema requiriendo el cálculo en lugar de mostrar la solución.",
-        ]
-        return format_diagnostic_error("R-19: FUGA DE RESPUESTA / SINTAXIS", cid, tpl_id, item_id, field_name, snippet, cause, actions)
-
-    # Rule R-22
-    if rule_id == "R-22":
-        m_field = re.search(r"Option '([^']+)'", msg)
-        opt_id = m_field.group(1) if m_field else "option"
-        field_name = f"options[{opt_id}].error_rationale"
-        cause = "Opción incorrecta (is_correct=False) en ítem de selección múltiple (multiple_select) carece de 'error_rationale' diagnóstico formativo."
-        actions = [
-            "Agregar una explicación diagnóstica en 'error_rationale' para cada opción con is_correct=False.",
-            "Explicar la falacia conceptual o el cálculo incorrecto que conduce a seleccionar dicha opción.",
-            "Asegurarse de que el texto de rationale no esté vacío ni sea un placeholder genérico.",
-        ]
-        return format_diagnostic_error("R-22: RATIONALE EN MULTIPLE_SELECT", cid, tpl_id, item_id, field_name, "(vacío o ausente)", cause, actions)
-
-    # Rule R-17
-    if rule_id == "R-17":
-        m_field = re.search(r"Option '([^']+)'", msg)
-        opt_id = m_field.group(1) if m_field else "option"
-        field_name = f"options[{opt_id}].error_rationale"
-        m_s = re.search(r"error_rationale':\s*'(.*)'", msg)
-        snippet = m_s.group(1) if m_s else "(vacío o placeholder)"
-        cause = "El campo 'error_rationale' contiene un placeholder genérico prohibido (ej. 'placeholder', 'distractor', 'error') o está vacío."
-        actions = [
-            "Redactar una explicación pedagógica formativa sobre el error que comete el estudiante al elegir la opción.",
-            "Eliminar palabras prohibidas como 'placeholder', 'distractor', 'error', 'n/a' o 'ninguno'.",
-            "Describir la confusión conceptual o error algebraico/aritmético subyacente.",
-        ]
-        return format_diagnostic_error("R-17: RATIONALE GENÉRICO / PLACEHOLDER", cid, tpl_id, item_id, field_name, snippet, cause, actions)
-
-    # Rule R-15: Option Length Parity (Per-Item)
-    if rule_id == "R-15":
-        correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
-        distractor_opts = [opt for opt in q.get("options", []) if not opt.get("is_correct")]
-        L_c = len(str(correct_opt.get("content", "")).strip()) if correct_opt else 0
-        dist_lens = [len(str(d.get("content", "")).strip()) for d in distractor_opts]
-        max_d = max(dist_lens) if dist_lens else 1
-        min_d = min(dist_lens) if dist_lens else 1
-        details_str = f"len(correct)={L_c} vs [min(D)={min_d}, max(D)={max_d}]. Longitudes distractores: {dist_lens}"
-        cause = f"Disparidad de longitud en opciones: {details_str}."
-        actions = [
-            "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
-            "Homogeneizar el nivel de detalle y formato matemático entre todas las opciones.",
-            "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
-        ]
-        return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, item_id, "options", details_str, cause, actions)
-
-    # Rule R-16: Option Length Distribution (Course-Level)
-    if rule_id == "R-16":
-        cause = f"Sesgo de longitud a nivel de competencia: {msg}."
-        actions = [
-            "Calibrar las plantillas de modo que la respuesta correcta no sea sistemáticamente la opción más larga ni la más corta.",
-            "Asegurar que algunos distractores sean más largos y otros más cortos que la respuesta correcta en cada plantilla.",
-            "Mantener la tasa de respuestas más largas/cortas por debajo del umbral del 25%.",
-        ]
-        return format_diagnostic_error("R-16: SESGO DE LONGITUD DE CLAVE", cid, tpl_id, "ALL", "options", msg, cause, actions)
-
-    # Rule S-01
-    if rule_id == "S-01":
-        return format_diagnostic_error(
-            "S-01: SOLUCIÓN PASO A PASO OBLIGATORIA", cid, tpl_id, item_id, "solution / detailed_solution",
-            "(vacío o ausente)",
-            "El reactivo carece de una solución explicativa paso a paso requerida en modo strict.",
-            [
-                "Agregar el campo 'detailed_solution' o 'solution' en la plantilla con la resolución paso a paso.",
-                "Describir el procedimiento matemático o conceptual completo para llegar a la respuesta correcta.",
-                "Asegurar que la solución esté redactada con KaTeX válido.",
-            ]
-        )
-
-    # Rule S-02
-    if rule_id == "S-02":
-        return format_diagnostic_error(
-            "S-02: MISCONCEPTION WARNING OBLIGATORIO", cid, tpl_id, item_id, "misconception_warning",
-            "(vacío o ausente)",
-            "El reactivo carece de una advertencia de error común ('misconception_warning') requerida en modo strict.",
-            [
-                "Agregar el campo 'misconception_warning' o 'common_misconception_warning' en la plantilla.",
-                "O asociar distractor_ids que tengan 'remediation_hint' definido en cta.json.",
-                "Explicar brevemente el error más común que deben evitar los estudiantes.",
-            ]
-        )
-
-    # Rule S-03
-    if rule_id == "S-03":
-        return format_diagnostic_error(
-            "S-03: DIFICULTAD EXPLÍCITA", cid, tpl_id, item_id, "difficulty",
-            "(inválido o ausente)",
-            "El reactivo no especifica un nivel de dificultad válido ('easy', 'medium', 'hard') en modo strict.",
-            [
-                "Declarar 'difficulty': 'easy', 'medium' o 'hard' en la plantilla.",
-                "Alinear la dificultad con el nivel de Bloom y la complejidad del problema.",
-                "No dejar el campo vacío ni con valores no reconocidos.",
-            ]
-        )
-
-    # Generic Fallback
-    action_fallback = "Revisa la regla y ajusta el generador o las variantes."
-    return format_diagnostic_error(
-        f"{rule_id}: CONTRATO DE VALIDACIÓN", cid, tpl_id, item_id, "question",
-        msg,
-        f"Violación de la regla {rule_id}: {msg}",
-        [
-            action_fallback,
-            "Verificar la estructura y tipos de datos de los reactivos producidos.",
-            "Corregir directamente en el script generador o archivo de plantillas.",
-        ]
-    )
 
 def synthetic_boilerplate_distractor_rule(assembled_q: Dict[str, Any]) -> List[str]:
     """Evaluates question instance options against synthetic boilerplate patterns."""
@@ -2672,46 +566,207 @@ def validate_template_schema(data: Dict[str, Any]) -> List[str]:
     return errors
 
 
-def check_distractor_refutation(
-    cross_check_py: str,
-    gen_result: Dict[str, Any],
-    seed: int = 100,
-) -> List[Tuple[str, Any]]:
-    """Verify that replacing 'correct' with each distractor fails the verifier."""
-    if not cross_check_py or not gen_result:
-        return []
-    distractors = gen_result.get("distractors", {})
-    dist_items: List[Tuple[str, Any]] = []
-    if isinstance(distractors, dict):
-        dist_items = list(distractors.items())
-    elif isinstance(distractors, list):
-        for i, d in enumerate(distractors):
-            if isinstance(d, dict):
-                did = d.get("distractor_id") or f"d{i+1}"
-                val = d.get("value")
-                if val is None:
-                    val = d.get("content")
-                if val is None:
-                    val = d
-                dist_items.append((did, val))
-            else:
-                dist_items.append((f"d{i+1}", d))
-    else:
-        return []
+from engine.template_validators import (
+    _M20_STRUCTURED_TYPES,
+    check_distractor_refutation,
+    check_mc7_and_ms_verifier_refutation,
+    check_multimodal_tpl_d3_coverage,
+    evaluate_static_opt_and_dynamic_rationale,
+    update_circuit_breaker_state,
+    validate_template_static_rules,
+)
 
-    unrefuted = []
-    for d_key, d_val in dist_items:
-        cand_res = dict(gen_result)
-        cand_res["correct"] = d_val
+def _extract_instance_distractor_ids(instance: Any) -> Set[str]:
+    """Collect all normalized distractor_id references across all 9 interaction modalities."""
+    if not isinstance(instance, dict):
+        return set()
+    dids: Set[str] = set()
+
+    def _add(val: Any) -> None:
+        if isinstance(val, str) and val.strip():
+            dids.add(val.strip().replace("_", "-"))
+
+    for opt in instance.get("options") or []:
+        if isinstance(opt, dict):
+            _add(opt.get("distractor_id") or opt.get("did"))
+    for dd in instance.get("diagnostic_distractors") or []:
+        if isinstance(dd, dict):
+            _add(dd.get("distractor_id") or dd.get("did"))
+    dag = instance.get("proof_dag")
+    if isinstance(dag, dict):
+        for st in dag.get("steps") or []:
+            if isinstance(st, dict):
+                _add(st.get("distractor_id") or st.get("did"))
+    adv = instance.get("adversarial_break")
+    if isinstance(adv, dict):
+        for st in adv.get("steps") or []:
+            if isinstance(st, dict):
+                _add(st.get("distractor_id") or st.get("did"))
+        for ro in adv.get("reason_options") or []:
+            if isinstance(ro, dict):
+                _add(ro.get("distractor_id") or ro.get("did"))
+        for pr in adv.get("predicates") or []:
+            if isinstance(pr, dict):
+                _add(pr.get("distractor_id") or pr.get("did"))
+        for tp in adv.get("trap_predicates") or []:
+            if isinstance(tp, dict):
+                _add(tp.get("distractor_id") or tp.get("did"))
+    um = instance.get("unstructured_model")
+    if isinstance(um, dict):
+        for it in (um.get("phase1_variables") or {}).get("items") or []:
+            if isinstance(it, dict):
+                _add(it.get("distractor_id") or it.get("did"))
+        for opt in (um.get("phase2_assumptions") or {}).get("options") or []:
+            if isinstance(opt, dict):
+                _add(opt.get("distractor_id") or opt.get("did"))
+        p3 = um.get("phase3_formulation") or {}
+        if isinstance(p3, dict):
+            for opt in p3.get("options") or []:
+                if isinstance(opt, dict):
+                    _add(opt.get("distractor_id") or opt.get("did"))
+            for dd in p3.get("diagnostic_distractors") or []:
+                if isinstance(dd, dict):
+                    _add(dd.get("distractor_id") or dd.get("did"))
+    ic = instance.get("invariant_canvas")
+    if isinstance(ic, dict):
+        for inv in ic.get("invariants") or []:
+            if isinstance(inv, dict):
+                _add(inv.get("distractor_id") or inv.get("did"))
+        ti = ic.get("tree_invariants") or {}
+        if isinstance(ti, dict):
+            _add(ti.get("distractor_id") or ti.get("did"))
+            for tdid in ti.get("distractor_ids") or []:
+                _add(tdid)
+    cm = instance.get("concept_matching")
+    if isinstance(cm, dict):
+        for tg in cm.get("targets") or []:
+            if isinstance(tg, dict):
+                _add(tg.get("distractor_id") or tg.get("did"))
+    return dids
+
+
+def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
+    """Return a hashable signature of the assembled answer/payload across all 9 interaction types."""
+    if q_type in ("multiple_choice_7_options", "multiple_choice"):
+        correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
+        return re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
+    if q_type in ("fill_in_the_blank", "open_symbolic"):
+        ans = q.get("correct_answer")
+        if isinstance(ans, dict):
+            val = ans.get("expression") or ans.get("value") or ans.get("canonical_algebraic") or q.get("correct", "")
+        else:
+            val = ans if ans is not None else q.get("correct", "")
+        return re.sub(r"\s+", " ", str(val)).strip()
+    if q_type == "multiple_select":
+        return frozenset(
+            (re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct")))
+            for opt in q.get("options", [])
+        )
+    if q_type in _M20_STRUCTURED_TYPES:
+        sig_obj: Dict[str, Any] = {"correct_answer": q.get("correct_answer")}
+        if q_type in q and isinstance(q[q_type], dict):
+            payload = q[q_type]
+            # Include rendered text/math fields so parametric steps/curves with static IDs reflect variance
+            if q_type == "proof_dag":
+                sig_obj["steps"] = sorted(
+                    ((s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                     for s in (payload.get("steps") or []) if isinstance(s, dict)),
+                    key=lambda t: str(t),
+                )
+            elif q_type == "adversarial_break":
+                sig_obj["prompt"] = payload.get("prompt")
+                sig_obj["sample_witness"] = payload.get("sample_witness")
+                sig_obj["steps"] = [
+                    (s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                    for s in (payload.get("steps") or []) if isinstance(s, dict)
+                ]
+                sig_obj["predicates"] = [
+                    p.get("expr") for p in (payload.get("predicates") or []) if isinstance(p, dict)
+                ]
+            elif q_type == "unstructured_model":
+                sig_obj["p1"] = sorted(
+                    ((it.get("id"), it.get("label"))
+                     for it in ((payload.get("phase1_variables") or {}).get("items") or []) if isinstance(it, dict)),
+                    key=lambda t: str(t),
+                )
+                sig_obj["p2"] = sorted(
+                    str((o.get("id"), o.get("content")))
+                    for o in ((payload.get("phase2_assumptions") or {}).get("options") or []) if isinstance(o, dict)
+                )
+                _p3 = payload.get("phase3_formulation") or {}
+                sig_obj["p3"] = _p3.get("correct_expression")
+                sig_obj["p3_opts"] = sorted(
+                    str((o.get("id"), o.get("content")))
+                    for o in (_p3.get("options") or []) if isinstance(o, dict)
+                )
+            elif q_type == "invariant_canvas":
+                sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
+                sig_obj["invariants"] = payload.get("invariants")
+                sig_obj["inequality"] = payload.get("inequality")
+                sig_obj["geometry"] = {
+                    "fixed_points": payload.get("fixed_points"),
+                    "interactive_points": payload.get("interactive_points"),
+                    "segments": payload.get("segments"),
+                    "polygons": payload.get("polygons"),
+                    "shaded_regions": payload.get("shaded_regions"),
+                    "sliders": payload.get("sliders"),
+                }
+                sig_obj["target_state"] = payload.get("target_state")
+                sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
+            elif q_type == "concept_matching":
+                sig_obj["premises"] = sorted(
+                    ((p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)),
+                    key=lambda t: str(t),
+                )
+                sig_obj["targets"] = sorted(
+                    ((t.get("id"), t.get("content")) for t in (payload.get("targets") or []) if isinstance(t, dict)),
+                    key=lambda t: str(t),
+                )
+        return json.dumps(sig_obj, sort_keys=True, default=str)
+    return str(q.get("correct", "")).strip()
+
+
+_DIGIT_PLACEHOLDER_CONCAT_RE = re.compile(
+    r"(?:\d@[a-zA-Z_]\w*@|@[a-zA-Z_]\w*@\d|@[a-zA-Z_]\w*@@[a-zA-Z_]\w*@)"
+)
+
+
+def _check_digit_placeholder_concat(template: Dict[str, Any]) -> List[Tuple[str, str]]:
+    """Scan raw template text fields (and generate_py string literals) for digit-placeholder concatenation."""
+    hits: List[Tuple[str, str]] = []
+
+    def _scan_val(val: Any, path_label: str) -> None:
+        if isinstance(val, str):
+            m = _DIGIT_PLACEHOLDER_CONCAT_RE.search(val)
+            if m:
+                hits.append((path_label, m.group(0)))
+        elif isinstance(val, (list, tuple)):
+            for idx, item in enumerate(val):
+                _scan_val(item, f"{path_label}[{idx}]")
+        elif isinstance(val, dict):
+            for k, v in val.items():
+                _scan_val(v, f"{path_label}.{k}")
+
+    for field_name in ("stem", "stem_es", "stem_variants", "hints", "solution", "explanation_es", "sol", "rats"):
+        if template.get(field_name) is not None:
+            _scan_val(template.get(field_name), field_name)
+
+    gen_src = template.get("generate_py") or template.get("generator_code")
+    if isinstance(gen_src, str) and gen_src.strip():
         try:
-            passed = execute_verifier_code(cross_check_py, cand_res, seed=seed)
-        except TypeError:
-            passed = True
-        except Exception:
-            passed = False
-        if passed:
-            unrefuted.append((str(d_key), d_val))
-    return unrefuted
+            tree = ast.parse(gen_src)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    m = _DIGIT_PLACEHOLDER_CONCAT_RE.search(node.value)
+                    if m:
+                        hits.append(("generate_py", m.group(0)))
+                        break
+        except SyntaxError:
+            m = _DIGIT_PLACEHOLDER_CONCAT_RE.search(gen_src)
+            if m:
+                hits.append(("generate_py", m.group(0)))
+
+    return hits
 
 
 def check_single_template(
@@ -2732,6 +787,23 @@ def check_single_template(
     generate_py = template.get("generate_py", "")
     cross_check_py = template.get("cross_check_py") or template.get("verifier_code") or ""
     distractor_ids = template.get("distractor_ids", [])
+
+    # Early static check: digit-placeholder concatenation ([TPL-DIGIT-PLACEHOLDER-CONCAT])
+    for concat_field, concat_tok in _check_digit_placeholder_concat(template):
+        errors.append(format_diagnostic_error(
+            "TPL-DIGIT-PLACEHOLDER-CONCAT: CONCATENACIÓN DÍGITO-PLACEHOLDER",
+            competency_id,
+            tpl_id,
+            tpl_id,
+            concat_field,
+            concat_tok,
+            f"[TPL-DIGIT-PLACEHOLDER-CONCAT] Digit-placeholder concatenation '{concat_tok}' detected in '{concat_field}'; "
+            f"precompute the product in vars or insert an explicit operator (\\cdot) so interpolation never concatenates digits (e.g. 2@c@ -> 21).",
+            [
+                "Precomputa el coeficiente compuesto dentro de 'vars' en generate_py (ej. coef=2*c) e interpola @coef@.",
+                "O inserta un operador explícito entre dígito y placeholder (ej. 2 \\cdot @c@) o entre dos placeholders (@a@ \\cdot @b@).",
+            ],
+        ))
 
     # Strict hint length check (>= 25 characters)
     if strict:
@@ -2775,6 +847,25 @@ def check_single_template(
                 ))
                 break
 
+    # Check deterministic placeholder parity across stem and all stem_variants ([TPL-STEM-VARIANT-PARITY])
+    parity_violations = _check_stem_variant_parity(template)
+    for pv_field, pv_missing in parity_violations:
+        missing_str = ", ".join(f"@{v}@" for v in pv_missing)
+        errors.append(format_diagnostic_error(
+            "TPL-STEM-VARIANT-PARITY: ASIMETRÍA DE PLACEHOLDERS EN STEM_VARIANTS",
+            competency_id,
+            tpl_id,
+            tpl_id,
+            pv_field,
+            f"Faltan placeholders: {missing_str}",
+            f"[-] [TPL-STEM-VARIANT-PARITY] violation in '{tpl_id}': '{pv_field}' omite los placeholders {missing_str} presentes en el stem base o en la mayoría de las demás variantes, lo que genera enunciados incompletos o con variables sin definir.",
+            [
+                f"Incluir explícitamente {missing_str} dentro de '{pv_field}' con su definición contextual clara.",
+                "Verificar que todas las variantes de 'stem_variants' inyecten el mismo conjunto de variables paramétricas requeridas para resolver el reactivo.",
+                "Si una variable realmente no aplica a esa variante, reformular 'stem_variants' para que sean equivalentes en información dada.",
+            ]
+        ))
+
     # Concise explanation check (blocking under strict=True)
     sol_text = str(template.get("solution") or template.get("sol") or template.get("explanation_es") or "").strip()
     if len(sol_text) < 60 and (strict or len(sol_text) > 0):
@@ -2796,131 +887,17 @@ def check_single_template(
                 file=sys.stderr,
             )
 
-    # 1. AST Sandbox validation & LaTeX corruption check
-    try:
-        validate_code_ast(generate_py)
-    except Exception as e:
-        errors.append(format_diagnostic_error(
-            "AST: SEGURIDAD DEL GENERADOR", competency_id, tpl_id, tpl_id, "generate_py",
-            str(e), f"El código de generate_py violó las reglas de seguridad del AST: {e}",
-            [
-                "Eliminar llamadas a funciones prohibidas o imports inseguros en generate_py.",
-                "Usar únicamente módulos permitidos (math, random, fractions, sympy, etc.).",
-                "Revisar la sintaxis de Python en generate_py.",
-            ]
-        ))
-
-    corrupt_items = check_latex_escape_corruption_structured(generate_py)
-    if corrupt_items:
-        by_cmd: Dict[str, List[Dict[str, Any]]] = {}
-        for ci in corrupt_items:
-            by_cmd.setdefault(ci["cmd"], []).append(ci)
-        for cmd, occurrences in by_cmd.items():
-            lines_list = [o["line"] for o in occurrences if o.get("line") is not None]
-            errors.append(format_diagnostic_error(
-                "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "generate_py",
-                f"'{cmd}'",
-                f"Posible corrupción de escape de LaTeX en generate_py: comando '{cmd}' interpretado como carácter de control ({len(occurrences)} ocurrencias).",
-                [
-                    "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
-                    f"Evitar cadenas con escapes inválidos; escapar como '\\\\{cmd[1:]}'.",
-                    "Verificar la generación de fórmulas KaTeX.",
-                ],
-                lines=lines_list,
-            ))
-
-    if cross_check_py:
-        try:
-            validate_code_ast(cross_check_py)
-        except Exception as e:
-            errors.append(format_diagnostic_error(
-                "AST: SEGURIDAD DEL CROSS-CHECK", competency_id, tpl_id, tpl_id, "cross_check_py",
-                str(e), f"El código de cross_check_py violó las reglas de seguridad del AST: {e}",
-                [
-                    "Eliminar llamadas a funciones prohibidas o imports inseguros en cross_check_py.",
-                    "Usar únicamente módulos permitidos del sandbox.",
-                    "Revisar la sintaxis de Python en cross_check_py.",
-                ]
-            ))
-        cc_corrupt_items = check_latex_escape_corruption_structured(cross_check_py)
-        if cc_corrupt_items:
-            by_cmd_cc: Dict[str, List[Dict[str, Any]]] = {}
-            for ci in cc_corrupt_items:
-                by_cmd_cc.setdefault(ci["cmd"], []).append(ci)
-            for cmd, occurrences in by_cmd_cc.items():
-                lines_list = [o["line"] for o in occurrences if o.get("line") is not None]
-                errors.append(format_diagnostic_error(
-                    "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "cross_check_py",
-                    f"'{cmd}'",
-                    f"Posible corrupción de escape de LaTeX en cross_check_py: comando '{cmd}' interpretado como carácter de control ({len(occurrences)} ocurrencias).",
-                    [
-                        "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
-                        "Evitar cadenas con escapes inválidos.",
-                        "Verificar la generación de fórmulas KaTeX.",
-                    ],
-                    lines=lines_list,
-                ))
-
-    # 2. Rule TPL-D1: All referenced distractor_ids exist in competency CTA
-    missing_dids = [did for did in distractor_ids if did not in declared_distractor_ids]
-    if len(missing_dids) > 1:
-        errors.append(format_diagnostic_error(
-            "TPL-D1: DISTRACTOR NO DECLARADO EN CTA", competency_id, tpl_id, tpl_id, "distractor_ids",
-            f"{', '.join(missing_dids)} ({len(missing_dids)} distractores)",
-            f"Los distractor_ids '{', '.join(missing_dids)}' referenciados en la plantilla no existen en la lista de distractores de '{competency_id}' en cta.json.",
-            [
-                f"Verificar los distractores declarados para '{competency_id}' en cta.json y usar los IDs exactos.",
-                f"O declarar los distractores en la competencia '{competency_id}' dentro de cta.json.",
-                "Corregir cualquier error tipográfico en el ID del distractor dentro del JSON de la plantilla.",
-            ]
-        ))
-    elif len(missing_dids) == 1:
-        did = missing_dids[0]
-        errors.append(format_diagnostic_error(
-            "TPL-D1: DISTRACTOR NO DECLARADO EN CTA", competency_id, tpl_id, tpl_id, "distractor_ids",
-            f"'{did}'",
-            f"El distractor_id '{did}' referenciado en la plantilla no existe en la lista de distractores de '{competency_id}' en cta.json.",
-            [
-                f"Verificar los distractores declarados para '{competency_id}' en cta.json y usar los IDs exactos.",
-                f"O declarar el distractor '{did}' en la competencia '{competency_id}' dentro de cta.json.",
-                "Corregir cualquier error tipográfico en el ID del distractor dentro del JSON de la plantilla.",
-            ]
-        ))
-
-    # 3. Rule TPL-D2: MC7 must reference/use at least 6 distinct distractor_ids
-    if interaction_type == "multiple_choice_7_options":
-        if len(set(distractor_ids)) < 6:
-            errors.append(format_diagnostic_error(
-                "TPL-D2: REQUISITO DE 6 DISTRACTORES EN MC7", competency_id, tpl_id, tpl_id, "distractor_ids",
-                f"{len(set(distractor_ids))} distractor_ids declarados: {distractor_ids}",
-                "Las plantillas MC7 requieren exactamente 6 distractor_ids distintos para cubrir los 6 distractores psicométricos.",
-                [
-                    "Declarar al menos 6 distractor_ids únicos en el arreglo 'distractor_ids' de la plantilla.",
-                    "Vincular cada uno de los 6 distractores generados en generate_py a un distractor_id declarado.",
-                    "Revisar cta.json para seleccionar 6 distractores relevantes de la competencia.",
-                ]
-            ))
-
-    # 4. Static validation of ALL stem_variants syntax with validate_katex_syntax
-    stem_variants_list = template.get("stem_variants", [])
-    if isinstance(stem_variants_list, list):
-        variant_katex_errs: Dict[str, Tuple[str, List[str]]] = {}
-        for idx, variant in enumerate(stem_variants_list):
-            if isinstance(variant, str):
-                for kv_err in validate_katex_syntax(variant, f"stem_variants[{idx}]"):
-                    sig = get_canonical_invariant_key(kv_err)
-                    if sig not in variant_katex_errs:
-                        variant_katex_errs[sig] = (kv_err, [f"stem_variants[{idx}]"])
-                    else:
-                        variant_katex_errs[sig][1].append(f"stem_variants[{idx}]")
-
-        for sig, (rep_err, var_items) in variant_katex_errs.items():
-            errors.append(format_invariant_error_diagnostic(
-                cid=competency_id,
-                tpl_id=tpl_id,
-                q_id=var_items,
-                inv_err=rep_err,
-            ))
+    validate_template_static_rules(
+        template=template,
+        competency_id=competency_id,
+        tpl_id=tpl_id,
+        interaction_type=interaction_type,
+        generate_py=generate_py,
+        cross_check_py=cross_check_py,
+        distractor_ids=distractor_ids,
+        declared_distractor_ids=declared_distractor_ids,
+        errors=errors,
+    )
 
     # 5. Dry-run 50 seeds and invariant evaluation
     seeds = list(range(100, 100 + num_dry_run_seeds))
@@ -2972,119 +949,16 @@ def check_single_template(
             # Full failure of all seeds: no instances can be evaluated further
             return errors
 
-    # Strict Distractor Refutation check for MC7 templates with verifier
-    if strict and cross_check_py and interaction_type == "multiple_choice_7_options":
-        first_succ = next((r for r in batch_results if r.get("success")), None)
-        if first_succ:
-            unrefuted = check_distractor_refutation(
-                cross_check_py=cross_check_py,
-                gen_result=first_succ.get("result", {}),
-                seed=first_succ.get("seed", 100),
-            )
-            if unrefuted:
-                unrefuted_ids = [k for k, _ in unrefuted]
-                errors.append(format_diagnostic_error(
-                    "TPL-CROSS: DISTRACTOR NO REFUTADO",
-                    competency_id,
-                    tpl_id,
-                    tpl_id,
-                    "cross_check_py / distractors",
-                    f"{len(unrefuted)} distractores aceptados como correctos por el verificador: {unrefuted_ids}",
-                    f"[-] [TPL-CROSS] violation in '{tpl_id}': cross_check_py / verifier did not refute distractor(s) {unrefuted_ids}. Distractors must fail verification when substituted into correct.",
-                    [
-                        "Asegurar que verify(result) verifique rigurosamente las propiedades de la solución correcta.",
-                        "Comprobar que los distractores violen la condición matemática evaluada en verify().",
-                        "Refinar los distractores para que no satisfagan accidentalmente el invariante de la respuesta correcta.",
-                    ]
-                ))
-
-    # Strict Verifier Tautology Check for MS templates with verifier
-    if strict and cross_check_py and interaction_type == "multiple_select":
-        first_succ = next((r for r in batch_results if r.get("success")), None)
-        if first_succ:
-            gen_res = first_succ.get("result", {})
-            seed_val = first_succ.get("seed", 100)
-            opts = gen_res.get("options")
-            if isinstance(opts, list) and len(opts) >= 2:
-                t_idxs = [i for i, o in enumerate(opts) if isinstance(o, dict) and o.get("is_correct")]
-                f_idxs = [i for i, o in enumerate(opts) if isinstance(o, dict) and not o.get("is_correct")]
-                if t_idxs and f_idxs:
-                    # Mutation (a): invert is_correct
-                    cand_a = copy.deepcopy(gen_res)
-                    cand_a["options"][t_idxs[0]]["is_correct"] = False
-                    cand_a["options"][f_idxs[0]]["is_correct"] = True
-                    try:
-                        passed_a = execute_verifier_code(cross_check_py, cand_a, seed=seed_val)
-                    except Exception:
-                        passed_a = False
-
-                    # Mutation (b): invalidate distractor_id
-                    passed_b = False
-                    did_idx = next((i for i in f_idxs if opts[i].get("distractor_id")), None)
-                    if did_idx is not None:
-                        cand_b = copy.deepcopy(gen_res)
-                        cand_b["options"][did_idx]["distractor_id"] = "__INVALID_DID__"
-                        try:
-                            passed_b = execute_verifier_code(cross_check_py, cand_b, seed=seed_val)
-                        except Exception:
-                            passed_b = False
-
-                    # Mutation (c1): empty error_rationale in false option only
-                    cand_c1 = copy.deepcopy(gen_res)
-                    cand_c1["options"][f_idxs[0]]["error_rationale"] = ""
-                    try:
-                        passed_c1 = execute_verifier_code(cross_check_py, cand_c1, seed=seed_val)
-                    except Exception:
-                        passed_c1 = False
-
-                    # Mutation (c2): mutate value/content to sentinel in true option only
-                    cand_c2 = copy.deepcopy(gen_res)
-                    cand_c2["options"][t_idxs[0]]["value"] = "__MUTATED__"
-                    if "content" in cand_c2["options"][t_idxs[0]]:
-                        cand_c2["options"][t_idxs[0]]["content"] = "__MUTATED__"
-                    try:
-                        passed_c2 = execute_verifier_code(cross_check_py, cand_c2, seed=seed_val)
-                    except Exception:
-                        passed_c2 = False
-
-                    # Mutation (c3): mutate value/content to syntactically valid but false LaTeX assertion
-                    false_latex = "$1 = 2$" if str(opts[t_idxs[0]].get("value", "")).strip() == "$0 = 1$" else "$0 = 1$"
-                    cand_c3 = copy.deepcopy(gen_res)
-                    cand_c3["options"][t_idxs[0]]["value"] = false_latex
-                    if "content" in cand_c3["options"][t_idxs[0]]:
-                        cand_c3["options"][t_idxs[0]]["content"] = false_latex
-                    try:
-                        passed_c3 = execute_verifier_code(cross_check_py, cand_c3, seed=seed_val)
-                    except Exception:
-                        passed_c3 = False
-
-                    is_taut = (passed_a is True) or (passed_c2 is True) or (passed_c3 is True)
-                    if is_taut:
-                        errors.append(format_diagnostic_error(
-                            "TPL-CROSS: VERIFICADOR MS TAUTOLOGICO",
-                            competency_id,
-                            tpl_id,
-                            tpl_id,
-                            "cross_check_py / options",
-                            "El verificador multiple_select aceptó mutaciones inválidas (inversión de is_correct / opciones mutadas).",
-                            f"[-] [TPL-CROSS] violation in '{tpl_id}': cross_check_py / verifier did not refute mutated options in multiple_select. The verifier is tautological and must reject incorrect option assignments.",
-                            [
-                                "Asegurar que verify(result) verifique rigurosamente cuáles opciones en 'options' son correctas e incorrectas.",
-                                "Validar que las opciones correctas e incorrectas cumplan o violen las condiciones de la pregunta.",
-                                "No limitarse a contar la cantidad de opciones (ej. len(options)==4 and sum(...)==2).",
-                            ]
-                        ))
-                    else:
-                        if passed_b is True:
-                            warn_msg = f"WARNING: [TPL-CROSS-DID] En '{tpl_id}': El verificador multiple_select no validó 'distractor_id' en opciones incorrectas."
-                            if warnings_out is not None:
-                                warnings_out.append(warn_msg)
-                            print(warn_msg, file=sys.stderr)
-                        if passed_c1 is True:
-                            warn_msg = f"WARNING: [TPL-CROSS-RATIONALE] En '{tpl_id}': El verificador multiple_select no validó 'error_rationale' en opciones incorrectas."
-                            if warnings_out is not None:
-                                warnings_out.append(warn_msg)
-                            print(warn_msg, file=sys.stderr)
+    check_mc7_and_ms_verifier_refutation(
+        interaction_type=interaction_type,
+        strict=strict,
+        cross_check_py=cross_check_py,
+        batch_results=batch_results,
+        competency_id=competency_id,
+        tpl_id=tpl_id,
+        errors=errors,
+        warnings_out=warnings_out,
+    )
 
     # Check invariants on all generated instances (Full Sweep: NO premature break)
     raw_asm_failures: Dict[str, List[str]] = {}
@@ -3092,6 +966,9 @@ def check_single_template(
     rendered_correct_answers: List[Any] = []
     distractor_contents_by_slot: Dict[Any, List[str]] = defaultdict(list)
     distractor_rationales_by_slot: Dict[Any, List[str]] = defaultdict(list)
+    epistemic_checked = False
+    checked_symbolic_stems: Set[str] = set()
+    epistemic_hard_reported = False
 
     for idx, item in enumerate(batch_results):
         if not item.get("success"):
@@ -3113,24 +990,23 @@ def check_single_template(
             continue
 
         # Collect rendered correct answer and distractors for TPL-STATIC-OPT and TPL-DYNAMIC-RATIONALE
+        rendered_correct_answers.append(_canonical_answer_signature(assembled_q, interaction_type))
         if interaction_type in ("multiple_choice_7_options", "multiple_choice"):
-            correct_opt = next((opt for opt in assembled_q.get("options", []) if opt.get("is_correct")), None)
-            c_val = re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
-            rendered_correct_answers.append(c_val)
             for opt_idx, opt in enumerate(assembled_q.get("options", [])):
                 if not opt.get("is_correct"):
                     did = str(opt.get("distractor_id") or "").strip()
                     slot_key = did or str(opt.get("id") or opt.get("option_id") or f"slot_{opt_idx}").strip()
                     distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
                     distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
-        elif interaction_type == "fill_in_the_blank":
-            ans_obj = assembled_q.get("correct_answer", {})
-            val = ans_obj.get("value") if isinstance(ans_obj, dict) else assembled_q.get("correct")
-            c_val = re.sub(r"\s+", " ", str(val)).strip()
-            rendered_correct_answers.append(c_val)
+        elif interaction_type in ("fill_in_the_blank", "open_symbolic"):
+            for dd_idx, dd in enumerate(assembled_q.get("diagnostic_distractors") or []):
+                if isinstance(dd, dict):
+                    did = str(dd.get("distractor_id") or "").strip()
+                    slot_key = did or f"diag_{dd_idx}"
+                    val_str = str(dd.get("expression") if "expression" in dd else (dd.get("value") or "")).strip()
+                    distractor_contents_by_slot[slot_key].append(val_str)
+                    distractor_rationales_by_slot[slot_key].append(str(dd.get("error_rationale", "")).strip())
         elif interaction_type == "multiple_select":
-            opt_set = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in assembled_q.get("options", []))
-            rendered_correct_answers.append(opt_set)
             for opt_idx, opt in enumerate(assembled_q.get("options", [])):
                 opt_txt = str(opt.get("content") or opt.get("text") or "")
                 m_tt = re.search(
@@ -3167,7 +1043,38 @@ def check_single_template(
                     raw_inv_failures[canon_key][1].append(seed_tag)
 
         # Invariant check (Accumulate all failures: NO break)
-        is_valid, inv_errors = check_instance_invariants(assembled_q, interaction_type)
+        is_valid, inv_errors = check_instance_invariants(
+            assembled_q,
+            interaction_type,
+            variables=gen_res.get("vars", {}),
+        )
+        if is_valid and not epistemic_checked:
+            epistemic_checked = True
+            for ep_warn in check_epistemic_closure(assembled_q, interaction_type):
+                msg = f"{competency_id} ({tpl_id}, seed={seed_val}): {ep_warn}"
+                _logger.warning(msg)
+                if warnings_out is not None:
+                    warnings_out.append(msg)
+        if not epistemic_hard_reported:
+            stem_txt_ep = str(assembled_q.get("stem") or "")
+            if stem_txt_ep not in checked_symbolic_stems:
+                checked_symbolic_stems.add(stem_txt_ep)
+                hard_ep_errs = check_open_symbolic_answer_closure(assembled_q, interaction_type)
+                if hard_ep_errs:
+                    epistemic_hard_reported = True
+                    errors.append(format_diagnostic_error(
+                        "TPL-EPISTEMIC-CLOSURE: SÍMBOLO NO DEFINIDO EN EXPECTED_ANSWER",
+                        competency_id,
+                        tpl_id,
+                        f"seed={seed_val}",
+                        "stem_variants / expected_answer",
+                        str(assembled_q.get("expected_answer", ""))[:120],
+                        hard_ep_errs[0],
+                        [
+                            "Declara explícitamente todas las variables simbólicas requeridas por expected_answer en todas las variantes de stem_variants (en $...$ o `var`).",
+                            "Verifica que ninguna variante de stem_variants omita parámetros libres usados en la expresión esperada.",
+                        ],
+                    ))
         if not is_valid:
             has_collision = any("Distractor identical to correct answer" in e for e in inv_errors)
             for inv_err in inv_errors:
@@ -3208,109 +1115,19 @@ def check_single_template(
             q_obj=sample_q,
         ))
 
-    # Evaluate [TPL-STATIC-OPT] under strict=True
-    if strict and rendered_correct_answers:
-        eval_answers = rendered_correct_answers
-        N_eval = len(eval_answers)
-        unique_correct = set(eval_answers)
-
-        # Unconditional mono-key blocking: if N >= 2 and len(unique_correct) == 1, ALWAYS reject
-        if N_eval >= 2 and len(unique_correct) == 1:
-            first_ans = list(unique_correct)[0]
-            first_str = str(first_ans)
-            errors.append(format_diagnostic_error(
-                "TPL-STATIC-OPT: MONO-CLAVE DETECTADA",
-                competency_id,
-                tpl_id,
-                "dry-run",
-                "correct / vars",
-                f"Clave fija en {N_eval} semillas evaluadas: '{first_str}'",
-                f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': Mono-clave detected across {N_eval} seeds ({len(unique_correct)} unique correct answers). Templates must generate dynamic correct answers.",
-                [
-                    "Parametrizar las variables en generate_py para que la respuesta correcta varíe dinámicamente entre semillas.",
-                    "Evitar respuestas estáticas o dominios vacíos que produzcan siempre la misma clave.",
-                    "Verificar que vars contenga parámetros que modifiquen el resultado numérico o simbólico.",
-                ]
-            ))
-        elif num_dry_run_seeds >= 15:
-            has_dynamic_vars = any(
-                len(r.get("result", {}).get("vars", {})) > 0
-                for r in batch_results if r.get("success")
-            )
-            if interaction_type == "multiple_select":
-                min_req_ms = 5 if has_dynamic_vars else 2
-                if len(unique_correct) < min_req_ms:
-                    errors.append(format_diagnostic_error(
-                        "TPL-STATIC-OPT: CONJUNTO DE OPCIONES ESTÁTICO",
-                        competency_id,
-                        tpl_id,
-                        "dry-run",
-                        "options",
-                        f"Únicamente {len(unique_correct)}/{min_req_ms} conjuntos de opciones generados en {N_eval} semillas.",
-                        f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': multiple_select template must generate at least {min_req_ms} distinct sets of correct options.",
-                        [
-                            "Parametrizar las opciones o su veracidad en generate_py.",
-                            "Asegurar que la selección de afirmaciones correctas varíe según los parámetros.",
-                        ]
-                    ))
-            else:
-                cid_upper = str(competency_id or template.get("competency_id") or "").upper().strip()
-                is_concept_or_misc = (
-                    cid_upper.startswith("C-")
-                    or cid_upper.startswith("M-")
-                    or "CONCEPT" in cid_upper
-                    or "MISCONCEPTION" in cid_upper
-                )
-                if is_concept_or_misc:
-                    is_skill_or_hab = False
-                elif (
-                    cid_upper.startswith("HAB-")
-                    or cid_upper.startswith("H-")
-                    or is_skill_type(competency_id)
-                    or any(s in cid_upper.lower() for s in ["skill", "hab"])
-                ):
-                    is_skill_or_hab = True
-                else:
-                    is_skill_or_hab = template.get("bloom", "") in ("Apply", "Analyze", "Evaluate", "Create")
-
-                min_req = min(10, max(5, N_eval // 2)) if is_skill_or_hab else (min(5, N_eval) if has_dynamic_vars else min(4, N_eval))
-                if len(unique_correct) < min_req:
-                    errors.append(format_diagnostic_error(
-                        "TPL-STATIC-OPT: BAJA VARIABILIDAD DE CLAVE",
-                        competency_id,
-                        tpl_id,
-                        "dry-run",
-                        "correct / vars",
-                        f"Únicamente {len(unique_correct)}/{min_req} claves correctas únicas en {N_eval} semillas.",
-                        f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': Only {len(unique_correct)}/{min_req} unique correct answers generated across {N_eval} seeds. Required threshold is >={min_req}.",
-                        [
-                            "Ampliar los rangos numéricos y combinaciones de parámetros en generate_py.",
-                            "Asegurar que la clave correcta cambie frecuentemente entre semillas.",
-                        ]
-                    ))
-
-    # Evaluate [TPL-DYNAMIC-RATIONALE]
-    if strict and num_dry_run_seeds >= 15:
-        for slot_key, contents_list in distractor_contents_by_slot.items():
-            rats_list = distractor_rationales_by_slot.get(slot_key, [])
-            u_contents = set(contents_list)
-            u_rats = set(rats_list)
-            if len(u_contents) > 1 and len(u_rats) == 1:
-                rat_sample = list(u_rats)[0] if u_rats else "(vacío)"
-                errors.append(format_diagnostic_error(
-                    "TPL-DYNAMIC-RATIONALE: RATIONALE ESTÁTICO EN DISTRACTOR DINÁMICO",
-                    competency_id,
-                    tpl_id,
-                    str(slot_key),
-                    "error_rationale",
-                    f"Distractor '{slot_key}' varía en contenido ({len(u_contents)} variantes) pero tiene error_rationale estático: '{rat_sample}'",
-                    f"[-] [TPL-DYNAMIC-RATIONALE] violation in '{tpl_id}': Distractor '{slot_key}' varies across seeds ({len(u_contents)} unique contents) but its error_rationale remains static. Dynamic distractors must include dynamic rationale explaining the specific misconception with seed parameters.",
-                    [
-                        f"Incluir placeholders como @var@ o {{var}} en el error_rationale del distractor '{slot_key}'.",
-                        "Explicar el error formativo contextualizado con los valores numéricos o simbólicos generados en la semilla.",
-                        "Asegurar que error_rationale varíe dinámicamente cuando el distractor varía.",
-                    ]
-                ))
+    evaluate_static_opt_and_dynamic_rationale(
+        template=template,
+        competency_id=competency_id,
+        tpl_id=tpl_id,
+        interaction_type=interaction_type,
+        strict=strict,
+        num_dry_run_seeds=num_dry_run_seeds,
+        batch_results=batch_results,
+        rendered_correct_answers=rendered_correct_answers,
+        distractor_contents_by_slot=distractor_contents_by_slot,
+        distractor_rationales_by_slot=distractor_rationales_by_slot,
+        errors=errors,
+    )
 
     # 5. Rule TPL-VAR: Early variability and parametric capacity validation
     # a) Verify vars dictionary is not empty across generated results
@@ -3538,21 +1355,10 @@ def check_competency_diversity(
 
     # Strict pool correct key concentration check
     if strict and len(questions) >= 20:
-        correct_keys = []
-        for q in questions:
-            q_type = q.get("interaction_type") or q.get("type", "")
-            if q_type == "multiple_choice_7_options":
-                correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
-                correct_keys.append(re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else "")
-            elif q_type == "fill_in_the_blank":
-                ans = q.get("correct_answer", {})
-                val = ans.get("value") if isinstance(ans, dict) else q.get("correct")
-                correct_keys.append(re.sub(r"\s+", " ", str(val)).strip())
-            elif q_type == "multiple_select":
-                opt_tuples = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in q.get("options", []))
-                correct_keys.append(opt_tuples)
-            else:
-                correct_keys.append(str(q.get("correct", "")).strip())
+        correct_keys = [
+            _canonical_answer_signature(q, str(q.get("interaction_type") or q.get("type", "")))
+            for q in questions
+        ]
 
         from collections import Counter
         key_counts = Counter(correct_keys)
@@ -3738,9 +1544,26 @@ def _validate_single_template_file(
     referenced_dids: Set[str] = set()
 
     for tpl in templates_list:
-        t_dids = tpl.get("distractor_ids", [])
+        t_dids = tpl.get("distractor_ids", []) or []
         for did in t_dids:
-            referenced_dids.add(did)
+            if isinstance(did, str) and did.strip():
+                referenced_dids.add(did.strip().replace("_", "-"))
+
+        if not t_dids and tpl.get("generate_py") and tpl.get("interaction_type") != "multiple_choice_7_options":
+            try:
+                rep_batch = execute_sandbox_batch(tpl["generate_py"], [42], timeout_per_item=0.8)
+                if rep_batch and rep_batch[0].get("success"):
+                    rep_q = assemble_question(
+                        template=tpl,
+                        gen_result=rep_batch[0].get("result", {}),
+                        competency_id=comp_id or "UNKNOWN",
+                        question_index=1,
+                        cta_distractors_map=cta_distractors_map,
+                        seed=42,
+                    )
+                    referenced_dids.update(_extract_instance_distractor_ids(rep_q))
+            except Exception:
+                pass
 
         single_errs = check_single_template(
             template=tpl,
@@ -3838,6 +1661,13 @@ def _eval_comp_diversity_and_parity_worker(
             )
         )
     return c_errors
+
+
+def _bounded_worker_count(item_count: int) -> int:
+    """Caps ProcessPool workers to leave host cores responsive on Windows."""
+    if item_count <= 1:
+        return 1
+    return max(1, min(6, max(1, (os.cpu_count() or 4) - 2), item_count))
 
 
 def check_templates_file_or_dir(
@@ -3984,7 +1814,7 @@ def check_templates_file_or_dir(
     errors_by_comp: Dict[str, List[str]] = {}
 
     if len(template_files) > 1:
-        max_workers = min(os.cpu_count() or 4, len(template_files))
+        max_workers = _bounded_worker_count(len(template_files))
 
         def _run_pool(pool_cls, workers, files):
             with pool_cls(max_workers=workers) as executor:
@@ -4053,7 +1883,7 @@ def check_templates_file_or_dir(
         if pending:
             # Validation is CPU-bound (GIL): prefer processes, fall back to threads if
             # the pool cannot be used (e.g. virtual stdout without fileno, unpicklable args, or restricted environment).
-            workers = min(os.cpu_count() or 4, len(pending))
+            workers = _bounded_worker_count(len(pending))
             stdout_is_virtual = False
             if not hasattr(sys.stdout, "fileno"):
                 stdout_is_virtual = True
@@ -4121,66 +1951,16 @@ def check_templates_file_or_dir(
                 if comp_id in referenced_distractors_by_comp:
                     referenced_distractors_by_comp[comp_id].update(ref_dids)
 
-    # Rule TPL-D3: Multimodal distractor coverage across templates
-    if cta_distractors_by_comp:
-        comps_to_check = list(referenced_distractors_by_comp.keys()) if is_full_dir else list(processed_comp_ids)
-        for cid in comps_to_check:
-            declared_set = cta_distractors_by_comp.get(cid, set())
-            referenced_set = referenced_distractors_by_comp.get(cid, set())
-            c_tpls = templates_by_comp.get(cid, [])
-            has_mc7 = any(t.get("interaction_type") == "multiple_choice_7_options" for t in c_tpls)
-            has_ms = any(t.get("interaction_type") == "multiple_select" for t in c_tpls)
-            is_100_fib = all(t.get("interaction_type") == "fill_in_the_blank" for t in c_tpls) and len(c_tpls) > 0
-
-            tpl_d3_failed = False
-            snippet_msg = ""
-            cause_msg = ""
-            if has_mc7:
-                uncovered = declared_set - referenced_set
-                if uncovered:
-                    tpl_d3_failed = True
-                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = (
-                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando "
-                        "en su semilla representativa (TPL-D3 evalúa los distractor_ids de la semilla representativa por plantilla; "
-                        "rotar distractores entre semillas en generate() NO los cubre y MC7 exige 6/6)."
-                    )
-            elif has_ms:
-                valid_ref = referenced_set.intersection(declared_set)
-                if len(valid_ref) < 2:
-                    tpl_d3_failed = True
-                    snippet_msg = f"Distractores cubiertos: {sorted(valid_ref)} ({len(valid_ref)}/2 requeridos para MS)"
-                    cause_msg = "Las plantillas multiple_select requieren al menos 2 distractores declarados en cta.json."
-            elif is_100_fib:
-                tpl_d3_failed = False
-            else:
-                uncovered = declared_set - referenced_set
-                if uncovered:
-                    tpl_d3_failed = True
-                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = (
-                        "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando "
-                        "en su semilla representativa (TPL-D3 evalúa los distractor_ids de la semilla representativa por plantilla; "
-                        "rotar distractores entre semillas NO los cubre)."
-                    )
-
-            if tpl_d3_failed:
-                err_diag = format_diagnostic_error(
-                    rule_tag="TPL-D3: COBERTURA COMPLETA DE DISTRACTORES",
-                    competency=cid,
-                    template="[Todas las plantillas de la competencia]",
-                    item_id="N/A",
-                    field_name="distractor_ids",
-                    snippet=snippet_msg,
-                    cause=cause_msg,
-                    actions=[
-                        f"Añadir plantillas MC7 adicionales en '{cid}' que emitan en su semilla representativa los distractores faltantes (rotar distractores entre semillas en una sola plantilla NO cubre TPL-D3).",
-                        f"O asignar los distractores faltantes en los distractor_ids de la semilla representativa de las plantillas existentes de '{cid}'.",
-                        "Asegurar la cobertura de distractores requerida por el contrato psicométrico.",
-                    ],
-                )
-                errors.append(err_diag)
-                errors_by_comp.setdefault(cid, []).append(err_diag)
+    check_multimodal_tpl_d3_coverage(
+        cta_distractors_by_comp=cta_distractors_by_comp,
+        cta_data=cta_data,
+        referenced_distractors_by_comp=referenced_distractors_by_comp,
+        templates_by_comp=templates_by_comp,
+        processed_comp_ids=processed_comp_ids,
+        is_full_dir=is_full_dir,
+        errors=errors,
+        errors_by_comp=errors_by_comp,
+    )
 
     # Rule TPL-VAR (Competency Diversity Gate) & Isomorphic Contract Parity Check
     if cta_data and "competencies" in cta_data:
@@ -4237,7 +2017,7 @@ def check_templates_file_or_dir(
                         )
                     for cid, fut in futs.items():
                         comp_results[cid] = fut.result()
-            w = min(os.cpu_count() or 4, len(to_run))
+            w = _bounded_worker_count(len(to_run))
             stdout_is_virtual = False
             if not hasattr(sys.stdout, "fileno"):
                 stdout_is_virtual = True
@@ -4301,6 +2081,22 @@ def check_templates_file_or_dir(
             if err not in errors_by_comp.get(only_cid, []):
                 errors_by_comp.setdefault(only_cid, []).append(err)
 
+    # Non-blocking cognitive rigor recommendation: Analyze+Evaluate >= 70% portfolio share
+    all_tpls_bloom = [t for tpls in templates_by_comp.values() for t in tpls if isinstance(t, dict)]
+    total_tpls_bloom = len(all_tpls_bloom)
+    if total_tpls_bloom >= 4:
+        sup_cnt = sum(1 for t in all_tpls_bloom if str(t.get("bloom") or "").strip() in ("Analyze", "Evaluate"))
+        sup_ratio = sup_cnt / total_tpls_bloom
+        if sup_ratio < 0.70:
+            bloom_warn = (
+                f"WARNING: [BLOOM-SUPERIOR-TARGET] Cuota Analyze+Evaluate = {sup_ratio * 100:.1f}% "
+                f"({sup_cnt}/{total_tpls_bloom} plantillas, < 70.0% recomendado). "
+                f"Recomendación no bloqueante: promueve plantillas aplicativas hacia Analyze/Evaluate si el material lo permite."
+            )
+            if warnings_out is not None:
+                warnings_out.append(bloom_warn)
+            print(bloom_warn, file=sys.stderr)
+
     is_clean = (len(errors) == 0)
 
     # Resolve attempts_dir automatically if not supplied
@@ -4319,184 +2115,18 @@ def check_templates_file_or_dir(
         else:
             effective_attempts_dir = Path("work/.check_attempts")
 
-    # Circuit breaker and attempt tracking
-    if effective_attempts_dir is not None:
-        try:
-            att_path = Path(effective_attempts_dir)
-            att_path.mkdir(parents=True, exist_ok=True)
-
-            def _safe_write_text(f_path: Path, text: str) -> None:
-                tmp_p = f_path.with_name(f".{f_path.name}.tmp.{os.getpid()}_{uuid.uuid4().hex[:8]}")
-                tmp_p.write_text(text, encoding="utf-8")
-                try:
-                    os.replace(tmp_p, f_path)
-                except Exception:
-                    try:
-                        if f_path.is_file():
-                            f_path.unlink()
-                        os.replace(tmp_p, f_path)
-                    except Exception:
-                        f_path.write_text(text, encoding="utf-8")
-                        if tmp_p.is_file():
-                            try:
-                                tmp_p.unlink()
-                            except Exception:
-                                pass
-
-            # Derive deterministic scope key for circuit breaker isolation across concurrent shards
-            shard_tag = f"{shard_id}_" if shard_id else ""
-            if processed_comp_ids:
-                scope_raw = f"{shard_tag}" + "_".join(sorted(processed_comp_ids))
-            elif raw_targets:
-                scope_raw = f"{shard_tag}" + "_".join(sorted(str(t) for t in raw_targets))
-            else:
-                scope_raw = f"{shard_tag}global"
-
-            if len(scope_raw) > 32:
-                scope_key = hashlib.sha256(scope_raw.encode("utf-8")).hexdigest()[:12]
-            else:
-                scope_key = re.sub(r"[^a-zA-Z0-9_-]", "_", scope_raw)
-
-            cb_file = att_path / f"circuit_breaker_{scope_key}.json"
-            legacy_cb_file = att_path / "circuit_breaker.json"
-            err_hash = None
-
-            if not is_clean:
-                # Compute deterministic error fingerprint
-                normalized_errs = sorted([normalize_error_string_for_hash(e) for e in errors])
-                err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
-
-                cb_data = {"consecutive_count": 1, "last_hash": err_hash, "history": []}
-                target_file = cb_file if cb_file.is_file() else (legacy_cb_file if legacy_cb_file.is_file() else None)
-                if target_file and target_file.is_file():
-                    try:
-                        loaded = json.loads(target_file.read_text(encoding="utf-8"))
-                        if loaded.get("last_hash") == err_hash:
-                            cb_data["consecutive_count"] = loaded.get("consecutive_count", 1) + 1
-                        else:
-                            cb_data["consecutive_count"] = 1
-                        cb_data["history"] = loaded.get("history", [])
-                    except Exception:
-                        pass
-
-                cb_data["history"].append({
-                    "hash": err_hash,
-                    "error_count": len(errors),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                })
-                cb_data["history"] = cb_data["history"][-10:]
-                _safe_write_text(cb_file, json.dumps(cb_data, indent=2, ensure_ascii=False))
-
-                if cb_data["consecutive_count"] >= 3:
-                    cb_msg = (
-                        f"[-] [CIRCUIT BREAKER: FALLOS CONSECUTIVOS IDÉNTICOS]\n"
-                        f"    UBICACIÓN: Subagente de autoría de plantillas\n"
-                        f"    CAUSA: Se han detectado 3 ejecuciones consecutivas de check_templates.py con exactamente el mismo número ({len(errors)}) y tipo de errores sin ningún progreso.\n"
-                        f"    ACTION REQUIRED: Detener de inmediato las llamadas a herramientas y responder:\n"
-                        f"    BLOCKED: CONTRACT_ERROR - Circuit breaker activado tras 3 fallos consecutivos idénticos.\n"
-                        f"    STOP, send_message the Director."
-                    )
-                    errors.append(cb_msg)
-            else:
-                # Clear circuit breaker on clean pass
-                if cb_file.is_file():
-                    try:
-                        cb_file.unlink()
-                    except Exception:
-                        pass
-                if legacy_cb_file.is_file():
-                    try:
-                        legacy_cb_file.unlink()
-                    except Exception:
-                        pass
-
-            # Per-competency budget halt tracking with shard isolation and stateful SHA-256 circuit breaker
-            for cid in processed_comp_ids:
-                cid_errs = errors_by_comp.get(cid, [])
-                cid_is_clean = (len(cid_errs) == 0)
-
-                if len(processed_comp_ids) == 1 and err_hash:
-                    cid_err_hash = err_hash
-                elif cid_errs:
-                    cid_norm = sorted([normalize_error_string_for_hash(e) for e in cid_errs])
-                    cid_err_hash = hashlib.sha256("\n".join(cid_norm).encode("utf-8")).hexdigest()
-                else:
-                    cid_err_hash = None
-
-                att_fname = f"{shard_id}_{cid}.json" if shard_id else f"{cid}.json"
-                f_att = att_path / att_fname
-                att_data = {"attempts": 0, "last_hash": None, "last_err_hash": None, "halted": False}
-                if f_att.is_file():
-                    try:
-                        loaded = json.loads(f_att.read_text(encoding="utf-8"))
-                        if isinstance(loaded, dict):
-                            att_data["attempts"] = loaded.get("attempts", 0)
-                            att_data["last_hash"] = loaded.get("last_hash")
-                            att_data["last_err_hash"] = loaded.get("last_err_hash")
-                            att_data["halted"] = bool(loaded.get("halted", False))
-                    except Exception:
-                        pass
-
-                # Compute SHA-256 of competency source
-                comp_tpls = templates_by_comp.get(cid, [])
-                comp_source_text = ""
-                if comp_tpls:
-                    comp_source_text = json.dumps(comp_tpls, sort_keys=True, ensure_ascii=False)
-                else:
-                    for tf in template_files:
-                        if tf.stem == cid or f"{cid}.json" in tf.name:
-                            if tf.is_file():
-                                comp_source_text = tf.read_text(encoding="utf-8")
-                            break
-                if not comp_source_text:
-                    comp_source_text = cid
-
-                comp_hash = hashlib.sha256(comp_source_text.encode("utf-8")).hexdigest()
-                last_hash = att_data.get("last_hash")
-                last_err_hash = att_data.get("last_err_hash")
-                was_halted = att_data.get("halted", False)
-                hash_changed = (last_hash is not None and last_hash != comp_hash)
-                err_changed = (cid_err_hash is not None and last_err_hash is not None and last_err_hash != cid_err_hash)
-
-                if hash_changed or (from_compile_shard and err_changed):
-                    # Changed hash is re-evaluated; clear previous halt and reset attempts
-                    att_data["attempts"] = 0
-                    att_data["halted"] = False
-                    was_halted = False
-
-                if cid_is_clean:
-                    # Pass clears the halt and deletes any attempt files for this competency
-                    targets_to_unlink = [f_att, att_path / f"{cid}.json"]
-                    if shard_id:
-                        targets_to_unlink.append(att_path / f"{shard_id}_{cid}.json")
-                    for target_file in targets_to_unlink:
-                        if target_file.is_file():
-                            try:
-                                target_file.unlink()
-                            except Exception:
-                                pass
-                else:
-                    if was_halted and not hash_changed and not (from_compile_shard and err_changed):
-                        terminal_msg = (
-                            f"[!] BUDGET HALT on competency '{cid}': Repeat failure with unchanged SHA-256 source hash ({comp_hash[:10]}). "
-                            f"STOP, send_message the Director."
-                        )
-                        errors.append(terminal_msg)
-                    else:
-                        att_data["attempts"] = att_data.get("attempts", 0) + 1
-                        att_data["last_hash"] = comp_hash
-                        att_data["last_err_hash"] = cid_err_hash
-                        if att_data["attempts"] >= 3:
-                            if not (from_compile_shard and err_changed):
-                                att_data["halted"] = True
-                                terminal_msg = (
-                                    f"[!] BUDGET HALT on competency '{cid}': Exceeded {att_data['attempts']} validation cycles with identical source hash ({comp_hash[:10]}). "
-                                    f"STOP, send_message the Director."
-                                )
-                                errors.append(terminal_msg)
-                        _safe_write_text(f_att, json.dumps(att_data, indent=2, ensure_ascii=False))
-        except Exception:
-            pass
+    update_circuit_breaker_state(
+        effective_attempts_dir=effective_attempts_dir,
+        shard_id=shard_id,
+        processed_comp_ids=processed_comp_ids,
+        raw_targets=raw_targets,
+        is_clean=is_clean,
+        errors=errors,
+        errors_by_comp=errors_by_comp,
+        templates_by_comp=templates_by_comp,
+        template_files=template_files,
+        from_compile_shard=from_compile_shard,
+    )
 
     is_clean = (len(errors) == 0)
     return is_clean, errors

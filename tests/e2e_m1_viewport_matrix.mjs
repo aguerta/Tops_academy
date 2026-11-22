@@ -227,6 +227,56 @@ async function startServerWithRetry(maxRetries = 3) {
 // Global references for crash/interrupt cleanup
 let globalServer = null;
 let globalBrowser = null;
+const FIXTURE_COURSE_ID = '__e2e_m1_mc7_fixture__';
+const FIXTURE_COURSE_TITLE = 'E2E M1 MC7 Fixture';
+const FIXTURE_COURSE_PATH = path.join(projectRoot, 'courses', `${FIXTURE_COURSE_ID}.json`);
+
+/**
+ * Builds an isolated, deterministic MC7-only course fixture from an existing
+ * course so that random session shuffling never lands on FIB/MS items during
+ * the 12-viewport MC7 + Blank-First layout matrix.
+ */
+function createDeterministicMc7Fixture() {
+  const coursesDir = path.join(projectRoot, 'courses');
+  const jsonFiles = fs
+    .readdirSync(coursesDir)
+    .filter((f) => f.endsWith('.json') && f !== `${FIXTURE_COURSE_ID}.json`)
+    .sort();
+
+  for (const file of jsonFiles) {
+    const raw = JSON.parse(fs.readFileSync(path.join(coursesDir, file), 'utf-8'));
+    const allQuestions = Array.isArray(raw.questions) ? raw.questions : [];
+    const mc7Questions = allQuestions.filter(
+      (q) =>
+        q.interaction_type === 'multiple_choice_7_options' &&
+        Array.isArray(q.options) &&
+        q.options.length === 7
+    );
+    if (mc7Questions.length === 0) continue;
+
+    const firstCompId = mc7Questions[0].competency_id;
+    const compQuestions = mc7Questions.filter((q) => q.competency_id === firstCompId);
+    const compObj =
+      (Array.isArray(raw.competencies) ? raw.competencies : []).find(
+        (c) => c.id === firstCompId
+      ) || { id: firstCompId, code: firstCompId, name: 'MC7 Fixture Competency' };
+
+    const fixtureCourse = {
+      ...raw,
+      course_id: FIXTURE_COURSE_ID,
+      course_title: FIXTURE_COURSE_TITLE,
+      title: FIXTURE_COURSE_TITLE,
+      competencies: [compObj],
+      questions: compQuestions,
+    };
+    fs.writeFileSync(FIXTURE_COURSE_PATH, JSON.stringify(fixtureCourse), 'utf-8');
+    console.log(
+      `[E2E-Fixture] Created deterministic MC7 fixture (${compQuestions.length} questions from ${file} / ${firstCompId})`
+    );
+    return;
+  }
+  console.warn('[E2E-Fixture] No MC7 questions found in courses/; falling back to existing courses.');
+}
 
 async function globalCleanup() {
   if (globalBrowser) {
@@ -241,6 +291,11 @@ async function globalCleanup() {
     } catch {}
     globalServer = null;
   }
+  try {
+    if (fs.existsSync(FIXTURE_COURSE_PATH)) {
+      fs.rmSync(FIXTURE_COURSE_PATH, { force: true });
+    }
+  } catch {}
 }
 
 process.on('SIGINT', async () => {
@@ -447,6 +502,7 @@ async function runMatrix() {
   const execPath = resolveChromiumExecutable();
   console.log(`[Playwright] Using Chromium executable: ${execPath || 'Default'}`);
 
+  createDeterministicMc7Fixture();
   globalServer = await startServerWithRetry(3);
   const server = globalServer;
 
@@ -524,10 +580,13 @@ async function runMatrix() {
         await page.goto(server.baseUrl, { waitUntil: 'domcontentloaded', timeout: PAGE_NAV_TIMEOUT });
         await page.waitForSelector('[data-testid="course-card"]', { timeout: SELECTOR_TIMEOUT });
 
-        // Select Saul course or first available valid course
+        // Select deterministic MC7 fixture course, Saul course, or first available valid course
         const courseCards = page.locator('[data-testid="course-card"]');
+        const fixtureCard = courseCards.filter({ hasText: FIXTURE_COURSE_TITLE }).first();
         const saulCard = courseCards.filter({ hasText: 'Saul' }).first();
-        if ((await saulCard.count()) > 0) {
+        if ((await fixtureCard.count()) > 0) {
+          await fixtureCard.click();
+        } else if ((await saulCard.count()) > 0) {
           await saulCard.click();
         } else {
           await courseCards.first().click();

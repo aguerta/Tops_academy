@@ -208,8 +208,8 @@ def check_semantic_rules(data: dict[str, Any]) -> list[ValidationError]:
                     item_id=q_id
                 ))
 
-        # R-04: Fill-in-the-Blank Answer Key Validation
-        elif itype == "fill_in_the_blank":
+        # R-04: Fill-in-the-Blank & Open Symbolic Answer Key Validation
+        elif itype in ("fill_in_the_blank", "open_symbolic"):
             ans = q.get("correct_answer")
             is_valid_ans = False
 
@@ -222,20 +222,93 @@ def check_semantic_rules(data: dict[str, Any]) -> list[ValidationError]:
             elif isinstance(ans, dict) and len(ans) > 0:
                 val = ans.get("value")
                 expr = ans.get("expression")
+                canon = ans.get("canonical_algebraic")
                 has_valid_val = (
                     (isinstance(val, str) and bool(val.strip()))
                     or (isinstance(val, (int, float)) and not isinstance(val, bool))
                     or (isinstance(val, list) and len(val) > 0 and any(isinstance(x, str) and bool(x.strip()) for x in val))
                 )
                 has_valid_expr = isinstance(expr, str) and bool(expr.strip())
-                if has_valid_val or has_valid_expr:
+                has_valid_canon = isinstance(canon, str) and bool(canon.strip())
+                if has_valid_val or has_valid_expr or has_valid_canon:
                     is_valid_ans = True
 
             if not is_valid_ans:
                 errors.append(ValidationError(
                     rule_id="R-04",
                     code="ERR_MISSING_ANSWER",
-                    message=f"Question '{q_id}' of type 'fill_in_the_blank' must specify a valid non-empty 'correct_answer' with expression or value",
+                    message=f"Question '{q_id}' of type '{itype}' must specify a valid non-empty 'correct_answer' with expression or value",
+                    item_id=q_id
+                ))
+
+        # R-04: Structured Bloom Superior modalities
+        elif itype == "proof_dag":
+            dag = q.get("proof_dag")
+            steps = dag.get("steps") if isinstance(dag, dict) else None
+            valid_steps = [s for s in (steps or []) if isinstance(s, dict) and not s.get("is_fallacy")]
+            if not isinstance(dag, dict) or not isinstance(steps, list) or len(valid_steps) < 2:
+                errors.append(ValidationError(
+                    rule_id="R-04",
+                    code="ERR_SCHEMA",
+                    message=f"Question '{q_id}' of type 'proof_dag' must provide 'proof_dag.steps' with at least 2 valid steps",
+                    item_id=q_id
+                ))
+        elif itype == "adversarial_break":
+            adv = q.get("adversarial_break")
+            mode = adv.get("mode") if isinstance(adv, dict) else None
+            ok_adv = isinstance(adv, dict) and (
+                (mode == "find_fallacy" and isinstance(adv.get("steps"), list) and len(adv["steps"]) >= 2)
+                or (mode == "counterexample" and isinstance(adv.get("inputs"), list) and isinstance(adv.get("predicates"), list) and isinstance(adv.get("sample_witness"), dict))
+            )
+            if not ok_adv:
+                errors.append(ValidationError(
+                    rule_id="R-04",
+                    code="ERR_SCHEMA",
+                    message=f"Question '{q_id}' of type 'adversarial_break' must declare valid 'find_fallacy' or 'counterexample' specification",
+                    item_id=q_id
+                ))
+        elif itype == "unstructured_model":
+            um = q.get("unstructured_model")
+            ok_um = (
+                isinstance(um, dict)
+                and isinstance(um.get("phase1_variables"), dict)
+                and isinstance(um.get("phase2_assumptions"), dict)
+                and isinstance(um.get("phase3_formulation"), dict)
+            )
+            if not ok_um:
+                errors.append(ValidationError(
+                    rule_id="R-04",
+                    code="ERR_SCHEMA",
+                    message=f"Question '{q_id}' of type 'unstructured_model' must declare phase1_variables, phase2_assumptions, and phase3_formulation",
+                    item_id=q_id
+                ))
+        elif itype == "invariant_canvas":
+            ic = q.get("invariant_canvas")
+            mode = ic.get("mode") if isinstance(ic, dict) else None
+            ok_ic = isinstance(ic, dict) and (
+                (mode == "cartesian" and isinstance(ic.get("invariants"), list) and len(ic["invariants"]) >= 1)
+                or (mode == "tree" and isinstance(ic.get("nodes"), list) and isinstance(ic.get("edges"), list) and isinstance(ic.get("tree_invariants"), dict))
+            )
+            if not ok_ic:
+                errors.append(ValidationError(
+                    rule_id="R-04",
+                    code="ERR_SCHEMA",
+                    message=f"Question '{q_id}' of type 'invariant_canvas' must declare a valid 'cartesian' or 'tree' specification",
+                    item_id=q_id
+                ))
+        elif itype == "concept_matching":
+            cm = q.get("concept_matching")
+            ok_cm = (
+                isinstance(cm, dict)
+                and isinstance(cm.get("premises"), list) and len(cm["premises"]) >= 2
+                and isinstance(cm.get("targets"), list) and len(cm["targets"]) >= len(cm["premises"])
+                and isinstance(cm.get("correct_pairs"), dict) and len(cm["correct_pairs"]) >= len(cm["premises"])
+            )
+            if not ok_cm:
+                errors.append(ValidationError(
+                    rule_id="R-04",
+                    code="ERR_SCHEMA",
+                    message=f"Question '{q_id}' of type 'concept_matching' must declare premises, targets, and correct_pairs",
                     item_id=q_id
                 ))
 
@@ -1088,13 +1161,13 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
 
             # --- Rule R-25: Hint Answer Leak in Hints 1-2 (ERR_HINT_ANSWER_LEAK_S12) ---
             candidate_correct_texts: list[str] = []
-            if isinstance(options, list):
+            if isinstance(options, list) and len(options) > 0:
                 for opt in options:
                     if isinstance(opt, dict) and opt.get("is_correct") is True:
                         c_text = opt.get("content")
                         if isinstance(c_text, str) and c_text.strip():
                             candidate_correct_texts.append(c_text)
-            elif itype == "fill_in_the_blank":
+            elif itype in ("fill_in_the_blank", "open_symbolic"):
                 ans = q.get("correct_answer")
                 if isinstance(ans, str) and ans.strip():
                     candidate_correct_texts.append(ans)
@@ -1238,8 +1311,8 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                                 item_id=q_id
                             ))
 
-        # --- Rule R-20 / R-23: LaTeX Quality & Over-escape Safeguards on correct_answer ---
-        if itype == "fill_in_the_blank" and q.get("correct_answer") is not None:
+        # --- Rule R-20 / R-23: LaTeX Quality & Over-escape Safeguards on correct_answer & diagnostic_distractors ---
+        if itype in ("fill_in_the_blank", "open_symbolic") and q.get("correct_answer") is not None:
             def _check_ans_recursive(obj: Any, path: str) -> None:
                 if isinstance(obj, str):
                     errors.extend(check_latex_and_templates(obj, q_id, path))
@@ -1252,12 +1325,177 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
 
             _check_ans_recursive(q["correct_answer"], "correct_answer")
 
-        # --- Rule R-19: Answer Leak in fill_in_the_blank, multiple_choice_7_options, and multiple_select ---
-        if itype in ("fill_in_the_blank", "multiple_choice_7_options", "multiple_select"):
+        diag_dists = q.get("diagnostic_distractors")
+        if isinstance(diag_dists, list):
+            for d_idx, dd in enumerate(diag_dists):
+                if not isinstance(dd, dict):
+                    continue
+                d_rat = dd.get("error_rationale")
+                if d_rat is None or (isinstance(d_rat, str) and not d_rat.strip()):
+                    errors.append(ValidationError(
+                        rule_id="R-17",
+                        code="ERR_PLACEHOLDER_RATIONALE",
+                        message=f"Question '{q_id}': diagnostic_distractors[{d_idx}] must include a non-empty 'error_rationale'",
+                        item_id=q_id
+                    ))
+                elif is_placeholder_rationale(d_rat):
+                    errors.append(ValidationError(
+                        rule_id="R-17",
+                        code="ERR_PLACEHOLDER_RATIONALE",
+                        message=f"Question '{q_id}': diagnostic_distractors[{d_idx}] contains a generic placeholder 'error_rationale': '{d_rat}'",
+                        item_id=q_id
+                    ))
+                elif isinstance(d_rat, str):
+                    errors.extend(check_latex_and_templates(d_rat, q_id, f"diagnostic_distractors[{d_idx}].error_rationale"))
+
+        # --- Rule R-20 on new Bloom Superior payloads ---
+        if itype == "proof_dag" and isinstance(q.get("proof_dag"), dict):
+            dag = q["proof_dag"]
+            for s_idx, step in enumerate(dag.get("steps") or []):
+                if isinstance(step, dict):
+                    if isinstance(step.get("content"), str):
+                        errors.extend(check_latex_and_templates(step["content"], q_id, f"proof_dag.steps[{s_idx}].content"))
+                    if isinstance(step.get("error_rationale"), str):
+                        errors.extend(check_latex_and_templates(step["error_rationale"], q_id, f"proof_dag.steps[{s_idx}].error_rationale"))
+        elif itype == "adversarial_break" and isinstance(q.get("adversarial_break"), dict):
+            adv = q["adversarial_break"]
+            for s_idx, step in enumerate(adv.get("steps") or []):
+                if isinstance(step, dict):
+                    if isinstance(step.get("content"), str):
+                        errors.extend(check_latex_and_templates(step["content"], q_id, f"adversarial_break.steps[{s_idx}].content"))
+                    if isinstance(step.get("error_rationale"), str):
+                        errors.extend(check_latex_and_templates(step["error_rationale"], q_id, f"adversarial_break.steps[{s_idx}].error_rationale"))
+        elif itype == "concept_matching" and isinstance(q.get("concept_matching"), dict):
+            cm = q["concept_matching"]
+            for p_idx, pr in enumerate(cm.get("premises") or []):
+                if isinstance(pr, dict) and isinstance(pr.get("content"), str):
+                    errors.extend(check_latex_and_templates(pr["content"], q_id, f"concept_matching.premises[{p_idx}].content"))
+            for t_idx, tg in enumerate(cm.get("targets") or []):
+                if isinstance(tg, dict):
+                    if isinstance(tg.get("content"), str):
+                        errors.extend(check_latex_and_templates(tg["content"], q_id, f"concept_matching.targets[{t_idx}].content"))
+                    if isinstance(tg.get("error_rationale"), str):
+                        errors.extend(check_latex_and_templates(tg["error_rationale"], q_id, f"concept_matching.targets[{t_idx}].error_rationale"))
+        elif itype == "unstructured_model" and isinstance(q.get("unstructured_model"), dict):
+            um = q["unstructured_model"]
+            p1 = um.get("phase1_variables") if isinstance(um.get("phase1_variables"), dict) else {}
+            p2 = um.get("phase2_assumptions") if isinstance(um.get("phase2_assumptions"), dict) else {}
+            p3 = um.get("phase3_formulation") if isinstance(um.get("phase3_formulation"), dict) else {}
+            for ph_name, ph_obj in (
+                ("phase1_variables", p1),
+                ("phase2_assumptions", p2),
+                ("phase3_formulation", p3),
+            ):
+                if isinstance(ph_obj.get("prompt"), str):
+                    errors.extend(check_latex_and_templates(ph_obj["prompt"], q_id, f"unstructured_model.{ph_name}.prompt"))
+            for r_idx, role_val in enumerate(p1.get("roles") or []):
+                if isinstance(role_val, str) and role_val:
+                    errors.extend(check_latex_and_templates(role_val, q_id, f"unstructured_model.phase1_variables.roles[{r_idx}]"))
+            for it_idx, it in enumerate(p1.get("items") or []):
+                if isinstance(it, dict):
+                    for fld in ("label", "error_rationale"):
+                        if isinstance(it.get(fld), str):
+                            errors.extend(check_latex_and_templates(it[fld], q_id, f"unstructured_model.phase1_variables.items[{it_idx}].{fld}"))
+                    if isinstance(it.get("error_rationale"), str) and is_placeholder_rationale(it["error_rationale"]):
+                        errors.append(ValidationError(
+                            rule_id="R-17",
+                            code="ERR_PLACEHOLDER_RATIONALE",
+                            message=f"Question '{q_id}': unstructured_model.phase1_variables.items[{it_idx}] contains a generic placeholder 'error_rationale': '{it['error_rationale']}'",
+                            item_id=q_id
+                        ))
+            for o_idx, opt in enumerate(p2.get("options") or []):
+                if isinstance(opt, dict):
+                    for fld in ("content", "error_rationale"):
+                        if isinstance(opt.get(fld), str):
+                            errors.extend(check_latex_and_templates(opt[fld], q_id, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}"))
+                    if isinstance(opt.get("error_rationale"), str) and is_placeholder_rationale(opt["error_rationale"]):
+                        errors.append(ValidationError(
+                            rule_id="R-17",
+                            code="ERR_PLACEHOLDER_RATIONALE",
+                            message=f"Question '{q_id}': unstructured_model.phase2_assumptions.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'",
+                            item_id=q_id
+                        ))
+            for o_idx, opt in enumerate(p3.get("options") or []):
+                if isinstance(opt, dict):
+                    for fld in ("content", "error_rationale"):
+                        if isinstance(opt.get(fld), str):
+                            errors.extend(check_latex_and_templates(opt[fld], q_id, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}"))
+                    if not opt.get("is_correct") and isinstance(opt.get("error_rationale"), str) and is_placeholder_rationale(opt["error_rationale"]):
+                        errors.append(ValidationError(
+                            rule_id="R-17",
+                            code="ERR_PLACEHOLDER_RATIONALE",
+                            message=f"Question '{q_id}': unstructured_model.phase3_formulation.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'",
+                            item_id=q_id
+                        ))
+            ce = p3.get("correct_expression")
+            if isinstance(ce, dict):
+                for fld in ("expression", "value", "canonical_algebraic"):
+                    if isinstance(ce.get(fld), str) and ce[fld]:
+                        errors.extend(check_latex_and_templates(ce[fld], q_id, f"unstructured_model.phase3_formulation.correct_expression.{fld}"))
+                for eq_idx, eq_val in enumerate(ce.get("accepted_equivalents") or []):
+                    if isinstance(eq_val, str) and eq_val:
+                        errors.extend(check_latex_and_templates(eq_val, q_id, f"unstructured_model.phase3_formulation.correct_expression.accepted_equivalents[{eq_idx}]"))
+            for dist_key in ("distractors", "diagnostic_distractors"):
+                for d_idx, dd in enumerate(p3.get(dist_key) or []):
+                    if isinstance(dd, dict):
+                        d_rat = dd.get("error_rationale")
+                        if d_rat is None or (isinstance(d_rat, str) and not d_rat.strip()) or is_placeholder_rationale(d_rat):
+                            errors.append(ValidationError(
+                                rule_id="R-17",
+                                code="ERR_PLACEHOLDER_RATIONALE",
+                                message=f"Question '{q_id}': unstructured_model.phase3_formulation.{dist_key}[{d_idx}] must include a non-placeholder 'error_rationale'",
+                                item_id=q_id
+                            ))
+                        elif isinstance(d_rat, str):
+                            errors.extend(check_latex_and_templates(d_rat, q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale"))
+                        for expr_fld in ("expression", "value"):
+                            if isinstance(dd.get(expr_fld), str) and dd[expr_fld]:
+                                errors.extend(check_latex_and_templates(dd[expr_fld], q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].{expr_fld}"))
+                        for eq_idx, eq_val in enumerate(dd.get("accepted_equivalents") or []):
+                            if isinstance(eq_val, str) and eq_val:
+                                errors.extend(check_latex_and_templates(eq_val, q_id, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].accepted_equivalents[{eq_idx}]"))
+        elif itype == "invariant_canvas" and isinstance(q.get("invariant_canvas"), dict):
+            ic = q["invariant_canvas"]
+            ic_mode = str(ic.get("mode") or "cartesian").strip().lower()
+            if ic_mode == "cartesian":
+                for axis_k in ("x_label", "y_label"):
+                    if isinstance(ic.get(axis_k), str):
+                        errors.extend(check_latex_and_templates(ic[axis_k], q_id, f"invariant_canvas.{axis_k}"))
+                for coll_k in (
+                    "fixed_curves",
+                    "interactive_curves",
+                    "interactive_points",
+                    "fixed_points",
+                    "sliders",
+                    "segments",
+                    "polygons",
+                    "shaded_regions",
+                ):
+                    for c_idx, c_item in enumerate(ic.get(coll_k) or []):
+                        if isinstance(c_item, dict) and isinstance(c_item.get("label"), str):
+                            errors.extend(check_latex_and_templates(c_item["label"], q_id, f"invariant_canvas.{coll_k}[{c_idx}].label"))
+                for i_idx, inv in enumerate(ic.get("invariants") or []):
+                    if isinstance(inv, dict) and isinstance(inv.get("error_rationale"), str):
+                        errors.extend(check_latex_and_templates(inv["error_rationale"], q_id, f"invariant_canvas.invariants[{i_idx}].error_rationale"))
+            elif ic_mode == "tree":
+                for n_idx, nd in enumerate(ic.get("nodes") or []):
+                    if isinstance(nd, dict) and isinstance(nd.get("label"), str):
+                        errors.extend(check_latex_and_templates(nd["label"], q_id, f"invariant_canvas.nodes[{n_idx}].label"))
+                for e_idx, ed in enumerate(ic.get("edges") or []):
+                    if isinstance(ed, dict) and isinstance(ed.get("label"), str):
+                        errors.extend(check_latex_and_templates(ed["label"], q_id, f"invariant_canvas.edges[{e_idx}].label"))
+                ti = ic.get("tree_invariants")
+                if isinstance(ti, dict):
+                    for rk in ("edge_error_rationale", "info_set_error_rationale"):
+                        if isinstance(ti.get(rk), str):
+                            errors.extend(check_latex_and_templates(ti[rk], q_id, f"invariant_canvas.tree_invariants.{rk}"))
+
+        # --- Rule R-19: Answer Leak in fill_in_the_blank, open_symbolic, multiple_choice_7_options, and multiple_select ---
+        if itype in ("fill_in_the_blank", "open_symbolic", "multiple_choice_7_options", "multiple_select"):
             stem = q.get("stem")
             if isinstance(stem, str):
                 candidate_answers: list[str] = []
-                if itype == "fill_in_the_blank":
+                if itype in ("fill_in_the_blank", "open_symbolic"):
                     ans = q.get("correct_answer")
                     if ans is not None:
                         if isinstance(ans, (int, float)) and not isinstance(ans, bool):
@@ -1322,6 +1560,52 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                             rule_id="R-19",
                             code="ERR_ANSWER_LEAK",
                             message=f"Question '{q_id}': Stem explicitly leaks the correct answer '{clean_cand}' as '= {clean_cand}' or 'es {clean_cand}'",
+                            item_id=q_id
+                        ))
+                        break
+        elif itype == "invariant_canvas" and isinstance(q.get("invariant_canvas"), dict):
+            ic = q["invariant_canvas"]
+            ic_mode = str(ic.get("mode") or "cartesian").strip().lower()
+            stem = q.get("stem")
+            if ic_mode == "cartesian" and isinstance(stem, str) and stem:
+                def _norm_c(val: Any) -> Any:
+                    if isinstance(val, bool) or val is None:
+                        return val
+                    if isinstance(val, (int, float)):
+                        return float(val)
+                    if isinstance(val, str):
+                        try:
+                            return float(val.strip())
+                        except ValueError:
+                            return val.strip()
+                    return val
+
+                def _tok_c(val: Any) -> str:
+                    if isinstance(val, (int, float)) and not isinstance(val, bool) and float(val).is_integer():
+                        return rf"{re.escape(str(int(val)))}(?:\.0+)?"
+                    return re.escape(str(val))
+
+                fixed_coords = {
+                    (_norm_c(fp.get("x")), _norm_c(fp.get("y")))
+                    for fp in (ic.get("fixed_points") or [])
+                    if isinstance(fp, dict)
+                }
+                for inv in (ic.get("invariants") or []):
+                    if not isinstance(inv, dict):
+                        continue
+                    inv_kind = str(inv.get("kind") or "").strip()
+                    if inv_kind not in ("point_coords", "kink_at"):
+                        continue
+                    tx = inv.get("target_x") if inv.get("target_x") is not None else (inv.get("x") if inv_kind == "kink_at" else None)
+                    ty = inv.get("target_y")
+                    if tx is None or ty is None or (_norm_c(tx), _norm_c(ty)) in fixed_coords:
+                        continue
+                    leak_pat = rf"\(\s*{_tok_c(tx)}\s*,\s*{_tok_c(ty)}\s*\)"
+                    if re.search(leak_pat, stem):
+                        errors.append(ValidationError(
+                            rule_id="R-19",
+                            code="ERR_ANSWER_LEAK",
+                            message=f"Question '{q_id}': Stem explicitly leaks invariant_canvas target coordinate pair '({tx}, {ty})'",
                             item_id=q_id
                         ))
                         break

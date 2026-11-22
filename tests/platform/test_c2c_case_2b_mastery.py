@@ -256,48 +256,65 @@ def ver_c01_inverse(res):
     val = float(raw) if raw else -999.0
     return abs(val - v["s"]) < 1e-3
 
-# Archetype 3: Comparative Statics / Perturbation
+# Archetype 3: Comparative Statics / Perturbation (multiple_select)
 def gen_c01_perturbation(rng):
     s1 = round(rng.uniform(0.16, 0.34), 2)
     delta_s = round(rng.uniform(0.02, 0.14), 2)
     s2 = round(s1 + delta_s, 2)
     shift_dir = "hacia arriba"
-    distractors = [
-        {"value": "La curva de inversión rota en sentido horario hacia el origen geométrico del plano cartesiano", "distractor_id": "D-C01-01", "error_rationale": "Confusión entre desplazamiento paralelo y rotación de pendiente para la tasa @s1@"},
-        {"value": "La recta de reposición de capital incrementa su pendiente verticalmente sin desplazar el intercepto", "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea del efecto de acumulación a la recta de reposición con variación @delta_s@"},
-        {"value": "El nivel de producto per cápita permanece inmutable sin experimentar traslación ni rotación alguna", "distractor_id": "D-C01-04", "error_rationale": "Falsa neutralidad dinámica del parámetro de ahorro al variar desde @s1@ hasta @s2@"},
-        {"value": "La tasa de ahorro marginal colapsa produciendo rendimientos decrecientes", "distractor_id": "D-C01-03", "error_rationale": "Confusión conceptual entre el incremento de ahorro @s2@ y la productividad marginal decreciente"},
-        {"value": "La acumulación neta de capital se anula instantáneamente en este régimen", "distractor_id": "D-C01-05", "error_rationale": "Confusión analítica entre régimen transitorio y estado estacionario ante nueva tasa @s2@"},
-        {"value": "El consumo por trabajador iguala a la inversión bruta en todo momento", "distractor_id": "D-C01-06", "error_rationale": "Supuesto arbitrario de igualdad entre ahorro y consumo ante una perturbación @delta_s@"},
+    options = [
+        {"content": f"La curva de inversión bruta se desplaza {shift_dir} alcanzando una nueva tasa de ahorro s = {s2}", "is_correct": True},
+        {"content": f"La variación paramétrica acumulada en la tasa de ahorro asciende exactamente a {delta_s} unidades reales", "is_correct": True},
+        {"content": "La curva de inversión rota en sentido horario hacia el origen geométrico del plano cartesiano", "is_correct": False, "distractor_id": "D-C01-01", "error_rationale": "Confusión entre desplazamiento paralelo vertical y rotación de pendiente para la tasa @s1@ en el plano"},
+        {"content": "La recta de reposición de capital incrementa su pendiente verticalmente sin desplazar el intercepto", "is_correct": False, "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea del efecto de acumulación a la recta de reposición ante la variación @delta_s@"},
+        {"content": "El nivel de producto per cápita permanece inmutable sin experimentar traslación ni rotación alguna", "is_correct": False, "distractor_id": "D-C01-04", "error_rationale": "Falsa neutralidad dinámica del parámetro de ahorro al variar desde @s1@ hasta el valor @s2@"},
     ]
-    correct_str = f"La curva de inversión se desplaza {shift_dir} con nueva tasa de ahorro s = {s2}"
-    return {"vars": {"s1": s1, "s2": s2, "delta_s": delta_s}, "correct": correct_str, "distractors": distractors}
+    return {"vars": {"s1": s1, "s2": s2, "delta_s": delta_s}, "options": options}
 
 def ver_c01_perturbation(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
+    opts = res.get("options", []) if isinstance(res, dict) else []
     v = res.get("vars", {}) if isinstance(res, dict) else {}
-    return "se desplaza" in c and str(v.get("s2")) in c
+    corrects = [o for o in opts if isinstance(o, dict) and o.get("is_correct") is True]
+    falses = [o for o in opts if isinstance(o, dict) and o.get("is_correct") is False]
+    if len(opts) != 5 or len(corrects) != 2 or len(falses) != 3:
+        return False
+    has_shift = any("se desplaza" in str(o.get("content", "")) and str(v.get("s2")) in str(o.get("content", "")) for o in corrects)
+    has_delta = any("variación paramétrica" in str(o.get("content", "")) and str(v.get("delta_s")) in str(o.get("content", "")) for o in corrects)
+    valid_falses = all(
+        o.get("distractor_id") in {"D-C01-01", "D-C01-02", "D-C01-04"}
+        and bool(str(o.get("error_rationale") or "").strip())
+        for o in falses
+    )
+    return has_shift and has_delta and valid_falses
 
-# Archetype 4: Boundary Testing / Axiomatic Violations
+# Archetype 4: Boundary Testing / Axiomatic Violations (fill_in_the_blank)
 def gen_c01_boundary(rng):
     s_lim = round(rng.uniform(0.001, 0.050), 4)
+    y_lim = rng.randint(50, 200)
+    inv_lim = round(s_lim * y_lim, 4)
     cond = "mínimo"
-    correct_str = rf"La inversión bruta converge al anularse el ahorro con tasa s = {s_lim}"
-
-    distractors = [
-        {"value": "La economía agregada alcanza de forma inmediata el óptimo dinámico prescrito por la regla de oro intertemporal", "distractor_id": "D-C01-01", "error_rationale": "Confusión con el óptimo intertemporal en régimen estacionario para la tasa límite @s_lim@"},
-        {"value": "El stock de capital per cápita diverge exponencialmente hacia infinito sin cota superior alguna en el largo plazo", "distractor_id": "D-C01-03", "error_rationale": "Falsa analogía con modelos de crecimiento endógeno en el régimen límite @s_lim@"},
-        {"value": "La tasa efectiva de depreciación combinada colapsa a valores estrictamente negativos en todo el dominio analítico", "distractor_id": "D-C01-04", "error_rationale": "Violación axiomática de no-negatividad de la depreciación bajo régimen con @s_lim@"},
-        {"value": "La función de producción global pierde los rendimientos constantes de escala", "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea de cambios en la tecnología productiva al parámetro de ahorro @s_lim@"},
-        {"value": "El estado estacionario resultante colapsa a cero", "distractor_id": "D-C01-05", "error_rationale": "Atribución espuria de ciclos límite oscilatorios para la tasa de ahorro @s_lim@"},
-        {"value": "La elasticidad del producto se descontinúa", "distractor_id": "D-C01-06", "error_rationale": "Atribución espuria de singularidad matemática en la frontera con parámetro @s_lim@"},
+    d_ids = ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"]
+    rats = [
+        "Sobreestimación analítica del flujo límite de inversión con tasa de ahorro @s_lim@ y producto @y_lim@",
+        "Subestimación numérica sistemática del flujo límite para tasa de ahorro @s_lim@ y nivel productivo @y_lim@",
+        "Error de escala porcentual aplicado incorrectamente sobre el caudal de inversión bruta @inv_lim@ en frontera",
+        "Deducción espuria de depreciación física aplicada indebidamente sobre el flujo de inversión límite @inv_lim@",
+        "Inversión aritmética directa errónea entre la tasa límite de ahorro @s_lim@ y el producto estacionario @y_lim@",
+        "Truncamiento decimal prematuro de la cota límite convergente para el flujo resultante @inv_lim@ en frontera",
     ]
-    return {"vars": {"s_lim": s_lim, "cond": cond}, "correct": correct_str, "distractors": distractors}
+    offsets = [0.5, -0.5, 1.2, -1.2, 2.1, -2.1]
+    distractors = [
+        {"value": str(round(inv_lim + off, 4)), "distractor_id": did, "error_rationale": rat}
+        for off, did, rat in zip(offsets, d_ids, rats)
+    ]
+    return {"vars": {"s_lim": s_lim, "y_lim": y_lim, "inv_lim": inv_lim, "cond": cond}, "correct": str(inv_lim), "distractors": distractors}
 
 def ver_c01_boundary(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
+    c = res.get("correct", "") if isinstance(res, dict) else str(res)
     v = res.get("vars", {}) if isinstance(res, dict) else {}
-    return "anularse el ahorro" in c and str(v.get("s_lim")) in c
+    raw = "".join(ch for ch in str(c) if ch.isdigit() or ch in ".-")
+    val = float(raw) if raw else -999.0
+    return abs(val - round(v["s_lim"] * v["y_lim"], 4)) < 1e-3
 
 
 # --- Competency C-02 (Skill) Archetypes ---
@@ -361,25 +378,34 @@ def gen_c02_perturbation(rng):
     n_old = round(rng.uniform(0.01, 0.03), 3)
     delta_n = round(rng.uniform(0.01, 0.05), 3)
     n_new = round(n_old + delta_n, 3)
-    distractors = [
-        {"value": "La tasa de ahorro exógena se ajusta automáticamente para contrarrestar la dilución poblacional inducida", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de endogeneidad del ahorro ante nueva tasa demográfica @n_new@"},
-        {"value": "La productividad marginal del capital disminuye de forma discontinua a lo largo de toda la trayectoria", "distractor_id": "D-C02-05", "error_rationale": "Violación axiomática de continuidad productiva para tasa poblacional @n_old@"},
-        {"value": "El consumo por unidad de trabajo eficiente converge a una senda de crecimiento no balanceado y volátil", "distractor_id": "D-C02-06", "error_rationale": "Confusión de régimen transitorio con senda balanceada de largo plazo para @delta_n@"},
-        {"value": "El capital estacionario se incrementa por efecto escala", "distractor_id": "D-C02-01", "error_rationale": "Confusión entre dilución de capital per cápita y producto absoluto con @delta_n@"},
-        {"value": "El capital estacionario permanece totalmente inalterado", "distractor_id": "D-C02-02", "error_rationale": "Falsa neutralidad demográfica del estado estacionario ante cambio de @n_old@ a @n_new@"},
-        {"value": "El sistema diverge hacia una trayectoria inestable", "distractor_id": "D-C02-03", "error_rationale": "Atribución espuria de dinámica caótica ante variación poblacional @delta_n@"},
+    options = [
+        {"content": rf"El capital estacionario $k^*$ disminuye tras elevarse la reposición poblacional a tasa n = {n_new}", "is_correct": True},
+        {"content": rf"La pendiente de la recta de reposición efectiva aumenta exactamente en {delta_n} puntos porcentuales", "is_correct": True},
+        {"content": "La tasa de ahorro exógena se ajusta automáticamente para contrarrestar la dilución poblacional inducida", "is_correct": False, "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de endogeneidad del ahorro ante nueva tasa demográfica @n_new@"},
+        {"content": "La productividad marginal del capital disminuye de forma discontinua a lo largo de toda la trayectoria", "is_correct": False, "distractor_id": "D-C02-05", "error_rationale": "Violación axiomática de continuidad productiva para tasa poblacional @n_old@"},
+        {"content": "El consumo por unidad de trabajo eficiente converge a una senda de crecimiento no balanceado y volátil", "is_correct": False, "distractor_id": "D-C02-06", "error_rationale": "Confusión de régimen transitorio con senda balanceada de largo plazo para @delta_n@"},
     ]
-    correct_str = rf"El capital $k^*$ disminuye al incrementarse la reposición con tasa n = {n_new}"
-    return {"vars": {"n_old": n_old, "n_new": n_new, "delta_n": delta_n}, "correct": correct_str, "distractors": distractors}
+    return {"vars": {"n_old": n_old, "n_new": n_new, "delta_n": delta_n}, "options": options}
 
 def ver_c02_perturbation(res):
-    c = str(res.get("correct", "")) if isinstance(res, dict) else str(res)
+    opts = res.get("options", []) if isinstance(res, dict) else []
     v = res.get("vars", {}) if isinstance(res, dict) else {}
-    return "disminuye al incrementarse la reposición" in c and str(v.get("n_new")) in c
+    corrects = [o for o in opts if isinstance(o, dict) and o.get("is_correct") is True]
+    falses = [o for o in opts if isinstance(o, dict) and o.get("is_correct") is False]
+    if len(opts) != 5 or len(corrects) != 2 or len(falses) != 3:
+        return False
+    has_k = any("disminuye tras elevarse" in str(o.get("content", "")) and str(v.get("n_new")) in str(o.get("content", "")) for o in corrects)
+    has_slope = any("pendiente de la recta" in str(o.get("content", "")) and str(v.get("delta_n")) in str(o.get("content", "")) for o in corrects)
+    valid_falses = all(
+        o.get("distractor_id") in {"D-C02-04", "D-C02-05", "D-C02-06"}
+        and bool(str(o.get("error_rationale") or "").strip())
+        for o in falses
+    )
+    return has_k and has_slope and valid_falses
 
 def gen_c02_boundary(rng):
     sample_rate = round(rng.uniform(0.001, 0.050), 4)
-    correct_str = rf"Bajo {sample_rate}, $k^*$ tiende a infinito al anularse la reposición"
+    correct_str = rf"Bajo {sample_rate}, k* tiende a infinito al anularse la reposición"
     distractors = [
         {"value": "La economía deja de producir bienes al alcanzarse la frontera analítica del espacio de estados posibles", "distractor_id": "D-C02-02", "error_rationale": "Confusión entre dinámica de acumulación de capital y nivel de producto con @sample_rate@"},
         {"value": "El estado estacionario resultante genera fluctuaciones y oscilaciones cíclicas explosivas no lineales", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de inestabilidad oscilatoria no lineal ante valor límite @sample_rate@"},
@@ -414,22 +440,22 @@ stems_c01_2 = [
     r"Calcule la relación de ahorro $s$ sabiendo que $i = {inv}$ y el ingreso es $y = {y}$:",
 ]
 stems_c01_3 = [
-    r"Analice el impacto cualitativo de un aumento en la tasa de ahorro de $s_1 = {s1}$ a $s_2 = {s2}$ sobre la curva de inversión:",
-    r"Examine la traslación de la función de ahorro e inversión ante una variación de $s_1 = {s1}$ a $s_2 = {s2}$:",
-    r"Determine la respuesta gráfica del flujo de inversión cuando la tasa de ahorro cambia de $s_1 = {s1}$ a $s_2 = {s2}$:",
-    r"Evalúe el desplazamiento de la curva de inversión si el ahorro pasa de $s_1 = {s1}$ a $s_2 = {s2}$:",
-    r"Indique el cambio geométrico en la inversión bruta tras subir la tasa de $s_1 = {s1}$ a $s_2 = {s2}$:",
-    r"Describa la traslación vertical de la función de inversión ante el salto de $s_1 = {s1}$ a $s_2 = {s2}$:",
-    r"Verifique la nueva posición de la curva de ahorro tras variar de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Seleccione todas las afirmaciones verdaderas sobre el impacto de un aumento en la tasa de ahorro de $s_1 = {s1}$ a $s_2 = {s2}$ en la curva de inversión:",
+    r"Marque todas las proposiciones correctas acerca de la traslación de la función de inversión ante una variación de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Indique todas las respuestas válidas sobre la respuesta gráfica del flujo de inversión cuando el ahorro cambia de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Elija todas las consecuencias ciertas del desplazamiento de la curva de inversión si el ahorro pasa de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Señale todas las afirmaciones correctas sobre el cambio geométrico en la inversión bruta tras subir la tasa de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Identifique todas las propiedades válidas de la traslación vertical de la función de inversión ante el salto de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Verifique cuáles conclusiones sobre la nueva posición de la curva de ahorro tras variar de $s_1 = {s1}$ a $s_2 = {s2}$ son verdaderas:",
 ]
 stems_c01_4 = [
-    r"Examine las implicaciones teóricas en el caso límite de régimen de ahorro {cond} con $s = {s_lim}$:",
-    r"Analice el comportamiento asintótico del sistema económico en la frontera {cond} fijando $s = {s_lim}$:",
-    r"Evalúe la dinámica de acumulación en el escenario extremo {cond} bajo el valor de parámetro $s = {s_lim}$:",
-    r"Determine el balance asintótico en la cota {cond} con parámetro $s = {s_lim}$:",
-    r"Identifique la conducta límite del modelo en el régimen {cond} con tasa $s = {s_lim}$:",
-    r"Halle las consecuencias analíticas para la condición {cond} al fijar $s = {s_lim}$:",
-    r"Compruebe la estabilidad de frontera del sistema en el entorno {cond} con $s = {s_lim}$:",
+    r"Examine el caso límite de régimen de ahorro {cond} con $s = {s_lim}$ y producto $y = {y_lim}$. Calcule la inversión bruta límite $i$:",
+    r"En el escenario extremo {cond} fijando $s = {s_lim}$ e ingreso $y = {y_lim}$, halle el flujo límite de inversión $i$:",
+    r"Determine la inversión bruta $i$ en la frontera {cond} bajo $s = {s_lim}$ y nivel de producción $y = {y_lim}$:",
+    r"Calcule el flujo de inversión de frontera $i$ en la cota {cond} con parámetro $s = {s_lim}$ y producto $y = {y_lim}$:",
+    r"Evalúe la inversión bruta límite $i$ del modelo en el régimen {cond} con tasa $s = {s_lim}$ e ingreso $y = {y_lim}$:",
+    r"Obtenga la inversión límite $i$ para la condición {cond} al fijar $s = {s_lim}$ y producción $y = {y_lim}$:",
+    r"Halle el monto numérico de inversión bruta $i$ en el entorno límite {cond} con $s = {s_lim}$ y $y = {y_lim}$:",
 ]
 
 stems_c02_1 = [
@@ -451,13 +477,13 @@ stems_c02_2 = [
     r"Calcule la propensión requerida $s$ para fijar el equilibrio en $k^* = {k_star}$ con factor ${denom}$:",
 ]
 stems_c02_3 = [
-    r"Considere un incremento en la tasa de crecimiento poblacional de $n = {n_old}$ a $n = {n_new}$. ¿Cómo responde el capital $k^*$?",
-    r"Analice el efecto sobre el capital de equilibrio $k^*$ ante un shock demográfico de $n = {n_old}$ a $n = {n_new}$:",
-    r"Examine la sensibilidad del estado estacionario $k^*$ cuando la tasa demográfica varía de $n = {n_old}$ a $n = {n_new}$:",
-    r"Determine el cambio en el capital $k^*$ si el crecimiento laboral pasa de $n = {n_old}$ a $n = {n_new}$:",
-    r"Evalúe la contracción de $k^*$ causada por una expansión poblacional de $n = {n_old}$ a $n = {n_new}$:",
-    r"Halle el impacto sobre la dotación de equilibrio $k^*$ al subir la natalidad de $n = {n_old}$ a $n = {n_new}$:",
-    r"Compruebe la variación de $k^*$ provocada por el incremento en $n$ desde {n_old} hasta {n_new}:",
+    r"Seleccione todas las afirmaciones verdaderas sobre un incremento poblacional de $n = {n_old}$ a $n = {n_new}$ y su efecto en $k^*$:",
+    r"Marque todas las proposiciones correctas acerca del capital de equilibrio $k^*$ ante un shock demográfico de $n = {n_old}$ a $n = {n_new}$:",
+    r"Indique todas las respuestas válidas sobre la sensibilidad del estado estacionario $k^*$ cuando la tasa demográfica varía de $n = {n_old}$ a $n = {n_new}$:",
+    r"Elija todas las conclusiones correctas sobre el cambio en $k^*$ si el crecimiento laboral pasa de $n = {n_old}$ a $n = {n_new}$:",
+    r"Señale todas las proposiciones ciertas sobre la contracción de $k^*$ causada por una expansión poblacional de $n = {n_old}$ a $n = {n_new}$:",
+    r"Identifique todas las consecuencias verdaderas sobre la dotación de equilibrio $k^*$ al subir la tasa de $n = {n_old}$ a $n = {n_new}$:",
+    r"Verifique cuáles efectos sobre $k^*$ provocados por el incremento en $n$ desde {n_old} hasta {n_new} son correctos:",
 ]
 stems_c02_4 = [
     r"Considere el caso límite donde la tasa combinada toma el valor ${sample_rate}$. Analice la trayectoria asintótica de $k^*$:",
@@ -511,17 +537,17 @@ hints_c02_4 = [
 ]
 
 TEMPLATES = [
-    # Competency C-01: 4 Archetypes
+    # Competency C-01: 4 Archetypes (max 1 MC7, 75% active)
     ("T-C-01-01", "C-01", "multiple_choice", gen_c01_direct, ver_c01_direct, ("easy", "Remember"), stems_c01_1, hints_c01_1, r"La inversión bruta per cápita directa es $i = s y = ({s})({y}) = {inv}$."),
     ("T-C-01-02", "C-01", "fill_in_the_blank", gen_c01_inverse, ver_c01_inverse, ("medium", "Understand"), stems_c01_2, hints_c01_2, r"Despejando la propensión media, obtenemos $s = i / y = {inv} / {y} = {s}$."),
-    ("T-C-01-03", "C-01", "multiple_choice", gen_c01_perturbation, ver_c01_perturbation, ("hard", "Apply"), stems_c01_3, hints_c01_3, r"Un incremento en $s$ desplaza la curva de inversión verticalmente hacia arriba."),
-    ("T-C-01-04", "C-01", "multiple_choice", gen_c01_boundary, ver_c01_boundary, ("hard", "Analyze"), stems_c01_4, hints_c01_4, r"En el caso límite analizado, el comportamiento del sistema refleja la condición de frontera."),
+    ("T-C-01-03", "C-01", "multiple_select", gen_c01_perturbation, ver_c01_perturbation, ("hard", "Apply"), stems_c01_3, hints_c01_3, r"Un incremento en $s$ desplaza la curva de inversión verticalmente hacia arriba."),
+    ("T-C-01-04", "C-01", "fill_in_the_blank", gen_c01_boundary, ver_c01_boundary, ("hard", "Analyze"), stems_c01_4, hints_c01_4, r"En el caso límite {cond}, la inversión bruta resultante es $i = ({s_lim})({y_lim}) = {inv_lim}$."),
 
-    # Competency C-02: 4 Archetypes
-    ("T-C-02-01", "C-02", "fill_in_the_blank", gen_c02_direct, ver_c02_direct, ("easy", "Remember"), stems_c02_1, hints_c02_1, r"En estado estacionario, $s \sqrt{k} = ({denom})k \implies k^* = (s/{denom})^2 = {k_star}$."),
-    ("T-C-02-02", "C-02", "fill_in_the_blank", gen_c02_inverse, ver_c02_inverse, ("medium", "Understand"), stems_c02_2, hints_c02_2, r"Despejando la tasa de equilibrio, $s = \sqrt{k^*} ({denom}) = {s}$."),
-    ("T-C-02-03", "C-02", "multiple_choice", gen_c02_perturbation, ver_c02_perturbation, ("hard", "Apply"), stems_c02_3, hints_c02_3, r"Un aumento en $n$ incrementa la pendiente de la recta de reposición reduciendo $k^*$."),
-    ("T-C-02-04", "C-02", "multiple_choice", gen_c02_boundary, ver_c02_boundary, ("hard", "Analyze"), stems_c02_4, hints_c02_4, r"Al anularse el denominador de la relación de equilibrio, $k^*$ diverge hacia infinito."),
+    # Competency C-02: 4 Archetypes (Skill Bloom Apply..Evaluate, max 1 MC7, 75% active)
+    ("T-C-02-01", "C-02", "fill_in_the_blank", gen_c02_direct, ver_c02_direct, ("easy", "Apply"), stems_c02_1, hints_c02_1, r"En estado estacionario, $s \sqrt{k} = ({denom})k \implies k^* = (s/{denom})^2 = {k_star}$."),
+    ("T-C-02-02", "C-02", "fill_in_the_blank", gen_c02_inverse, ver_c02_inverse, ("medium", "Apply"), stems_c02_2, hints_c02_2, r"Despejando la tasa de equilibrio, $s = \sqrt{k^*} ({denom}) = {s}$."),
+    ("T-C-02-03", "C-02", "multiple_select", gen_c02_perturbation, ver_c02_perturbation, ("hard", "Analyze"), stems_c02_3, hints_c02_3, r"Un aumento en $n$ incrementa la pendiente de la recta de reposición reduciendo $k^*$."),
+    ("T-C-02-04", "C-02", "fill_in_the_blank", gen_c02_boundary, ver_c02_boundary, ("hard", "Evaluate"), stems_c02_4, hints_c02_4, r"Al anularse el denominador de la relación de equilibrio, $k^*$ diverge hacia infinito."),
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_source, encoding="utf-8")

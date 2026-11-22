@@ -832,8 +832,8 @@ class TestInvariantChecksAdversarial:
         gen_res = {
             "vars": {"c": "alpha"},
             "options": [
-                {"text": "Opción correcta 1", "is_correct": True},
-                {"text": "Opción correcta 2", "is_correct": True},
+                {"text": "Opción correcta válida 1 del modelo", "is_correct": True},
+                {"text": "Opción correcta válida 2 del modelo", "is_correct": True},
                 {"text": "Opción incorrecta sin rationale", "is_correct": False},
                 {"text": "Otra opción incorrecta con distractor", "is_correct": False, "distractor_id": "D-ERR-01"},
             ],

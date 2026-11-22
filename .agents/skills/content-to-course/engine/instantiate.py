@@ -30,9 +30,11 @@ def competency_seed_base(cid: str, base_seed: int = 42) -> int:
     return base_seed + (zlib.crc32(cid.encode("utf-8")) % 10000)
 
 
-def get_competency_quota(comp_type: str) -> int:
-    """Return required question quota: >=30 for Skill, >=20 for Fact/Concept."""
-    from engine.stage_contract import quota_for_type
+def get_competency_quota(comp_type: str, num_templates: int = 0) -> int:
+    """Return required question quota: max(30, N*4) for Skill, max(20, N*3) for Fact/Concept."""
+    from engine.stage_contract import quota_for_competency, quota_for_type
+    if num_templates and int(num_templates) > 0:
+        return quota_for_competency(comp_type, int(num_templates))
     return quota_for_type(comp_type)
 
 
@@ -50,7 +52,7 @@ def allocate_template_quotas(
 
     quotas = {}
     for idx, tpl in enumerate(templates):
-        t_id = tpl["id"]
+        t_id = tpl.get("id") or tpl.get("template_id") or f"tpl_{idx}"
         extra = 1 if idx < remainder else 0
         quotas[t_id] = base_quota + extra
 
@@ -162,14 +164,14 @@ def instantiate_template(
     instantiated_questions: List[Dict[str, Any]] = []
 
     attempt = 0
-    batch_size = 20
 
     seeds_evaluated_count = 0
     seeds_retried_count = 0
 
     while len(instantiated_questions) < target_count and attempt < max_attempts:
+        cur_batch_size = min(20, max(6, target_count * 2)) if attempt == 0 else 20
         current_batch_seeds = [
-            seed_offset + attempt + i for i in range(min(batch_size, max_attempts - attempt))
+            seed_offset + attempt + i for i in range(min(cur_batch_size, max_attempts - attempt))
         ]
         attempt += len(current_batch_seeds)
 
@@ -328,19 +330,24 @@ def instantiate_competency(
 
     # Extract ID
     if isinstance(competency, dict):
-        comp_id = competency.get("id", competency_id or "comp-01")
-        comp_type = competency.get("type", category or "concept")
+        comp_id = str(competency.get("id") or competency_id or "comp-01")
+        comp_type = str(competency.get("type") or competency.get("category") or category or "")
     elif competency is not None:
-        comp_id = getattr(competency, "id", competency_id or "comp-01")
-        comp_type = getattr(competency, "category", getattr(competency, "type", category or "concept"))
+        comp_id = str(getattr(competency, "id", None) or competency_id or "comp-01")
+        comp_type = str(getattr(competency, "category", None) or getattr(competency, "type", None) or category or "")
     else:
-        comp_id = competency_id or "comp-01"
-        comp_type = category or "concept"
+        comp_id = str(competency_id or "comp-01")
+        comp_type = str(category or "")
+    if comp_id.startswith("Hab-"):
+        comp_type = "skill"
+    elif not comp_type.strip():
+        comp_type = "concept"
 
+    min_contract_quota = get_competency_quota(comp_type, num_templates=len(templates))
     if quota is not None:
-        target_quota = quota
+        target_quota = max(int(quota), min_contract_quota) if int(quota) >= 20 else int(quota)
     else:
-        target_quota = get_competency_quota(comp_type)
+        target_quota = min_contract_quota
 
     if base_seed is not None:
         seed_offset_base = base_seed
@@ -351,7 +358,7 @@ def instantiate_competency(
     q_counter = 1
 
     for t_idx, tpl in enumerate(templates):
-        t_id = tpl["id"]
+        t_id = tpl.get("id") or tpl.get("template_id") or f"tpl_{t_idx}"
         t_quota = quotas.get(t_id, 0)
         if t_quota <= 0:
             continue

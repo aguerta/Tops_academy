@@ -3,16 +3,19 @@ import pytest
 
 
 def navigate_to_challenge_course(page):
-    """Navigate to the comprehensive challenge course."""
+    """Navigate to a valid course overview containing Examen Modo Hierro."""
     page.goto(page.base_url)
     page.wait_for_load_state("networkidle")
+    page.locator("[data-testid='course-card']").first.wait_for(state="visible", timeout=10000)
 
-    course_link = page.locator(
-        "a:has-text('Comprehensive Challenge'), button:has-text('Comprehensive Challenge'), [data-testid='course-card']:has-text('Comprehensive Challenge')"
+    preferred = page.locator(
+        "[data-testid='course-card']:has-text('Comprehensive Challenge'), [data-testid='course-card']:has-text('Ecuaciones Diferenciales')"
     )
-    if course_link.count() > 0:
-        course_link.first.click()
-        page.wait_for_load_state("networkidle")
+    if preferred.count() > 0:
+        preferred.first.click()
+    else:
+        page.locator("[data-testid='course-card']").first.click()
+    page.locator("[data-testid='course-challenge-card']").wait_for(state="visible", timeout=10000)
 
 
 def test_quiz_and_unit_test_flow(page, setup_test_courses):
@@ -72,67 +75,43 @@ def test_quiz_and_unit_test_flow(page, setup_test_courses):
 
 
 def test_course_challenge_flow(page, setup_test_courses):
-    """AC-08 (Part 2): Course Challenge (~30 questions across units) can be started and completed."""
+    """AC-08 (Part 2): Examen Modo Hierro replaces Course Challenge as the single course exam and completes cleanly."""
     navigate_to_challenge_course(page)
 
-    # 1. Locate Course Challenge card or sidebar item
-    challenge_trigger = page.locator(
-        "[data-testid='course-challenge-card'], a:has-text('Course challenge'), button:has-text('Course challenge'), button:has-text('Take Course challenge')"
-    )
-    assert challenge_trigger.count() > 0, "Course Challenge entry point not found on Course Overview!"
-    challenge_trigger.first.click()
+    # 1. Locate Examen Modo Hierro button inside course-challenge-card
+    challenge_btn = page.locator("[data-testid='course-challenge-card'] button").first
+    challenge_btn.wait_for(state="visible", timeout=10000)
+    challenge_btn.click()
     page.wait_for_load_state("networkidle")
 
-    # 2. Verify Course Challenge hero screen ("Ready for a challenge?", ~30 questions)
+    # 2. Verify Modo Hierro briefing screen
     body_text = page.locator("body").inner_text()
     assert (
-        "challenge" in body_text.lower()
-        or "30 questions" in body_text
-        or "Ready for a challenge" in body_text
-    ), "Course challenge intro screen did not render!"
+        "modo hierro" in body_text.lower()
+        or "preguntas" in body_text.lower()
+    ), "Modo Hierro intro screen did not render!"
 
-    # 3. Click "Let's go"
-    lets_go = page.locator("button:has-text(\"Let's go\"), [data-testid='start-challenge-btn']").first
-    if lets_go.is_visible():
-        lets_go.click()
-        page.wait_for_load_state("networkidle")
+    # 3. Click Iniciar Modo Hierro (start-challenge-btn)
+    start_btn = page.locator("[data-testid='start-challenge-btn']").first
+    expect = start_btn.wait_for(state="visible", timeout=10000)
+    start_btn.click()
+    page.wait_for_load_state("networkidle")
 
-    # 4. Verify Course Challenge session started with questions
-    check_or_skip = page.locator("button:has-text('Check'), button:has-text('Skip'), [data-testid='check-btn']")
-    assert check_or_skip.count() > 0, "Course challenge session failed to start questions!"
+    # 4. Verify Iron Exam session started with navigator & submit button
+    page.locator("[data-testid='iron-exam-session']").wait_for(state="visible", timeout=10000)
+    assert page.locator("[data-testid='hints-toggle']").count() == 0, "Iron Exam must hide hints!"
+    assert page.locator("[data-testid='feedback-toast']").count() == 0, "Iron Exam must defer feedback!"
 
-    # Step through questions to verify full flow completion
-    # In a fast test run, step through with Skip
-    for q_idx in range(35):
-        # Check if completion reached
-        completion = page.locator(
-            ":text-matches('complete', 'i'), :text-matches('Challenge complete', 'i'), :text-matches('Summary', 'i'), [data-testid='completion-screen']"
-        )
-        if completion.count() > 0 and completion.first.is_visible():
-            break
+    # Submit via Metacognitive Modal
+    page.locator("[data-testid='iron-submit-exam-btn']").click()
+    page.locator("[data-testid='metacognitive-modal']").wait_for(state="visible", timeout=5000)
+    page.locator("[data-testid='meta-global-confidence-medium']").click()
+    page.locator("[data-testid='metacognitive-confirm-btn']").click()
 
-        # If next question visible
-        next_btn = page.locator("button:has-text('Next question'), button:has-text('Next'), [data-testid='next-question-btn']")
-        if next_btn.count() > 0 and next_btn.first.is_visible():
-            next_btn.first.click()
-            page.wait_for_timeout(150)
-            continue
-
-        skip_btn = page.locator("button:has-text('Skip'), [data-testid='skip-btn']").first
-        if skip_btn.is_visible() and skip_btn.is_enabled():
-            skip_btn.click()
-            page.wait_for_timeout(150)
-        else:
-            break
-
-    # 5. Verify challenge completion screen reached
-    completion_text = page.locator("body").inner_text()
-    assert (
-        "complete" in completion_text.lower()
-        or "score" in completion_text.lower()
-        or "result" in completion_text.lower()
-        or "/" in completion_text
-    ), "Course challenge did not display completion screen!"
+    # 5. Verify completion screen + metacognitive audit + deferred review rendered
+    page.locator("[data-testid='completion-screen']").wait_for(state="visible", timeout=10000)
+    assert page.locator("[data-testid='metacognitive-audit-summary']").is_visible()
+    assert page.locator("[data-testid='iron-deferred-review']").is_visible()
 
     assert len(page.page_errors) == 0, f"Page errors: {page.page_errors}"
     assert len(page.console_errors) == 0, f"Console errors: {page.console_errors}"

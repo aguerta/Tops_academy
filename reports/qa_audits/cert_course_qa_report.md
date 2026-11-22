@@ -1,12 +1,13 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Certified Course (`cert_course`)
 
-- **Fecha de Evaluación:** 2026-11-18
+- **Fecha de Evaluación:** 2026-11-21
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
 - **Quality Tier:** **EXCELENTE (PLATINUM MASTERY)**
 - **Mastery Path Readiness Index (MPRI):** **100.00 / 100.0** (GOLD MASTERY PATH)
+- **Índice Bloom Ponderado (1–5):** **0.00 / 5.0** (piso adaptativo 3.85 | Analyze+Evaluate: 100.0% | Tier: **N/A**)
 
 ---
 
@@ -77,9 +78,18 @@ El curso **Certified Course** ha sido **certificado y aprobado** con calificaci�
     "question_types_distribution": {
       "multiple_choice_7_options": 1
     },
+    "bloom_index": {
+      "weighted_index": 0.0,
+      "adaptive_floor": 3.85,
+      "gap": 0.0,
+      "apply_plus_pct": 100.0,
+      "superior_pct": 100.0,
+      "tier": "N/A",
+      "coherence_violations_count": 0
+    },
     "platform_status": "ACTIVO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-18"
+    "evaluation_date": "2026-11-21"
   },
   "dimension_scores": {},
   "penalties_applied": [],

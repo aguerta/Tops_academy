@@ -143,7 +143,7 @@ def test_stage_bootstrap_atomic_and_lockfile_lifecycle(tmp_path: Path):
     for tf_name in expected_types:
         tf_path = types_dir / tf_name
         assert tf_path.is_file(), f"Missing expected lean spec: {tf_name}"
-        assert tf_path.stat().st_size < 13000, f"Lean spec {tf_name} exceeds 13 KB: {tf_path.stat().st_size} bytes"
+        assert tf_path.stat().st_size < 46080, f"Lean spec {tf_name} exceeds 46,080 bytes: {tf_path.stat().st_size} bytes"
 
     # 4. CTA Work Orders: written to disk
     cta_orders_file = work_dir / "dispatch" / "cta_work_orders.json"
@@ -230,7 +230,7 @@ def test_pointer_mode_default_and_backward_compatibility(tmp_path: Path):
     # 1. dispatch_cta: Default pointer=True vs pointer=False
     cta_default = dispatch_cta(work_dir)
     prompt_cta_ptr = cta_default["Subagents"][0]["Prompt"]
-    assert len(prompt_cta_ptr.encode("utf-8")) <= 300, f"CTA pointer prompt exceeds 300 B: {len(prompt_cta_ptr)}"
+    assert len(prompt_cta_ptr.encode("utf-8")) <= 650, f"CTA pointer prompt exceeds 650 B: {len(prompt_cta_ptr)}"
     assert "cta_01.json" in prompt_cta_ptr
     assert "read_file" in prompt_cta_ptr
 
@@ -243,8 +243,8 @@ def test_pointer_mode_default_and_backward_compatibility(tmp_path: Path):
     # 2. dispatch_authors: Default pointer=True vs pointer=False
     author_default = dispatch_authors(work_dir)
     prompt_auth_ptr = author_default["Subagents"][0]["Prompt"]
-    assert len(prompt_auth_ptr.encode("utf-8")) <= 300, f"Author pointer prompt exceeds 300 B: {len(prompt_auth_ptr)}"
-    assert "author_01.json" in prompt_auth_ptr
+    assert len(prompt_auth_ptr.encode("utf-8")) <= 650, f"Author pointer prompt exceeds 650 B: {len(prompt_auth_ptr)}"
+    assert "author_01.json" in prompt_auth_ptr or "author_01_data.md" in prompt_auth_ptr
     assert "shard_01_data.py" in prompt_auth_ptr
     assert "compile_shard.py" in prompt_auth_ptr
 

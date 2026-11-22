@@ -66,7 +66,16 @@ def get_available_courses() -> list[dict]:
 
 def summarize_course(course_entry: dict) -> dict:
     """Build an enriched, standardized audit package for a course."""
-    data = course_entry.get("data", {})
+    data = course_entry.get("data") or {}
+    if not data and course_entry.get("filename"):
+        raw_path = COURSES_DIR / str(course_entry["filename"])
+        if raw_path.is_file():
+            try:
+                loaded = json.loads(raw_path.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    data = loaded
+            except Exception:
+                pass
     competencies = data.get("competencies", [])
     questions = data.get("questions", [])
 
@@ -94,7 +103,7 @@ def summarize_course(course_entry: dict) -> dict:
     for cid, qlist in q_by_comp.items():
         comp_info = comp_map.get(cid, {})
         for q in qlist[:2]:
-            stratified_samples.append({
+            sample_item = {
                 "id": q.get("id"),
                 "competency_id": cid,
                 "competency_name": comp_info.get("name", ""),
@@ -109,7 +118,19 @@ def summarize_course(course_entry: dict) -> dict:
                 "hints": q.get("hints"),
                 "detailed_solution": q.get("detailed_solution") or q.get("solution"),
                 "misconception_warning": q.get("misconception_warning") or q.get("common_misconception_warning"),
-            })
+            }
+            for m20_key in (
+                "diagnostic_distractors",
+                "symbolic_config",
+                "proof_dag",
+                "adversarial_break",
+                "unstructured_model",
+                "invariant_canvas",
+                "concept_matching",
+            ):
+                if q.get(m20_key) is not None:
+                    sample_item[m20_key] = q[m20_key]
+            stratified_samples.append(sample_item)
 
     # 3. Select targeted anomaly samples from Risk Clusters for direct quotation
     risk_cluster_samples: dict[str, list[dict]] = {}
@@ -122,16 +143,30 @@ def summarize_course(course_entry: dict) -> dict:
                 risk_cluster_samples[cluster_name] = {  # type: ignore[assignment]
                     "items": []
                 } if not isinstance(risk_cluster_samples[cluster_name], list) else risk_cluster_samples[cluster_name]
-                risk_cluster_samples[cluster_name].append({
+                rc_item = {
                     "id": qid,
                     "competency_id": q_item.get("competency_id"),
+                    "interaction_type": q_item.get("interaction_type"),
                     "stem": q_item.get("stem"),
                     "options": q_item.get("options"),
+                    "correct_answer": q_item.get("correct_answer"),
                     "hints": q_item.get("hints"),
                     "detailed_solution": q_item.get("detailed_solution") or q_item.get("solution"),
                     "misconception_warning": q_item.get("misconception_warning") or q_item.get("common_misconception_warning"),
                     "detected_issues": telemetry.get("issues_by_item", {}).get(qid, []),
-                })
+                }
+                for m20_key in (
+                    "diagnostic_distractors",
+                    "symbolic_config",
+                    "proof_dag",
+                    "adversarial_break",
+                    "unstructured_model",
+                    "invariant_canvas",
+                    "concept_matching",
+                ):
+                    if q_item.get(m20_key) is not None:
+                        rc_item[m20_key] = q_item[m20_key]
+                risk_cluster_samples[cluster_name].append(rc_item)
 
     # 4. Ingest Stage-5 Blind Judge verification report if available in courses/<id>/work/
     cid_slug = str(course_entry.get("id") or "")
@@ -153,10 +188,11 @@ def summarize_course(course_entry: dict) -> dict:
                 pass
 
     return {
-        "course_id": course_entry.get("id"),
+        "course_id": data.get("course_id") or course_entry.get("id"),
         "filename": course_entry.get("filename"),
-        "title": course_entry.get("title"),
+        "title": data.get("title") or data.get("course_title") or course_entry.get("title"),
         "description": data.get("description", ""),
+        "platform_validation_error": course_entry.get("error_message"),
         "total_competencies": len(competencies),
         "total_questions": len(questions),
         "question_types_distribution": types_count,

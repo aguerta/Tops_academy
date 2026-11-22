@@ -15,7 +15,7 @@ Evaluates 100% of instances against strict psychometric and correctness rules:
 import functools
 import re
 import threading
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 try:
     import pykatex
@@ -111,6 +111,41 @@ ANTONYM_PAIRS: List[Tuple[str, str]] = [
     ("positivo", "negativo"),
     ("máximo", "mínimo"),
 ]
+
+VALID_CANVAS_INVARIANT_KINDS = frozenset({
+    "point_on_curve",
+    "point_coords",
+    "kink_at",
+    "slope_at",
+    "slider_eq",
+    "slider_range",
+    "curves_intersect_at",
+    "point_in_region",
+    "inequality_state",
+    "expr_true",
+})
+
+
+def _norm_coord_scalar(val: Any) -> Any:
+    """Normalize numeric scalars/strings to float for coordinate comparison."""
+    if isinstance(val, bool) or val is None:
+        return val
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, str):
+        s = val.strip()
+        try:
+            return float(s)
+        except ValueError:
+            return s
+    return val
+
+
+def _coord_regex_token(val: Any) -> str:
+    """Build a regex token matching integer/float coordinate representations."""
+    if isinstance(val, (int, float)) and not isinstance(val, bool) and float(val).is_integer():
+        return rf"{re.escape(str(int(val)))}(?:\.0+)?"
+    return re.escape(str(val))
 
 
 _LATEX_ARG_MACROS = {
@@ -904,7 +939,12 @@ def validate_katex_syntax(
 
     # 15. LaTeX math commands with backslash exposed outside math delimiters '$...$' or '$$...$$'
     # Skips purely algebraic fields (e.g. canonical_algebraic or expression in FIB) which are mathematical formulas by specification
-    if not ("canonical_algebraic" in context or "expression" in context):
+    if not (
+        "canonical_algebraic" in context
+        or "expression" in context
+        or context == "correct_answer"
+        or context.startswith("correct_answer.")
+    ):
         clean_no_math = re.sub(r"\$\$[\s\S]*?\$\$", "", clean_text)
         clean_no_math = re.sub(r"\$[^\$]*?\$", "", clean_no_math)
         EXPOSED_LATEX_CMD = (
@@ -930,7 +970,139 @@ def validate_katex_syntax(
     for m_dot in re.finditer(r"\\dot\{\s*\d+\s*\}", text):
         errors.append(f"Newtonian dot accent on digits detected in {context}: '{m_dot.group(0)}'.")
 
+    # 18. Raw SymPy syntax leaked inside KaTeX math blocks ($...$ or $$...$$) [TPL-KATEX-SYMPY-LEAK]
+    _sympy_leak_re = re.compile(r"(?:(?<![{^])\*\*|\d\s*\*\s*[a-zA-Z(]|(?<![\\a-zA-Z])sqrt\s*\()")
+    for mb_sym in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
+        math_seg = mb_sym.group(1) if mb_sym.group(0).startswith("$$") else mb_sym.group(2)
+        if not math_seg:
+            continue
+        m_sym = _sympy_leak_re.search(math_seg)
+        if m_sym:
+            errors.append(
+                f"[TPL-KATEX-SYMPY-LEAK] Raw SymPy syntax ('{m_sym.group(0).strip()}') leaked inside KaTeX math in {context}; "
+                f"format symbolic expressions with sympy.latex(...) or '^{{...}}' instead of str(...)/'**'."
+            )
+            break
+
+    # 19. Tautological self-identity ($X = X$) in solution/hints [TPL-TAUTOLOGICAL-IDENTITY]
+    if any(k in context.lower() for k in ("solution", "hint")):
+        for mb_taut in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
+            taut_seg = mb_taut.group(1) if mb_taut.group(0).startswith("$$") else mb_taut.group(2)
+            if not taut_seg or "=" not in taut_seg:
+                continue
+            if any(op in taut_seg for op in ("\\neq", "\\ne ", "\\leq", "\\geq", "\\equiv", "!=", "<=", ">=")):
+                continue
+            sides = [re.sub(r"\s+", "", s) for s in taut_seg.split("=")]
+            for idx_s in range(len(sides) - 1):
+                if len(sides[idx_s]) >= 4 and sides[idx_s] == sides[idx_s + 1]:
+                    errors.append(
+                        f"[TPL-TAUTOLOGICAL-IDENTITY] Redundant self-identity ('{sides[idx_s]}={sides[idx_s + 1]}') "
+                        f"detected inside KaTeX math in {context}; avoid repeating the same expression on both sides of '='."
+                    )
+                    break
+
     return errors
+
+
+def _normalize_expr_key(expr: str) -> str:
+    return re.sub(r"\s+", "", str(expr or "").strip().strip("$"))
+
+
+def _expressions_collide(expr_a: str, expr_b: str) -> bool:
+    na = _normalize_expr_key(expr_a)
+    nb = _normalize_expr_key(expr_b)
+    if not na or not nb:
+        return False
+    if na == nb:
+        return True
+    try:
+        fa = float(na.replace(",", "."))
+        fb = float(nb.replace(",", "."))
+        if abs(fa - fb) <= 1e-9:
+            return True
+    except Exception:
+        pass
+    try:
+        import sympy as sp  # type: ignore
+        sa = sp.sympify(na.replace("^", "**"))
+        sb = sp.sympify(nb.replace("^", "**"))
+        if sa.free_symbols == sb.free_symbols and sp.simplify(sa - sb) == 0:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+_PLACEHOLDER_RATIONALE_PAT = re.compile(
+    r"^(?:"
+    r"static|dummy.*|placeholder.*|none|null|n/?a|ningun[oa]|comod[ií]n|gen[eé]rico|generic|"
+    r"todo|tbd|test|default|(?:placeholder|distractor|error)(?:\s+[a-z0-9]+)?|"
+    r"error\s+(?:gen[eé]rico|rationale|de\s+prueba)|"
+    r"distractor(?:\s+derivado.*)?\.?|incorrect[oa]?\.?|opci[oó]n\s+(?:incorrecta|inv[aá]lida.*)\.?"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def _is_placeholder_rationale_inv(rationale: Any) -> bool:
+    if not isinstance(rationale, str):
+        return True
+    cleaned = rationale.strip().strip(".!?,;:\"'-_ ")
+    if not cleaned:
+        return True
+    if "placeholder" in cleaned.lower():
+        return True
+    return bool(_PLACEHOLDER_RATIONALE_PAT.match(cleaned))
+
+
+def _check_diagnostic_distractors_invariants(
+    instance: Dict[str, Any],
+    correct_expr: str,
+    effective_vars: Optional[Dict[str, Any]],
+    errors: List[str],
+    interaction_type: str = "",
+    stem: str = "",
+) -> None:
+    diag_dists = instance.get("diagnostic_distractors")
+    if diag_dists is None:
+        return
+    if not isinstance(diag_dists, list):
+        errors.append("diagnostic_distractors must be a list.")
+        return
+
+    seen_exprs: Set[str] = set()
+    for idx, dd in enumerate(diag_dists):
+        if not isinstance(dd, dict):
+            errors.append(f"diagnostic_distractors[{idx}] must be a dictionary.")
+            continue
+        expr = str(dd.get("expression") or dd.get("value") or "").strip()
+        if not expr:
+            errors.append(f"diagnostic_distractors[{idx}] must specify a non-empty expression/value.")
+            continue
+        norm_expr = _normalize_expr_key(expr)
+        if norm_expr in seen_exprs:
+            errors.append(f"Duplicate option content detected in diagnostic_distractors: '{expr}'")
+        seen_exprs.add(norm_expr)
+
+        if correct_expr and _expressions_collide(expr, correct_expr):
+            errors.append(f"Distractor identical to correct answer: '{expr}'")
+
+        rat = dd.get("error_rationale")
+        if not isinstance(rat, str) or not rat.strip():
+            errors.append(f"diagnostic_distractors[{idx}] must include a non-empty 'error_rationale'.")
+        elif _is_placeholder_rationale_inv(rat):
+            errors.append(f"diagnostic_distractors[{idx}] contains a generic placeholder 'error_rationale': '{rat}'")
+        else:
+            errors.extend(validate_katex_syntax(rat, f"diagnostic_distractors[{idx}].error_rationale", variables=effective_vars))
+            if interaction_type == "open_symbolic" and isinstance(stem, str):
+                allowed_context = f"{stem} {correct_expr} {expr}"
+                for num_tok in re.findall(r"(?<![a-zA-Z0-9_])\d+\.\d+(?![a-zA-Z0-9_])", rat):
+                    if num_tok not in allowed_context:
+                        errors.append(
+                            f"Phantom numeric leak in open_symbolic diagnostic_distractors[{idx}].error_rationale: "
+                            f"decimal '{num_tok}' does not appear in stem or expression."
+                        )
+                        break
 
 
 def check_instance_invariants(
@@ -1005,6 +1177,24 @@ def check_instance_invariants(
 
         # Item-level options integrity (telltales, synthetic clone prefix, padding, vacuous quantifiers)
         errors.extend(check_item_level_options_integrity(options_raw, interaction_type))
+
+    if interaction_type in ("fill_in_the_blank", "open_symbolic") and not corr_texts_extracted:
+        ans_obj = instance.get("correct_answer") if instance.get("correct_answer") is not None else instance.get("correct")
+        if isinstance(ans_obj, dict):
+            for _ak in ("expression", "value", "canonical_algebraic"):
+                _av = ans_obj.get(_ak)
+                if isinstance(_av, str) and _av.strip():
+                    corr_texts_extracted.append(_av.strip())
+            for _eq in (ans_obj.get("accepted_equivalents") or []):
+                if isinstance(_eq, str) and _eq.strip():
+                    corr_texts_extracted.append(_eq.strip())
+        elif isinstance(ans_obj, str) and ans_obj.strip():
+            corr_texts_extracted.append(ans_obj.strip())
+        for _dd in (instance.get("diagnostic_distractors") or []):
+            if isinstance(_dd, dict):
+                _dv = str(_dd.get("expression") or _dd.get("value") or "").strip()
+                if _dv:
+                    dist_texts_extracted.append(_dv)
 
     # 1. Multiple Choice 7 options
     if interaction_type == "multiple_choice_7_options":
@@ -1107,8 +1297,8 @@ def check_instance_invariants(
             bp_errors = check_synthetic_boilerplate_distractors(correct_content, distractor_contents)
             errors.extend(bp_errors)
 
-    # 2. Fill in the blank
-    elif interaction_type == "fill_in_the_blank":
+    # 2. Fill in the blank & Open Symbolic
+    elif interaction_type in ("fill_in_the_blank", "open_symbolic"):
         if isinstance(stem, str):
             m_tok = re.search(r"\b([a-zA-Z_]\w*)\s*=\s*@\1@(?!\w)", stem)
             if m_tok:
@@ -1117,17 +1307,21 @@ def check_instance_invariants(
         ans = instance.get("correct_answer")
         if ans is None:
             ans = instance.get("correct")
-        
+
+        type_label = "FIB" if interaction_type == "fill_in_the_blank" else interaction_type
+        corr_expr_str = ""
         if ans is None:
-            errors.append("FIB instance must provide a correct answer.")
+            errors.append(f"{type_label} instance must provide a correct answer.")
         else:
             if isinstance(ans, dict):
                 val = next(
-                    (ans[k] for k in ("value", "expression", "canonical_algebraic") if k in ans and ans[k] is not None),
+                    (ans[k] for k in ("expression", "value", "canonical_algebraic") if k in ans and ans[k] is not None),
                     None,
                 )
                 if val is None or str(val).strip() == "":
-                    errors.append("FIB answer dict missing value/expression/canonical_algebraic.")
+                    errors.append(f"{type_label} answer dict missing value/expression/canonical_algebraic.")
+                else:
+                    corr_expr_str = str(val).strip()
                 for field in ("value", "expression", "canonical_algebraic"):
                     fval = ans.get(field)
                     if isinstance(fval, str) and fval:
@@ -1141,11 +1335,52 @@ def check_instance_invariants(
                         errors.append(f"Accepted equivalent [{eq_idx}] has invalid type: {type(eq).__name__}")
             elif isinstance(ans, (int, float, str)):
                 if str(ans).strip() == "":
-                    errors.append("FIB scalar answer is empty.")
-                elif isinstance(ans, str):
-                    errors.extend(validate_katex_syntax(ans, "correct_answer", variables=effective_vars))
+                    errors.append(f"{type_label} scalar answer is empty.")
+                else:
+                    corr_expr_str = str(ans).strip()
+                    if isinstance(ans, str):
+                        errors.extend(validate_katex_syntax(ans, "correct_answer", variables=effective_vars))
             else:
-                errors.append(f"FIB answer format invalid: {type(ans)}")
+                errors.append(f"{type_label} answer format invalid: {type(ans)}")
+
+        if corr_expr_str and isinstance(stem, str):
+            clean_cand_fib = corr_expr_str.strip().strip("$").strip()
+            if clean_cand_fib and len(clean_cand_fib) > 1 and not clean_cand_fib.isdigit():
+                leak_pat_fib = re.compile(
+                    rf"(?:=\s*|\bes\s+(?:igual\s+a\s+)?)\$?{re.escape(clean_cand_fib)}\$?(?=[^0-9a-zA-Z]|$)",
+                    re.IGNORECASE,
+                )
+                if leak_pat_fib.search(stem):
+                    errors.append(
+                        f"{type_label} correct answer '{clean_cand_fib}' leaked as direct assignment in stem text."
+                    )
+
+        if interaction_type == "open_symbolic" and isinstance(effective_vars, dict):
+            sym_cfg = instance.get("symbolic_config") if isinstance(instance.get("symbolic_config"), dict) else {}
+            free_vars = set(
+                str(v).strip()
+                for v in (sym_cfg.get("variables") or instance.get("variables") or [])
+                if str(v).strip()
+            )
+            for fv in sorted(free_vars):
+                if fv in effective_vars:
+                    val = effective_vars[fv]
+                    is_num = isinstance(val, (int, float)) and not isinstance(val, bool)
+                    is_num_str = isinstance(val, str) and bool(re.fullmatch(r"-?\d+(?:\.\d+)?", val.strip()))
+                    if is_num or is_num_str:
+                        errors.append(
+                            f"open_symbolic variable collision: free symbolic variable '{fv}' is numerically bound "
+                            f"to '{val}' in vars. Remove '{fv}' from vars and reference it symbolically in error_rationale/hints."
+                        )
+
+        _check_diagnostic_distractors_invariants(
+            instance,
+            corr_expr_str,
+            effective_vars,
+            errors,
+            interaction_type=interaction_type,
+            stem=stem if isinstance(stem, str) else "",
+        )
 
     # 3. Multiple select
     elif interaction_type == "multiple_select":
@@ -1191,6 +1426,35 @@ def check_instance_invariants(
             bp_errors = check_synthetic_boilerplate_distractors(None, ms_distractors)
             errors.extend(bp_errors)
 
+            # Check length anti-giveaway symmetry for multiple_select [R-15-MS]:
+            # 0.85 <= avg(len(true)) / avg(len(false)) <= 1.15
+            if strict_length_bounds:
+                true_lens = [
+                    len(str(opt.get("content", "")).strip())
+                    for opt in options
+                    if isinstance(opt, dict) and opt.get("is_correct") is True
+                ]
+                false_lens = [
+                    len(str(opt.get("content", "")).strip())
+                    for opt in options
+                    if isinstance(opt, dict) and not opt.get("is_correct")
+                ]
+                if true_lens and false_lens:
+                    avg_t = sum(true_lens) / len(true_lens)
+                    avg_f = sum(false_lens) / len(false_lens)
+                    if min(avg_t, avg_f) >= 15.0 and avg_f > 0 and abs(avg_t - avg_f) >= 8.0:
+                        ratio = avg_t / avg_f
+                        if ratio > 1.15:
+                            errors.append(
+                                f"MS length anti-giveaway violation: correct options too long on average "
+                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x > 1.15x)."
+                            )
+                        elif ratio < 0.85:
+                            errors.append(
+                                f"MS length anti-giveaway violation: correct options too short on average "
+                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x < 0.85x)."
+                            )
+
             # Check answer leak in stem or early hints for multiple_select correct options
             for opt in options:
                 if not isinstance(opt, dict) or opt.get("is_correct") is not True:
@@ -1217,6 +1481,352 @@ def check_instance_invariants(
                         )
                         if leak_pattern.search(stem):
                             errors.append(f"MS correct answer '{clean_cc}' leaked as direct assignment in stem text.")
+
+    # 4. ProofDAG (Step-by-step formal reasoning)
+    elif interaction_type == "proof_dag":
+        dag = instance.get("proof_dag")
+        if not isinstance(dag, dict):
+            errors.append("proof_dag instance must provide a 'proof_dag' dict.")
+        else:
+            steps = dag.get("steps") or []
+            if not isinstance(steps, list) or not steps:
+                errors.append("proof_dag.steps must be a non-empty list.")
+            else:
+                valid_ids: Set[str] = set()
+                req_just = bool(dag.get("require_justification", False))
+                for s_idx, st in enumerate(steps):
+                    if not isinstance(st, dict):
+                        errors.append(f"proof_dag.steps[{s_idx}] must be a dict.")
+                        continue
+                    sid = str(st.get("id") or "").strip()
+                    content = str(st.get("content") or "").strip()
+                    if not sid or not content:
+                        errors.append(f"proof_dag.steps[{s_idx}] missing id or content.")
+                    errors.extend(validate_katex_syntax(content, f"proof_dag.steps[{s_idx}].content", variables=effective_vars))
+                    if st.get("is_fallacy"):
+                        rat = st.get("error_rationale")
+                        if not isinstance(rat, str) or not rat.strip():
+                            errors.append(f"proof_dag fallacy step '{sid}' must provide non-empty 'error_rationale'.")
+                        else:
+                            errors.extend(validate_katex_syntax(rat, f"proof_dag.steps[{s_idx}].error_rationale", variables=effective_vars))
+                    else:
+                        valid_ids.add(sid)
+                        if req_just and not str(st.get("justification") or "").strip():
+                            errors.append(f"proof_dag step '{sid}' missing required 'justification'.")
+                if not (3 <= len(valid_ids) <= 10):
+                    errors.append(f"proof_dag must have 3 to 10 valid steps (found {len(valid_ids)}).")
+                raw_dag_edges = dag.get("edges") or []
+                if not isinstance(raw_dag_edges, list) or len(raw_dag_edges) < 1:
+                    errors.append("proof_dag.edges must declare at least 1 prerequisite edge.")
+                for e_idx, edge in enumerate(raw_dag_edges):
+                    if not isinstance(edge, (list, tuple)) or len(edge) != 2:
+                        errors.append(f"proof_dag.edges[{e_idx}] must be a 2-element pair.")
+                    elif str(edge[0]) not in valid_ids or str(edge[1]) not in valid_ids:
+                        errors.append(f"proof_dag.edges[{e_idx}] references invalid/fallacy step {edge}.")
+
+    # 5. Adversarial Break
+    elif interaction_type == "adversarial_break":
+        adv = instance.get("adversarial_break")
+        if not isinstance(adv, dict):
+            errors.append("adversarial_break instance must provide an 'adversarial_break' dict.")
+        else:
+            mode = adv.get("mode")
+            if mode == "find_fallacy":
+                steps = adv.get("steps") or []
+                if len(steps) < 3:
+                    errors.append("adversarial_break find_fallacy requires >= 3 steps.")
+                fallacy_cnt = 0
+                for s_idx, st in enumerate(steps):
+                    if not isinstance(st, dict):
+                        continue
+                    c = str(st.get("content") or "").strip()
+                    if not c:
+                        errors.append(f"adversarial_break.steps[{s_idx}] has empty content.")
+                    else:
+                        errors.extend(validate_katex_syntax(c, f"adversarial_break.steps[{s_idx}].content", variables=effective_vars))
+                    if st.get("is_fallacy"):
+                        fallacy_cnt += 1
+                        rat = st.get("error_rationale")
+                        if not isinstance(rat, str) or not rat.strip():
+                            errors.append(f"adversarial_break fallacy step[{s_idx}] missing 'error_rationale'.")
+                        else:
+                            errors.extend(validate_katex_syntax(rat, f"adversarial_break.steps[{s_idx}].error_rationale", variables=effective_vars))
+                if fallacy_cnt != 1:
+                    errors.append(f"adversarial_break find_fallacy must have exactly 1 fallacy step (found {fallacy_cnt}).")
+            elif mode == "counterexample":
+                if not isinstance(adv.get("inputs"), list) or not adv["inputs"]:
+                    errors.append("adversarial_break counterexample requires non-empty 'inputs'.")
+                if not isinstance(adv.get("predicates"), list) or not adv["predicates"]:
+                    errors.append("adversarial_break counterexample requires non-empty 'predicates'.")
+                if not isinstance(adv.get("sample_witness"), dict) or not adv["sample_witness"]:
+                    errors.append("adversarial_break counterexample requires 'sample_witness'.")
+                for p_idx, pr in enumerate(adv.get("predicates") or []):
+                    if isinstance(pr, dict):
+                        fr = pr.get("failure_rationale")
+                        if isinstance(fr, str) and fr:
+                            errors.extend(validate_katex_syntax(fr, f"adversarial_break.predicates[{p_idx}].failure_rationale", variables=effective_vars))
+            else:
+                errors.append(f"adversarial_break has invalid mode '{mode}'.")
+
+    # 6. Unstructured Model (Stage 0)
+    elif interaction_type == "unstructured_model":
+        um = instance.get("unstructured_model")
+        if not isinstance(um, dict):
+            errors.append("unstructured_model instance must provide an 'unstructured_model' dict.")
+        else:
+            p1 = um.get("phase1_variables")
+            p2 = um.get("phase2_assumptions")
+            p3 = um.get("phase3_formulation")
+            if not isinstance(p1, dict) or not isinstance(p2, dict) or not isinstance(p3, dict):
+                errors.append("unstructured_model must include phase1_variables, phase2_assumptions, phase3_formulation.")
+            else:
+                if len(p1.get("items") or []) < 2 or len(p1.get("roles") or []) < 2:
+                    errors.append("unstructured_model phase1_variables requires >= 2 items and >= 2 roles.")
+                p2_opts = p2.get("options") or []
+                if len(p2_opts) < 2 or not any(isinstance(o, dict) and o.get("is_required") for o in p2_opts):
+                    errors.append("unstructured_model phase2_assumptions requires >= 2 options and >= 1 required.")
+                if p3.get("input_mode") == "select":
+                    p3_opts = p3.get("options") or []
+                    if len(p3_opts) < 2 or not any(isinstance(o, dict) and o.get("is_correct") for o in p3_opts):
+                        errors.append("unstructured_model phase3_formulation select mode requires >= 2 options and 1 correct.")
+                elif p3.get("input_mode") == "symbolic":
+                    ce = p3.get("correct_expression")
+                    if not isinstance(ce, dict) or not str(ce.get("expression") or ce.get("value") or "").strip():
+                        errors.append("unstructured_model phase3_formulation symbolic mode requires 'correct_expression'.")
+
+                for ph_name, ph_obj in (
+                    ("phase1_variables", p1),
+                    ("phase2_assumptions", p2),
+                    ("phase3_formulation", p3),
+                ):
+                    ph_prompt = ph_obj.get("prompt")
+                    if isinstance(ph_prompt, str) and ph_prompt:
+                        errors.extend(validate_katex_syntax(ph_prompt, f"unstructured_model.{ph_name}.prompt", variables=effective_vars))
+
+                for r_idx, role_val in enumerate(p1.get("roles") or []):
+                    if isinstance(role_val, str) and role_val:
+                        errors.extend(validate_katex_syntax(role_val, f"unstructured_model.phase1_variables.roles[{r_idx}]", variables=effective_vars))
+
+                declared_roles = [str(r) for r in (p1.get("roles") or []) if str(r).strip()]
+                for it_idx, it in enumerate(p1.get("items") or []):
+                    if isinstance(it, dict):
+                        c_role = str(it.get("correct_role") or "").strip()
+                        if declared_roles and c_role and c_role not in declared_roles:
+                            errors.append(
+                                f"unstructured_model.phase1_variables.items[{it_idx}] correct_role '{c_role}' is not in declared roles {declared_roles}."
+                            )
+                        for fld in ("label", "error_rationale"):
+                            fval = it.get(fld)
+                            if isinstance(fval, str) and fval:
+                                errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase1_variables.items[{it_idx}].{fld}", variables=effective_vars))
+                        if isinstance(it.get("error_rationale"), str) and _is_placeholder_rationale_inv(it["error_rationale"]):
+                            errors.append(
+                                f"unstructured_model.phase1_variables.items[{it_idx}] contains a generic placeholder 'error_rationale': '{it['error_rationale']}'"
+                            )
+
+                for o_idx, opt in enumerate(p2_opts):
+                    if isinstance(opt, dict):
+                        for fld in ("content", "error_rationale"):
+                            fval = opt.get(fld)
+                            if isinstance(fval, str) and fval:
+                                errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}", variables=effective_vars))
+                        if isinstance(opt.get("error_rationale"), str) and _is_placeholder_rationale_inv(opt["error_rationale"]):
+                            errors.append(
+                                f"unstructured_model.phase2_assumptions.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'"
+                            )
+
+                for o_idx, opt in enumerate(p3.get("options") or []):
+                    if isinstance(opt, dict):
+                        for fld in ("content", "error_rationale"):
+                            fval = opt.get(fld)
+                            if isinstance(fval, str) and fval:
+                                errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}", variables=effective_vars))
+                        if not opt.get("is_correct") and isinstance(opt.get("error_rationale"), str) and _is_placeholder_rationale_inv(opt["error_rationale"]):
+                            errors.append(
+                                f"unstructured_model.phase3_formulation.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'"
+                            )
+
+                if isinstance(p3.get("correct_expression"), dict):
+                    ce_obj = p3["correct_expression"]
+                    for fld in ("expression", "value", "canonical_algebraic"):
+                        fval = ce_obj.get(fld)
+                        if isinstance(fval, str) and fval:
+                            errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase3_formulation.correct_expression.{fld}", variables=effective_vars))
+                    for eq_idx, eq_val in enumerate(ce_obj.get("accepted_equivalents") or []):
+                        if isinstance(eq_val, str) and eq_val:
+                            errors.extend(validate_katex_syntax(eq_val, f"unstructured_model.phase3_formulation.correct_expression.accepted_equivalents[{eq_idx}]", variables=effective_vars))
+
+                for dist_key in ("distractors", "diagnostic_distractors"):
+                    for d_idx, dd in enumerate(p3.get(dist_key) or []):
+                        if isinstance(dd, dict):
+                            rat = dd.get("error_rationale")
+                            if not isinstance(rat, str) or not rat.strip() or _is_placeholder_rationale_inv(rat):
+                                errors.append(
+                                    f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}] must include a non-placeholder 'error_rationale'."
+                                )
+                            else:
+                                errors.extend(validate_katex_syntax(rat, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].error_rationale", variables=effective_vars))
+                            for expr_fld in ("expression", "value"):
+                                if isinstance(dd.get(expr_fld), str) and dd[expr_fld]:
+                                    errors.extend(validate_katex_syntax(dd[expr_fld], f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].{expr_fld}", variables=effective_vars))
+                            for eq_idx, eq_val in enumerate(dd.get("accepted_equivalents") or []):
+                                if isinstance(eq_val, str) and eq_val:
+                                    errors.extend(validate_katex_syntax(eq_val, f"unstructured_model.phase3_formulation.{dist_key}[{d_idx}].accepted_equivalents[{eq_idx}]", variables=effective_vars))
+
+    # 7. Invariant Canvas
+    elif interaction_type == "invariant_canvas":
+        ic = instance.get("invariant_canvas")
+        if not isinstance(ic, dict):
+            errors.append("invariant_canvas instance must provide an 'invariant_canvas' dict.")
+        else:
+            mode = ic.get("mode")
+            if mode == "cartesian":
+                for axis_k in ("x_label", "y_label"):
+                    axis_val = ic.get(axis_k)
+                    if isinstance(axis_val, str) and axis_val:
+                        errors.extend(validate_katex_syntax(axis_val, f"invariant_canvas.{axis_k}", variables=effective_vars))
+
+                for coll_k in (
+                    "fixed_curves",
+                    "interactive_curves",
+                    "interactive_points",
+                    "fixed_points",
+                    "sliders",
+                    "segments",
+                    "polygons",
+                    "shaded_regions",
+                ):
+                    for c_idx, c_item in enumerate(ic.get(coll_k) or []):
+                        if isinstance(c_item, dict):
+                            lbl = c_item.get("label")
+                            if isinstance(lbl, str) and lbl:
+                                errors.extend(validate_katex_syntax(lbl, f"invariant_canvas.{coll_k}[{c_idx}].label", variables=effective_vars))
+
+                ineq = ic.get("inequality")
+                if ineq is not None:
+                    if not isinstance(ineq, dict):
+                        errors.append("[CANVAS-INEQUALITY] invariant_canvas.inequality must be a dict.")
+                    else:
+                        declared_curve_ids = {
+                            str(cv.get("id")).strip()
+                            for coll in ("fixed_curves", "interactive_curves")
+                            for cv in (ic.get(coll) or [])
+                            if isinstance(cv, dict) and cv.get("id") is not None and str(cv.get("id")).strip()
+                        }
+                        cid_ineq = str(ineq.get("curve_id") or "").strip()
+                        if not cid_ineq or cid_ineq not in declared_curve_ids:
+                            errors.append(
+                                f"[CANVAS-INEQUALITY] invariant_canvas.inequality.curve_id '{cid_ineq}' "
+                                "is not declared in fixed_curves/interactive_curves."
+                            )
+                        if "initial_style" in ineq and ineq["initial_style"] is not None:
+                            if ineq["initial_style"] not in ("solid", "dashed"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.inequality.initial_style '{ineq['initial_style']}' "
+                                    "must be 'solid' or 'dashed'."
+                                )
+                        if "initial_shade" in ineq and ineq["initial_shade"] is not None:
+                            if ineq["initial_shade"] not in ("above", "below"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.inequality.initial_shade '{ineq['initial_shade']}' "
+                                    "must be 'above' or 'below'."
+                                )
+
+                invs = ic.get("invariants") or []
+                if not isinstance(invs, list) or not invs:
+                    errors.append("invariant_canvas cartesian mode requires >= 1 invariant.")
+                else:
+                    for i_idx, inv in enumerate(invs):
+                        if not isinstance(inv, dict):
+                            errors.append(f"invariant_canvas.invariants[{i_idx}] must be a dict.")
+                            continue
+                        inv_kind = str(inv.get("kind") or "").strip()
+                        if inv_kind not in VALID_CANVAS_INVARIANT_KINDS:
+                            errors.append(
+                                f"[CANVAS-INVARIANT-KIND] invariant_canvas.invariants[{i_idx}] has invalid kind '{inv_kind}'."
+                            )
+                        if inv_kind == "inequality_state":
+                            if inv.get("expected_style") not in ("solid", "dashed"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.invariants[{i_idx}] (inequality_state) "
+                                    "requires expected_style in ('solid', 'dashed')."
+                                )
+                            if inv.get("expected_shade") not in ("above", "below"):
+                                errors.append(
+                                    f"[CANVAS-INEQUALITY] invariant_canvas.invariants[{i_idx}] (inequality_state) "
+                                    "requires expected_shade in ('above', 'below')."
+                                )
+                        rat = inv.get("error_rationale")
+                        if isinstance(rat, str) and rat:
+                            errors.extend(validate_katex_syntax(rat, f"invariant_canvas.invariants[{i_idx}].error_rationale", variables=effective_vars))
+
+                    fixed_coords = {
+                        (_norm_coord_scalar(fp.get("x")), _norm_coord_scalar(fp.get("y")))
+                        for fp in (ic.get("fixed_points") or [])
+                        if isinstance(fp, dict)
+                    }
+                    if isinstance(stem, str) and stem:
+                        for inv in invs:
+                            if not isinstance(inv, dict):
+                                continue
+                            inv_kind = str(inv.get("kind") or "").strip()
+                            if inv_kind not in ("point_coords", "kink_at"):
+                                continue
+                            tx = inv.get("target_x") if inv.get("target_x") is not None else (inv.get("x") if inv_kind == "kink_at" else None)
+                            ty = inv.get("target_y")
+                            if tx is None or ty is None or (_norm_coord_scalar(tx), _norm_coord_scalar(ty)) in fixed_coords:
+                                continue
+                            leak_pat = rf"\(\s*{_coord_regex_token(tx)}\s*,\s*{_coord_regex_token(ty)}\s*\)"
+                            if re.search(leak_pat, stem):
+                                errors.append(
+                                    f"invariant_canvas target coordinate pair '({tx}, {ty})' leaked verbatim in stem text."
+                                )
+            elif mode == "tree":
+                nodes = ic.get("nodes") or []
+                edges = ic.get("edges") or []
+                tree_inv = ic.get("tree_invariants")
+                if len(nodes) < 2 or not edges:
+                    errors.append("invariant_canvas tree mode requires >= 2 nodes and >= 1 edge.")
+                if not isinstance(tree_inv, dict):
+                    errors.append("invariant_canvas tree mode requires 'tree_invariants'.")
+                for n_idx, nd in enumerate(nodes):
+                    if isinstance(nd, dict):
+                        lbl = nd.get("label")
+                        if isinstance(lbl, str) and lbl:
+                            errors.extend(validate_katex_syntax(lbl, f"invariant_canvas.nodes[{n_idx}].label", variables=effective_vars))
+                for e_idx, ed in enumerate(edges):
+                    if isinstance(ed, dict):
+                        lbl = ed.get("label")
+                        if isinstance(lbl, str) and lbl:
+                            errors.extend(validate_katex_syntax(lbl, f"invariant_canvas.edges[{e_idx}].label", variables=effective_vars))
+                if isinstance(tree_inv, dict):
+                    for rk in ("edge_error_rationale", "info_set_error_rationale"):
+                        rval = tree_inv.get(rk)
+                        if isinstance(rval, str) and rval:
+                            errors.extend(validate_katex_syntax(rval, f"invariant_canvas.tree_invariants.{rk}", variables=effective_vars))
+            else:
+                errors.append(f"invariant_canvas has invalid mode '{mode}'.")
+
+    # 8. Concept Matching
+    elif interaction_type == "concept_matching":
+        cm = instance.get("concept_matching")
+        if not isinstance(cm, dict):
+            errors.append("concept_matching instance must provide a 'concept_matching' dict.")
+        else:
+            premises = cm.get("premises") or []
+            targets = cm.get("targets") or []
+            pairs = cm.get("correct_pairs") or {}
+            if len(premises) < 2 or len(targets) < len(premises) or len(pairs) < len(premises):
+                errors.append("concept_matching requires >= 2 premises, targets >= premises, and full correct_pairs.")
+            for idx, pr in enumerate(premises):
+                if isinstance(pr, dict) and isinstance(pr.get("content"), str):
+                    errors.extend(validate_katex_syntax(pr["content"], f"concept_matching.premises[{idx}].content", variables=effective_vars))
+            for idx, tg in enumerate(targets):
+                if isinstance(tg, dict):
+                    if isinstance(tg.get("content"), str):
+                        errors.extend(validate_katex_syntax(tg["content"], f"concept_matching.targets[{idx}].content", variables=effective_vars))
+                    if isinstance(tg.get("error_rationale"), str) and tg["error_rationale"]:
+                        errors.extend(validate_katex_syntax(tg["error_rationale"], f"concept_matching.targets[{idx}].error_rationale", variables=effective_vars))
 
     # Scaffolding progressive hint answer leak and item-level integrity checks across all interaction types
     raw_hints = instance.get("hints", [])

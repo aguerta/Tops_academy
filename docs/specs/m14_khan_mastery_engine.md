@@ -136,8 +136,8 @@ export function updateCourseChallengeWithSkillCalibration(
    - Pantalla previa unificada `PreExerciseModal.tsx` con metas de récord de tiempo.
    - Evaluación estricta en `CompletionScreen.tsx`: `⬆️ Leveled Up`, `🔻 Leveled Down` o `⏸️ No change` basados en `TIER_POINTS`.
    - Consolidación por unidad de las áreas a reforzar evitando filas duplicadas.
-7. **[POSTERGADO / FUERA DE ALCANCE] Simulador Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):**
-   - El enrutamiento dinámico a mitad de prueba (Módulo 1 diagnóstico $\to$ Módulo 2 Estándar vs. Avanzado) y el cronómetro de examen con cuenta regresiva universitario fueron postergados y desacoplados formalmente hacia **Milestone 14-B**.
+7. **[COMPLETADO EN M14-B] Simulador Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):**
+   - Implementado e integrado en Modo Hierro (`IronExamSession.tsx`, `CourseChallenge.tsx`, `sessionShuffler.ts`, `CompletionScreen.tsx`, `App.tsx`) con Módulo 1 diagnóstico (12 preg.), corte `>= 70%` hacia Módulo 2 Avanzado vs. Estándar, advertencias visuales de reloj a `<= 5 min` y `<= 1 min`, y proyección de nota universitaria 0–20 con desglose por unidad (ver [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)).
 
 ---
 
@@ -163,6 +163,6 @@ Durante el alineamiento técnico de la sesión de desarrollo (ronda *Grill-Me* y
 | **Pantalla Previa Unificada (`PreExerciseModal`)** | ✅ **Implementado** | Visualización de récords antes de Practice, Quiz, Test y Challenge. | Milestone 14 |
 | **Motor Persistente 'Up Next for You' (5 Niveles)** | ✅ **Implementado** | Jerarquía pedagógica ininterrumpida orientada al menor ordinal y remediación. | Milestone 14 |
 | **Consolidación de Áreas a Reforzar** | ✅ **Implementado** | Agrupa fallos por unidad eliminando filas duplicadas en `CompletionScreen`. | Milestone 14 |
-| **Simulador Cronometrado 2 Módulos (SAT Bluebook)** | ⏳ **Obviado / Postergado** | Desacoplado para evitar sobrecargar el hito; requiere arnés de router adaptativo M1 $\to$ M2. | **Milestone 14-B** |
-| **Decaimiento Temporal Ebbinghaus (SRS)** | ⏳ **Obviado / Delegado** | La degradación por paso de días (14 y 45 días sin práctica) pertenece a retención espaciada. | **Milestone 8** |
-| **Mastery Challenge con Cooldown de 12 Horas** | ⏳ **Obviado / Delegado** | Tarjeta de evocación rápida con bloqueo temporal para retención a largo plazo. | **Milestone 8** |
+| **Simulador Cronometrado 2 Módulos (SAT Bluebook)** | ✅ **Implementado (2026-11-21)** | Integrado sobre Modo Hierro (`IronExamSession`, `sessionShuffler.ts`, `CompletionScreen.tsx`). | **Milestone 14-B** |
+| **Decaimiento Temporal FSRS-5/6 (`ts-fsrs`)** | ⏳ **Especificado** | Ver especificación dedicada en [`docs/specs/m08_srs_fsrs_fluency.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m08_srs_fsrs_fluency.md). | **Milestone 8** |
+| **Mastery Challenge con Cooldown de 12 Horas** | ⏳ **Especificado** | Tarjeta de evocación rápida con bloqueo temporal para retención a largo plazo. | **Milestone 8** |

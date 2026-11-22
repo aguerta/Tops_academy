@@ -1,6 +1,13 @@
 import React, { useState, useLayoutEffect, useEffect, useRef, useMemo } from 'react';
 import { Course, CourseMasteryRecord, Competency, ContentModule } from '../types';
-import { calculateCourseProgress, isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
+import {
+  calculateCourseProgress,
+  getActiveMisconceptions,
+  getCompetencyRetrievability,
+  getMasteryChallengeReadiness,
+  isUnitCompleted,
+  isUnitStarted,
+} from '../utils/masteryStorage';
 import { resolveCourseModules } from '../utils/hierarchyAdapter';
 import { MasteryLegend } from './MasteryLegend';
 import { MasteryGrid } from './MasteryGrid';
@@ -14,6 +21,9 @@ interface CourseOverviewProps {
   onStartQuiz: (competency: Competency) => void;
   onStartUnitTest: (competency: Competency) => void;
   onStartCourseChallenge: () => void;
+  onStartMasteryChallenge: () => void;
+  onStartMisconceptionDrill: () => void;
+  onOpenProgressLog: () => void;
   focusCompetencyId?: string | null;
 }
 
@@ -24,6 +34,9 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   onStartQuiz,
   onStartUnitTest,
   onStartCourseChallenge,
+  onStartMasteryChallenge,
+  onStartMisconceptionDrill,
+  onOpenProgressLog,
   focusCompetencyId,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -116,6 +129,12 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
     ? 'in_progress'
     : 'not_attempted';
 
+  const readiness = useMemo(
+    () => getMasteryChallengeReadiness(course, mastery),
+    [course, mastery]
+  );
+  const activeTraps = useMemo(() => getActiveMisconceptions(mastery), [mastery]);
+
   return (
     <div ref={rootRef} className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-20 sm:pb-[88px]">
       {/* Compact progress bar fixed to the top of the viewport (aligned with this column) */}
@@ -171,14 +190,15 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         <MathText text={course.description} />
       </div>
 
-      {/* Up Next for You — Persistent Pedagogical Recommender (Milestone 14) */}
+      {/* Up Next for You — Persistent Pedagogical Recommender (M14 + M8 FSRS) */}
       {(() => {
         if (!course.competencies || course.competencies.length === 0) return null;
 
-        // Priority 1: Remediation (needs_review / lagunas detectadas)
-        const needsReviewComp = course.competencies.find(
-          (c) => mastery.competencies?.[c.id]?.needs_review
-        );
+        // Priority 1: Remediation (Error reciente real; nunca por decaimiento FSRS)
+        const needsReviewComp = course.competencies.find((c) => {
+          const m = mastery.competencies?.[c.id];
+          return m?.needs_review && m.review_reason !== 'decay';
+        });
         if (needsReviewComp) {
           return (
             <div
@@ -205,6 +225,53 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
               >
                 Repasar ahora ➔
+              </button>
+            </div>
+          );
+        }
+
+        // Priority 2: Repaso Espaciado FSRS (Competencias vencidas por R(t))
+        const decayDueComps = course.competencies
+          .filter((c) => {
+            const m = mastery.competencies?.[c.id];
+            return m?.needs_review && m.review_reason === 'decay';
+          })
+          .sort(
+            (a, b) =>
+              getCompetencyRetrievability(mastery.competencies?.[a.id]) -
+              getCompetencyRetrievability(mastery.competencies?.[b.id])
+          );
+        if (decayDueComps.length > 0) {
+          const topDecayComp = decayDueComps[0];
+          const topPct = Math.round(
+            getCompetencyRetrievability(mastery.competencies?.[topDecayComp.id]) * 100
+          );
+          return (
+            <div
+              data-testid="up-next-banner"
+              className="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl shrink-0">🧠</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold uppercase tracking-wide text-indigo-800">
+                    Up Next for You • Repaso Espaciado FSRS ({decayDueComps.length}{' '}
+                    {decayDueComps.length === 1 ? 'competencia' : 'competencias'})
+                  </div>
+                  <div className="text-sm font-bold text-indigo-950 truncate">
+                    <MathText text={topDecayComp.name} inline /> (retención estimada {topPct}%)
+                  </div>
+                  <p className="text-xs text-indigo-700 mt-0.5">
+                    Refresca tus competencias con menor retención R(t) mediante un Mastery Challenge rápido de 6 preguntas.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onStartMasteryChallenge}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0 cursor-pointer"
+              >
+                Iniciar Mastery Challenge ➔
               </button>
             </div>
           );
@@ -451,6 +518,67 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
               }}
             />
           </div>
+        </div>
+      </div>
+
+      {/* M8 Dedicated Mastery Challenge (6q), Misconception Drill & Progress Log Card */}
+      <div
+        data-testid="mastery-challenge-card"
+        className="mt-4 p-4 bg-white rounded-xl border border-indigo-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 min-w-0"
+      >
+        <div className="flex items-start gap-3 min-w-0">
+          <span className="text-2xl leading-none shrink-0">🧠</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+                Mastery Challenge (6 preg.) &amp; Retención FSRS
+              </h3>
+              {readiness.decayDueCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                  {readiness.decayDueCount} por repasar
+                </span>
+              )}
+              {readiness.proficientEligibleCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
+                  {readiness.proficientEligibleCount} listas para Mastered (≥12h)
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-ka-text-secondary mt-0.5">
+              {readiness.startedCount === 0
+                ? 'Inicia al menos una unidad para desbloquear tu Mastery Challenge espaciado de 6 preguntas.'
+                : 'Sesión corta con feedback inmediato para consolidar retención R(t) y promover skills Proficient tras 12h.'}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            data-testid="start-mastery-challenge-btn"
+            disabled={readiness.startedCount === 0}
+            onClick={onStartMasteryChallenge}
+            className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed"
+          >
+            Mastery Challenge (6 preg.)
+          </button>
+          {activeTraps.length > 0 && (
+            <button
+              type="button"
+              data-testid="practice-traps-btn"
+              onClick={onStartMisconceptionDrill}
+              className="px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer"
+            >
+              🎯 Practicar mis Trampas ({activeTraps.length})
+            </button>
+          )}
+          <button
+            type="button"
+            data-testid="open-progress-log-btn"
+            onClick={onOpenProgressLog}
+            className="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-bold transition-colors cursor-pointer"
+          >
+            📈 Bitácora de Fluidez
+          </button>
         </div>
       </div>
 

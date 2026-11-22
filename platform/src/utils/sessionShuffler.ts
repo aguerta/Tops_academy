@@ -1,5 +1,18 @@
-import { Competency, MasteryTier, Question, QuestionOption } from '../types';
+import {
+  AdaptiveExamSummary,
+  AdaptiveModuleResult,
+  AdaptiveUnitBreakdownItem,
+  Competency,
+  Course,
+  CourseMasteryRecord,
+  MasteryTier,
+  Question,
+  QuestionOption,
+  QuestionTelemetry,
+} from '../types';
 import { normalizeQuestion } from './questionUtils';
+import { extractCarriedDistractorIds } from './distractorExtractor';
+import { computeRetrievability, getCooldownRemainingMs } from './fsrsEngine';
 
 /**
  * Standard Fisher-Yates array shuffling algorithm.
@@ -290,4 +303,379 @@ export function buildInterleavedSessionQuestions(
 
   // Shuffle the combined interleaved session so the learner must discriminate which concept applies
   return shuffleArray(combined);
+}
+
+export const ADAPTIVE_MODULE_CUTOFF_PCT = 70;
+
+function pickBalancedAcrossCompetencies(
+  course: Course,
+  pool: Question[],
+  count: number,
+  priorityFn: (q: Question) => number,
+  prioritizeCompKeys?: Set<string>
+): Question[] {
+  if (pool.length === 0 || count <= 0) return [];
+  const targetCount = Math.min(count, pool.length);
+
+  // Group by normalized competency id, preserving stratified sampling across all course units
+  const buckets = new Map<string, Question[]>();
+  for (const q of shuffleArray(pool)) {
+    const key = (q.competency_id || '__other__').trim().toLowerCase();
+    const list = buckets.get(key) || [];
+    list.push(q);
+    buckets.set(key, list);
+  }
+
+  for (const [key, list] of buckets.entries()) {
+    list.sort((a, b) => priorityFn(a) - priorityFn(b));
+    buckets.set(key, list);
+  }
+
+  const allKeys = [
+    ...course.competencies
+      .map((c) => c.id.trim().toLowerCase())
+      .filter((k) => buckets.has(k)),
+    ...Array.from(buckets.keys()).filter(
+      (k) => !course.competencies.some((c) => c.id.trim().toLowerCase() === k)
+    ),
+  ];
+  const prioritized = prioritizeCompKeys
+    ? shuffleArray(allKeys.filter((k) => prioritizeCompKeys.has(k)))
+    : [];
+  const rest = prioritizeCompKeys
+    ? shuffleArray(allKeys.filter((k) => !prioritizeCompKeys.has(k)))
+    : shuffleArray(allKeys);
+  const orderedKeys = [...prioritized, ...rest];
+
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+  while (selected.length < targetCount && madeProgress) {
+    madeProgress = false;
+    for (const key of orderedKeys) {
+      if (selected.length >= targetCount) break;
+      const list = buckets.get(key);
+      if (!list) continue;
+      while (list.length > 0 && usedIds.has(list[0].id)) {
+        list.shift();
+      }
+      if (list.length > 0) {
+        const picked = list.shift()!;
+        usedIds.add(picked.id);
+        selected.push(picked);
+        madeProgress = true;
+      }
+    }
+  }
+
+  return prepareSessionQuestions(shuffleArray(selected), false);
+}
+
+/**
+ * M14-B: Builds Adaptive Module 1 (10-12 questions, default 12) stratified across units
+ * with mixed/medium ZPD diagnostic calibration.
+ */
+export function buildAdaptiveModule1(course: Course, count: number = 12): Question[] {
+  const diffRank = (q: Question): number => {
+    const d = (q.difficulty || 'medium').toLowerCase();
+    if (d === 'medium') return 0;
+    if (d === 'easy') return 1;
+    return 2;
+  };
+  return pickBalancedAcrossCompetencies(course, course.questions, count, diffRank);
+}
+
+/**
+ * M14-B: Routes to Adaptive Module 2 (10-12 questions, default 12) based on Module 1 score:
+ * - >= 70%: 'advanced' (prioritizes hard / expert ZPD questions, no repeats)
+ * - < 70%: 'standard' (prioritizes medium/easy reinforcement + missed competencies)
+ */
+export function buildAdaptiveModule2(
+  course: Course,
+  module1Percentage: number,
+  usedQuestionIds: Set<string>,
+  missedCompetencyIds: Set<string>,
+  count: number = 12
+): {
+  tier: 'standard' | 'advanced';
+  cutoffPercentage: number;
+  questions: Question[];
+} {
+  const tier: 'standard' | 'advanced' =
+    module1Percentage >= ADAPTIVE_MODULE_CUTOFF_PCT ? 'advanced' : 'standard';
+
+  const unused = course.questions.filter((q) => !usedQuestionIds.has(q.id));
+  const pool = unused.length > 0 ? unused : course.questions;
+  const missedLower = new Set(
+    Array.from(missedCompetencyIds).map((id) => id.trim().toLowerCase())
+  );
+
+  const priorityFn = (q: Question): number => {
+    const d = (q.difficulty || 'medium').toLowerCase();
+    if (tier === 'advanced') {
+      return d === 'hard' ? 0 : d === 'medium' ? 1 : 2;
+    }
+    return d === 'medium' ? 0 : d === 'easy' ? 1 : 2;
+  };
+
+  return {
+    tier,
+    cutoffPercentage: ADAPTIVE_MODULE_CUTOFF_PCT,
+    questions: pickBalancedAcrossCompetencies(
+      course,
+      pool,
+      count,
+      priorityFn,
+      tier === 'standard' ? missedLower : undefined
+    ),
+  };
+}
+
+/**
+ * M14-B: Computes post-exam diagnostic summary, per-unit breakdown, and projected 0-20 university grade.
+ */
+export function computeAdaptiveExamSummary(
+  course: Course,
+  module1: AdaptiveModuleResult,
+  module2: AdaptiveModuleResult,
+  combinedTelemetry: QuestionTelemetry[],
+  combinedQuestions: Question[]
+): AdaptiveExamSummary {
+  const routedTier: 'standard' | 'advanced' =
+    module2.tier === 'advanced' ? 'advanced' : 'standard';
+
+  const ceiling20 = routedTier === 'advanced' ? 20.0 : 15.5;
+  const rawProjected =
+    routedTier === 'advanced'
+      ? 0.4 * (module1.percentage / 100) * ceiling20 +
+        0.6 * (module2.percentage / 100) * ceiling20
+      : 0.45 * (module1.percentage / 100) * ceiling20 +
+        0.55 * (module2.percentage / 100) * ceiling20;
+  const projectedGrade20 = Math.round(Math.min(ceiling20, Math.max(0, rawProjected)) * 10) / 10;
+
+  const compNameById = new Map<string, string>();
+  for (const c of course.competencies) {
+    compNameById.set(c.id.trim().toLowerCase(), c.name);
+  }
+
+  const telemetryQueueByQid = new Map<string, QuestionTelemetry[]>();
+  for (const t of combinedTelemetry) {
+    const q = telemetryQueueByQid.get(t.question_id) || [];
+    q.push(t);
+    telemetryQueueByQid.set(t.question_id, q);
+  }
+
+  const unitMap = new Map<
+    string,
+    { competencyId: string; competencyName: string; correct: number; total: number; seconds: number }
+  >();
+
+  for (const q of combinedQuestions) {
+    const cid = q.competency_id || 'unknown';
+    const key = cid.trim().toLowerCase();
+    const qQueue = telemetryQueueByQid.get(q.id);
+    const t = qQueue && qQueue.length > 0 ? qQueue.shift() : undefined;
+    const entry = unitMap.get(key) || {
+      competencyId: cid,
+      competencyName: compNameById.get(key) || cid,
+      correct: 0,
+      total: 0,
+      seconds: 0,
+    };
+    entry.total += 1;
+    if (t?.is_correct) entry.correct += 1;
+    entry.seconds += t ? t.seconds_spent : 0;
+    unitMap.set(key, entry);
+  }
+
+  const unitBreakdown: AdaptiveUnitBreakdownItem[] = Array.from(unitMap.values()).map((u) => ({
+    competencyId: u.competencyId,
+    competencyName: u.competencyName,
+    correct: u.correct,
+    total: u.total,
+    percentage: u.total > 0 ? Math.round((u.correct / u.total) * 100) : 0,
+    avgSeconds: u.total > 0 ? Math.round((u.seconds / u.total) * 10) / 10 : 0,
+  }));
+
+  const totalCount = Math.max(1, combinedQuestions.length);
+  const totalElapsed = Math.max(1, module1.elapsedSeconds + module2.elapsedSeconds);
+  const avgSecondsPerQuestion = Math.round((totalElapsed / totalCount) * 10) / 10;
+
+  return {
+    module1,
+    module2,
+    routedTier,
+    cutoffPercentage: ADAPTIVE_MODULE_CUTOFF_PCT,
+    projectedGrade20,
+    avgSecondsPerQuestion,
+    unitBreakdown,
+  };
+}
+
+/**
+ * M8: Builds a 6-question Mastery Challenge drawn strictly from already-started
+ * competencies, prioritized by:
+ * 1. FSRS decay due (lowest R(t) first)
+ * 2. Proficient competencies past the 12h per-skill cooldown
+ * 3. Familiar / Attempted / active error review competencies
+ * 4. Remaining Proficient (<12h cooldown) & Mastered competencies (lowest R(t) first)
+ */
+export function buildMasteryChallengeQuestions(
+  course: Course,
+  mastery: CourseMasteryRecord | undefined,
+  now: Date = new Date(),
+  count: number = 6
+): Question[] {
+  if (!mastery || count <= 0 || course.questions.length === 0) return [];
+
+  const startedComps = course.competencies.filter((c) => {
+    const m = mastery.competencies?.[c.id];
+    if (!m) return false;
+    const completed =
+      !!m.unit_test && m.unit_test.percentage === 100 && m.unit_test.total_questions > 0;
+    return (
+      completed ||
+      (m.history && m.history.length > 0) ||
+      m.status !== 'Not started' ||
+      m.points > 0 ||
+      !!m.unit_test
+    );
+  });
+
+  if (startedComps.length === 0) return [];
+
+  const questionsByComp = new Map<string, Question[]>();
+  for (const q of shuffleArray(course.questions)) {
+    const key = (q.competency_id || '').trim().toLowerCase();
+    if (!key) continue;
+    const list = questionsByComp.get(key) || [];
+    list.push(q);
+    questionsByComp.set(key, list);
+  }
+
+  const bucket1Decay: Array<{ comp: Competency; r: number }> = [];
+  const bucket2Eligible: Array<{ comp: Competency; r: number }> = [];
+  const bucket3Growing: Array<{ comp: Competency; r: number }> = [];
+  const bucket4Rest: Array<{ comp: Competency; r: number }> = [];
+
+  for (const comp of startedComps) {
+    const m = mastery.competencies[comp.id];
+    const r = computeRetrievability(m?.fsrs, now);
+    if (m?.needs_review && m.review_reason === 'decay') {
+      bucket1Decay.push({ comp, r });
+    } else if (
+      m?.status === 'Proficient' &&
+      getCooldownRemainingMs(m.last_tier_promotion_at || m.last_practiced, now) === 0
+    ) {
+      bucket2Eligible.push({ comp, r });
+    } else if (
+      m?.status === 'Familiar' ||
+      m?.status === 'Attempted' ||
+      (m?.needs_review && m.review_reason === 'error')
+    ) {
+      bucket3Growing.push({ comp, r });
+    } else {
+      bucket4Rest.push({ comp, r });
+    }
+  }
+
+  bucket1Decay.sort((a, b) => a.r - b.r);
+  bucket2Eligible.sort((a, b) => a.r - b.r);
+  bucket3Growing.sort((a, b) => a.r - b.r);
+  bucket4Rest.sort((a, b) => a.r - b.r);
+
+  const orderedComps = [
+    ...bucket1Decay.map((x) => x.comp),
+    ...bucket2Eligible.map((x) => x.comp),
+    ...bucket3Growing.map((x) => x.comp),
+    ...bucket4Rest.map((x) => x.comp),
+  ];
+
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+
+  while (selected.length < count && madeProgress) {
+    madeProgress = false;
+    for (const comp of orderedComps) {
+      if (selected.length >= count) break;
+      const key = comp.id.trim().toLowerCase();
+      const codeKey = (comp.code || '').trim().toLowerCase();
+      const pool = questionsByComp.get(key) || (codeKey ? questionsByComp.get(codeKey) : undefined) || [];
+      const nextQ = pool.find((q) => !usedIds.has(q.id));
+      if (nextQ) {
+        usedIds.add(nextQ.id);
+        selected.push(nextQ);
+        madeProgress = true;
+      }
+    }
+  }
+
+  return prepareSessionQuestions(shuffleArray(selected), false);
+}
+
+/**
+ * M8: Builds a targeted Misconception Drill session ("Practicar mis Trampas")
+ * selecting questions across the course that carry active distractor IDs (D-XX-YY).
+ */
+export function buildMisconceptionSession(
+  course: Course,
+  activeDistractorIds: string[],
+  count: number = 6
+): Question[] {
+  const orderedIds = Array.from(
+    new Set(activeDistractorIds.map((id) => id.trim()).filter(Boolean))
+  );
+  if (orderedIds.length === 0 || count <= 0 || course.questions.length === 0) {
+    return [];
+  }
+
+  const targetSet = new Set(orderedIds);
+  const shuffledPool = shuffleArray(course.questions);
+  const matchingByTrap = new Map<string, Question[]>();
+  const allMatches: Question[] = [];
+
+  for (const q of shuffledPool) {
+    const carried = extractCarriedDistractorIds(q);
+    const hits = carried.filter((id) => targetSet.has(id));
+    if (hits.length === 0) continue;
+    allMatches.push(q);
+    for (const did of hits) {
+      const list = matchingByTrap.get(did) || [];
+      list.push(q);
+      matchingByTrap.set(did, list);
+    }
+  }
+
+  if (allMatches.length === 0) return [];
+
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+
+  while (selected.length < count && madeProgress) {
+    madeProgress = false;
+    for (const did of orderedIds) {
+      if (selected.length >= count) break;
+      const list = matchingByTrap.get(did) || [];
+      const nextQ = list.find((q) => !usedIds.has(q.id));
+      if (nextQ) {
+        usedIds.add(nextQ.id);
+        selected.push(nextQ);
+        madeProgress = true;
+      }
+    }
+  }
+
+  if (selected.length < count) {
+    for (const q of allMatches) {
+      if (selected.length >= count) break;
+      if (!usedIds.has(q.id)) {
+        usedIds.add(q.id);
+        selected.push(q);
+      }
+    }
+  }
+
+  return prepareSessionQuestions(shuffleArray(selected), false);
 }

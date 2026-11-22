@@ -110,6 +110,10 @@ COURSE_SCHEMA: dict[str, Any] = {
                 },
                 "source_examples": {
                     "type": "array"
+                },
+                "recommended_modalities": {
+                    "type": "array",
+                    "items": {"type": "string"}
                 }
             }
         },
@@ -152,6 +156,66 @@ COURSE_SCHEMA: dict[str, Any] = {
                     "then": {
                         "required": ["correct_answer"]
                     }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "interaction_type": {"const": "open_symbolic"}
+                        }
+                    },
+                    "then": {
+                        "required": ["correct_answer"]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "interaction_type": {"const": "proof_dag"}
+                        }
+                    },
+                    "then": {
+                        "required": ["proof_dag"]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "interaction_type": {"const": "adversarial_break"}
+                        }
+                    },
+                    "then": {
+                        "required": ["adversarial_break"]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "interaction_type": {"const": "unstructured_model"}
+                        }
+                    },
+                    "then": {
+                        "required": ["unstructured_model"]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "interaction_type": {"const": "invariant_canvas"}
+                        }
+                    },
+                    "then": {
+                        "required": ["invariant_canvas"]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": {
+                            "interaction_type": {"const": "concept_matching"}
+                        }
+                    },
+                    "then": {
+                        "required": ["concept_matching"]
+                    }
                 }
             ],
             "properties": {
@@ -183,7 +247,13 @@ COURSE_SCHEMA: dict[str, Any] = {
                     "enum": [
                         "multiple_choice_7_options",
                         "multiple_select",
-                        "fill_in_the_blank"
+                        "fill_in_the_blank",
+                        "open_symbolic",
+                        "proof_dag",
+                        "adversarial_break",
+                        "unstructured_model",
+                        "invariant_canvas",
+                        "concept_matching"
                     ]
                 },
                 "context_application": {
@@ -205,6 +275,41 @@ COURSE_SCHEMA: dict[str, Any] = {
                         "$ref": "#/definitions/Option"
                     }
                 },
+                "diagnostic_distractors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "distractor_id": { "type": "string" },
+                            "expression": { "type": "string" },
+                            "value": { "type": ["string", "number"] },
+                            "accepted_equivalents": {
+                                "type": "array",
+                                "items": { "type": "string" }
+                            },
+                            "tolerance": { "type": "number" },
+                            "error_rationale": { "type": "string" }
+                        }
+                    }
+                },
+                "symbolic_config": {
+                    "type": "object"
+                },
+                "proof_dag": {
+                    "type": "object"
+                },
+                "adversarial_break": {
+                    "type": "object"
+                },
+                "unstructured_model": {
+                    "type": "object"
+                },
+                "invariant_canvas": {
+                    "type": "object"
+                },
+                "concept_matching": {
+                    "type": "object"
+                },
                 "correct_answer": {
                     "oneOf": [
                         { "type": "string", "minLength": 1 },
@@ -216,31 +321,7 @@ COURSE_SCHEMA: dict[str, Any] = {
                         },
                         {
                             "type": "object",
-                            "minProperties": 1,
-                            "anyOf": [
-                                { "required": ["value"] },
-                                { "required": ["expression"] }
-                            ],
-                            "properties": {
-                                "value": {
-                                    "oneOf": [
-                                        { "type": "string", "minLength": 1 },
-                                        { "type": "number" },
-                                        {
-                                            "type": "array",
-                                            "minItems": 1,
-                                            "items": { "type": "string", "minLength": 1 }
-                                        }
-                                    ]
-                                },
-                                "expression": { "type": "string", "minLength": 1 },
-                                "tolerance": { "type": "number" },
-                                "canonical_algebraic": { "type": "string", "minLength": 1 },
-                                "accepted_equivalents": {
-                                    "type": "array",
-                                    "items": { "type": "string", "minLength": 1 }
-                                }
-                            }
+                            "minProperties": 1
                         }
                     ]
                 },

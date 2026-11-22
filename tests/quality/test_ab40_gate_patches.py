@@ -30,6 +30,12 @@ def _make_stems(var_token: str = "@k@", count: int = 12) -> List[str]:
         f"Compute la respuesta formal requerida bajo el supuesto de {var_token}:",
         f"Analice la relación lineal propuesta tomando como base {var_token}:",
         f"Identifique la cuantía final obtenida a partir del dato {var_token}:",
+        f"Califique el efecto estructural inducido al imponer {var_token}:",
+        f"Formule el cálculo operativo requerido para el caso con {var_token}:",
+        f"Estime la salida numérica que corresponde al escenario de {var_token}:",
+        f"Contraste el resultado teórico derivado de fijar {var_token}:",
+        f"Resuelva la expresión cuantitativa dependiente de {var_token}:",
+        f"Precise el valor resultante tras sustituir el término {var_token}:",
     ]
     return base_patterns[:count]
 
@@ -240,7 +246,7 @@ class TestAB40ShardCompilerPatches:
     )
 '''
 
-        stems = _make_stems("@k@", count=12)
+        stems = _make_stems("@k@", count=16)
         shard_code = f'''
 def gen_ms(rng):
     k = rng.randint(10, 600)
@@ -484,7 +490,7 @@ TEMPLATES = [
         """P1: Hallucinated assumption_id fails [TPL-ASSUMPTION-LINK] even when cta.json has assumptions=[]."""
         from compile_shard import compile_shard
 
-        stems_x = _make_stems("@x@", count=12)
+        stems_x = _make_stems("@x@", count=16)
 
         def _build_shard(base: Path, assumptions_cta: Optional[List[Dict[str, str]]], with_cta: bool, aid: str) -> tuple[bool, List[str]]:
             work_dir, shards_dir, _, cta_file = _setup_shard_workspace(
@@ -784,7 +790,7 @@ TEMPLATES = [
         """P1: Raw >= 50c that shrinks below 50c when normalizing @var@ -> 'X' fails under strict=True."""
         from compile_shard import compile_shard
 
-        stems_vars = _make_stems("@parametro_largo_uno@ y @parametro_largo_dos@", count=12)
+        stems_vars = _make_stems("@parametro_largo_uno@ y @parametro_largo_dos@", count=16)
 
         def _run_rat(base: Path, rat_str: str) -> tuple[bool, List[str]]:
             work_dir, shards_dir, _, cta_file = _setup_shard_workspace(base, cid="C-01", ctype="skill")

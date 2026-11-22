@@ -44,7 +44,11 @@ def test_precheck_clean_source_is_silent():
 
 
 def test_compile_shard_arity_detection_and_no_hidden_ast_injection():
-    text = (SKILL / "compile_shard.py").read_text(encoding="utf-8")
+    text = (
+        (SKILL / "compile_shard.py").read_text(encoding="utf-8")
+        + "\n"
+        + (SKILL / "engine" / "shard_compiler_steps.py").read_text(encoding="utf-8")
+    )
     assert "len(pos_params) == 2 or len(sig.parameters) == 2" not in text
     assert 'isinstance(res_test.get("options"), list)' in text
     assert "shard_scaffold" not in text

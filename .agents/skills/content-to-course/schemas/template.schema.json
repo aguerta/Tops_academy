@@ -34,7 +34,17 @@
         "competency_id": { "type": "string" },
         "interaction_type": {
           "type": "string",
-          "enum": ["multiple_choice_7_options", "fill_in_the_blank", "multiple_select"]
+          "enum": [
+            "multiple_choice_7_options",
+            "fill_in_the_blank",
+            "multiple_select",
+            "open_symbolic",
+            "proof_dag",
+            "adversarial_break",
+            "unstructured_model",
+            "invariant_canvas",
+            "concept_matching"
+          ]
         },
         "difficulty": {
           "type": "string",

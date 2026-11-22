@@ -52,9 +52,21 @@ def _is_valid_katex_span(span: str, is_display: bool = False) -> bool:
 
 # Import validators from check_cta
 try:
-    from .check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
+    from .check_cta import (
+        JsonLineLocator,
+        _VALID_RECOMMENDED_MODALITIES,
+        check_cta_katex,
+        check_prerequisites_dag,
+        validate_cta_rules,
+    )
 except ImportError:
-    from check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
+    from check_cta import (
+        JsonLineLocator,
+        _VALID_RECOMMENDED_MODALITIES,
+        check_cta_katex,
+        check_prerequisites_dag,
+        validate_cta_rules,
+    )
 
 # Import patch recording from patch_ledger
 try:
@@ -65,6 +77,34 @@ except ImportError:
     except ImportError:
         def record_patch(*args: Any, **kwargs: Any) -> Any:
             pass
+
+try:
+    from .engine.stage_contract import (
+        ASSUMPTION_REQUIRED_MODALITIES as _ASSUMPTION_REQUIRED_MODALITIES,
+        BLOOM_LEVELS as _BLOOM_LEVELS,
+        MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+        MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+        compute_cta_bloom_portfolio_metrics,
+        normalize_modality_name,
+    )
+except ImportError:
+    try:
+        from engine.stage_contract import (
+            ASSUMPTION_REQUIRED_MODALITIES as _ASSUMPTION_REQUIRED_MODALITIES,
+            BLOOM_LEVELS as _BLOOM_LEVELS,
+            MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+            MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+            compute_cta_bloom_portfolio_metrics,
+            normalize_modality_name,
+        )
+    except ImportError:
+        _MAX_MODALITIES_PER_COMPETENCY = 4
+        _MIN_MODALITIES_PER_COMPETENCY = 2
+        _BLOOM_LEVELS = ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create")
+        _ASSUMPTION_REQUIRED_MODALITIES = frozenset({"unstructured_model"})
+        compute_cta_bloom_portfolio_metrics = None  # type: ignore[assignment]
+        def normalize_modality_name(raw: Any) -> str:
+            return str(raw or "").strip().lower()
 
 
 logger = logging.getLogger("cta_merge")
@@ -1156,38 +1196,53 @@ def _build_outline_payload(
     if existing_competencies:
         for bc in existing_competencies:
             bc_id = bc.get("id") or bc.get("competency_id", "")
-            outline_competencies.append({
+            outline_entry = {
                 "id": bc_id,
                 "name": bc.get("name") or bc.get("title", ""),
                 "type": (bc.get("type") or bc.get("category", "concept")).lower(),
+                "bloom": bc.get("bloom", ""),
                 "description_latex": bc.get("description_latex") or bc.get("description", ""),
                 "assumptions_count": len(bc.get("assumptions") or []),
+                "distractor_count": len(bc.get("distractors") or bc.get("distractor_names") or []),
                 "session": bc.get("session", "[BASE]"),
                 "unit_index": bc.get("unit_index", 0),
                 "evidence": bc.get("evidence", []),
                 "prerequisites": bc.get("prerequisites", []),
                 "distractor_names": bc.get("distractor_names", []),
                 "read_only_base": True,
-            })
+            }
+            if bc.get("recommended_modalities"):
+                outline_entry["recommended_modalities"] = list(bc["recommended_modalities"])
+            outline_competencies.append(outline_entry)
 
     for c in draft_competencies:
-        outline_competencies.append({
+        outline_entry = {
             "id": c["id"],
             "name": c.get("name", ""),
             "type": c.get("type", ""),
+            "bloom": c.get("bloom", ""),
             "description_latex": c.get("description_latex") or c.get("description", ""),
             "assumptions_count": len(c.get("assumptions") or []),
+            "distractor_count": len(c.get("distractors") or []),
             "session": c.get("session", ""),
             "unit_index": c.get("unit_index", 0),
             "evidence": c.get("evidence", []),
             "prerequisites": c.get("prerequisites", []),
             "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
             "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
-        })
+        }
+        if c.get("recommended_modalities"):
+            outline_entry["recommended_modalities"] = list(c["recommended_modalities"])
+        outline_competencies.append(outline_entry)
 
     draft_count = len(draft_competencies)
     recommended_min = max(14, int(round(draft_count * 0.50)))
     recommended_max = max(24, min(32, int(round(draft_count * 0.68))))
+    bloom_preview = (
+        compute_cta_bloom_portfolio_metrics(draft_competencies)
+        if compute_cta_bloom_portfolio_metrics is not None
+        else {}
+    )
     return {
         "course_id": course_id,
         "title": course_title,
@@ -1198,6 +1253,7 @@ def _build_outline_payload(
             "draft_count": draft_count,
             "consolidation_needed": draft_count > recommended_max,
         },
+        "bloom_portfolio_preview": bloom_preview,
         "competencies": outline_competencies,
     }
 
@@ -1309,6 +1365,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         raise FileNotFoundError(f"No sectional CTA parts found in {parts_dir.resolve()}")
 
     combined_competencies: List[Dict[str, Any]] = []
+    max_contract_version: Optional[int] = None
     course_id = manifest_data.get("course_id") or "course_generic"
     course_title = course_id.replace("_", " ").title()
     macro_competency = f"Mastery of {course_title}"
@@ -1336,6 +1393,12 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             course_id = content.get("course_id", course_id)
             course_title = content.get("title", course_title)
             macro_competency = content.get("macro_competency", macro_competency)
+            part_cv = content.get("contract_version", content.get("CTA_CONTRACT_VERSION"))
+            if part_cv is not None:
+                try:
+                    max_contract_version = max(int(part_cv), max_contract_version or 1)
+                except (TypeError, ValueError):
+                    pass
         else:
             comps = []
 
@@ -1662,12 +1725,15 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "by_part": comp_id_map_by_part,
     }
 
-    draft_payload = {
+    draft_payload = {}
+    if max_contract_version is not None:
+        draft_payload["contract_version"] = max_contract_version
+    draft_payload.update({
         "course_id": course_id,
         "title": course_title,
         "macro_competency": macro_competency,
         "competencies": combined_competencies,
-    }
+    })
 
     outline_payload = _build_outline_payload(
         course_id=course_id,
@@ -1974,6 +2040,7 @@ def apply_harmonize(
             merges_directives.append(m_val)
 
     absorbed_to_root: Dict[str, str] = {}
+    promoted_survivor_ids: Dict[str, str] = {}
 
     if no_merge:
         decisions_log.append({
@@ -2111,9 +2178,9 @@ def apply_harmonize(
                     "survivor_id": survivor_id,
                     "absorbed_id": absorbed_id,
                     "reason": reason,
-                    "merged_type": m_entry.get("merged_type"),
-                    "merged_name": m_entry.get("merged_name"),
-                    "merged_description_latex": m_entry.get("merged_description_latex"),
+                    "merged_type": m_entry.get("merged_type") or m_entry.get("type"),
+                    "merged_name": m_entry.get("merged_name") or m_entry.get("name"),
+                    "merged_description_latex": m_entry.get("merged_description_latex") or m_entry.get("description_latex"),
                 })
 
         # Group members by Union-Find root
@@ -2248,6 +2315,37 @@ def apply_harmonize(
                     ))
                     comp_survivor["source_examples"] = merged_examples
 
+                # Unify CTA Architect recommended_modalities if present (preserving survivor order, capped at <= MAX)
+                if comp_survivor.get("recommended_modalities") or comp_absorbed.get("recommended_modalities"):
+                    merged_mods = list(dict.fromkeys(
+                        list(comp_survivor.get("recommended_modalities") or [])
+                        + list(comp_absorbed.get("recommended_modalities") or [])
+                    ))
+                    surv_is_skill = (
+                        str(comp_survivor.get("type", "")).lower() == "skill"
+                        or str(comp_survivor.get("id", "")).startswith("Hab-")
+                    )
+                    if surv_is_skill and "multiple_choice_7_options" in merged_mods:
+                        merged_mods = [m for m in merged_mods if m != "multiple_choice_7_options"]
+                        for fallback_mod in ("fill_in_the_blank", "open_symbolic", "multiple_select"):
+                            if len(merged_mods) >= 2:
+                                break
+                            if fallback_mod not in merged_mods:
+                                merged_mods.append(fallback_mod)
+                    if len(merged_mods) > _MAX_MODALITIES_PER_COMPETENCY:
+                        dropped_mods = merged_mods[_MAX_MODALITIES_PER_COMPETENCY:]
+                        merged_mods = merged_mods[:_MAX_MODALITIES_PER_COMPETENCY]
+                        logger.info(
+                            "Truncating merged recommended_modalities for survivor '%s' (absorbed '%s') to %d entries: kept=%s, dropped=%s",
+                            root,
+                            absorbed_id,
+                            _MAX_MODALITIES_PER_COMPETENCY,
+                            merged_mods,
+                            dropped_mods,
+                        )
+                    if merged_mods:
+                        comp_survivor["recommended_modalities"] = merged_mods
+
                 # Unify assumptions
                 survivor_assumptions = list(comp_survivor.get("assumptions", []))
                 seen_a_stmts = {
@@ -2265,19 +2363,42 @@ def apply_harmonize(
                             survivor_assumptions.append(a_copy)
                 comp_survivor["assumptions"] = survivor_assumptions
 
-                # Inherit valid backward prerequisites from absorbed competency
+                # Inherit valid prerequisites from absorbed competency without introducing cycles
                 survivor_prereqs = list(comp_survivor.get("prerequisites", []))
-                root_pos = orig_pos.get(root, 999999)
+                known_comp_ids = {c["id"] for c in competencies if c["id"] != absorbed_id}
+                comp_by_id = {c["id"]: c for c in competencies}
+
+                def _depends_on_root(start_id: str) -> bool:
+                    visited: Set[str] = set()
+                    stack: List[str] = [start_id]
+                    while stack:
+                        curr_id = stack.pop()
+                        if curr_id in visited:
+                            continue
+                        visited.add(curr_id)
+                        curr_obj = comp_by_id.get(curr_id)
+                        if not curr_obj:
+                            continue
+                        for req in curr_obj.get("prerequisites", []):
+                            mapped = root if req == absorbed_id else absorbed_to_root.get(req, req)
+                            if mapped == root:
+                                return True
+                            if mapped not in visited and mapped in comp_by_id:
+                                stack.append(mapped)
+                    return False
+
                 for pr in comp_absorbed.get("prerequisites", []):
                     target_pr = absorbed_to_root.get(pr, pr)
                     if target_pr == root or target_pr == absorbed_id:
                         continue
-                    if target_pr in existing_competency_ids or orig_pos.get(target_pr, 999999) < root_pos:
+                    if target_pr in existing_competency_ids or (
+                        target_pr in known_comp_ids and not _depends_on_root(target_pr)
+                    ):
                         if target_pr not in survivor_prereqs:
                             survivor_prereqs.append(target_pr)
                     else:
                         logger.warning(
-                            "Dropping non-inheritable prerequisite '%s' from absorbed '%s' into earlier survivor '%s'",
+                            "Dropping cyclic or unknown prerequisite '%s' from absorbed '%s' into survivor '%s'",
                             target_pr, absorbed_id, root,
                         )
                 comp_survivor["prerequisites"] = survivor_prereqs
@@ -2318,6 +2439,22 @@ def apply_harmonize(
             elif comp_survivor.get("type", "").lower() == "fact" and absorbed_concept_with_assumptions:
                 comp_survivor["type"] = "concept"
 
+            # Re-enforce [M20-MC7-CAP] and modality cap once the final survivor type is known
+            if comp_survivor.get("recommended_modalities"):
+                final_mods = list(dict.fromkeys(comp_survivor["recommended_modalities"]))
+                final_is_skill = (
+                    str(comp_survivor.get("type", "")).lower() == "skill"
+                    or str(comp_survivor.get("id", "")).startswith("Hab-")
+                )
+                if final_is_skill and "multiple_choice_7_options" in final_mods:
+                    final_mods = [m for m in final_mods if m != "multiple_choice_7_options"]
+                    for fallback_mod in ("fill_in_the_blank", "open_symbolic", "multiple_select"):
+                        if len(final_mods) >= 2:
+                            break
+                        if fallback_mod not in final_mods:
+                            final_mods.append(fallback_mod)
+                comp_survivor["recommended_modalities"] = final_mods[:_MAX_MODALITIES_PER_COMPETENCY]
+
             if explicit_name and str(explicit_name).strip():
                 comp_survivor["name"] = str(explicit_name).strip()
             if explicit_desc and str(explicit_desc).strip():
@@ -2330,6 +2467,183 @@ def apply_harmonize(
                         if not d.get("wrong_belief"):
                             d["wrong_belief"] = str(d["omitted_step"])
                         d["omitted_step"] = None
+
+            # Promote survivor ID prefix to match finalized category when cross-tier merge upgrades type
+            final_type = str(comp_survivor.get("type") or "").strip().lower()
+            _TYPE_VALID_PREFIXES = {
+                "fact": ("h-", "f-", "fact-", "pre-"),
+                "concept": ("c-", "concept-", "pre-"),
+                "skill": ("hab-", "skill-"),
+            }
+            _TYPE_CANON_PREFIX = {"fact": "H-", "concept": "C-", "skill": "Hab-"}
+            old_id = str(comp_survivor.get("id") or "")
+            valid_pfxs = _TYPE_VALID_PREFIXES.get(final_type)
+            if valid_pfxs and old_id and not old_id.lower().startswith(valid_pfxs):
+                used_ids = {str(c.get("id")) for c in competencies if c is not comp_survivor} | set(existing_competency_ids)
+                new_id = next(
+                    (
+                        str(mid) for mid in members
+                        if str(mid).lower().startswith(valid_pfxs) and str(mid) not in used_ids
+                    ),
+                    None,
+                )
+                if not new_id:
+                    canon_pfx = _TYPE_CANON_PREFIX[final_type]
+                    seq_num = 1
+                    while f"{canon_pfx}{seq_num:02d}" in used_ids:
+                        seq_num += 1
+                    new_id = f"{canon_pfx}{seq_num:02d}"
+
+                new_code = new_id.replace("-", "")
+                comp_survivor["id"] = new_id
+                for d_idx, dist in enumerate(comp_survivor.get("distractors", []), start=1):
+                    if isinstance(dist, dict):
+                        dist["id"] = f"D-{new_code}-{d_idx:02d}"
+                for a_idx, asmp in enumerate(comp_survivor.get("assumptions", []), start=1):
+                    if isinstance(asmp, dict):
+                        asmp["id"] = f"A-{new_code}-{a_idx:02d}"
+                for c in competencies:
+                    c["prerequisites"] = list(dict.fromkeys(
+                        (new_id if pr == old_id else pr)
+                        for pr in c.get("prerequisites", [])
+                        if (new_id if pr == old_id else pr) != c["id"]
+                    ))
+                promoted_survivor_ids[old_id] = new_id
+                for k_abs, v_root in list(absorbed_to_root.items()):
+                    if v_root == old_id:
+                        absorbed_to_root[k_abs] = new_id
+                absorbed_to_root.pop(new_id, None)
+                for d_entry in decisions_log:
+                    if d_entry.get("operation") == "merge" and d_entry.get("survivor") == old_id:
+                        d_entry["survivor"] = new_id
+                        d_entry["survivor_renamed_from"] = old_id
+
+    # 3b. Process optional 5th root key: adjust_modalities
+    raw_adj = harmonize_data.get("adjust_modalities")
+    adj_directives: List[Dict[str, Any]] = []
+    if isinstance(raw_adj, dict):
+        for cid_k, mods_v in raw_adj.items():
+            if isinstance(mods_v, dict):
+                adj_directives.append({"competency": str(cid_k), **mods_v})
+            else:
+                adj_directives.append({
+                    "competency": str(cid_k),
+                    "recommended_modalities": mods_v if isinstance(mods_v, list) else [mods_v],
+                })
+    elif isinstance(raw_adj, list):
+        for item in raw_adj:
+            if isinstance(item, dict):
+                adj_directives.append(item)
+            else:
+                validation_errors.append(
+                    f"adjust_modalities failed: entry must be an object, got {type(item).__name__}."
+                )
+    elif raw_adj is not None:
+        validation_errors.append(
+            f"adjust_modalities failed: expected list or dict, got {type(raw_adj).__name__}."
+        )
+
+    for adj_item in adj_directives:
+        cid = str(
+            adj_item.get("competency")
+            or adj_item.get("competency_id")
+            or adj_item.get("id")
+            or ""
+        ).strip()
+        cid = promoted_survivor_ids.get(cid, cid)
+        if not cid:
+            validation_errors.append("adjust_modalities failed: missing 'competency' ID.")
+            continue
+        if cid in existing_competency_ids:
+            validation_errors.append(
+                f"adjust_modalities failed: Epistemic monotonicity violation — cannot mutate base competency '{cid}' ([BASE])."
+            )
+            continue
+        target_comp = next((c for c in competencies if c["id"] == cid), None)
+        if not target_comp:
+            hint = (
+                f" (absorbed into '{absorbed_to_root[cid]}'; use '{absorbed_to_root[cid]}')"
+                if cid in absorbed_to_root
+                else ""
+            )
+            validation_errors.append(
+                f"adjust_modalities failed: Competency '{cid}' not found{hint}."
+            )
+            continue
+
+        raw_mods = adj_item.get("recommended_modalities")
+        if raw_mods is None:
+            raw_mods = adj_item.get("modalities")
+        if not isinstance(raw_mods, list):
+            validation_errors.append(
+                f"adjust_modalities failed for '{cid}': 'recommended_modalities' must be a list."
+            )
+            continue
+
+        norm_mods = list(dict.fromkeys(
+            normalize_modality_name(m) for m in raw_mods if str(m).strip()
+        ))
+        invalid_mods = [m for m in norm_mods if m not in _VALID_RECOMMENDED_MODALITIES]
+        if invalid_mods:
+            validation_errors.append(
+                f"[CTA-MODALITY-INVALID] adjust_modalities failed for '{cid}': invalid modalities {invalid_mods}. "
+                f"Allowed: {sorted(_VALID_RECOMMENDED_MODALITIES)}."
+            )
+            continue
+        if not (_MIN_MODALITIES_PER_COMPETENCY <= len(norm_mods) <= _MAX_MODALITIES_PER_COMPETENCY):
+            validation_errors.append(
+                f"[CTA-MODALITY-RANGE] adjust_modalities failed for '{cid}': got {len(norm_mods)} unique modalities "
+                f"({norm_mods}); required range is {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY}."
+            )
+            continue
+
+        ctype_adj = str(target_comp.get("type") or "").lower().strip()
+        is_skill_adj = ctype_adj == "skill" or cid.startswith("Hab-")
+        if is_skill_adj and "multiple_choice_7_options" in norm_mods:
+            validation_errors.append(
+                f"[M20-MC7-CAP] adjust_modalities failed for skill '{cid}': "
+                f"'multiple_choice_7_options' (MC7) is prohibited in Skill competencies."
+            )
+            continue
+
+        dist_count_adj = len(target_comp.get("distractors") or [])
+        if "multiple_choice_7_options" in norm_mods and dist_count_adj < 6:
+            validation_errors.append(
+                f"[CTA-MC7-DISTRACTORS] adjust_modalities failed for '{cid}' ({ctype_adj}): "
+                f"MC7 requires >= 6 distractors (found {dist_count_adj})."
+            )
+            continue
+
+        assump_count_adj = len(target_comp.get("assumptions") or [])
+        req_assump_mods = [m for m in norm_mods if m in _ASSUMPTION_REQUIRED_MODALITIES]
+        if req_assump_mods and assump_count_adj == 0:
+            validation_errors.append(
+                f"[CTA-MODALITY-ELIGIBILITY] adjust_modalities failed for '{cid}' ({ctype_adj}): "
+                f"{req_assump_mods} requires >= 1 assumption (assumptions=[]). Use 'multiple_select', "
+                f"'fill_in_the_blank' or 'proof_dag' instead."
+            )
+            continue
+
+        new_bloom = adj_item.get("bloom")
+        if new_bloom is not None:
+            canon_bloom = str(new_bloom).strip().capitalize()
+            if canon_bloom not in _BLOOM_LEVELS:
+                validation_errors.append(
+                    f"adjust_modalities failed for '{cid}': invalid bloom '{new_bloom}'. Allowed: {_BLOOM_LEVELS}."
+                )
+                continue
+            target_comp["bloom"] = canon_bloom
+
+        prev_mods = list(target_comp.get("recommended_modalities") or [])
+        target_comp["recommended_modalities"] = norm_mods
+        decisions_log.append({
+            "operation": "adjust_modalities",
+            "competency": cid,
+            "previous_modalities": prev_mods,
+            "recommended_modalities": norm_mods,
+            **({"bloom": target_comp["bloom"]} if new_bloom is not None else {}),
+            **({"reason": str(adj_item.get("reason"))} if adj_item.get("reason") else {}),
+        })
 
     # 4. Process add_prerequisites (supports dict, prerequisite_additions, prerequisite_updates)
     prereq_directives: List[Tuple[str, List[str]]] = []
@@ -2364,6 +2678,7 @@ def apply_harmonize(
     current_order_map = {c["id"]: idx for idx, c in enumerate(competencies)}
 
     for cid, reqs in prereq_directives:
+        cid = promoted_survivor_ids.get(cid, cid)
         if cid not in current_order_map:
             hint = (
                 f" (absorbed into '{absorbed_to_root[cid]}'; use '{absorbed_to_root[cid]}')"
@@ -2378,7 +2693,7 @@ def apply_harmonize(
         comp_prereqs = list(comp.get("prerequisites", []))
 
         for req_raw in reqs:
-            req = str(req_raw).strip()
+            req = promoted_survivor_ids.get(str(req_raw).strip(), str(req_raw).strip())
             if ":" in req:
                 prefix_part, bare_id = req.split(":", 1)
                 if prefix_part.lower() in ("base", "existing"):
@@ -2433,7 +2748,7 @@ def apply_harmonize(
 
         def _topo_priority(idx: int) -> Tuple[int, int]:
             comp_obj = competencies[idx]
-            is_pre = bool(comp_obj.get("is_prerequisite")) or str(comp_obj.get("id", "")).startswith("PRE-")
+            is_pre = bool(comp_obj.get("is_prerequisite")) or str(comp_obj.get("id", "")).upper().startswith("PRE-")
             return (0 if is_pre else 1, idx)
 
         ready: List[Tuple[Tuple[int, int], int]] = [
@@ -2450,7 +2765,11 @@ def apply_harmonize(
                     heapq.heappush(ready, (_topo_priority(nxt), nxt))
 
         if len(sorted_indices) == len(competencies):
-            competencies = [competencies[i] for i in sorted_indices]
+            if sorted_indices != list(range(len(competencies))):
+                competencies = [competencies[i] for i in sorted_indices]
+                for new_u_idx, comp_obj in enumerate(competencies, start=1):
+                    if "unit_index" in comp_obj:
+                        comp_obj["unit_index"] = new_u_idx
 
     # 6b. Hard gate: exact duplicate competency titles
     validation_errors.extend(
@@ -2483,6 +2802,7 @@ def apply_harmonize(
             cta_draft,
             manifest_data,
             allowed_prereq_ids=existing_competency_ids,
+            exclude_bloom_ids=existing_competency_ids,
         )
         if not valid:
             for r_err in rule_errors:
@@ -2589,6 +2909,9 @@ def render_cta_md(cta_data: Dict[str, Any]) -> str:
         lines.append(f"- **Bloom Level:** {bloom}")
         lines.append(f"- **Session:** {session}")
         lines.append(f"- **Prerequisites:** {prereqs}")
+        rec_mods_md = c.get("recommended_modalities")
+        if isinstance(rec_mods_md, list) and rec_mods_md:
+            lines.append(f"- **Recommended Modalities:** {', '.join(str(m) for m in rec_mods_md)}")
 
         if evidence:
             ev_strs = []

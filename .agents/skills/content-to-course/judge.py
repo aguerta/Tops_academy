@@ -27,6 +27,7 @@ skill_dir = Path(__file__).parent.resolve()
 if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
 
+from engine import fast_json
 from engine.assemble import assemble_question
 from engine.invariants import check_instance_invariants
 from engine.sandbox import execute_sandbox_instance, execute_verifier_code
@@ -36,6 +37,72 @@ logger = logging.getLogger("judge")
 MAX_CORRECTION_CYCLES = 3
 DEFAULT_MAX_JUDGES = 10
 DEFAULT_MAX_ITEMS_PER_JUDGE = 20
+DEFAULT_TARGET_TOTAL_EVALUATIONS = 165
+DEFAULT_OVERLAP_RATIO = 0.15
+DEFAULT_MAX_SEED_RETRIES = 1
+
+_HIGH_RISK_INTERACTION_TYPES: Set[str] = {
+    "open_symbolic",
+    "fill_in_the_blank",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+}
+_DOUBLE_READ_PRIORITY_TYPES: Set[str] = {
+    "multiple_choice_7_options",
+    "multiple_choice",
+    "multiple_select",
+}
+
+
+def _compute_template_risk_score(
+    t_obj: Dict[str, Any],
+    compile_history: Optional[Dict[str, int]] = None,
+) -> int:
+    """Computes a heuristic risk score for Neyman Allocation sampling in Stage 5."""
+    score = 0
+    itype = str(t_obj.get("interaction_type", "multiple_choice_7_options")).strip().lower()
+    if itype in _HIGH_RISK_INTERACTION_TYPES:
+        score += 2
+    v_code = t_obj.get("verifier_code") or t_obj.get("cross_check_py") or t_obj.get("verify_py") or ""
+    if not (v_code and str(v_code).strip()):
+        score += 2
+    stem_variants = t_obj.get("stem_variants") or []
+    if isinstance(stem_variants, list) and len(stem_variants) >= 3:
+        score += 1
+    if compile_history:
+        tid = str(t_obj.get("id", ""))
+        cid = str(t_obj.get("competency_id", ""))
+        if compile_history.get(tid, 0) >= 2 or compile_history.get(cid, 0) >= 2:
+            score += 2
+    return score
+
+
+def _compute_cohens_kappa(pairs: List[Tuple[bool, bool]]) -> Dict[str, Any]:
+    """Computes raw inter-judge agreement and Cohen's kappa on binary PASS/FAIL pairs."""
+    n = len(pairs)
+    if n == 0:
+        return {
+            "overlap_count": 0,
+            "raw_agreement": None,
+            "cohens_kappa": None,
+        }
+    both_true = sum(1 for a, b in pairs if a and b)
+    both_false = sum(1 for a, b in pairs if (not a) and (not b))
+    a_true = sum(1 for a, _ in pairs if a)
+    b_true = sum(1 for _, b in pairs if b)
+    po = (both_true + both_false) / n
+    pe = ((a_true / n) * (b_true / n)) + (((n - a_true) / n) * ((n - b_true) / n))
+    if abs(1.0 - pe) < 1e-12:
+        kappa = 1.0 if abs(po - 1.0) < 1e-12 else 0.0
+    else:
+        kappa = (po - pe) / (1.0 - pe)
+    return {
+        "overlap_count": n,
+        "raw_agreement": round(po, 4),
+        "cohens_kappa": round(kappa, 4),
+    }
 
 MC7_STEM_SOLUBILITY_INSTRUCTIONS = (
     "CRITICAL SOLUBILITY PROTOCOL (MC7): Before comparing against options A..G, you MUST: "
@@ -71,7 +138,7 @@ def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
     if path.is_file():
         raw_bytes = path.read_bytes()
         file_sha = hashlib.sha256(raw_bytes).hexdigest()
-        content = json.loads(raw_bytes.decode("utf-8"))
+        content = fast_json.loads(raw_bytes)
         if isinstance(content, dict):
             if "templates" in content:
                 for t in content["templates"]:
@@ -97,7 +164,7 @@ def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
             try:
                 raw_bytes = file.read_bytes()
                 file_sha = hashlib.sha256(raw_bytes).hexdigest()
-                data = json.loads(raw_bytes.decode("utf-8"))
+                data = fast_json.loads(raw_bytes)
                 if isinstance(data, dict):
                     if "templates" in data:
                         for t in data["templates"]:
@@ -190,6 +257,234 @@ def _normalize_str(s: Any) -> str:
     return re.sub(r"\s+", "", st)
 
 
+_M20_INTERACTION_TYPES = (
+    "open_symbolic",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+)
+
+_GREEK_EXPR_MAP = {
+    "α": "alpha", "β": "beta", "γ": "gamma", "δ": "delta", "ε": "epsilon",
+    "ζ": "zeta", "η": "eta", "θ": "theta", "κ": "kappa", "λ": "lambda_",
+    "μ": "mu", "ξ": "xi", "π": "pi", "ρ": "rho", "σ": "sigma",
+    "τ": "tau", "φ": "phi", "ψ": "psi", "ω": "omega", "Δ": "Delta",
+    "×": "*", "·": "*", "÷": "/", "−": "-", "√(": "sqrt(",
+}
+
+
+def _parse_json_or_dict(val: Any) -> Optional[Dict[str, Any]]:
+    """Coerces a dict or serialized JSON object string into a Python dict."""
+    if isinstance(val, dict):
+        return val
+    if isinstance(val, str):
+        s = val.strip()
+        if s.startswith("{") and s.endswith("}"):
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                return None
+    return None
+
+
+def _normalize_expr_text(expr: Any) -> str:
+    """Normalizes symbolic expression strings before SymPy or string comparison."""
+    s = str(expr or "").strip()
+    s = re.sub(r"^\$\$?(.*?)\$\$?$", r"\1", s).strip()
+    for src, dst in _GREEK_EXPR_MAP.items():
+        s = s.replace(src, dst)
+    s = re.sub(r"\\sqrt\{([^{}]+)\}", r"sqrt(\1)", s)
+    s = re.sub(r"\\frac\{([^{}]+)\}\{([^{}]+)\}", r"((\1)/(\2))", s)
+    return s.replace("^", "**")
+
+
+def _is_symbolic_equal(u_raw: Any, gt_raw: Any, tol: float = 0.001) -> bool:
+    """Checks mathematical equivalence between two symbolic/numeric expressions."""
+    if _is_numeric_equal(u_raw, gt_raw, tol=tol):
+        return True
+    u_norm = _normalize_str(_normalize_expr_text(u_raw))
+    g_norm = _normalize_str(_normalize_expr_text(gt_raw))
+    if not u_norm or not g_norm:
+        return False
+    if u_norm == g_norm:
+        return True
+    try:
+        import sympy as sp
+        from sympy.parsing.sympy_parser import (
+            convert_xor,
+            implicit_multiplication_application,
+            parse_expr,
+            standard_transformations,
+        )
+        trans = standard_transformations + (implicit_multiplication_application, convert_xor)
+        e1 = parse_expr(_normalize_expr_text(u_raw), transformations=trans)
+        e2 = parse_expr(_normalize_expr_text(gt_raw), transformations=trans)
+        diff = sp.simplify(e1 - e2)
+        if diff == 0 or diff.equals(0):
+            return True
+        syms = sorted(list(e1.free_symbols | e2.free_symbols), key=lambda x: x.name)
+        if syms:
+            vals = [1.37 + 0.41 * idx for idx in range(len(syms))]
+            subs = dict(zip(syms, vals))
+            d_num = complex(diff.evalf(subs=subs))
+            return abs(d_num.imag) < 1e-6 and abs(d_num.real) <= max(tol, 1e-4)
+    except Exception:
+        pass
+    return False
+
+
+def _sanitize_m20_judge_item(
+    itype: str,
+    assembled: Dict[str, Any],
+    judge_item: Dict[str, Any],
+    gt_record: Dict[str, Any],
+) -> None:
+    """Populates blind prompt payload and isolated ground_truth record for M20 interaction types."""
+    if itype == "open_symbolic":
+        ca = assembled.get("correct_answer") if isinstance(assembled.get("correct_answer"), dict) else {}
+        sym_cfg = assembled.get("symbolic_config") if isinstance(assembled.get("symbolic_config"), dict) else {}
+        tol = float(ca.get("tolerance", 0.001) or 0.001)
+        if sym_cfg:
+            judge_item["symbolic_config"] = sym_cfg
+        judge_item["answer_contract"] = {
+            "expected_format": "open_symbolic",
+            "variables": sym_cfg.get("variables") or [],
+            "tolerance": tol,
+        }
+        gt_record["correct_value"] = ca.get("expression") or ca.get("value") or ""
+        gt_record["canonical_algebraic"] = ca.get("canonical_algebraic") or ""
+        gt_record["accepted_equivalents"] = ca.get("accepted_equivalents") or []
+        gt_record["variables"] = sym_cfg.get("variables") or []
+        gt_record["tolerance"] = tol
+        return
+
+    if itype == "proof_dag":
+        pd = assembled.get("proof_dag") if isinstance(assembled.get("proof_dag"), dict) else {}
+        blind_dag: Dict[str, Any] = {
+            "steps": [{"id": s.get("id"), "content": s.get("content")} for s in (pd.get("steps") or []) if isinstance(s, dict)],
+            "require_justification": bool(pd.get("require_justification", False)),
+        }
+        if pd.get("goal"):
+            blind_dag["goal"] = pd["goal"]
+        if pd.get("justification_bank"):
+            blind_dag["justification_bank"] = pd["justification_bank"]
+        judge_item["proof_dag"] = blind_dag
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        return
+
+    if itype == "adversarial_break":
+        adv = assembled.get("adversarial_break") if isinstance(assembled.get("adversarial_break"), dict) else {}
+        adv_mode = str(adv.get("mode") or "find_fallacy")
+        blind_adv: Dict[str, Any] = {"mode": adv_mode}
+        if adv_mode == "find_fallacy":
+            blind_adv["steps"] = [
+                {"id": s.get("id"), "content": s.get("content")}
+                for s in (adv.get("steps") or [])
+                if isinstance(s, dict)
+            ]
+            if adv.get("reason_options"):
+                blind_adv["reason_options"] = [
+                    {"id": r.get("id"), "content": r.get("content")}
+                    for r in adv["reason_options"]
+                    if isinstance(r, dict)
+                ]
+        else:
+            for key in ("inputs", "claim", "computed_readouts"):
+                if key in adv:
+                    blind_adv[key] = adv[key]
+            if isinstance(adv.get("predicates"), list):
+                blind_adv["predicates"] = [
+                    {pk: pr[pk] for pk in ("id", "expr", "description") if pk in pr}
+                    for pr in adv["predicates"]
+                    if isinstance(pr, dict)
+                ]
+            for g_key in ("inputs", "predicates", "trap_predicates"):
+                if g_key in adv:
+                    gt_record[g_key] = adv[g_key]
+        judge_item["adversarial_break"] = blind_adv
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        return
+
+    if itype == "unstructured_model":
+        um = assembled.get("unstructured_model") if isinstance(assembled.get("unstructured_model"), dict) else {}
+        p1 = um.get("phase1_variables") if isinstance(um.get("phase1_variables"), dict) else {}
+        p2 = um.get("phase2_assumptions") if isinstance(um.get("phase2_assumptions"), dict) else {}
+        p3 = um.get("phase3_formulation") if isinstance(um.get("phase3_formulation"), dict) else {}
+        p3_mode = str(p3.get("input_mode") or "select")
+        blind_p3: Dict[str, Any] = {"prompt": p3.get("prompt", ""), "input_mode": p3_mode}
+        if p3_mode == "select":
+            blind_p3["options"] = [
+                {"id": o.get("id"), "content": o.get("content")}
+                for o in (p3.get("options") or [])
+                if isinstance(o, dict)
+            ]
+        elif p3.get("symbolic_config"):
+            blind_p3["symbolic_config"] = p3["symbolic_config"]
+        judge_item["unstructured_model"] = {
+            "phase1_variables": {
+                "prompt": p1.get("prompt", ""),
+                "roles": p1.get("roles") or [],
+                "items": [
+                    {k: it[k] for k in ("id", "label", "symbol") if k in it}
+                    for it in (p1.get("items") or [])
+                    if isinstance(it, dict)
+                ],
+            },
+            "phase2_assumptions": {
+                "prompt": p2.get("prompt", ""),
+                "options": [
+                    {"id": o.get("id"), "content": o.get("content")}
+                    for o in (p2.get("options") or [])
+                    if isinstance(o, dict)
+                ],
+            },
+            "phase3_formulation": blind_p3,
+        }
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        return
+
+    if itype == "invariant_canvas":
+        ic = assembled.get("invariant_canvas") if isinstance(assembled.get("invariant_canvas"), dict) else {}
+        c_mode = str(ic.get("mode") or "cartesian")
+        if c_mode == "tree":
+            blind_keys = ("mode", "width", "height", "interaction_mode", "nodes", "edges")
+        else:
+            blind_keys = (
+                "mode", "x_range", "y_range", "step", "x_label", "y_label", "snap", "sliders",
+                "fixed_curves", "fixed_points", "segments", "polygons", "shaded_regions",
+                "inequality", "interactive_curves", "interactive_points",
+            )
+        judge_item["invariant_canvas"] = {k: ic[k] for k in blind_keys if k in ic}
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+        if c_mode == "cartesian" and isinstance(ic.get("invariants"), list):
+            gt_record["invariants"] = ic["invariants"]
+        elif c_mode == "tree" and isinstance(ic.get("edges"), list):
+            gt_record["edges"] = ic["edges"]
+        return
+
+    if itype == "concept_matching":
+        cm = assembled.get("concept_matching") if isinstance(assembled.get("concept_matching"), dict) else {}
+        judge_item["concept_matching"] = {
+            "left_title": cm.get("left_title", "Premisa"),
+            "right_title": cm.get("right_title", "Consecuencia"),
+            "premises": [
+                {"id": p.get("id"), "content": p.get("content")}
+                for p in (cm.get("premises") or [])
+                if isinstance(p, dict)
+            ],
+            "targets": [
+                {"id": t.get("id"), "content": t.get("content")}
+                for t in (cm.get("targets") or [])
+                if isinstance(t, dict)
+            ],
+        }
+        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
+
+
 def generate_judge_batch(
     templates_path: Union[str, Path],
     work_dir: Union[str, Path],
@@ -203,6 +498,9 @@ def generate_judge_batch(
     ids: Optional[Union[str, List[Union[str, int]]]] = None,
     samples_per_template: Optional[int] = None,
     num_samples: Optional[int] = None,
+    max_seed_retries: int = DEFAULT_MAX_SEED_RETRIES,
+    target_unique_items: Optional[int] = None,
+    stem_variant_offset: int = 0,
 ) -> Tuple[Path, Path]:
     """Generates work/judge_batch.json WITHOUT answer keys using stratified random sampling.
     
@@ -371,14 +669,36 @@ def generate_judge_batch(
         if len(planned_items) > max_total_items:
             planned_items = planned_items[:max_total_items]
     else:
-        # Stratified random selection across all templates:
+        # Stratified random selection across all templates with Neyman Allocation:
         # 1. Guarantee >= 1 random instance per template/competency in Round 0.
-        # 2. Fill subsequent rounds randomly and stratified by competency up to max_total_items (<= 200).
+        # 2. Allocate additional samples (k=2..3) to high-risk templates up to effective_unique_cap
+        #    (reserving room for ~15% double-read overlap within Option B target = 165 total evals).
+        compile_history: Dict[str, int] = {}
+        for ch_cand in (work / "compile_history.json", work / "verification" / "compile_history.json"):
+            if ch_cand.is_file():
+                try:
+                    raw_ch = json.loads(ch_cand.read_text(encoding="utf-8"))
+                    if isinstance(raw_ch, dict):
+                        for k, v in raw_ch.items():
+                            if isinstance(v, (int, float)):
+                                compile_history[str(k)] = int(v)
+                except Exception:
+                    pass
+
+        if target_unique_items is not None:
+            effective_unique_cap = min(max_total_items, max(1, int(target_unique_items)))
+        else:
+            effective_unique_cap = max_total_items
+
         seeds_per_tpl = len(seeds) if (seeds is not None and len(seeds) > 0) else 3
         comp_keys = list(comp_templates.keys())
         rng.shuffle(comp_keys)
 
+        tpl_risk_scores: Dict[int, int] = {}
+
         def _get_target_sample_count(t_obj: Dict[str, Any]) -> int:
+            risk = _compute_template_risk_score(t_obj, compile_history=compile_history)
+            tpl_risk_scores[id(t_obj)] = risk
             if samples_per_template is not None:
                 return samples_per_template
             if num_samples is not None:
@@ -386,9 +706,16 @@ def generate_judge_batch(
             if seeds is not None and len(seeds) > 0:
                 return len(seeds)
             v_code = t_obj.get("verifier_code") or t_obj.get("cross_check_py") or t_obj.get("verify_py") or ""
-            if v_code and str(v_code).strip():
+            has_verifier = bool(v_code and str(v_code).strip())
+            # Single-template verified batches keep k=1 deterministic default;
+            # multi-template courses allocate k=2..3 via Neyman Allocation on high-risk templates.
+            if has_verifier and len(templates) == 1:
                 return 1
-            return 3
+            if risk >= 4:
+                return 3
+            if risk >= 2:
+                return 2
+            return 1 if has_verifier else 2
 
         # Prepare per-template random seed lists
         tpl_seed_lists: Dict[int, List[int]] = {}
@@ -417,16 +744,19 @@ def generate_judge_batch(
                         if r_idx < len(t_seeds):
                             round_candidates.append((t, t_seeds[r_idx]))
             if r_idx > 0:
+                # Prioritize highest-risk templates first (Neyman Allocation), breaking ties randomly
                 rng.shuffle(round_candidates)
+                round_candidates.sort(key=lambda pair: tpl_risk_scores.get(id(pair[0]), 0), reverse=True)
             for cand in round_candidates:
-                if len(planned_items) >= max_total_items:
+                if len(planned_items) >= effective_unique_cap:
                     break
                 planned_items.append(cand)
-            if len(planned_items) >= max_total_items:
+            if len(planned_items) >= effective_unique_cap:
                 break
 
     template_counts: Dict[str, int] = {}
     refuted_templates: Dict[str, Dict[str, Any]] = {}
+    eff_max_retries = max(1, int(max_seed_retries))
 
     for template, seed in planned_items:
         template_id = template.get("id", "T-00")
@@ -436,15 +766,22 @@ def generate_judge_batch(
         gen_code = template.get("generate_py") or template.get("generator_code") or ""
         ver_code = template.get("verifier_code") or template.get("cross_check_py") or template.get("verify_py") or ""
 
-        # Pre-verify candidate seed, deterministically retrying next seed on collision or invariant failure
+        # Deterministic without-replacement stem_variants rotation across samples of the same template
+        stem_variants = template.get("stem_variants")
+        next_inst_idx = template_counts.get(template_id, 0) + 1
+        selected_var_idx: Optional[int] = None
+        if isinstance(stem_variants, list) and len(stem_variants) > 0:
+            base_var_offset = zlib.crc32(f"{template_id}:{random_seed or 0}".encode("utf-8")) % len(stem_variants)
+            selected_var_idx = (base_var_offset + int(stem_variant_offset) + (next_inst_idx - 1)) % len(stem_variants)
+
+        # Pre-verify candidate seed; default max_seed_retries=1 (zero-tolerance, eliminates survivorship bias)
         active_seed = seed
         gen_res = None
         assembled = None
         seed_passed = False
-        max_seed_retries = 5
         curr_try = 0
 
-        while curr_try < max_seed_retries and not seed_passed:
+        while curr_try < eff_max_retries and not seed_passed:
             curr_try += 1
             try:
                 cand_res = execute_sandbox_instance(gen_code, seed=active_seed, timeout=1.5)
@@ -455,7 +792,7 @@ def generate_judge_batch(
                         active_seed = (active_seed + 101) % 99991 + 100
                         continue
 
-                inst_idx = template_counts.get(template_id, 0) + 1
+                inst_idx = next_inst_idx
                 option_shuffle_seed = zlib.crc32(f"{template_id}:{inst_idx}:{active_seed}".encode("utf-8")) & 0xFFFFFFFF
                 cand_assembled = assemble_question(
                     template=template,
@@ -464,9 +801,14 @@ def generate_judge_batch(
                     question_index=inst_idx,
                     cta_distractors_map=cta_distractors_map,
                     seed=option_shuffle_seed,
+                    stem_variant_index=selected_var_idx,
                 )
 
-                is_inv, inv_errs = check_instance_invariants(cand_assembled, itype)
+                is_inv, inv_errs = check_instance_invariants(
+                    cand_assembled,
+                    itype,
+                    variables=cand_res.get("vars") if isinstance(cand_res, dict) else None,
+                )
                 if not is_inv:
                     active_seed = (active_seed + 101) % 99991 + 100
                     continue
@@ -518,6 +860,8 @@ def generate_judge_batch(
             "interaction_type": itype,
             "kernel_verified": bool(ver_code and str(ver_code).strip()),
             "kernel_refuted": False,
+            "stem_variant_index": selected_var_idx,
+            "seed_attempts": curr_try,
         }
 
         if itype == "multiple_choice_7_options":
@@ -604,6 +948,9 @@ def generate_judge_batch(
             judge_item["answer_contract"] = contract
             gt_record["answer_contract"] = contract
 
+        elif itype in _M20_INTERACTION_TYPES:
+            _sanitize_m20_judge_item(itype, assembled, judge_item, gt_record)
+
         if "graph" in assembled and assembled["graph"]:
             judge_item["graph"] = assembled["graph"]
 
@@ -617,23 +964,23 @@ def generate_judge_batch(
     v_dir.mkdir(parents=True, exist_ok=True)
 
     batch_path = work / "judge_batch.json"
-    batch_json_str = json.dumps(judge_batch_items, indent=2, ensure_ascii=False)
-    batch_path.write_text(batch_json_str, encoding="utf-8")
-    (v_dir / "judge_batch.json").write_text(batch_json_str, encoding="utf-8")
+    batch_json_bytes = fast_json.dumps_bytes(judge_batch_items, indent=True)
+    batch_path.write_bytes(batch_json_bytes)
+    (v_dir / "judge_batch.json").write_bytes(batch_json_bytes)
 
     truth_path = work / "judge_ground_truth.json"
-    truth_json_str = json.dumps(ground_truth, indent=2, ensure_ascii=False)
-    truth_path.write_text(truth_json_str, encoding="utf-8")
-    (v_dir / "judge_ground_truth.json").write_text(truth_json_str, encoding="utf-8")
+    truth_json_bytes = fast_json.dumps_bytes(ground_truth, indent=True)
+    truth_path.write_bytes(truth_json_bytes)
+    (v_dir / "judge_ground_truth.json").write_bytes(truth_json_bytes)
 
     answer_key_path = work / "answer_key.json"
-    answer_key_path.write_text(truth_json_str, encoding="utf-8")
-    (v_dir / "answer_key.json").write_text(truth_json_str, encoding="utf-8")
+    answer_key_path.write_bytes(truth_json_bytes)
+    (v_dir / "answer_key.json").write_bytes(truth_json_bytes)
 
     if refuted_templates:
-        refuted_json_str = json.dumps(refuted_templates, indent=2, ensure_ascii=False)
-        (work / "refuted_templates.json").write_text(refuted_json_str, encoding="utf-8")
-        (v_dir / "refuted_templates.json").write_text(refuted_json_str, encoding="utf-8")
+        refuted_json_bytes = fast_json.dumps_bytes(refuted_templates, indent=True)
+        (work / "refuted_templates.json").write_bytes(refuted_json_bytes)
+        (v_dir / "refuted_templates.json").write_bytes(refuted_json_bytes)
 
     # Clean up stale split batches in verification and work so dispatch_judges slices the new batch fresh
     for stale_split in list(v_dir.glob("judge_batch_*.json")) + list(work.glob("judge_batch_*.json")):
@@ -675,6 +1022,8 @@ def split_judge_batch(
     items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
     max_items_per_judge: Optional[int] = None,
     random_seed: Optional[int] = None,
+    overlap_ratio: Optional[float] = None,
+    max_total_evaluations: Optional[int] = None,
 ) -> Any:
     """Splits work/judge_batch.json or raw items list into batches with at most items_per_judge items each (default <= 20)
     and at most max_judges judges (default <= 10), using stratified random assignment.
@@ -762,8 +1111,31 @@ def split_judge_batch(
                     pass
 
     total_items = len(items)
-    # Strictly enforce both items_per_judge <= 20 and num_judges <= max_judges (10)
-    needed_judges = math.ceil(total_items / limit)
+    if overlap_ratio is None:
+        # Apply 15% double-read overlap by default only for standard production SLA (<=10 judges, <=20 items/judge)
+        if max_judges == DEFAULT_MAX_JUDGES and limit == DEFAULT_MAX_ITEMS_PER_JUDGE:
+            eff_overlap_ratio = DEFAULT_OVERLAP_RATIO
+        else:
+            eff_overlap_ratio = 0.0
+    else:
+        eff_overlap_ratio = max(0.0, min(0.5, float(overlap_ratio)))
+    # Determine effective evaluation budget (Option B default = 165 when using default 10x20 SLA)
+    if max_total_evaluations is not None:
+        eval_cap = max(total_items, int(max_total_evaluations))
+    elif max_judges == DEFAULT_MAX_JUDGES and limit == DEFAULT_MAX_ITEMS_PER_JUDGE:
+        eval_cap = max(total_items, DEFAULT_TARGET_TOTAL_EVALUATIONS)
+    else:
+        eval_cap = max_total if max_total > 0 else total_items + int(round(total_items * eff_overlap_ratio))
+    if max_total > 0:
+        eval_cap = min(eval_cap, max_total)
+
+    desired_overlap = 0
+    if eff_overlap_ratio > 0 and max_judges != 1 and total_items >= 2:
+        desired_overlap = min(max(0, eval_cap - total_items), max(1, int(round(total_items * eff_overlap_ratio))))
+
+    projected_total = total_items + desired_overlap
+    # Strictly enforce both items_per_judge <= limit and num_judges <= max_judges (10)
+    needed_judges = math.ceil(projected_total / limit)
     num_judges = min(max_judges, max(1, needed_judges)) if max_judges > 0 else max(1, needed_judges)
     num_judges = min(num_judges, total_items)
     num_judges = max(1, num_judges)
@@ -775,13 +1147,39 @@ def split_judge_batch(
         comp_groups.setdefault(cid, []).append(item)
 
     buckets: List[List[Dict[str, Any]]] = [[] for _ in range(num_judges)]
+    item_primary_bucket: List[Tuple[int, Dict[str, Any]]] = []
     curr_j = 0
     for cid, c_items in comp_groups.items():
         c_shuffled = list(c_items)
         rng.shuffle(c_shuffled)
         for itm in c_shuffled:
-            buckets[curr_j % num_judges].append(itm)
+            b_idx = curr_j % num_judges
+            buckets[b_idx].append(itm)
+            item_primary_bucket.append((b_idx, itm))
             curr_j += 1
+
+    # Double-blind overlap injection (15-20%): assign copies to a DIFFERENT judge (j2 != j1)
+    overlap_added = 0
+    if num_judges >= 2 and desired_overlap > 0:
+        rng.shuffle(item_primary_bucket)
+        # Prioritize MC7 and MS where guessing/heuristic luck is higher
+        item_primary_bucket.sort(
+            key=lambda pair: 0 if str(pair[1].get("interaction_type", "")).lower() in _DOUBLE_READ_PRIORITY_TYPES else 1
+        )
+        for primary_idx, itm in item_primary_bucket:
+            if overlap_added >= desired_overlap:
+                break
+            # Find least-loaded distinct bucket with remaining capacity < limit
+            candidate_buckets = [
+                j for j in range(num_judges)
+                if j != primary_idx and len(buckets[j]) < limit
+            ]
+            if not candidate_buckets:
+                break
+            candidate_buckets.sort(key=lambda j: len(buckets[j]))
+            target_j = candidate_buckets[0]
+            buckets[target_j].append(dict(itm))
+            overlap_added += 1
 
     # Filter out empty buckets and randomize order within each judge's bucket
     non_empty_buckets = []
@@ -1061,7 +1459,7 @@ def emit_judge_redispatch(
                 "Model": "inherit",
                 "Prompt": (
                     f"You are Blind Judge {j_num} for Re-dispatch Batch {b_idx:02d}. "
-                    f"Your work order is `{b_path.as_posix()}`. Read it first with `view_file`. "
+                    f"Your work order is `{b_path.as_posix()}`. Read it first with `read_file`. "
                     f"Finalize strictly with: `DONE: verification/judge_responses_redispatch_{b_idx:02d}_{j_num}.json`."
                 ),
             })
@@ -1097,6 +1495,20 @@ def _validate_ground_truth_item(gt: Dict[str, Any], itype: str) -> None:
         if val is None or str(val).strip() == "":
             raise ValueError(
                 f"Ground truth schema violation for '{eff_type}': 'correct_value' must be non-None and non-empty (preserving 0/'0'), got {val!r}"
+            )
+    elif eff_type == "open_symbolic":
+        val = gt.get("correct_value")
+        if not (isinstance(val, str) and val.strip() != ""):
+            ca = gt.get("correct_answer")
+            if not (isinstance(ca, dict) and str(ca.get("expression") or ca.get("value") or "").strip()):
+                raise ValueError(
+                    f"Ground truth schema violation for '{eff_type}': 'correct_value' must be a non-empty expression"
+                )
+    elif eff_type in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+        ca = gt.get("correct_answer")
+        if not (isinstance(ca, dict) and len(ca) > 0):
+            raise ValueError(
+                f"Ground truth schema violation for '{eff_type}': 'correct_answer' must be a non-empty dict, got {ca!r}"
             )
     elif eff_type == "multiple_select":
         val = gt.get("correct_letters")
@@ -1197,6 +1609,281 @@ def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) ->
             return True, ""
         else:
             return False, f"Judge selected {raw_items} (letters: {sorted(u_letters)}) but expected {sorted(gt_letters)}"
+
+    elif itype in _M20_INTERACTION_TYPES:
+        return _check_m20_answer_match(user_ans, gt, itype)
+
+    return False, f"Unsupported interaction type '{itype}'"
+
+
+def _values_approx_equal(u_val: Any, g_val: Any, tol: float = 0.02) -> bool:
+    """Recursively compares structured ground-truth objects with float tolerance."""
+    if isinstance(g_val, (int, float)) and not isinstance(g_val, bool):
+        return _is_numeric_equal(u_val, g_val, tol=tol)
+    if isinstance(g_val, dict):
+        if not isinstance(u_val, dict):
+            return False
+        return all(k in u_val and _values_approx_equal(u_val[k], v, tol=tol) for k, v in g_val.items())
+    if isinstance(g_val, list):
+        if not isinstance(u_val, (list, tuple)) or len(u_val) != len(g_val):
+            return False
+        return all(_values_approx_equal(u_v, g_v, tol=tol) for u_v, g_v in zip(u_val, g_val))
+    return _normalize_str(u_val) == _normalize_str(g_val)
+
+
+def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tuple[bool, str]:
+    """Evaluates blind judge responses for all 6 M20 interaction modalities."""
+    if itype == "open_symbolic":
+        u_dict = _parse_json_or_dict(user_ans)
+        u_expr = (u_dict.get("expression") or u_dict.get("value") or "") if u_dict else user_ans
+        ca = gt.get("correct_answer") if isinstance(gt.get("correct_answer"), dict) else {}
+        gt_val = gt.get("correct_value") or ca.get("expression") or ca.get("value") or ""
+        gt_canon = gt.get("canonical_algebraic") or ca.get("canonical_algebraic") or ""
+        gt_equivs = gt.get("accepted_equivalents") or ca.get("accepted_equivalents") or []
+        tol = float(gt.get("tolerance") or ca.get("tolerance") or 0.001)
+        cands = [x for x in [gt_val, gt_canon, *gt_equivs] if str(x).strip()]
+        if any(_is_symbolic_equal(u_expr, c, tol=tol) for c in cands):
+            return True, ""
+        return False, f"Judge symbolic '{u_expr}' does not match expected '{gt_val}'"
+
+    ans = _parse_json_or_dict(user_ans)
+    if ans is None:
+        return False, f"Expected JSON object response for '{itype}', got {user_ans!r}"
+    ca = gt.get("correct_answer") if isinstance(gt.get("correct_answer"), dict) else {}
+
+    if itype == "proof_dag":
+        gt_order = [str(x) for x in (ca.get("canonical_order") or [])]
+        gt_req = {str(x) for x in (ca.get("required_step_ids") or gt_order)}
+        gt_edges = {(str(e[0]), str(e[1])) for e in (ca.get("edges") or []) if isinstance(e, (list, tuple)) and len(e) == 2}
+        u_order = [str(x) for x in (ans.get("canonical_order") or [])]
+        if u_order != gt_order:
+            is_valid_topo = (
+                len(u_order) == len(gt_req)
+                and set(u_order) == gt_req
+                and all(u_order.index(u) < u_order.index(v) for u, v in gt_edges if u in gt_req and v in gt_req)
+            )
+            if not is_valid_topo:
+                return False, f"proof_dag canonical_order mismatch: got {u_order}, expected {gt_order}"
+        if "required_step_ids" in ans and {str(x) for x in (ans.get("required_step_ids") or [])} != gt_req:
+            return False, "proof_dag required_step_ids mismatch"
+        if "edges" in ans and gt_edges:
+            u_edges = {(str(e[0]), str(e[1])) for e in (ans.get("edges") or []) if isinstance(e, (list, tuple)) and len(e) == 2}
+            if u_edges != gt_edges and not (
+                len(u_order) == len(gt_req)
+                and set(u_order) == gt_req
+                and all(u_order.index(u) < u_order.index(v) for u, v in gt_edges if u in gt_req and v in gt_req)
+            ):
+                return False, f"proof_dag edges mismatch: got {sorted(u_edges)}, expected {sorted(gt_edges)}"
+        if ca.get("justifications"):
+            gt_just = {str(k): _normalize_str(v) for k, v in ca["justifications"].items()}
+            u_just = {str(k): _normalize_str(v) for k, v in (ans.get("justifications") or {}).items()}
+            if u_just != gt_just:
+                return False, "proof_dag justifications mismatch"
+        return True, ""
+
+    if itype == "adversarial_break":
+        mode = str(ca.get("mode") or ans.get("mode") or "find_fallacy")
+        if mode == "find_fallacy":
+            if str(ans.get("fallacy_step_id") or "") != str(ca.get("fallacy_step_id") or ""):
+                return False, f"adversarial_break fallacy_step_id mismatch: got {ans.get('fallacy_step_id')!r}, expected {ca.get('fallacy_step_id')!r}"
+            if ca.get("correct_reason_id") and str(ans.get("correct_reason_id") or "") != str(ca["correct_reason_id"]):
+                return False, f"adversarial_break correct_reason_id mismatch: got {ans.get('correct_reason_id')!r}, expected {ca['correct_reason_id']!r}"
+            return True, ""
+        u_w = ans.get("sample_witness") if isinstance(ans.get("sample_witness"), dict) else ans
+        gt_w = ca.get("sample_witness") if isinstance(ca.get("sample_witness"), dict) else {}
+        if _values_approx_equal(u_w, gt_w, tol=0.01):
+            return True, ""
+        if isinstance(u_w, dict) and isinstance(gt.get("predicates"), list) and gt["predicates"]:
+            try:
+                from engine.adversarial_generator import eval_safe_predicate
+                env_w: Dict[str, float] = {}
+                bounds_ok = True
+                for inp in (gt.get("inputs") or []):
+                    if not isinstance(inp, dict):
+                        continue
+                    iname = str(inp.get("id") or inp.get("name") or "")
+                    if not iname or iname not in u_w or isinstance(u_w[iname], bool):
+                        bounds_ok = False
+                        break
+                    val_f = float(u_w[iname])
+                    if str(inp.get("type") or "").strip().lower() == "integer" and abs(val_f - round(val_f)) > 1e-6:
+                        bounds_ok = False
+                        break
+                    if inp.get("min") is not None and val_f < float(inp["min"]) - 1e-6:
+                        bounds_ok = False
+                        break
+                    if inp.get("max") is not None and val_f > float(inp["max"]) + 1e-6:
+                        bounds_ok = False
+                        break
+                    env_w[iname] = val_f
+                if not env_w and u_w:
+                    env_w = {str(k): float(v) for k, v in u_w.items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
+                if bounds_ok and env_w:
+                    preds_ok = all(
+                        bool(eval_safe_predicate(str(pr.get("expr") or ""), env_w))
+                        for pr in gt["predicates"]
+                        if isinstance(pr, dict) and pr.get("expr")
+                    )
+                    traps_ok = all(
+                        not bool(eval_safe_predicate(str(tp.get("expr") or ""), env_w))
+                        for tp in (gt.get("trap_predicates") or [])
+                        if isinstance(tp, dict) and tp.get("expr")
+                    )
+                    if preds_ok and traps_ok:
+                        return True, ""
+            except Exception:
+                pass
+        return False, f"adversarial_break witness mismatch: got {u_w}, expected {gt_w}"
+
+    if itype == "unstructured_model":
+        gt_p1 = {str(k): _normalize_str(v) for k, v in (ca.get("phase1") or {}).items()}
+        u_p1 = {str(k): _normalize_str(v) for k, v in (ans.get("phase1") or {}).items()}
+        if u_p1 != gt_p1:
+            return False, f"unstructured_model phase1 mismatch: got {u_p1}, expected {gt_p1}"
+        gt_p2 = {str(x) for x in (ca.get("phase2") or [])}
+        u_p2 = {str(x) for x in (ans.get("phase2") or [])}
+        if u_p2 != gt_p2:
+            return False, f"unstructured_model phase2 mismatch: got {sorted(u_p2)}, expected {sorted(gt_p2)}"
+        gt_p3 = ca.get("phase3")
+        u_p3 = ans.get("phase3")
+        if isinstance(gt_p3, dict):
+            cands = [gt_p3.get("expression"), gt_p3.get("value"), gt_p3.get("canonical_algebraic"), *(gt_p3.get("accepted_equivalents") or [])]
+            if any(_is_symbolic_equal(u_p3, c, tol=float(gt_p3.get("tolerance", 0.001) or 0.001)) for c in cands if c):
+                return True, ""
+            return False, f"unstructured_model phase3 expression mismatch: got {u_p3!r}"
+        if _normalize_str(u_p3) == _normalize_str(gt_p3):
+            return True, ""
+        return False, f"unstructured_model phase3 mismatch: got {u_p3!r}, expected {gt_p3!r}"
+
+    if itype == "invariant_canvas":
+        c_mode = str(ca.get("mode") or ans.get("mode") or "cartesian")
+        if c_mode == "tree":
+            edge_id_map: Dict[str, Tuple[str, str]] = {}
+            for ed in (gt.get("edges") or []):
+                if isinstance(ed, dict) and ed.get("id") and ed.get("from") is not None and ed.get("to") is not None:
+                    edge_id_map[str(ed["id"])] = (str(ed["from"]), str(ed["to"]))
+
+            def _norm_tree_edge(e: Any) -> Any:
+                if isinstance(e, (list, tuple)) and len(e) == 2:
+                    return (str(e[0]), str(e[1]))
+                s_e = str(e)
+                return edge_id_map.get(s_e, s_e)
+
+            gt_edges = {_norm_tree_edge(e) for e in (ca.get("required_edges") or [])}
+            u_edges = {_norm_tree_edge(e) for e in (ans.get("required_edges") or [])}
+            if u_edges != gt_edges:
+                return False, f"invariant_canvas tree required_edges mismatch: got {sorted(map(str, u_edges))}"
+            gt_sets = {frozenset(str(x) for x in grp) for grp in (ca.get("required_info_sets") or [])}
+            u_sets = {frozenset(str(x) for x in grp) for grp in (ans.get("required_info_sets") or [])}
+            if u_sets != gt_sets:
+                return False, "invariant_canvas tree required_info_sets mismatch"
+            return True, ""
+        def _norm_cart_state(d_raw: Dict[str, Any]) -> Dict[str, Any]:
+            d_obj = dict(d_raw)
+            if "style" in d_obj and "inequalityStyle" not in d_obj:
+                d_obj["inequalityStyle"] = d_obj["style"]
+            elif "inequalityStyle" in d_obj and "style" not in d_obj:
+                d_obj["style"] = d_obj["inequalityStyle"]
+            if "shade" in d_obj and "inequalityShade" not in d_obj:
+                d_obj["inequalityShade"] = d_obj["shade"]
+            elif "inequalityShade" in d_obj and "shade" not in d_obj:
+                d_obj["shade"] = d_obj["inequalityShade"]
+            reserved = {
+                "points",
+                "sliders",
+                "inequalityStyle",
+                "inequalityShade",
+                "style",
+                "shade",
+                "mode",
+                "invariants_count",
+            }
+            pts = dict(d_obj["points"]) if isinstance(d_obj.get("points"), dict) else {}
+            flat_keys = [
+                k for k, v in d_obj.items()
+                if k not in reserved and isinstance(v, dict) and ("x" in v or "y" in v)
+            ]
+            if flat_keys or "points" in d_obj:
+                for fk in flat_keys:
+                    pts[fk] = d_obj.pop(fk)
+                d_obj["points"] = pts
+            return d_obj
+
+        u_ts = _norm_cart_state(ans.get("target_state") if isinstance(ans.get("target_state"), dict) else ans)
+        gt_ts = _norm_cart_state(ca.get("target_state") if isinstance(ca.get("target_state"), dict) else {})
+        invs = gt.get("invariants") if isinstance(gt.get("invariants"), list) else []
+        if gt_ts and "invariants_count" not in gt_ts:
+            if _values_approx_equal(u_ts, gt_ts, tol=0.05):
+                return True, ""
+            if not invs:
+                return False, f"invariant_canvas target_state mismatch: got {u_ts}, expected {gt_ts}"
+        # Fallback check against extracted cartesian invariants when explicit target_state was omitted or differed
+        for inv in invs:
+            if not isinstance(inv, dict):
+                continue
+            kind = str(inv.get("kind") or "")
+            tol_inv = float(inv.get("tolerance", 0.05) or 0.05)
+            if kind == "inequality_state":
+                if inv.get("expected_style") and _normalize_str(u_ts.get("inequalityStyle")) != _normalize_str(inv["expected_style"]):
+                    return False, f"Expected inequalityStyle={inv['expected_style']}"
+                if inv.get("expected_shade") and _normalize_str(u_ts.get("inequalityShade")) != _normalize_str(inv["expected_shade"]):
+                    return False, f"Expected inequalityShade={inv['expected_shade']}"
+            elif kind == "point_coords":
+                pid = str(inv.get("point_id") or inv.get("target") or "")
+                tx = inv.get("target_x") if inv.get("target_x") is not None else inv.get("x")
+                ty = inv.get("target_y") if inv.get("target_y") is not None else inv.get("y")
+                pts_map = u_ts.get("points") if isinstance(u_ts.get("points"), dict) else {}
+                u_pt = pts_map.get(pid) if pid in pts_map else (next(iter(pts_map.values())) if len(pts_map) == 1 else None)
+                if not isinstance(u_pt, dict):
+                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
+                if tx is not None and not _values_approx_equal(u_pt.get("x"), tx, tol=tol_inv):
+                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
+                if ty is not None and not _values_approx_equal(u_pt.get("y"), ty, tol=tol_inv):
+                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
+            elif kind == "kink_at":
+                pts_map = u_ts.get("points") if isinstance(u_ts.get("points"), dict) else {}
+                raw_pid = inv.get("point_id")
+                if not raw_pid and isinstance(inv.get("target"), str) and inv["target"] in pts_map:
+                    raw_pid = inv["target"]
+                if raw_pid:
+                    pid = str(raw_pid)
+                    tx = inv.get("target_x") if inv.get("target_x") is not None else inv.get("x")
+                    ty = inv.get("target_y") if inv.get("target_y") is not None else inv.get("y")
+                    u_pt = pts_map.get(pid) if pid in pts_map else (next(iter(pts_map.values())) if len(pts_map) == 1 else None)
+                    if not isinstance(u_pt, dict):
+                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
+                    if tx is not None and not _values_approx_equal(u_pt.get("x"), tx, tol=tol_inv):
+                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
+                    if ty is not None and not _values_approx_equal(u_pt.get("y"), ty, tol=tol_inv):
+                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
+            elif kind == "slider_eq":
+                sid = str(inv.get("slider_id") or "")
+                t_val = inv.get("target") if inv.get("target") is not None else (inv.get("target_value") if inv.get("target_value") is not None else inv.get("expected"))
+                s_map = u_ts.get("sliders") if isinstance(u_ts.get("sliders"), dict) else {}
+                u_sval = s_map.get(sid) if sid in s_map else u_ts.get(sid)
+                if not _values_approx_equal(u_sval, t_val, tol=tol_inv):
+                    return False, f"Expected slider '{sid}' == {t_val}, got {u_sval}"
+            elif kind == "slider_range":
+                sid = str(inv.get("slider_id") or "")
+                s_map = u_ts.get("sliders") if isinstance(u_ts.get("sliders"), dict) else {}
+                u_sval = s_map.get(sid) if sid in s_map else u_ts.get(sid)
+                try:
+                    u_f = float(u_sval)
+                    if inv.get("min") is not None and u_f < float(inv["min"]) - tol_inv:
+                        return False, f"Slider '{sid}'={u_f} < min {inv['min']}"
+                    if inv.get("max") is not None and u_f > float(inv["max"]) + tol_inv:
+                        return False, f"Slider '{sid}'={u_f} > max {inv['max']}"
+                except (TypeError, ValueError):
+                    return False, f"Slider '{sid}' missing or non-numeric: {u_sval}"
+        return (True, "") if u_ts else (False, "Empty cartesian target_state")
+
+    if itype == "concept_matching":
+        gt_pairs = {str(k): _normalize_str(v) for k, v in (ca.get("pairs") or {}).items()}
+        u_raw = ans.get("pairs") if isinstance(ans.get("pairs"), dict) else ans
+        u_pairs = {str(k): _normalize_str(v) for k, v in u_raw.items()}
+        if u_pairs == gt_pairs and len(gt_pairs) > 0:
+            return True, ""
+        return False, f"concept_matching pairs mismatch: got {u_pairs}, expected {gt_pairs}"
 
     return False, f"Unsupported interaction type '{itype}'"
 
@@ -1366,6 +2053,7 @@ def compare_judge_responses(
     cycle: int = 1,
     work_dir: Optional[Union[str, Path]] = None,
     shards: Optional[Union[List[str], str]] = None,
+    prior_template_failures: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Any]:
     """Compares judge answers against ground truth answer keys and records discordances.
     
@@ -1560,6 +2248,25 @@ def compare_judge_responses(
     # First pass: evaluate raw judge agreement per item so we know failed seed counts per template
     pre_evals: List[Dict[str, Any]] = []
     template_raw_failures: Dict[str, int] = {}
+    inter_judge_pairs: List[Tuple[bool, bool]] = []
+
+    effective_prior_failures: Dict[str, int] = {}
+    if isinstance(prior_template_failures, dict):
+        for k, v in prior_template_failures.items():
+            try:
+                effective_prior_failures[str(k)] = int(v)
+            except (ValueError, TypeError):
+                pass
+    elif resolved_work_dir:
+        lqas_prior_p = resolved_work_dir / "verification" / "lqas_prior_failures.json"
+        if lqas_prior_p.is_file():
+            try:
+                raw_pf = json.loads(lqas_prior_p.read_text(encoding="utf-8"))
+                if isinstance(raw_pf, dict):
+                    for k, v in raw_pf.items():
+                        effective_prior_failures[str(k)] = int(v)
+            except Exception:
+                pass
 
     for item_id, gt in ground_truth.items():
         s_iid = str(item_id)
@@ -1615,6 +2322,20 @@ def compare_judge_responses(
                 isinstance(it, dict) and bool(it.get("flaw_detected"))
                 for it in items_to_check
             )
+
+            # Record independent double-blind pair verdicts for inter-judge Kappa telemetry
+            if len(rep_evals) >= 2:
+                def _rep_is_flaw(idx: int) -> bool:
+                    r_obj = reps[idx] if idx < len(reps) else None
+                    if isinstance(r_obj, dict) and r_obj.get("flaw_detected"):
+                        return True
+                    if idx < len(meta_raws) and isinstance(meta_raws[idx], dict) and meta_raws[idx].get("flaw_detected"):
+                        return True
+                    return False
+
+                v1 = bool(rep_evals[0][0]) and not _rep_is_flaw(0)
+                v2 = bool(rep_evals[1][0]) and not _rep_is_flaw(1)
+                inter_judge_pairs.append((v1, v2))
 
             if all(m_ok for m_ok, _ in rep_evals) and not flaw_detected:
                 is_match = True
@@ -1710,7 +2431,7 @@ def compare_judge_responses(
                 correct_ans = gt.get("correct_letters")
             else:
                 solver_ans = user_ans
-                correct_ans = None
+                correct_ans = gt.get("correct_value") if gt.get("correct_value") is not None else gt.get("correct_answer")
 
             neuro_verdict = resolve_neuro_symbolic_verdict(
                 kernel_verified=True,
@@ -1721,7 +2442,7 @@ def compare_judge_responses(
                 interaction_type=itype,
                 solver_answer=solver_ans,
                 correct_answer=correct_ans,
-                template_failed_seeds=template_raw_failures.get(tid, 0),
+                template_failed_seeds=template_raw_failures.get(tid, 0) + effective_prior_failures.get(tid, 0),
             )
             if neuro_verdict.get("kernel_override"):
                 is_match = True
@@ -1737,6 +2458,8 @@ def compare_judge_responses(
                 )
                 kernel_overridden_items.append({
                     "item_id": s_iid,
+                    "template_id": tid,
+                    "competency_id": cid,
                     "judge_response": user_ans,
                     "expected": exp_override,
                     "reason": reason,
@@ -1830,6 +2553,23 @@ def compare_judge_responses(
                 if p_clean and p_clean not in normalized_shards:
                     normalized_shards.append(p_clean)
 
+    # Inter-judge reliability (Cohen's kappa) & sensitivity-adjusted 95% upper defect bound
+    inter_judge_stats = _compute_cohens_kappa(inter_judge_pairs)
+    raw_po = inter_judge_stats.get("raw_agreement")
+    est_sensitivity = round(max(0.5, min(1.0, float(raw_po))) if raw_po is not None else 0.85, 4)
+    upper_bound_naive = round(min(1.0, 3.0 / total), 4) if total > 0 else 1.0
+    upper_bound_adjusted = round(min(1.0, 3.0 / (total * est_sensitivity)), 4) if total > 0 else 1.0
+
+    # Adaptive Two-Stage LQAS detection: templates with kernel_override=True on k=1 sample
+    single_seed_override_templates = sorted({
+        str(ov["template_id"])
+        for ov in kernel_overridden_items
+        if ov.get("template_id")
+        and len(tpl_items.get(str(ov["template_id"]), [])) == 1
+        and effective_prior_failures.get(str(ov["template_id"]), 0) == 0
+    })
+    lqas_followup_required = bool(single_seed_override_templates)
+
     report_data = {
         "cycle": cycle,
         "timestamp": now_iso,
@@ -1847,6 +2587,17 @@ def compare_judge_responses(
         "discordances": discordances,
         "kernel_overridden_items": kernel_overridden_items,
         "kernel_override_count": kernel_override_count,
+        "single_seed_override_templates": single_seed_override_templates,
+        "lqas_followup_required": lqas_followup_required,
+        "inter_judge_reliability": inter_judge_stats,
+        "statistical_certification": {
+            "unique_templates_covered": len(tpl_items),
+            "total_items_evaluated": total,
+            "inter_judge_overlap_count": inter_judge_stats["overlap_count"],
+            "estimated_sensitivity": est_sensitivity,
+            "upper_defect_bound_95_naive": upper_bound_naive,
+            "upper_defect_bound_95_adjusted": upper_bound_adjusted,
+        },
         "can_retry": (cycle < MAX_CORRECTION_CYCLES and not passed),
         "max_cycles_reached": (cycle >= MAX_CORRECTION_CYCLES),
     }

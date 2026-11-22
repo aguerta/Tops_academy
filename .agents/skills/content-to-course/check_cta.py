@@ -24,6 +24,18 @@ if str(_skills_root) not in sys.path:
     sys.path.insert(0, str(_skills_root))
 
 from engine.invariants import validate_katex_syntax
+try:
+    from engine.stage_contract import (
+        MIN_MODALITIES_PER_COMPETENCY as _MIN_MODALITIES_PER_COMPETENCY,
+        MAX_MODALITIES_PER_COMPETENCY as _MAX_MODALITIES_PER_COMPETENCY,
+        MIN_COMPS_FOR_CTA_BLOOM_GATE as _MIN_COMPS_FOR_CTA_BLOOM_GATE,
+        compute_cta_bloom_portfolio_metrics,
+    )
+except ImportError:
+    _MIN_MODALITIES_PER_COMPETENCY = 2
+    _MAX_MODALITIES_PER_COMPETENCY = 4
+    _MIN_COMPS_FOR_CTA_BLOOM_GATE = 5
+    compute_cta_bloom_portfolio_metrics = None  # type: ignore[assignment]
 
 try:
     import pykatex
@@ -706,6 +718,19 @@ def check_cta_katex(
     return list(dict.fromkeys(errors))
 
 
+_VALID_RECOMMENDED_MODALITIES = frozenset({
+    "multiple_choice_7_options",
+    "multiple_select",
+    "fill_in_the_blank",
+    "open_symbolic",
+    "proof_dag",
+    "adversarial_break",
+    "unstructured_model",
+    "invariant_canvas",
+    "concept_matching",
+})
+
+
 def _validate_competencies_rules(
     competencies: List[Dict[str, Any]],
     manifest_data: Optional[Dict[str, Any]] = None,
@@ -713,6 +738,7 @@ def _validate_competencies_rules(
     is_part: bool = False,
     locator: Optional[JsonLineLocator] = None,
     require_assumptions: bool = False,
+    require_modalities: bool = True,
     warnings: Optional[List[str]] = None,
 ) -> List[str]:
     errors: List[str] = []
@@ -740,6 +766,24 @@ def _validate_competencies_rules(
                 comp_schema_errs.setdefault((loc, err.message), []).append(cid)
 
         ctype = comp.get("type", "").lower()
+
+        # Rule CTA-PREFIX-TYPE-MISMATCH: Canonical ID prefixes must match competency category
+        # (accepts Spanish 'H-' = Hecho = fact as well as 'F-' / 'Fact-' = fact)
+        cid_low = str(cid or "").lower()
+        for prefixes, valid_types, expected_rule in (
+            (("hab-", "skill-"), ("skill",), "Hab-/Skill- -> skill"),
+            (("h-", "f-", "fact-"), ("fact",), "H- (Hecho) / F- (Fact) -> fact"),
+            (("c-", "concept-"), ("concept",), "C-/Concept- -> concept"),
+            (("pre-",), ("fact", "concept"), "PRE- -> fact/concept"),
+        ):
+            if cid_low.startswith(prefixes) and ctype in ("fact", "concept", "skill") and ctype not in valid_types:
+                line_no_pfx = locator.get_line(cid) if locator else None
+                line_tag_pfx = f" [Línea {line_no_pfx}]" if line_no_pfx else ""
+                errors.append(
+                    f"[CTA-PREFIX-TYPE-MISMATCH]{line_tag_pfx} Competency '{cid}' declares type='{ctype}' "
+                    f"incompatible with ID prefix (expected {expected_rule})."
+                )
+                break
         distractors = comp.get("distractors", [])
 
         # Rule CTA-D1: >=3 distractors per comp, >=6 per Skill with >=2 omitted_step
@@ -782,6 +826,61 @@ def _validate_competencies_rules(
                 if valid_cnt == 0 and not any("[CTA-ASSUMPTIONS-MISSING]" in e and cid in e for e in errors):
                     errors.append(
                         f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' ({ctype}) requires at least 1 valid assumption (len >= 10)."
+                    )
+
+        rec_mods = comp.get("recommended_modalities")
+        line_no_rm = locator.get_line(cid, "recommended_modalities") if locator else None
+        if not line_no_rm and locator:
+            line_no_rm = locator.get_line(cid)
+        line_tag_rm = f" [Línea {line_no_rm}]" if line_no_rm else ""
+        if rec_mods is None:
+            if require_modalities:
+                errors.append(
+                    f"[CTA-MODALITY-MISSING]{line_tag_rm} Competency '{cid}' requires "
+                    f"{_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} canonical recommended_modalities in contract v2."
+                )
+        elif not isinstance(rec_mods, list):
+            errors.append(
+                f"[CTA-MODALITY-INVALID]{line_tag_rm} Competency '{cid}' recommended_modalities must be a list of canonical modality strings."
+            )
+        elif len(rec_mods) == 0:
+            if require_modalities:
+                errors.append(
+                    f"[CTA-MODALITY-MISSING]{line_tag_rm} Competency '{cid}' has empty recommended_modalities; "
+                    f"contract v2 requires {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} canonical modalities."
+                )
+        else:
+            invalid_rm = False
+            for rm in rec_mods:
+                if not isinstance(rm, str) or rm not in _VALID_RECOMMENDED_MODALITIES:
+                    invalid_rm = True
+                    errors.append(
+                        f"[CTA-MODALITY-INVALID]{line_tag_rm} Competency '{cid}' has invalid recommended_modality '{rm}'. "
+                        f"Allowed: {sorted(_VALID_RECOMMENDED_MODALITIES)}"
+                    )
+            if not invalid_rm and (ctype == "skill" or str(cid).startswith("Hab-")) and "multiple_choice_7_options" in rec_mods:
+                errors.append(
+                    f"[M20-MC7-CAP]{line_tag_rm} Competency '{cid}' (skill) cannot include 'multiple_choice_7_options' (MC7) "
+                    f"in recommended_modalities (0 MC7 allowed in Skill competencies)."
+                )
+            if not invalid_rm and "multiple_choice_7_options" in rec_mods and len(distractors) < 6:
+                errors.append(
+                    f"[CTA-MC7-DISTRACTORS]{line_tag_rm} Competency '{cid}' ({ctype}) includes "
+                    f"'multiple_choice_7_options' (MC7) in recommended_modalities but only declares "
+                    f"{len(distractors)} distractors (MC7 requires >= 6 distinct distractors; "
+                    f"either declare >= 6 distractors or remove 'multiple_choice_7_options')."
+                )
+            if require_modalities and not invalid_rm:
+                unique_rm_count = len(set(m for m in rec_mods if isinstance(m, str)))
+                if unique_rm_count != len(rec_mods):
+                    errors.append(
+                        f"[CTA-MODALITY-RANGE]{line_tag_rm} Competency '{cid}' has duplicate entries in recommended_modalities ({rec_mods}). "
+                        f"Must declare {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY} unique canonical modalities."
+                    )
+                if not (_MIN_MODALITIES_PER_COMPETENCY <= len(rec_mods) <= _MAX_MODALITIES_PER_COMPETENCY):
+                    errors.append(
+                        f"[CTA-MODALITY-RANGE]{line_tag_rm} Competency '{cid}' declares {len(rec_mods)} recommended_modalities; "
+                        f"required range is {_MIN_MODALITIES_PER_COMPETENCY}..{_MAX_MODALITIES_PER_COMPETENCY}."
                     )
 
         # Calibrated competency warnings (no hard-fail):
@@ -940,6 +1039,7 @@ def check_cta_part(
     file_path: Optional[Union[str, Path]] = None,
     locator: Optional[JsonLineLocator] = None,
     require_assumptions: bool = False,
+    require_modalities: Optional[bool] = None,
     warnings_out: Optional[List[str]] = None,
 ) -> ValidationResult:
     """Validate sectional CTA part (cta_part_XX.json).
@@ -951,10 +1051,9 @@ def check_cta_part(
     if locator is None:
         locator = JsonLineLocator(file_path)
 
-    eff_require_assumptions = bool(
-        require_assumptions
-        or (isinstance(data, dict) and int(data.get("contract_version", data.get("CTA_CONTRACT_VERSION", 1))) >= 2)
-    )
+    raw_cv = int(data.get("contract_version", data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(data, dict) else 1
+    eff_require_assumptions = bool(require_assumptions or raw_cv >= 2)
+    eff_require_modalities = (raw_cv >= 2) if require_modalities is None else bool(require_modalities)
 
     if isinstance(data, list):
         competencies = data
@@ -983,6 +1082,7 @@ def check_cta_part(
         is_part=True,
         locator=locator,
         require_assumptions=eff_require_assumptions,
+        require_modalities=eff_require_modalities,
         warnings=part_warnings,
     )
     errors.extend(part_errors)
@@ -997,6 +1097,177 @@ def check_cta_part(
     return ValidationResult(len(unique_errors) == 0, unique_errors, part_warnings)
 
 
+def check_cta_bloom_portfolio(
+    competencies: List[Dict[str, Any]],
+    exclude_ids: Optional[Set[str]] = None,
+    warnings: Optional[List[str]] = None,
+    enforce_hard_fail: bool = True,
+) -> List[str]:
+    """Validate adaptive portfolio Bloom floor across eligible contract v2 competencies."""
+    if compute_cta_bloom_portfolio_metrics is None:
+        return []
+    metrics = compute_cta_bloom_portfolio_metrics(competencies, exclude_ids=exclude_ids)
+    if not metrics.get("active_gate") or metrics.get("passes"):
+        return []
+
+    weak_parts: List[str] = []
+    for wc in metrics.get("weak_competencies", []):
+        weak_parts.append(
+            f"{wc['id']} ({wc['type']}, expected={wc['expected_bloom']:.2f}, "
+            f"assumptions={wc['assumptions_count']}, mods={wc['recommended_modalities']})"
+        )
+    weak_str = "; ".join(weak_parts) if weak_parts else "ninguna"
+    msg = (
+        f"[CTA-BLOOM-FLOOR] Portafolio de modalidades por debajo del piso cognitivo adaptativo "
+        f"(evaluadas {metrics['eligible_competencies']} competencias): "
+        f"expected_bloom_index={metrics['expected_bloom_index']:.3f} (piso {metrics['adaptive_bloom_floor']:.3f}), "
+        f"evaluate_capable={metrics['evaluate_capable_ratio']*100:.1f}% (piso {metrics['adaptive_eval_floor']*100:.1f}%), "
+        f"low_modalities={metrics['low_modality_ratio']*100:.1f}% (tope {metrics['adaptive_low_cap']*100:.1f}%). "
+        f"Brechas: {', '.join(metrics['violations'])}. "
+        f"Competencias más débiles a promover: {weak_str}. "
+        f"Acción: usa la 5.ª clave 'adjust_modalities' en cta_harmonize.json para reemplazar modalidades bajas "
+        f"(MC7/concept_matching) por modalidades Evaluate-capable (adversarial_break, proof_dag, multiple_select, "
+        f"o unstructured_model solo si assumptions_count >= 1) sin mutar nodos [BASE]."
+    )
+    if enforce_hard_fail:
+        return [msg]
+    if warnings is not None:
+        warnings.append(msg)
+    return []
+
+
+_DISAMBIG_STOPWORDS: Set[str] = {
+    "de", "la", "el", "en", "y", "a", "o", "e", "los", "las", "del", "al",
+    "un", "una", "unos", "unas", "por", "para", "con", "sin", "sobre", "su",
+    "sus", "que", "se", "es", "son", "como", "entre", "the", "of", "and",
+    "in", "to", "for", "with", "on", "by", "as", "an", "or", "is", "are",
+    "concepto", "concept", "hecho", "fact", "habilidad", "skill",
+    "competencia", "competency", "description", "descripcion",
+}
+
+
+def _normalize_disambig_text(text: str) -> str:
+    """Fold accents, strip non-alphanumeric chars, and lowercase for lexical comparison."""
+    if not text:
+        return ""
+    folded = "".join(
+        ch for ch in unicodedata.normalize("NFKD", str(text))
+        if unicodedata.category(ch) != "Mn"
+    ).lower()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", folded)).strip()
+
+
+def _tokenize_disambig_text(text: str, cid: str = "") -> Set[str]:
+    """Extract normalized non-stopword alphanumeric tokens (len >= 2), excluding own CID tokens."""
+    norm = _normalize_disambig_text(text)
+    if not norm:
+        return set()
+    cid_toks = set(_normalize_disambig_text(cid).split()) if cid else set()
+    return {
+        t for t in norm.split()
+        if len(t) >= 2 and t not in _DISAMBIG_STOPWORDS and t not in cid_toks
+    }
+
+
+def _skeleton_without_index(name: str, cid: str) -> str:
+    """Mask ID and trailing/ordinal index tokens so intentionally indexed pairs are distinguished."""
+    s = _normalize_disambig_text(name)
+    cid_norm = _normalize_disambig_text(cid)
+    if cid_norm:
+        s = re.sub(rf"\b{re.escape(cid_norm)}\b", " ", s)
+    s = re.sub(r"\b(?:[pv]?\d+|i{1,3}|iv|vi{0,3})\b", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def check_cta_disambiguation(
+    competencies: List[Dict[str, Any]],
+    existing_comp_ids: Optional[Set[str]] = None,
+    locator: Optional[JsonLineLocator] = None,
+    warnings: Optional[List[str]] = None,
+) -> List[str]:
+    """D1 curricular disambiguation gate across same-category competencies."""
+    errors: List[str] = []
+    base_ids = set(existing_comp_ids or ())
+    prepared: List[Dict[str, Any]] = []
+
+    for idx, comp in enumerate(competencies):
+        if not isinstance(comp, dict):
+            continue
+        cid = str(comp.get("id") or f"comp_{idx}")
+        ctype = str(comp.get("type") or "").strip().lower()
+        if ctype not in ("fact", "concept", "skill"):
+            continue
+        name = str(comp.get("name") or "")
+        desc = str(comp.get("description_latex") or comp.get("description") or "")
+        norm_name = _normalize_disambig_text(name)
+        skel_name = _skeleton_without_index(name, cid)
+        name_tokens = _tokenize_disambig_text(name, cid=cid)
+        tokens = _tokenize_disambig_text(f"{name} {desc}", cid=cid)
+        prepared.append({
+            "id": cid,
+            "type": ctype,
+            "norm_name": norm_name,
+            "skel_name": skel_name,
+            "name_tokens": name_tokens,
+            "tokens": tokens,
+            "desc_len": len(desc.strip()),
+        })
+
+    for i in range(len(prepared)):
+        c1 = prepared[i]
+        for j in range(i + 1, len(prepared)):
+            c2 = prepared[j]
+            if c1["type"] != c2["type"]:
+                continue
+            if base_ids and c1["id"] in base_ids and c2["id"] in base_ids:
+                continue
+
+            norm1, norm2 = c1["norm_name"], c2["norm_name"]
+            if (
+                norm1 != norm2
+                and c1["skel_name"]
+                and c1["skel_name"] == c2["skel_name"]
+            ):
+                continue
+
+            nt1, nt2 = c1["name_tokens"], c2["name_tokens"]
+            name_sim = 0.0
+            if norm1 and norm2 and norm1 == norm2:
+                name_sim = 1.0
+            elif len(nt1) >= 2 and len(nt2) >= 2:
+                nt_union = nt1 | nt2
+                if nt_union:
+                    name_sim = len(nt1 & nt2) / len(nt_union)
+
+            toks1, toks2 = c1["tokens"], c2["tokens"]
+            jaccard = 0.0
+            if len(toks1) >= 4 and len(toks2) >= 4:
+                union = toks1 | toks2
+                if union:
+                    jaccard = len(toks1 & toks2) / len(union)
+
+            line_no = locator.get_line(c1["id"]) if locator else None
+            line_tag = f" [Línea {line_no}]" if line_no else ""
+            high_jaccard = jaccard >= 0.45 and (
+                (c1["desc_len"] >= 80 and c2["desc_len"] >= 80) or name_sim > 0.0
+            )
+            if name_sim >= 0.60 or high_jaccard:
+                errors.append(
+                    f"[CTA-OVERLAP-HIGH]{line_tag} Solapamiento curricular severo en categoría '{c1['type']}' "
+                    f"entre '{c1['id']}' y '{c2['id']}' (name_sim={name_sim:.2f}, jaccard={jaccard:.2f}). "
+                    f"Desambigua alcance/evaluación o fusionalas antes de particionar shards."
+                )
+            elif jaccard >= 0.30:
+                if warnings is not None:
+                    warnings.append(
+                        f"WARNING: [CTA-OVERLAP-WARN]{line_tag} Solapamiento moderado en categoría '{c1['type']}' "
+                        f"entre '{c1['id']}' y '{c2['id']}' (jaccard={jaccard:.2f}, name_sim={name_sim:.2f}). "
+                        f"Verifica frontera pedagógica clara."
+                    )
+
+    return errors
+
+
 def validate_cta_rules(
     cta_data: Dict[str, Any],
     manifest_data: Optional[Dict[str, Any]] = None,
@@ -1004,17 +1275,19 @@ def validate_cta_rules(
     locator: Optional[JsonLineLocator] = None,
     allowed_prereq_ids: Optional[Set[str]] = None,
     require_assumptions: bool = False,
+    require_modalities: Optional[bool] = None,
     warnings_out: Optional[List[str]] = None,
+    exclude_bloom_ids: Optional[Set[str]] = None,
+    enforce_bloom_gate: Optional[bool] = None,
 ) -> ValidationResult:
     """Validate all cognitive and psychometric rules on cta.json."""
     errors = []
     if locator is None:
         locator = JsonLineLocator(file_path)
 
-    eff_require_assumptions = bool(
-        require_assumptions
-        or int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) >= 2
-    )
+    raw_cv = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(cta_data, dict) else 1
+    eff_require_assumptions = bool(require_assumptions or raw_cv >= 2)
+    eff_require_modalities = (raw_cv >= 2) if require_modalities is None else bool(require_modalities)
 
     # 1. JSON Schema validation
     schema_errs = validate_cta_schema(cta_data, locator=locator)
@@ -1033,11 +1306,12 @@ def validate_cta_rules(
         is_part=False,
         locator=locator,
         require_assumptions=eff_require_assumptions,
+        require_modalities=eff_require_modalities,
         warnings=comp_warnings,
     )
     errors.extend(comp_errors)
 
-    # 3. Prerequisites DAG check (respecting base competencies in --append mode)
+    # Extract base competency IDs (for --append mode) before Bloom portfolio & DAG checks
     delta_info = None
     if manifest_data and isinstance(manifest_data, dict):
         delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
@@ -1047,10 +1321,31 @@ def validate_cta_rules(
     if allowed_prereq_ids:
         existing_comp_ids = existing_comp_ids | set(allowed_prereq_ids)
 
+    # 2b. Portfolio Bloom quality gate [CTA-BLOOM-FLOOR] (global CTA only, v2+, >= 5 delta comps)
+    if eff_require_modalities and enforce_bloom_gate is not False:
+        eff_exclude_bloom = (set(exclude_bloom_ids or ()) | existing_comp_ids) or None
+        bloom_errors = check_cta_bloom_portfolio(
+            competencies=competencies,
+            exclude_ids=eff_exclude_bloom,
+            warnings=comp_warnings,
+            enforce_hard_fail=True,
+        )
+        errors.extend(bloom_errors)
+
+    # 3. Curricular disambiguation gate (D1 overlap check on delta/new pairs)
+    disambig_errors = check_cta_disambiguation(
+        competencies=competencies,
+        existing_comp_ids=existing_comp_ids,
+        locator=locator,
+        warnings=comp_warnings,
+    )
+    errors.extend(disambig_errors)
+
+    # 4. Prerequisites DAG check (respecting base competencies in --append mode)
     dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_comp_ids)
     errors.extend(dag_errors)
 
-    # 4. KaTeX syntax validation
+    # 5. KaTeX syntax validation
     katex_errors = check_cta_katex(cta_data, locator=locator)
     errors.extend(katex_errors)
 
@@ -1076,6 +1371,18 @@ def main():
         action="store_true",
         default=False,
         help="Require assumptions for Skill and Concept competencies (auto-activated if contract_version >= 2)",
+    )
+    parser.add_argument(
+        "--no-require-modalities",
+        action="store_true",
+        default=False,
+        help="Allow omitting recommended_modalities in contract v2 (legacy v1 compatibility)",
+    )
+    parser.add_argument(
+        "--no-bloom-gate",
+        action="store_true",
+        default=False,
+        help="Bypass the [CTA-BLOOM-FLOOR] portfolio gate (for retrospective audits)",
     )
     args = parser.parse_args()
 
@@ -1116,6 +1423,7 @@ def main():
 
     contract_ver = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(cta_data, dict) else 1
     eff_req_assumptions = bool(args.require_assumptions or contract_ver >= 2)
+    eff_req_modalities: Optional[bool] = False if args.no_require_modalities else None
 
     if args.part:
         res = check_cta_part(
@@ -1124,6 +1432,7 @@ def main():
             file_path=cta_file,
             locator=locator,
             require_assumptions=eff_req_assumptions,
+            require_modalities=eff_req_modalities,
         )
         valid, errors = res[0], res[1]
         for w in getattr(res, "warnings", []):
@@ -1142,6 +1451,8 @@ def main():
         file_path=cta_file,
         locator=locator,
         require_assumptions=eff_req_assumptions,
+        require_modalities=eff_req_modalities,
+        enforce_bloom_gate=(False if args.no_bloom_gate else None),
     )
     valid, errors = res[0], res[1]
     for w in getattr(res, "warnings", []):

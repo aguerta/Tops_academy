@@ -662,12 +662,12 @@ TEMPLATES = [
     },
     ("T-C01-02", "C-01", "fill_in_the_blank", gen_c01_2, ver_c01_2, ("medium", "Apply"), stems_2, hints_2, "Step-by-step formal solution evaluating expression @y@ in detail."),
     ("T-C01-03", "C-01", "multiple_select", gen_c01_3, ver_c01_3, ("hard", "Analyze"), stems_3, hints_3, "Step-by-step formal solution verifying each statement for @z@."),
-    ("T-C01-04", "C-01", "multiple_choice_7_options", gen_c01_4, ver_c01_4, ("hard", "Evaluate"), stems_4, hints_4, "Step-by-step formal solution deriving final value @w@ carefully."),
+    ("T-C01-04", "C-01", "fill_in_the_blank", gen_c01_4, ver_c01_4, ("hard", "Evaluate"), stems_4, hints_4, "Step-by-step formal solution deriving final value @w@ carefully."),
 ]
 '''
         shard_py.write_text(shard_code, encoding="utf-8")
 
-        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True, templates_per_modality=1)
         assert success, f"Expected compile_shard to succeed, got errors: {errors}"
         assert errors == []
 

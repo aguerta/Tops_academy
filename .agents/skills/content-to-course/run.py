@@ -24,13 +24,18 @@ import hashlib
 import io
 import json
 import logging
+import math
 import os
+import pickle
 import re
 import subprocess
 import sys
 import time
+import uuid
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 # Safe stdout encoding on Windows
 if hasattr(sys.stdout, "reconfigure"):
@@ -46,6 +51,12 @@ repo_root = skill_dir.parents[2]
 if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
 
+from engine import fast_json
+from engine.build_worker import (
+    build_course_comp_dict as _build_course_comp_dict,
+    init_stage4_worker as _init_stage4_worker,
+    instantiate_single_comp_worker as _instantiate_single_comp_worker,
+)
 from engine.interstage_schemas import ArtifactCertificate, RejectionSpec, verify_certificate
 
 try:
@@ -77,7 +88,16 @@ from dispatch import (
 )
 from engine.assemble import check_course_giveaway_distribution
 from engine.diversity import evaluate_competency_diversity
-from engine.stage_contract import MIN_DIVERSITY_RATIO, is_skill_type, quota_for_type, required_unique_stems, stems_advice, stems_advice_text
+from engine.stage_contract import (
+    DEFAULT_TEMPLATES_PER_MODALITY,
+    MIN_DIVERSITY_RATIO,
+    is_skill_type,
+    quota_for_competency,
+    quota_for_type,
+    required_unique_stems,
+    stems_advice,
+    stems_advice_text,
+)
 from engine.instantiate import instantiate_competency
 from engine.invariants import check_instance_invariants
 from ingest import ingest_course
@@ -319,6 +339,8 @@ def format_compact_json_stdout(
         "stage_log": log_rel,
         "_notice": f"Ultra-compact summary for {total_subagents} subagents. Inspect {orders_rel} with view_file.",
     }
+    if "workflow_script_path" in summary_dict:
+        minimal["workflow_script_path"] = summary_dict["workflow_script_path"]
     return json.dumps(minimal, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -343,6 +365,8 @@ AUXILIARY_STAGES = {
     "repair-matrix": "run_stage_repair_matrix",
     "rejudge": "run_stage_rejudge",
     "rejudge-compare": "run_stage_rejudge_compare",
+    "lqas-rejudge": "run_stage_lqas_rejudge",
+    "lqas-compare": "run_stage_lqas_compare",
     "certify": "run_stage_certify",
     "gates": "run_stage_gates",
     "bootstrap": "run_stage_bootstrap",
@@ -356,8 +380,11 @@ AUXILIARY_STAGES = {
 
 
 def sanitize_slug(name: str) -> str:
-    """Sanitizes a name into an alphanumeric slug with underscores."""
-    s = re.sub(r"[^\w\s-]", "", name.lower())
+    """Sanitizes a name into an ASCII alphanumeric slug with underscores."""
+    import unicodedata
+
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    s = re.sub(r"[^\w\s-]", "", ascii_name.lower())
     s = re.sub(r"[-\s]+", "_", s).strip("_")
     return s or "custom_course"
 
@@ -379,7 +406,8 @@ class PipelineRunner:
         vision: str = "auto",
         legacy_transcribe: bool = False,
         shards_k: Optional[int] = None,
-        comps_per_shard: int = DEFAULT_COMPS_PER_SHARD,
+        comps_per_shard: Optional[int] = None,
+        templates_per_modality: Optional[int] = None,
         order: Optional[Union[str, List[str]]] = None,
         no_handouts: bool = False,
         cta_mode: str = "auto",
@@ -422,6 +450,7 @@ class PipelineRunner:
         self.legacy_transcribe = legacy_transcribe
         self.shards_k = shards_k
         self.comps_per_shard = comps_per_shard
+        self.templates_per_modality = templates_per_modality
         self.order = order
         self.no_handouts = no_handouts
         if str(cta_mode).strip().lower() in ("multiple", "multi", "map-reduce", "map_reduce"):
@@ -600,7 +629,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "prepare", elapsed)
-        record_stage_telemetry(self.work_dir, "00", "prepare", status="completed", metadata={"duration_seconds": elapsed})
+        record_stage_telemetry(self.work_dir, "00", "prepare", status="completed", metadata={"duration_seconds": elapsed}, conv_id=self._resolve_conversation_id())
         print("  [+] Stage 0 (prepare) completed successfully.")
         return prep_res
 
@@ -725,7 +754,7 @@ class PipelineRunner:
                 print(json.dumps(reduce_res, indent=2, ensure_ascii=False))
                 elapsed = time.time() - t0
                 record_stage_timing(self.work_dir, "cta", elapsed)
-                record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "needs_harmonize": True})
+                record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "needs_harmonize": True}, conv_id=self._resolve_conversation_id())
                 return {
                     "paused_for_review": False,
                     "needs_harmonize": True,
@@ -789,7 +818,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "cta", elapsed)
-        record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "competencies": len(comps)})
+        record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "competencies": len(comps)}, conv_id=self._resolve_conversation_id())
 
         if self.review_cta:
             print("\n" + "*" * 70)
@@ -833,7 +862,28 @@ class PipelineRunner:
 
         shards_dir = self.work_dir / "shards"
         shards_dir.mkdir(parents=True, exist_ok=True)
-        res = plan_shards(cta_file, shards_dir, k=self.shards_k, max_comps=self.comps_per_shard)
+        eff_shards_k = self.shards_k
+        eff_comps_per_shard = self.comps_per_shard
+        eff_tpl_per_mod = self.templates_per_modality
+        lock_file = self.work_dir / ".c2c_subagent_lock.json"
+        if lock_file.is_file():
+            try:
+                lock_obj = json.loads(lock_file.read_text(encoding="utf-8"))
+                if eff_shards_k is None and lock_obj.get("shards_k") is not None:
+                    eff_shards_k = int(lock_obj["shards_k"])
+                if eff_comps_per_shard is None and lock_obj.get("comps_per_shard") is not None:
+                    eff_comps_per_shard = int(lock_obj["comps_per_shard"])
+                if eff_tpl_per_mod is None and lock_obj.get("templates_per_modality") is not None:
+                    eff_tpl_per_mod = int(lock_obj["templates_per_modality"])
+            except Exception:
+                pass
+        res = plan_shards(
+            cta_file,
+            shards_dir,
+            k=eff_shards_k,
+            max_comps=eff_comps_per_shard,
+            templates_per_modality=eff_tpl_per_mod,
+        )
 
         # Verificar que exista work/shards/pre_shard_manifest.json (cero fallbacks)
         pre_shard_file = wait_for_file_resilient(shards_dir / "pre_shard_manifest.json")
@@ -846,7 +896,7 @@ class PipelineRunner:
             print(f"      * [{s['shard_id']}] {s['competency_count']} competencies (weight={s['weight']}): {', '.join(s['competency_ids'])}")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "shard", elapsed)
-        record_stage_telemetry(self.work_dir, "02", "shard", status="completed", metadata={"duration_seconds": elapsed, "shards": res.get("total_shards")})
+        record_stage_telemetry(self.work_dir, "02", "shard", status="completed", metadata={"duration_seconds": elapsed, "shards": res.get("total_shards")}, conv_id=self._resolve_conversation_id())
         print("  [+] Stage 2 (shard) completed successfully.")
         return res
 
@@ -920,9 +970,13 @@ class PipelineRunner:
             pre_shard_manifest_p = self.work_dir / "pre_shard_manifest.json"
 
         shard_to_cids: Dict[str, List[str]] = {}
+        manifest_k: Optional[int] = None
         if pre_shard_manifest_p.is_file():
             try:
                 sm_data = json.loads(pre_shard_manifest_p.read_text(encoding="utf-8"))
+                raw_mk = (sm_data.get("stage4_contract") or {}).get("templates_per_modality") or sm_data.get("templates_per_modality")
+                if raw_mk is not None:
+                    manifest_k = max(1, int(raw_mk))
                 shards_info = sm_data.get("shards", [])
                 if isinstance(shards_info, list):
                     for s in shards_info:
@@ -958,6 +1012,7 @@ class PipelineRunner:
             except Exception:
                 pass
 
+        compile_errors: List[str] = []
         if shard_data_files and (compile_shard_mod or compile_shard_script.is_file()):
             print(f"  [*] Compiling {len(shard_data_files)} pending shard data files...")
             cta_mtime = cta_file.stat().st_mtime if cta_file.is_file() else 0.0
@@ -996,30 +1051,62 @@ class PipelineRunner:
                         print(f"  [i] Skipping compilation for {s_data_p.name} (templates up-to-date).")
                         continue
 
+                eff_k = (
+                    max(1, int(self.templates_per_modality))
+                    if self.templates_per_modality is not None
+                    else (manifest_k if manifest_k is not None else DEFAULT_TEMPLATES_PER_MODALITY)
+                )
                 if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
-                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True, min_archetypes=4)
+                    ok, errs = compile_shard_mod.compile_shard(
+                        self.work_dir,
+                        shard_id=shard_id,
+                        strict=True,
+                        min_archetypes=4,
+                        templates_per_modality=eff_k,
+                    )
                     if not ok:
                         logger.warning("Compilation for %s reported issues: %s", shard_id, errs[:3] if errs else "unknown")
+                        compile_errors.extend(errs or [f"[{shard_id}] compile_shard failed"])
                 elif compile_shard_script.is_file():
                     import subprocess
-                    subprocess.run(
-                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "4"],
+                    proc_res = subprocess.run(
+                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "4", "--templates-per-modality", str(eff_k)],
                         check=False,
                     )
+                    if proc_res.returncode != 0:
+                        compile_errors.append(f"[{shard_id}] compile_shard exited with code {proc_res.returncode}")
 
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
+            if compile_errors:
+                raise RuntimeError(
+                    "Stage 3 (templates) compilation failed before generating template .json files:\n  - "
+                    + "\n  - ".join(str(e) for e in compile_errors[:15])
+                )
             raise FileNotFoundError(
                 f"Missing required templates: No .json files found in {templates_dir.resolve()}\n"
                 f"Strict fail-fast: Exercise creator subagents must author templates before this stage."
             )
 
         all_template_files = sorted(list(templates_dir.glob("*.json")))
+        expected_cids_all: Set[str] = {cid for cids_l in shard_to_cids.values() for cid in cids_l if cid}
+        if cta_file.is_file():
+            try:
+                _cta_d = json.loads(cta_file.read_text(encoding="utf-8"))
+                for _c in (_cta_d.get("competencies") or []):
+                    if isinstance(_c, dict) and _c.get("id"):
+                        expected_cids_all.add(str(_c["id"]))
+            except Exception:
+                pass
+        present_cids_all = {tf.stem for tf in all_template_files}
+        missing_cids = sorted(expected_cids_all - present_cids_all)
+        for m_cid in missing_cids:
+            compile_errors.append(f"[{m_cid}] Missing compiled template file 'templates/{m_cid}.json'.")
 
         # Cryptographic fast-path: verify shard_XX.cert.json receipts (< 5 ms)
         certified_cids: Set[str] = set()
         certified_template_files: Set[Path] = set()
 
-        if not getattr(self, "force_recheck", False) and cta_file.is_file():
+        if not getattr(self, "force_recheck", False) and not compile_errors and not missing_cids and cta_file.is_file():
             cta_bytes = cta_file.read_bytes()
             cta_sha = hashlib.sha256(cta_bytes).hexdigest()
 
@@ -1086,18 +1173,23 @@ class PipelineRunner:
 
         uncertified_templates = [tf for tf in all_template_files if tf not in certified_template_files]
 
-        if not getattr(self, "force_recheck", False) and len(certified_template_files) == len(all_template_files) and len(all_template_files) > 0:
+        if not getattr(self, "force_recheck", False) and not compile_errors and not missing_cids and len(certified_template_files) == len(all_template_files) and len(all_template_files) > 0:
             print(f"  [+] Fast-path < 5 ms: All {len(all_template_files)} template(s) cryptographically certified via shard_XX.cert.json.")
             is_valid = True
             errors = []
             (self.work_dir / "template_failures.json").unlink(missing_ok=True)
             (self.work_dir / "specific_error_report.json").unlink(missing_ok=True)
             (self.work_dir / "specific_error_report.md").unlink(missing_ok=True)
-        elif uncertified_templates and len(certified_template_files) > 0 and not getattr(self, "force_recheck", False):
+        elif uncertified_templates and len(certified_template_files) > 0 and not getattr(self, "force_recheck", False) and not compile_errors and not missing_cids:
             print(f"  [+] Fast-path < 5 ms: Skipping {len(certified_template_files)} pre-certified template(s). Checking {len(uncertified_templates)} pending template(s)...")
             is_valid, errors = check_templates_file_or_dir(uncertified_templates, cta_path=cta_file)
         else:
             is_valid, errors = check_templates_file_or_dir(templates_dir, cta_path=cta_file)
+        if compile_errors:
+            is_valid = False
+            for ce in compile_errors:
+                if ce not in errors:
+                    errors.append(ce)
 
         # Build errors_by_cid mapping
         errors_by_cid: Dict[str, List[str]] = {}
@@ -1202,7 +1294,7 @@ class PipelineRunner:
         print("  [+] AST whitelist, 50-seed dry-run, invariants, and TPL-D1..D4 passed.")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "templates", elapsed)
-        record_stage_telemetry(self.work_dir, "03", "templates", status="completed", metadata={"duration_seconds": elapsed, "count": len(template_files)})
+        record_stage_telemetry(self.work_dir, "03", "templates", status="completed", metadata={"duration_seconds": elapsed, "count": len(template_files)}, conv_id=self._resolve_conversation_id())
         print("  [+] Stage 3 (templates) completed successfully.")
         return {"status": "PASS", "templates_dir": str(templates_dir.resolve()), "count": len(template_files)}
 
@@ -1226,7 +1318,7 @@ class PipelineRunner:
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
             raise FileNotFoundError(f"Missing templates in {templates_dir.resolve()}")
 
-        cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
+        cta_data = fast_json.read_json(cta_file)
         competencies = cta_data.get("competencies", [])
 
         # Build distractor map
@@ -1239,7 +1331,7 @@ class PipelineRunner:
         # Load all template files grouped by competency_id
         templates_by_comp: Dict[str, List[Dict[str, Any]]] = {}
         for tf in sorted(templates_dir.glob("*.json")):
-            tdata = json.loads(tf.read_text(encoding="utf-8"))
+            tdata = fast_json.read_json(tf)
             if isinstance(tdata, dict) and "templates" in tdata:
                 cid = tdata.get("competency_id", tf.stem)
                 for t in tdata["templates"]:
@@ -1256,55 +1348,62 @@ class PipelineRunner:
                     tdata["competency_id"] = cid
                 templates_by_comp.setdefault(cid, []).append(tdata)
 
-        # Parallel competency question instantiation
+        # Parallel competency question instantiation (process-isolated for QuickJS safety)
         import zlib
-        import os
-        from concurrent.futures import ThreadPoolExecutor
 
-        def _instantiate_single_comp(comp: Dict[str, Any]) -> Tuple[Dict[str, Any], List[Dict[str, Any]], Dict[str, Any]]:
+        worker_payloads: List[Tuple[Dict[str, Any], List[Dict[str, Any]], Optional[Dict[str, Dict[str, Any]]], int]] = []
+        for comp in competencies:
             cid = comp["id"]
-            cat = comp.get("type", "concept").title()
             name = comp.get("name", cid)
-            desc = comp.get("description_latex") or comp.get("description", "")
-            course_comp_dict = {
-                "id": cid,
-                "code": cid.upper(),
-                "name": name,
-                "category": cat,
-                "description": desc,
-                "mastery_target": 100,
-                "prerequisites": comp.get("prerequisites", []),
-            }
-            if cid.upper().startswith("PRE-") or comp.get("is_prerequisite"):
-                course_comp_dict["is_prerequisite"] = True
-            for opt_key in ("session", "unit_index", "evidence", "assumptions", "source_examples"):
-                opt_val = comp.get(opt_key)
-                if opt_val is not None and opt_val != "" and opt_val != []:
-                    course_comp_dict[opt_key] = opt_val
             comp_templates = templates_by_comp.get(cid, [])
             if not comp_templates:
                 raise ValueError(
                     f"No templates found for competency '{cid}' ({name}). "
                     f"Strict fail-fast requires all competencies to have templates."
                 )
-            comp_res = instantiate_competency(
-                competency=comp,
-                templates=comp_templates,
-                cta_distractors_map=distractor_map,
-                seed_offset_base=self.random_seed + (zlib.crc32(cid.encode("utf-8")) % 10000),
-            )
-            comp_questions = comp_res["questions"] if isinstance(comp_res, dict) and "questions" in comp_res else comp_res
-            for q in comp_questions:
-                check_instance_invariants(q, q["interaction_type"])
-            stems = [q["stem"] for q in comp_questions]
-            div_res = evaluate_competency_diversity(stems)
-            return course_comp_dict, comp_questions, div_res
+            seed_offset = self.random_seed + (zlib.crc32(cid.encode("utf-8")) % 10000)
+            worker_payloads.append((comp, comp_templates, None, seed_offset))
 
-        # Sequential execution: PyKaTeX QuickJS C-extension is not thread-safe.
-        # Sequential instantiation takes < 3s for 21 competencies and avoids C-level GIL deadlock.
         comp_results_map: Dict[str, Any] = {}
-        for comp in competencies:
-            comp_results_map[comp["id"]] = _instantiate_single_comp(comp)
+        max_workers = min(6, max(1, (os.cpu_count() or 4) - 2), len(worker_payloads))
+        main_mod = sys.modules.get("__main__")
+        main_file = getattr(main_mod, "__file__", None)
+        can_spawn_pool = bool(main_file and str(main_file) not in ("<stdin>", "-"))
+        if can_spawn_pool and len(worker_payloads) >= 4 and max_workers > 1:
+            # Longest-Processing-Time-First order minimizes tail straggler waiting
+            lpt_payloads = sorted(worker_payloads, key=lambda p: len(p[1]), reverse=True)
+            try:
+                with ProcessPoolExecutor(
+                    max_workers=max_workers,
+                    initializer=_init_stage4_worker,
+                    initargs=(distractor_map,),
+                ) as executor:
+                    for cid, course_comp_dict, comp_questions, div_res in executor.map(
+                        _instantiate_single_comp_worker, lpt_payloads
+                    ):
+                        comp_results_map[cid] = (course_comp_dict, comp_questions, div_res)
+            except (OSError, PermissionError, BrokenProcessPool, pickle.PicklingError) as pool_err:
+                logger.warning("Stage 4 ProcessPoolExecutor unavailable (%s); falling back to sequential.", pool_err)
+                comp_results_map.clear()
+
+        if len(comp_results_map) != len(worker_payloads):
+            for comp, comp_templates, _, seed_offset in worker_payloads:
+                cid = comp["id"]
+                course_comp_dict = _build_course_comp_dict(comp)
+                comp_res = instantiate_competency(
+                    competency=comp,
+                    templates=comp_templates,
+                    cta_distractors_map=distractor_map,
+                    seed_offset_base=seed_offset,
+                )
+                comp_questions = (
+                    comp_res["questions"]
+                    if isinstance(comp_res, dict) and "questions" in comp_res
+                    else comp_res
+                )
+                stems = [q["stem"] for q in comp_questions]
+                div_res = evaluate_competency_diversity(stems)
+                comp_results_map[cid] = (course_comp_dict, comp_questions, div_res)
 
         # Strictly preserve the exact pedagogical sequence of competencies as declared in cta.json
         all_questions: List[Dict[str, Any]] = []
@@ -1318,7 +1417,7 @@ class PipelineRunner:
             course_comp_dict, comp_questions, div_res = comp_results_map[cid]
             course_competencies_output.append(course_comp_dict)
 
-            quota = quota_for_type(cat)
+            quota = quota_for_competency(cat, len(templates_by_comp.get(cid, [])))
             div_ratio = div_res["diversity_ratio"]
             unique_c = div_res["unique_masked"]
             total_c = div_res["total"]
@@ -1343,7 +1442,7 @@ class PipelineRunner:
             all_questions.extend(comp_questions)
 
         if stem_gate_failures:
-            from compile_shard import ShardDataLineLocator
+            from engine.shard_locator import ShardDataLineLocator
             shards_dir = self.work_dir / "shards"
             manifest_p = shards_dir / "pre_shard_manifest.json"
             if not manifest_p.is_file():
@@ -1379,9 +1478,12 @@ class PipelineRunner:
             for f_item in stem_gate_failures:
                 f_cid = f_item["cid"]
                 is_sk = is_skill_type(f_item["cat"])
+                c_tpls = templates_by_comp.get(f_cid, [])
+                n_arch = max(4, len(c_tpls))
                 req_u = required_unique_stems(f_item["quota"])
-                req_pt = stems_advice("skill" if is_sk else "concept")["per_tpl"]
-                tot_pt = stems_advice("skill" if is_sk else "concept")["total"]
+                adv_info = stems_advice("skill" if is_sk else "concept", min_archetypes=n_arch, quota=f_item["quota"])
+                req_pt = adv_info["per_tpl"]
+                tot_pt = adv_info["total"]
                 cat_lbl = "skills" if is_sk else "concepts/facts"
                 s_id = cid_to_shard.get(f_cid, "shard_01")
                 isolated_fix_p = shards_dir / "shard_fixes" / s_id / f"{f_cid}.py"
@@ -1390,7 +1492,6 @@ class PipelineRunner:
                 py_p = fix_p if fix_p.is_file() else (shards_dir / f"{s_id}_data.py")
                 s_file_rel = f"shards/shard_fixes/{s_id}/{f_cid}.py" if isolated_fix_p.is_file() else (f"shards/shard_fixes/{f_cid}.py" if flat_fix_p.is_file() else f"shards/{s_id}_data.py")
                 loc_inst = ShardDataLineLocator(py_p) if py_p.is_file() else None
-                c_tpls = templates_by_comp.get(f_cid, [])
                 for t_i, t_d in enumerate(c_tpls):
                     t_id = t_d.get("id") or t_d.get("template_id") or f"T-{f_cid}-{t_i+1:02d}"
                     t_info = loc_inst.find_tuple_for_question(f_cid, template_id=t_id) if loc_inst else None
@@ -1505,10 +1606,10 @@ class PipelineRunner:
         print(f"  [+] Anti-giveaway distribution: longest={longest_pct:.1f}%, shortest={shortest_pct:.1f}%")
 
         course_file = self.work_dir / "course.json"
-        course_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        fast_json.write_json(course_file, course_data, indent=True)
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "build", elapsed)
-        record_stage_telemetry(self.work_dir, "04", "build", status="completed", metadata={"duration_seconds": elapsed, "total_questions": len(all_questions)})
+        record_stage_telemetry(self.work_dir, "04", "build", status="completed", metadata={"duration_seconds": elapsed, "total_questions": len(all_questions)}, conv_id=self._resolve_conversation_id())
         print(f"  [+] Successfully built course bank with {len(all_questions)} questions: {course_file}")
         print("  [+] Stage 4 (build) completed successfully.")
         return {"course_file": str(course_file.resolve()), "total_questions": len(all_questions)}
@@ -1586,7 +1687,7 @@ class PipelineRunner:
         verified_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "verify", elapsed)
-        record_stage_telemetry(self.work_dir, "05", "verify", status="completed", metadata={"duration_seconds": elapsed, "verified_course_path": str(verified_file.resolve())})
+        record_stage_telemetry(self.work_dir, "05", "verify", status="completed", metadata={"duration_seconds": elapsed, "verified_course_path": str(verified_file.resolve())}, conv_id=self._resolve_conversation_id())
         print(f"  [+] Verified course written to: {verified_file}")
         print("  [+] Stage 5 (verify) completed successfully.")
         return {"verified_course_path": str(verified_file.resolve())}
@@ -1676,7 +1777,7 @@ class PipelineRunner:
         lines.append(f"    • Sintaxis KaTeX:           {katex_errs} errores críticos (100% limpio y renderizable)")
         lines.append(f"    • Pistas Socráticas:        {soc_l.get('genuine_socratic_hints_pct', 100.0)}% genuinas (0% boilerplate, 0% envenenadas)")
         lines.append(f"    • Cobertura de Rationales:  {dist_l.get('rationale_coverage_pct', 100.0)}% ({diag_l.get('rationale_uniqueness_pct', 100.0)}% únicos)")
-        lines.append(f"    • Modalidad de Reactivos:   MC7={mod_l.get('mc7_share_pct', 0.0)}%, FIB={mod_l.get('fib_share_pct', 0.0)}%, MS={mod_l.get('ms_share_pct', 0.0)}% ({mod_l.get('active_generation_or_discrimination_pct', 0.0)}% evocación activa)")
+        lines.append(f"    • Modalidad de Reactivos:   MC7={mod_l.get('mc7_share_pct', 0.0)}%, FIB={mod_l.get('fib_share_pct', 0.0)}%, MS={mod_l.get('ms_share_pct', 0.0)}%, M20={mod_l.get('bloom_superior_share_pct', 0.0)}% ({mod_l.get('active_generation_or_discrimination_pct', 0.0)}% evocación activa)")
         lines.append(f"    • Progresión ZPD:           {zpd_l.get('three_band_competencies_count', 0)}/{total_comps} competencias con 3 bandas ('easy', 'medium', 'hard')")
         lines.append(f"    • Bloom Superior en Skills: {zpd_l.get('skill_higher_bloom_pct', 100.0)}% en Apply+")
 
@@ -1857,14 +1958,50 @@ class PipelineRunner:
             tool_calls = summary.get("tool_calls_total", 0)
             tool_errs = summary.get("tool_errors_total", 0)
 
+            # Resolve Gemini 4 Hydrogen USD costs (prefer precomputed summary from audit_engine.py)
+            total_cost_usd = summary.get("total_cost_usd")
+            cb = summary.get("cost_breakdown_usd")
+            stage_costs = summary.get("stage_costs_usd")
+            if total_cost_usd is None or not isinstance(cb, dict) or not isinstance(stage_costs, dict):
+                try:
+                    _run_aud_dir = repo_root / ".agents" / "skills" / "c2c-run-auditor" / "scripts"
+                    if str(_run_aud_dir) not in sys.path:
+                        sys.path.insert(0, str(_run_aud_dir))
+                    from audit_engine import resolve_telemetry_costs  # type: ignore
+                    _resolved_costs = resolve_telemetry_costs(tel)
+                    total_cost_usd = _resolved_costs["total_cost_usd"]
+                    cb = _resolved_costs["cost_breakdown_usd"]
+                    stage_costs = _resolved_costs["stage_costs_usd"]
+                except Exception:
+                    _raw_in = (in_tok / 1_000_000.0) * 1.50
+                    _raw_out = (out_tok / 1_000_000.0) * 7.50
+                    _raw_c = (cache_tok / 1_000_000.0) * 0.075
+                    total_cost_usd = round(_raw_in + _raw_out + _raw_c, 4)
+                    cb = {
+                        "input_usd": round(_raw_in, 4),
+                        "output_usd": round(_raw_out, 4),
+                        "cache_read_usd": round(_raw_c, 4),
+                        "total_usd": total_cost_usd,
+                    }
+                    stage_costs = {}
+
+            q_cnt = workload.get("questions_count", 0) or 0
+            c_cnt = workload.get("competencies_count", 0) or 0
+            _raw_uq = unit.get("usd_per_question")
+            usd_per_q = float(_raw_uq) if _raw_uq is not None else (round(float(total_cost_usd) / q_cnt, 4) if q_cnt else 0.0)
+            _raw_uc = unit.get("usd_per_competency")
+            usd_per_comp = float(_raw_uc) if _raw_uc is not None else (round(float(total_cost_usd) / c_cnt, 4) if c_cnt else 0.0)
+
             lines.extend([
                 f"  Tiempo Total de Pared:        {wall_min:.2f} min ({wall_sec:.0f}s) | Cómputo: {comp_min:.2f} min | Speedup: {speedup:.2f}x",
                 f"  Subagentes Desplegados:       {sub_total} | Intervenciones Manuales: {interventions}",
                 f"  Consumo Total de Tokens:      {tot_tok:,} ({act_tok:,} activos: In={in_tok:,}, Out={out_tok:,}, Think={think_tok:,} | Cache={cache_tok:,})",
+                f"  Costo Estimado (Hydrogen):    ${float(total_cost_usd):.4f} USD (In=${cb.get('input_usd', 0.0):.4f} @ $1.50/1M | Out+Think=${cb.get('output_usd', 0.0):.4f} @ $7.50/1M | Cache=${cb.get('cache_read_usd', 0.0):.4f} @ $0.075/1M)",
                 f"  Llamadas a Herramientas:      {tool_calls:,} llamadas ({tool_errs} errores)",
                 "",
                 "  📈 Unit Economics Normalizados:",
                 f"    • Tokens / Pregunta:        {unit.get('tokens_per_question', 0.0):,.1f} tot ({unit.get('active_tokens_per_question', 0.0):,.1f} activos)",
+                f"    • Costo Unitario (USD):     ${usd_per_q:.4f} USD/preg  |  ${usd_per_comp:.4f} USD/comp",
                 f"    • Velocidad de Entrega:     {unit.get('seconds_per_question', 0.0):.2f} s/preg  |  Throughput: {unit.get('questions_per_minute', 0.0):.2f} preg/min",
                 f"    • Tokens / Competencia:     {unit.get('tokens_per_competency', 0.0):,.1f} tot ({unit.get('author_tokens_per_competency', 0.0):,.1f} autoría)",
             ])
@@ -1889,19 +2026,33 @@ class PipelineRunner:
             cta_wall = s1b.get("total_stage_wall_time", 0.0)
             cta_tok = s1b.get("total_active_tokens", 0)
 
+            s1a_usd = float(stage_costs.get("stage_1a_vision", s1a.get("cost_usd", 0.0)))
+            s1b_usd = float(stage_costs.get("stage_1b_cta", s1b.get("cost_usd", 0.0)))
+            s3_usd = float(stage_costs.get("stage_3_authors", s3.get("cost_usd", 0.0)))
+            s3b_usd = float(stage_costs.get("stage_3b_repairs", s3b.get("cost_usd", 0.0)))
+            s5_usd = float(stage_costs.get("stage_5_judges", s5.get("cost_usd", 0.0)))
+            orch_usd = float(stage_costs.get("orchestrator", 0.0))
+            oth_usd = float(stage_costs.get("other_subagents", 0.0))
+
             lines.extend([
                 "",
-                "  ⏱️  Desglose por Etapas / Secciones:",
-                f"    • Stage 0  (Bootstrap/Prep): {prep_dur:.2f}s CLI",
-                f"    • Stage 1A (Visión):         {s1a.get('agents_count', 0)} agentes | {s1a.get('max_wall_time_seconds', 0.0):.1f}s pared | {s1a.get('total_active_tokens', 0):,} tok activos",
-                f"    • Stage 1B (CTA):            {cta_agents} agentes | {cta_wall:.1f}s pared | {cta_tok:,} tok activos | {workload.get('competencies_count', 0)} comps",
-                f"    • Stage 2  (Sharding):       {shard_dur:.2f}s CLI | {workload.get('shards_count', 0)} shards",
-                f"    • Stage 3  (Autores):        {s3.get('shards_count', 0)} shards | min={s3.get('min_duration_seconds', 0.0):.1f}s / med={s3.get('median_duration_seconds', 0.0):.1f}s / max={s3.get('max_duration_seconds', 0.0):.1f}s | {s3.get('total_author_active_tokens', 0):,} tok activos",
+                "  ⏱️  Desglose por Etapas / Secciones (con Costos Gemini 4 Hydrogen):",
+                f"    • Stage 0  (Bootstrap/Prep): {prep_dur:.2f}s CLI | $0.0000 USD",
+                f"    • Stage 1A (Visión):         {s1a.get('agents_count', 0)} agentes | {s1a.get('max_wall_time_seconds', 0.0):.1f}s pared | {s1a.get('total_active_tokens', 0):,} tok activos | ${s1a_usd:.4f} USD",
+                f"    • Stage 1B (CTA):            {cta_agents} agentes | {cta_wall:.1f}s pared | {cta_tok:,} tok activos | {workload.get('competencies_count', 0)} comps | ${s1b_usd:.4f} USD",
+                f"    • Stage 2  (Sharding):       {shard_dur:.2f}s CLI | {workload.get('shards_count', 0)} shards | $0.0000 USD",
+                f"    • Stage 3  (Autores):        {s3.get('shards_count', 0)} shards | min={s3.get('min_duration_seconds', 0.0):.1f}s / med={s3.get('median_duration_seconds', 0.0):.1f}s / max={s3.get('max_duration_seconds', 0.0):.1f}s | {s3.get('total_author_active_tokens', 0):,} tok activos | ${s3_usd:.4f} USD",
                 f"       └─ Straggler Crítico:     {s3.get('straggler_shard', 'N/A')} ({s3.get('max_duration_seconds', 0.0):.1f}s, +{s3.get('straggler_delay_vs_median', 0.0):.1f}s vs mediana)",
-                f"    • Stage 3B (Reparaciones):   {s3b.get('repairs_count', 0)} reparaciones | max={s3b.get('max_duration_seconds', 0.0):.1f}s | {s3b.get('total_active_tokens', 0):,} tok activos",
-                f"    • Stage 4  (Templates/Build):{tpl_dur + bld_dur:.2f}s CLI (templates={tpl_dur:.2f}s, build={bld_dur:.2f}s) | {workload.get('questions_count', 0)} reactivos",
-                f"    • Stage 5  (Blind Judges):   {s5.get('judges_count', 0)} jueces | {s5.get('max_judge_duration', 0.0):.1f}s pared | {s5.get('batch_items_count', 0)} ítems | {s5.get('agreement_rate', 1.0) * 100:.1f}% acuerdo ({s5.get('discrepancies_count', 0)} discrepancias)",
-                f"    • Stage 6  (Publish):        {pub_dur:.2f}s CLI",
+                f"    • Stage 3B (Reparaciones):   {s3b.get('repairs_count', 0)} reparaciones | max={s3b.get('max_duration_seconds', 0.0):.1f}s | {s3b.get('total_active_tokens', 0):,} tok activos | ${s3b_usd:.4f} USD",
+                f"    • Stage 4  (Templates/Build):{tpl_dur + bld_dur:.2f}s CLI (templates={tpl_dur:.2f}s, build={bld_dur:.2f}s) | {workload.get('questions_count', 0)} reactivos | $0.0000 USD",
+                f"    • Stage 5  (Blind Judges):   {s5.get('judges_count', 0)} jueces | {s5.get('max_judge_duration', 0.0):.1f}s pared | {s5.get('batch_items_count', 0)} ítems | {s5.get('agreement_rate', 1.0) * 100:.1f}% acuerdo ({s5.get('discrepancies_count', 0)} discrepancias) | ${s5_usd:.4f} USD",
+                f"    • Stage 6  (Publish):        {pub_dur:.2f}s CLI | $0.0000 USD",
+                f"    • Orquestador (Director):    {wall_sec:.0f}s pared | ${orch_usd:.4f} USD",
+            ])
+            if oth_usd > 0:
+                lines.append(f"    • Otros Subagentes:          ${oth_usd:.4f} USD")
+            lines.extend([
+                f"    • TOTAL CORRIDA (Hydrogen):  ${float(total_cost_usd):.4f} USD",
                 "",
                 "  📁 Reportes del Pipeline Auditor Guardados:",
                 f"    • Informe Auditor (MD):      {audit_info.get('report_md', '')}",
@@ -1913,10 +2064,45 @@ class PipelineRunner:
             state = audit_info.get("state", {})
             stages_dict = state.get("stages", {}) if isinstance(state, dict) else {}
             lines.append("  (Modo Fallback Local — Sin transcript de conversación activo)")
+            try:
+                _run_aud_dir = repo_root / ".agents" / "skills" / "c2c-run-auditor" / "scripts"
+                if str(_run_aud_dir) not in sys.path:
+                    sys.path.insert(0, str(_run_aud_dir))
+                from audit_engine import compute_hydrogen_cost_usd as _h2_cost  # type: ignore
+            except Exception:
+                def _h2_cost(input_tokens: int = 0, output_tokens: int = 0, cache_read_tokens: int = 0) -> Dict[str, float]:
+                    _raw_i = (max(0, int(input_tokens or 0)) / 1_000_000.0) * 1.50
+                    _raw_o = (max(0, int(output_tokens or 0)) / 1_000_000.0) * 7.50
+                    _raw_c = (max(0, int(cache_read_tokens or 0)) / 1_000_000.0) * 0.075
+                    return {
+                        "input_usd": round(_raw_i, 4),
+                        "output_usd": round(_raw_o, 4),
+                        "cache_read_usd": round(_raw_c, 4),
+                        "total_usd": round(_raw_i + _raw_o + _raw_c, 4),
+                    }
+
             if stages_dict:
+                fb_tot_in = fb_tot_out = fb_tot_cache = 0
                 for st_key, st_val in stages_dict.items():
                     if isinstance(st_val, dict):
-                        lines.append(f"    • {st_key:<20}: {st_val.get('duration_seconds', 0.0):.2f}s ({st_val.get('status', 'unknown')})")
+                        st_tok = st_val.get("tokens") or {}
+                        st_in = int(st_tok.get("input", 0) or 0)
+                        st_out = int(st_tok.get("output", 0) or 0)
+                        st_cch = int(st_tok.get("cached", 0) or 0)
+                        fb_tot_in += st_in
+                        fb_tot_out += st_out
+                        fb_tot_cache += st_cch
+                        st_usd = _h2_cost(st_in, st_out, st_cch)["total_usd"]
+                        lines.append(
+                            f"    • {st_key:<20}: {st_val.get('duration_seconds', 0.0):.2f}s "
+                            f"({st_val.get('status', 'unknown')}) | ${st_usd:.4f} USD"
+                        )
+                tot_st_tok = state.get("total_tokens") if isinstance(state.get("total_tokens"), dict) else {}
+                t_in = int(tot_st_tok.get("input", fb_tot_in) or fb_tot_in)
+                t_out = int(tot_st_tok.get("output", fb_tot_out) or fb_tot_out)
+                t_cch = int(tot_st_tok.get("cached", fb_tot_cache) or fb_tot_cache)
+                tot_fb_usd = _h2_cost(t_in, t_out, t_cch)["total_usd"]
+                lines.append(f"    • TOTAL CORRIDA (Hydrogen):  ${tot_fb_usd:.4f} USD")
             elif timings:
                 for t_key, t_val in timings.items():
                     if isinstance(t_val, (int, float)):
@@ -2015,7 +2201,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "publish", elapsed)
-        record_stage_telemetry(self.work_dir, "06", "publish", status="completed", metadata={"duration_seconds": elapsed, "published_json": str(pub_result.published_json_path)})
+        record_stage_telemetry(self.work_dir, "06", "publish", status="completed", metadata={"duration_seconds": elapsed, "published_json": str(pub_result.published_json_path)}, conv_id=self._resolve_conversation_id())
 
         print("\n" + "=" * 70)
         print("[SUCCESS] COURSE PUBLISHED TO PLATFORM!")
@@ -2247,7 +2433,27 @@ class PipelineRunner:
         if hasattr(self, "work_dir") and self.work_dir:
             self.work_dir.mkdir(parents=True, exist_ok=True)
             (self.work_dir / "subagent_types.json").write_bytes(types_bytes)
-        (skill_dir / "subagent_types.json").write_bytes(types_bytes)
+        target_types_path = skill_dir / "subagent_types.json"
+        should_write_global = True
+        if target_types_path.is_file():
+            try:
+                if target_types_path.read_bytes() == types_bytes:
+                    should_write_global = False
+            except OSError:
+                pass
+        if should_write_global:
+            tmp_types_path = skill_dir / f".subagent_types.{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp"
+            try:
+                tmp_types_path.write_bytes(types_bytes)
+                os.replace(tmp_types_path, target_types_path)
+            except OSError:
+                if tmp_types_path.exists():
+                    try:
+                        tmp_types_path.unlink()
+                    except OSError:
+                        pass
+                if not (target_types_path.is_file() and target_types_path.read_bytes() == types_bytes):
+                    raise
 
         # Guardar y listar rutas individuales en work/dispatch/types/<type_name>.json
         types_dir = self.work_dir / "dispatch" / "types"
@@ -2285,7 +2491,7 @@ class PipelineRunner:
         res = compare_judge_responses(work_dir=self.work_dir)
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "judge_compare", elapsed)
-        record_stage_telemetry(self.work_dir, "05b", "judge_compare", status="completed", metadata={"duration_seconds": elapsed, "passed": res.get("passed", False)})
+        record_stage_telemetry(self.work_dir, "05b", "judge_compare", status="completed", metadata={"duration_seconds": elapsed, "passed": res.get("passed", False)}, conv_id=self._resolve_conversation_id())
         passed = res.get("passed", False)
         print(f"  [+] Judge comparison finished with status: {'PASSED' if passed else 'DISCORDANCES'}")
         print(f"  [+] Agreement rate: {res.get('agreement_rate', 0.0) * 100:.1f}% ({res.get('agreed_items', 0)}/{res.get('total_items', 0)})")
@@ -2665,6 +2871,11 @@ class PipelineRunner:
         )
         res = dispatch_judges(self.work_dir, ids=target, pointer=not self.no_pointer)
         n_sub = len(res.get("Subagents", []))
+        if target and n_sub == 0:
+            raise RuntimeError(
+                f"Rejudge dispatch produced 0 judges for {len(target)} target(s) "
+                f"({', '.join(target)}). Aborting before empty wave."
+            )
         (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
         (self.work_dir / "dispatch" / "judge_work_orders.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"  [+] Re-judging {len(target)} competency(ies): {', '.join(target)} -> {n_sub} judge(s)")
@@ -2712,6 +2923,128 @@ class PipelineRunner:
         print(f"  [+] Surgical result: {'PASSED' if not partial.get('disagreements') else 'DISCORDANCES'} for {sorted(target)}")
         print(f"  [+] Merged report: status={merged['status']}, remaining disagreements={len(discord)}")
         record_stage_timing(self.work_dir, "rejudge_compare", time.time() - t0)
+        return merged
+
+    def run_stage_lqas_rejudge(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Two-Stage Adaptive LQAS follow-up for single-seed kernel_override templates.
+
+        Dispatches 2 additional rotated seeds per template that received kernel_override=True on k=1
+        so Anti-false-consensus Guard (c) (template_failed_seeds >= 2) can decide with statistical evidence.
+        """
+        import shutil
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: LQAS-REJUDGE] Adaptive Two-Stage LQAS confirmation for k=1 kernel_override templates")
+        print("=" * 70)
+        jr_p = self.work_dir / "judge_report.json"
+        if not jr_p.is_file():
+            print("  [+] No judge_report.json found. Nothing to confirm.")
+            return {"status": "nothing_to_rejudge", "ids": []}
+        jr_data = json.loads(jr_p.read_text(encoding="utf-8"))
+        target_tids = [str(x).strip() for x in (jr_data.get("single_seed_override_templates") or []) if str(x).strip()]
+        if not target_tids:
+            print("  [+] No single-seed kernel_override templates require LQAS confirmation.")
+            return {"status": "nothing_to_rejudge", "ids": []}
+
+        base_p = self.work_dir / "judge_report_baseline.json"
+        shutil.copy2(jr_p, base_p)
+
+        verif_dir = self.work_dir / "verification"
+        verif_dir.mkdir(parents=True, exist_ok=True)
+        (verif_dir / "lqas_prior_failures.json").write_text(
+            json.dumps({tid: 1 for tid in target_tids}, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        # Archive stale responses before micro-wave
+        archive = self.work_dir / "judge_archive" / f"lqas_{time.strftime('%Y%m%d_%H%M%S')}"
+        for d in (self.work_dir, verif_dir, self.work_dir / "judges"):
+            if d.is_dir():
+                for f in list(d.glob("judge_responses*.json")):
+                    archive.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(f), str(archive / f"{d.name}__{f.name}"))
+
+        (self.work_dir / "lqas_scope.json").write_text(
+            json.dumps({"template_ids": target_tids, "baseline": base_p.name}, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        max_j = 1 if len(target_tids) * 2 <= 20 else min(10, math.ceil((len(target_tids) * 2) / 20))
+        res = dispatch_judges(
+            self.work_dir,
+            ids=target_tids,
+            samples_per_template=2,
+            overlap_ratio=0.0,
+            stem_variant_offset=1,
+            max_judges=max_j,
+            pointer=not self.no_pointer,
+        )
+        n_sub = len(res.get("Subagents", []))
+        if target_tids and n_sub == 0:
+            raise RuntimeError(
+                f"LQAS rejudge dispatch produced 0 judges for {len(target_tids)} template(s) "
+                f"({', '.join(target_tids)}). Aborting before empty wave."
+            )
+        (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "dispatch" / "judges.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] LQAS micro-wave: confirming {len(target_tids)} template(s) ({', '.join(target_tids)}) x 2 seeds -> {n_sub} judge(s)")
+        print("  [>] After LQAS judge replies: run.py --stage lqas-compare")
+        record_stage_timing(self.work_dir, "lqas_rejudge", time.time() - t0)
+        return {"status": "dispatched", "ids": target_tids, "subagents_count": n_sub, "Subagents": res.get("Subagents", [])}
+
+    def run_stage_lqas_compare(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Compare LQAS confirmation responses with accumulated prior failure counts."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: LQAS-COMPARE] Evaluating Two-Stage LQAS confirmation with Guard (c)")
+        print("=" * 70)
+        scope_p = self.work_dir / "lqas_scope.json"
+        base_p = self.work_dir / "judge_report_baseline.json"
+        if not scope_p.is_file():
+            raise RuntimeError("No lqas_scope.json: run --stage lqas-rejudge first.")
+        target_tids = set(json.loads(scope_p.read_text(encoding="utf-8")).get("template_ids", []))
+        partial = compare_judge_responses(work_dir=self.work_dir)
+        (self.work_dir / "judge_report_lqas.json").write_text(json.dumps(partial, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        # Clean up prior failures marker after evaluation
+        prior_p = self.work_dir / "verification" / "lqas_prior_failures.json"
+        if prior_p.is_file():
+            try:
+                prior_p.unlink()
+            except Exception:
+                pass
+
+        base = json.loads(base_p.read_text(encoding="utf-8")) if base_p.is_file() else {"disagreements": [], "total_items": 0, "agreed_items": 0}
+        existing_disc = list(base.get("disagreements") or base.get("discordances") or [])
+        new_disc = list(partial.get("disagreements") or [])
+        discord = existing_disc + new_disc
+        total_items = int(base.get("total_items", base.get("total", 0)) or 0) + int(partial.get("total_items", 0) or 0)
+        agreed = max(0, total_items - len(discord))
+        failed_c = sorted({str(d.get("cid") or d.get("competency_id") or "") for d in discord if d.get("cid") or d.get("competency_id")})
+        failed_t = sorted({str(d.get("template_id")) for d in discord if d.get("template_id")})
+        complete = bool(base.get("all_complete", True)) and bool(partial.get("all_complete", False)) and total_items > 0
+        passed = complete and not discord
+        merged = dict(base)
+        merged.update({
+            "total": total_items,
+            "total_items": total_items,
+            "agreed_items": agreed,
+            "agreement_rate": round(agreed / total_items, 4) if total_items else 0.0,
+            "passed": passed,
+            "status": "passed" if passed else ("incomplete" if not complete else "disagreements"),
+            "all_complete": complete,
+            "failed_templates": failed_t,
+            "failed_competencies": failed_c,
+            "affected_template_ids": failed_t,
+            "disagreements": discord,
+            "discordances": discord,
+            "lqas_confirmed_templates": sorted(target_tids - set(failed_t)),
+            "lqas_rejected_templates": sorted(target_tids & set(failed_t)),
+            "lqas_followup_required": False,
+        })
+        (self.work_dir / "judge_report.json").write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
+        base_p.write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] LQAS confirmed={merged['lqas_confirmed_templates']} | rejected={merged['lqas_rejected_templates']}")
+        record_stage_timing(self.work_dir, "lqas_compare", time.time() - t0)
         return merged
 
     def run_stage_certify(self) -> Dict[str, Any]:
@@ -2817,18 +3150,22 @@ class PipelineRunner:
             "error_sha256_streak": 0,
             "max_error_streak": 3,
             "exempt_conversation_ids": [],
+            "shards_k": self.shards_k,
+            "comps_per_shard": self.comps_per_shard,
+            "templates_per_modality": self.templates_per_modality,
         }
         lock_file.write_text(json.dumps(lock_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "bootstrap", elapsed)
-        record_stage_telemetry(self.work_dir, "00b", "bootstrap", status="completed", metadata={"duration_seconds": elapsed, "lock_file": str(lock_file.resolve())})
+        record_stage_telemetry(self.work_dir, "00b", "bootstrap", status="completed", metadata={"duration_seconds": elapsed, "lock_file": str(lock_file.resolve())}, conv_id=self._resolve_conversation_id())
 
         summary = {
             "status": "ready_for_cta",
             "course_id": self.course_id,
             "work_dir": self.work_dir.resolve().as_posix(),
             "lock_file": lock_file.resolve().as_posix(),
+            "workflow_script_path": str((Path(__file__).resolve().parent / "workflows" / "c2c_wave_workflow.py").resolve()),
             "type_spec_files": [Path(p).resolve().as_posix() for p in type_files],
             "cta_unit_count": len(cta_subagents),
             "Subagents": cta_subagents,
@@ -3185,7 +3522,7 @@ def main() -> None:
         "prepare", "ingest", "cta", "shard", "templates", "build", "verify", "publish",
         "0", "1", "2", "3", "4", "5", "6",
         "cta-merge", "cta-reduce", "cta-apply", "dispatch", "scope-check",
-        "define-types", "judge-compare", "repair-matrix", "gates", "rejudge", "rejudge-compare", "certify",
+        "define-types", "judge-compare", "repair-matrix", "gates", "rejudge", "rejudge-compare", "lqas-rejudge", "lqas-compare", "certify",
         "bootstrap", "unlock", "wave-status",
         "dispatch-cta", "dispatch-authors", "dispatch-judges", "judge-generate",
     ]
@@ -3290,8 +3627,14 @@ def main() -> None:
     parser.add_argument(
         "--comps-per-shard",
         type=int,
-        default=DEFAULT_COMPS_PER_SHARD,
-        help="Max non-skill competencies per shard (default 3; skills are capped at 2 per shard).",
+        default=None,
+        help="Max non-skill competencies per shard (default 3, or 2 when templates-per-modality >= 3; skills capped at 2 or 1).",
+    )
+    parser.add_argument(
+        "--templates-per-modality",
+        type=int,
+        default=None,
+        help=f"Minimum distinct non-clone templates per recommended modality (default: {DEFAULT_TEMPLATES_PER_MODALITY}).",
     )
     parser.add_argument(
         "--order",
@@ -3373,6 +3716,7 @@ def main() -> None:
         random_seed=args.seed,
         shards_k=args.shards,
         comps_per_shard=args.comps_per_shard,
+        templates_per_modality=args.templates_per_modality,
         order=order_arg,
         cta_mode=args.cta_mode,
         granularity=args.granularity,

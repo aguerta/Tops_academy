@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Cloud, CloudOff, RefreshCw, Check, Copy, AlertCircle, X, Eye, EyeOff } from 'lucide-react';
 import {
   clearSyncConfig,
   getSyncConfig,
-  saveSyncConfig,
   syncWithGist,
   SyncResult,
 } from '../utils/cloudSync';
@@ -26,6 +25,19 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
   const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>(undefined);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [copiedId, setCopiedId] = useState(false);
+  const isMountedRef = useRef(true);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+        copyTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -56,9 +68,11 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
 
     const trimmedToken = token.trim();
     const trimmedGistId = gistId.trim();
-    saveSyncConfig({ token: trimmedToken, gistId: trimmedGistId, lastSyncedAt });
 
     const result = await syncWithGist({ token: trimmedToken, gistId: trimmedGistId });
+    onSyncCompleted?.(result);
+
+    if (!isMountedRef.current) return;
     setIsSyncing(false);
 
     if (result.status === 'created') {
@@ -78,11 +92,10 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
     } else if (result.status === 'error') {
       setFeedback({ type: 'error', text: result.message });
     }
-
-    onSyncCompleted?.(result);
   };
 
   const handleDisconnect = () => {
+    if (isSyncing) return;
     clearSyncConfig();
     setToken('');
     setGistId('');
@@ -98,8 +111,17 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
     if (!gistId.trim()) return;
     try {
       await navigator.clipboard.writeText(gistId.trim());
+      if (!isMountedRef.current) return;
       setCopiedId(true);
-      setTimeout(() => setCopiedId(false), 2000);
+      if (copyTimerRef.current) {
+        clearTimeout(copyTimerRef.current);
+      }
+      copyTimerRef.current = setTimeout(() => {
+        copyTimerRef.current = null;
+        if (isMountedRef.current) {
+          setCopiedId(false);
+        }
+      }, 2000);
     } catch {}
   };
 
@@ -229,8 +251,9 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
             {isConnected ? (
               <button
                 type="button"
+                disabled={isSyncing}
                 onClick={handleDisconnect}
-                className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CloudOff className="w-3.5 h-3.5" />
                 <span>Desconectar</span>

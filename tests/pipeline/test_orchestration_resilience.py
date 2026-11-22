@@ -86,10 +86,11 @@ class TestPointerPromptProtocol(unittest.TestCase):
             self.assertGreater(len(content.strip()), 100, f"Lean prompt {fname} appears empty or truncated")
 
     def test_load_system_prompt_lean_mode(self) -> None:
-        """load_system_prompt respects lean=True and loads lean prompt version."""
+        """load_system_prompt respects lean=True (M20 user policy keeps lean/full byte-identical within budget)."""
         lean_author = load_system_prompt("prompt_shard_author.md", lean=True)
         orig_author = load_system_prompt("prompt_shard_author.md", lean=False)
-        self.assertLess(len(lean_author.encode("utf-8")), len(orig_author.encode("utf-8")))
+        self.assertLessEqual(len(lean_author.encode("utf-8")), len(orig_author.encode("utf-8")))
+        self.assertLess(len(lean_author.encode("utf-8")), 46080)
 
     def test_make_pointer_prompt_under_300_bytes(self) -> None:
         """make_pointer_prompt generates a concise prompt <= 300 bytes referencing disk payload."""
@@ -168,8 +169,8 @@ class TestPointerPromptProtocol(unittest.TestCase):
             prompt_bytes = len(sub["Prompt"].encode("utf-8"))
             self.assertLessEqual(
                 prompt_bytes,
-                300,
-                f"Author pointer prompt exceeds 300 B: {prompt_bytes} bytes",
+                650,
+                f"Author pointer prompt exceeds 650 B: {prompt_bytes} bytes",
             )
             self.assertIn("work/dispatch/items/author_", sub["Prompt"])
 

@@ -1,12 +1,13 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Economía Abierta y Balanza de Pagos (`eco_101`)
 
-- **Fecha de Evaluación:** 2026-11-18
+- **Fecha de Evaluación:** 2026-11-21
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** OBSERVADO
-- **Calificación Final Certificada:** **13.6 / 20.0 pts**
+- **Calificación Final Certificada:** **12.8 / 20.0 pts**
 - **Quality Tier:** **DEFICIENTE (11.0 - 13.9 pts)**
-- **Mastery Path Readiness Index (MPRI):** **75.05 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Mastery Path Readiness Index (MPRI):** **71.05 / 100.0** (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)
+- **Índice Bloom Ponderado (1–5):** **2.05 / 5.0** (piso adaptativo 3.70 | Analyze+Evaluate: 0.0% | Tier: **BAJO**)
 
 ---
 
@@ -17,10 +18,10 @@
 | **D1: Arquitectura Curricular y Granularidad** | **0.0** | 4.0 | 0% | ❌ Deficiente |
 | **D2: Calidad Psicométrica y Reactivos** | **3.8** | 5.0 | 76% | ⚠️ Observación menor |
 | **D3: Andamiaje y Pistas Socráticas** | **3.8** | 5.0 | 76% | ⚠️ Observación menor |
-| **D4: Alineación Instruccional y ZPD** | **4.0** | 4.0 | 100% | ✅ Impecable |
+| **D4: Alineación Instruccional y ZPD** | **3.2** | 4.0 | 80% | ⚠️ Observación menor |
 | **D5: Ergonomía Técnica y KaTeX** | **2.0** | 2.0 | 100% | ✅ Impecable |
 | **Penalizaciones Duras** | **-0.0** | - | - | ✅ Sin penalizaciones |
-| **TOTAL** | **13.6** | **20.0** | **68.1%** | 🏆 **DEFICIENTE (11.0 - 13.9 pts)** |
+| **TOTAL** | **12.8** | **20.0** | **64.1%** | 🏆 **DEFICIENTE (11.0 - 13.9 pts)** |
 
 ---
 
@@ -35,11 +36,11 @@
 #### D3. Andamiaje y Pistas Socráticas (3.8 / 5.0 pts)
 - Andamiaje formativo: 100.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 1.59% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0).
 
-#### D4. Alineación Instruccional y ZPD (4.0 / 4.0 pts)
-- Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente.
+#### D4. Alineación Instruccional y ZPD (3.2 / 4.0 pts)
+- Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 2.05/5.0 (piso adaptativo 3.70, 0.0% Analyze+Evaluate, tier: BAJO, incoherencias=0).
 
 #### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
-- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos.
+- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas, 0 formatos flotantes/asteriscos crudos y 0 residuos de plantilla/reemplazo (template_vars=0, blind_repl=0).
 
 ---
 
@@ -47,19 +48,19 @@
 
 | Pilar Cognitivo | Puntaje | Máximo | Calificación |
 | :--- | :---: | :---: | :---: |
-| **1. Progresión Adaptativa ZPD y Bloom** | **20.00** | 20.0 | 100.0% |
+| **1. Progresión Adaptativa ZPD y Bloom** | **16.00** | 20.0 | 80.0% |
 | **2. Modalidad de Evocación y Anti-Gaming** | **10.00** | 20.0 | 50.0% |
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **25.00** | 25.0 | 100.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **10.05** | 15.0 | 67.0% |
 | **5. Topología DAG e Interleaving** | **0.00** | 10.0 | 0.0% |
 | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
-| **TOTAL MPRI** | **75.05** | **100.0** | **75.0% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
+| **TOTAL MPRI** | **71.05** | **100.0** | **71.0% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
 
 ---
 
 ### 4. Veredicto y Certificación
 
-El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** (requiere correcciones antes de despliegue pleno) con calificación de **13.6 / 20.0** y MPRI de **75.05 / 100.0**.
+El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** (requiere correcciones antes de despliegue pleno) con calificación de **12.8 / 20.0** y MPRI de **71.05 / 100.0**.
 
 ---
 
@@ -77,9 +78,18 @@ El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** 
     "question_types_distribution": {
       "multiple_choice_7_options": 63
     },
+    "bloom_index": {
+      "weighted_index": 2.048,
+      "adaptive_floor": 3.702,
+      "gap": 1.654,
+      "apply_plus_pct": 28.57,
+      "superior_pct": 0.0,
+      "tier": "BAJO",
+      "coherence_violations_count": 0
+    },
     "platform_status": "OBSERVADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-18"
+    "evaluation_date": "2026-11-21"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -98,27 +108,27 @@ El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** 
       "feedback": "Andamiaje formativo: 100.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 1.59% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0)."
     },
     "instructional_alignment": {
-      "score": 4.0,
+      "score": 3.2,
       "max": 4.0,
-      "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 2.05/5.0 (piso adaptativo 3.70, 0.0% Analyze+Evaluate, tier: BAJO, incoherencias=0)."
     },
     "technical_ergonomics": {
       "score": 2.0,
       "max": 2.0,
-      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación y 0 formatos flotantes/asteriscos crudos."
+      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas, 0 formatos flotantes/asteriscos crudos y 0 residuos de plantilla/reemplazo (template_vars=0, blind_repl=0)."
     }
   },
   "penalties_applied": [],
-  "raw_subtotal": 13.62,
-  "final_score": 13.62,
+  "raw_subtotal": 12.82,
+  "final_score": 12.82,
   "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
   "mastery_path_readiness": {
-    "mpri_score": 75.05,
+    "mpri_score": 71.05,
     "mpri_max": 100.0,
     "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
     "pillars": {
       "zpd_adaptive_progression": {
-        "score": 20.0,
+        "score": 16.0,
         "max": 20.0
       },
       "retrieval_modality_and_anti_gaming": {
@@ -144,7 +154,7 @@ El curso **Economía Abierta y Balanza de Pagos** queda en estado **OBSERVADO** 
     }
   },
   "remediation_actions": [
-    "Elevar calificación global (13.6/20.0 < 14.0 mínimo requerido) atendiendo dimensiones deficitarias."
+    "Elevar calificación global (12.8/20.0 < 14.0 mínimo requerido) atendiendo dimensiones deficitarias."
   ],
   "discovered_lint_rules": [],
   "platform_status": "OBSERVADO"

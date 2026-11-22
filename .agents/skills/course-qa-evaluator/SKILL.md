@@ -154,6 +154,11 @@ Al recibir las notificaciones de finalización:
 2. Genera la **Matriz Comparativa Consolidada** en `reports/qa_audits/SUITE_QA_AUDIT_REPORT.md`.
 3. Revisa los campos `discovered_lint_rules` reportados por los subagentes para retroalimentar `scripts/standardized_audit_engine.py` en caso de nuevos patrones.
 
+#### Regla Obligatoria de Persistencia Histórica (QA Reports & Archive)
+Toda ejecución agéntica de QA (ya sea individual sobre un curso, en suite paralela, o disparada como verificación post-pipeline desde otra skill/conversación) **DEBE** persistir siempre sus entregables en el repositorio:
+1. Escribir o sobrescribir el reporte final completo en `reports/qa_audits/<course_id>_qa_report.md` (nunca dejarlo únicamente en un artifact de conversación ni en memoria).
+2. Conservar intactos todos los respaldos y trazas previas en `reports/audits_archive/<course_id>/` (archivando cualquier reporte previo antes de regenerar cuando se ejecuta una nueva ronda, sin borrar ni sobrescribir el historial archivado).
+
 ---
 
 ## 4. Definición del Subagente `course_qa_auditor`
@@ -176,7 +181,7 @@ Al registrar el subagente vía `define_subagent`:
 1. **Arquitectura y Granularidad (0 a 4 pts)**: Atomicidad de micro-competencias, balance cognitivo (Hechos/Conceptos/Habilidades) y modelado de prerrequisitos.
 2. **Calidad de Evaluación y Reactivos (0 a 5 pts)**: Variedad de ítems (MC7, MS, FIB), distractores con rationales diagnósticos reales, cero answer leaks ni metainformación visible delatora.
 3. **Andamiaje y Pistas Progresivas (0 a 5 pts)**: Exactamente 3 a 5 pistas escalonadas (Conceptual $\to$ Procedimental $\to$ Cálculo) y solución detallada con advertencia de ideas erróneas.
-4. **Alineación Instruccional (0 a 4 pts)**: Congruencia semántica estricta con la teoría, sin preguntas huérfanas ni contaminación cruzada.
+4. **Alineación Instruccional (0 a 4 pts)**: Congruencia semántica estricta con la teoría, habilidades en `Apply+`, **Índice Bloom Ponderado (`1–5`) vs piso adaptativo (banda Élite `3.85–4.15`) y coherencia `modalidad × bloom` anti-Goodhart**, sin preguntas huérfanas ni contaminación cruzada.
 5. **Ergonomía Técnica y KaTeX (0 a 2 pts)**: Delimitadores `$` balanceados, sin triples `$$$`, sin llaves dobles `{{...}}` y notación matemática formal preservada.
 
 **Penalizaciones Duras Automáticas**:

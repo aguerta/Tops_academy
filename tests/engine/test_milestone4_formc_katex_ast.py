@@ -526,18 +526,20 @@ def ver_c01_2(res):
     v = res.get("vars", {})
     return str(res.get("correct")) == str(v.get("eta"))
 
-# 3. FIB Perturbation Template
+# 3. FIB Perturbation Template (distinct mathematical AST from gen_c01_2)
 def gen_c01_3(rng):
     tc = rng.randint(200, 280)
     th = 550
-    eta = round(1.0 - (tc / th), 2)
-    return {"vars": {"tc": tc, "th": th, "eta": eta}, "correct": str(eta)}
+    qh = rng.randint(400, 800)
+    work = round(qh * (1.0 - (tc / th)), 2)
+    return {"vars": {"tc": tc, "th": th, "qh": qh, "work": work}, "correct": str(work)}
 
 def ver_c01_3(res):
     if not isinstance(res, dict):
         return False
     v = res.get("vars", {})
-    return str(res.get("correct")) == str(v.get("eta"))
+    exp = round(v.get("qh", 0) * (1.0 - (v.get("tc", 0) / v.get("th", 1))), 2)
+    return str(res.get("correct")) == str(exp) and str(v.get("work")) == str(exp)
 
 # 4. MS Boundary/Edge-case Template with assumption_id
 def gen_c01_4(rng):
@@ -578,15 +580,15 @@ hints_fib_1 = [
 ]
 
 stems_fib_2 = [
-    "Perturbacion A: Evalue el nuevo rendimiento al variar la fuente a @th@ K.",
-    "Perturbacion B: Calcule la respuesta termodinamica ajustada con @tc@ K.",
-    "Perturbacion C: Estime la variacion de eficiencia del sistema a @th@ K.",
-    "Perturbacion D: Deduzca el impacto marginal en la maquina con @tc@ K.",
+    "Perturbacion A: Evalue el trabajo neto para @qh@ J al operar entre @tc@ K y @th@ K.",
+    "Perturbacion B: Calcule el trabajo util con aporte @qh@ J, foco frio @tc@ K y caliente @th@ K.",
+    "Perturbacion C: Estime la energia mecanica extraida de @qh@ J entre @tc@ K y @th@ K.",
+    "Perturbacion D: Deduzca el trabajo maximo con calor @qh@ J y focos @tc@ K y @th@ K.",
 ]
 hints_fib_2 = [
-    "Paso 1: Observe el nuevo valor de la fuente caliente @th@.",
-    "Paso 2: Calcule el nuevo cociente Tc / Th con @tc@.",
-    "Paso 3: Verifique el incremento de eficiencia resultante.",
+    "Paso 1: Calcule primero la eficiencia de Carnot con @tc@ y @th@.",
+    "Paso 2: Multiplique la eficiencia adimensional por el calor absorbido @qh@.",
+    "Paso 3: Redondee el trabajo neto resultante a dos decimales.",
 ]
 
 stems_ms = [
@@ -624,7 +626,7 @@ TEMPLATES = [
         "sol": "La solucion paso a paso calcula la eficiencia ideal de Carnot con eta = 1 - (@tc@ / @th@) = @X@.",
     },
     {"id": "T-M4-02", "cid": "C-M4-01", "qtype": "fill_in_the_blank", "archetype": "inverse", "gen": gen_c01_2, "ver": ver_c01_2, "band": ("medium", "Apply"), "stems": stems_fib_1, "hints": hints_fib_1, "sol": "Solucion paso a paso: evalue el cociente de temperaturas de Carnot para obtener eta = @eta@."},
-    {"id": "T-M4-03", "cid": "C-M4-01", "qtype": "fill_in_the_blank", "archetype": "perturbation", "gen": gen_c01_3, "ver": ver_c01_3, "band": ("medium", "Analyze"), "stems": stems_fib_2, "hints": hints_fib_2, "sol": "Solucion paso a paso: recalcule la eficiencia termica tras la perturbacion obteniendo @eta@."},
+    {"id": "T-M4-03", "cid": "C-M4-01", "qtype": "fill_in_the_blank", "archetype": "perturbation", "gen": gen_c01_3, "ver": ver_c01_3, "band": ("medium", "Analyze"), "stems": stems_fib_2, "hints": hints_fib_2, "sol": "Solucion paso a paso: calcule la eficiencia 1 - @tc@/@th@ y multiplique por @qh@ para obtener @work@."},
     {
         "id": "T-M4-04",
         "cid": "C-M4-01",

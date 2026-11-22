@@ -14,12 +14,12 @@ Builds standardized question JSON objects complying with the practice platform s
 import json
 import random
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 try:
-    from engine.invariants import validate_katex_syntax
+    from engine.invariants import VALID_CANVAS_INVARIANT_KINDS, validate_katex_syntax
 except ImportError:
-    from .invariants import validate_katex_syntax
+    from .invariants import VALID_CANVAS_INVARIANT_KINDS, validate_katex_syntax
 
 try:
     from engine.katex_ast import canonicalize_algebraic_katex
@@ -464,9 +464,15 @@ _GENERIC_RATIONALE_PATTERNS = re.compile(
     r"placeholder.*|"
     r"none|"
     r"null|"
-    r"n/a|"
+    r"n/?a|"
+    r"ningun[oa]|"
+    r"comod[ií]n|"
+    r"gen[eé]rico|generic|"
+    r"todo|tbd|test|default|"
+    r"(?:placeholder|distractor|error)(?:\s+[a-z0-9]+)?|"
+    r"error\s+(?:gen[eé]rico|rationale|de\s+prueba)|"
     r"distractor(?:\s+derivado.*)?\.?|"
-    r"incorrect[oa]\.?|"
+    r"incorrect[oa]?\.?|"
     r"opci[oó]n\s+(?:incorrecta|inv[aá]lida.*)\.?"
     r")$",
     re.IGNORECASE,
@@ -477,7 +483,11 @@ def _is_generic_placeholder(text: str) -> bool:
     """Return True if text is empty or a generic boilerplate placeholder."""
     if not text or not str(text).strip():
         return True
-    cleaned = str(text).strip()
+    cleaned = str(text).strip().strip(".!?,;:\"'-_ ")
+    if not cleaned:
+        return True
+    if "placeholder" in cleaned.lower():
+        return True
     return bool(_GENERIC_RATIONALE_PATTERNS.match(cleaned))
 
 
@@ -683,6 +693,690 @@ def _build_competency_misconception_fallback(
     return f"Revise cuidadosamente los supuestos y pasos clave de la competencia {competency_id} antes de responder."
 
 
+def _strip_outer_math_dollars(text: str) -> str:
+    s = str(text or "").strip()
+    if s.startswith("$$") and s.endswith("$$") and len(s) >= 4:
+        return s[2:-2].strip()
+    if s.startswith("$") and s.endswith("$") and len(s) >= 2:
+        return s[1:-1].strip()
+    return s
+
+
+def _assemble_diagnostic_distractors(
+    gen_result: Dict[str, Any],
+    template: Dict[str, Any],
+    variables: Dict[str, Any],
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]],
+) -> List[Dict[str, Any]]:
+    """Build diagnostic_distractors list for FIB / open_symbolic from ds / distractors."""
+    raw_ds = gen_result.get("ds")
+    if raw_ds is None:
+        raw_ds = gen_result.get("distractors")
+    if not isinstance(raw_ds, list) or not raw_ds:
+        return []
+
+    tpl_rats = template.get("rats") if isinstance(template.get("rats"), dict) else {}
+    out: List[Dict[str, Any]] = []
+    for item in raw_ds:
+        did: Optional[str] = None
+        raw_val: Any = ""
+        raw_rat: Any = None
+        accepted_eqs: List[str] = []
+        tol: Optional[float] = None
+
+        if isinstance(item, dict):
+            did = item.get("distractor_id") or item.get("id") or item.get("did")
+            raw_val = item.get("expression")
+            if raw_val is None:
+                raw_val = item.get("value")
+            if raw_val is None:
+                raw_val = item.get("content", "")
+            raw_rat = item.get("error_rationale") or item.get("rationale")
+            raw_eqs = item.get("accepted_equivalents") or item.get("equivalents") or []
+            if isinstance(raw_eqs, list):
+                accepted_eqs = [
+                    _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(eq).strip(), variables)))
+                    for eq in raw_eqs
+                    if str(eq).strip()
+                ]
+            if item.get("tolerance") is not None:
+                try:
+                    tol = float(item["tolerance"])
+                except (TypeError, ValueError):
+                    tol = None
+        elif isinstance(item, (tuple, list)):
+            if len(item) >= 3:
+                did = str(item[0]).strip()
+                raw_val = item[1]
+                raw_rat = item[2]
+            elif len(item) == 2:
+                did = str(item[0]).strip()
+                raw_val = item[1]
+            elif len(item) == 1:
+                raw_val = item[0]
+        else:
+            raw_val = item
+
+        did_norm = str(did).strip().replace("_", "-") if did else None
+        val_fmt = _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(raw_val).strip(), variables)))
+        if not val_fmt:
+            continue
+
+        d_lookup = {"error_rationale": raw_rat}
+        if not raw_rat and did_norm and did_norm in tpl_rats:
+            d_lookup["error_rationale"] = tpl_rats[did_norm]
+        elif not raw_rat and did and str(did) in tpl_rats:
+            d_lookup["error_rationale"] = tpl_rats[str(did)]
+
+        rationale = _resolve_distractor_rationale(
+            d_lookup,
+            did_norm,
+            cta_distractors_map,
+            "Error conceptual o de procedimiento en la expresión ingresada.",
+            variables=variables,
+        )
+        entry: Dict[str, Any] = {
+            "expression": val_fmt,
+            "value": val_fmt,
+            "error_rationale": rationale,
+        }
+        if did_norm:
+            entry["distractor_id"] = did_norm
+        if accepted_eqs:
+            entry["accepted_equivalents"] = accepted_eqs
+        if tol is not None:
+            entry["tolerance"] = tol
+        out.append(entry)
+    return out
+
+
+def _assemble_unstructured_model(
+    raw_um: Any,
+    variables: Dict[str, Any],
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]],
+    rng: random.Random,
+    rats_map: Dict[str, str],
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    if not isinstance(raw_um, dict):
+        raise ValueError("[STAGE0-INVALID] unstructured_model payload must be a dict.")
+
+    p1 = raw_um.get("phase1_variables")
+    p2 = raw_um.get("phase2_assumptions")
+    p3 = raw_um.get("phase3_formulation")
+    if not isinstance(p1, dict) or not isinstance(p2, dict) or not isinstance(p3, dict):
+        raise ValueError("[STAGE0-PHASES] unstructured_model must declare phase1_variables, phase2_assumptions, and phase3_formulation.")
+
+    roles = [sanitize_katex_syntax(format_template_string(str(r), variables)) for r in (p1.get("roles") or []) if str(r).strip()]
+    if len(roles) < 2:
+        raise ValueError("[STAGE0-P1] phase1_variables requires at least 2 roles.")
+    raw_items = p1.get("items") or []
+    if len(raw_items) < 2:
+        raise ValueError("[STAGE0-P1] phase1_variables requires at least 2 items.")
+
+    p1_items: List[Dict[str, Any]] = []
+    p1_answer: Dict[str, str] = {}
+    for idx, it in enumerate(raw_items):
+        if not isinstance(it, dict):
+            raise ValueError(f"[STAGE0-P1] item[{idx}] must be a dict.")
+        iid = str(it.get("id") or f"V{idx + 1}").strip()
+        label = sanitize_katex_syntax(format_template_string(str(it.get("label") or ""), variables))
+        correct_role = sanitize_katex_syntax(format_template_string(str(it.get("correct_role") or ""), variables))
+        if not label or not correct_role:
+            raise ValueError(f"[STAGE0-P1] item '{iid}' missing label or correct_role.")
+        if correct_role not in roles:
+            raise ValueError(
+                f"[STAGE0-P1] item '{iid}' correct_role '{correct_role}' must be one of phase1_variables.roles {roles}."
+            )
+        did = it.get("distractor_id") or it.get("did")
+        did_norm = str(did).strip().replace("_", "-") if did else None
+        it_lookup = dict(it)
+        if not it_lookup.get("error_rationale") and did_norm and did_norm in rats_map:
+            it_lookup["error_rationale"] = rats_map[did_norm]
+        rat = _resolve_distractor_rationale(
+            it_lookup,
+            did_norm,
+            cta_distractors_map,
+            f"Revisa el rol estructural de {label} dentro del modelo.",
+            variables=variables,
+        )
+        p1_entry: Dict[str, Any] = {
+            "id": iid,
+            "label": label,
+            "correct_role": correct_role,
+            "error_rationale": rat,
+        }
+        if did_norm:
+            p1_entry["distractor_id"] = did_norm
+        p1_items.append(p1_entry)
+        p1_answer[iid] = correct_role
+    rng.shuffle(p1_items)
+
+    raw_p2_opts = p2.get("options") or []
+    if len(raw_p2_opts) < 2:
+        raise ValueError("[STAGE0-P2] phase2_assumptions requires at least 2 options.")
+    p2_opts: List[Dict[str, Any]] = []
+    p2_answer: List[str] = []
+    for idx, opt in enumerate(raw_p2_opts):
+        if not isinstance(opt, dict):
+            raise ValueError(f"[STAGE0-P2] option[{idx}] must be a dict.")
+        oid = str(opt.get("id") or f"C{idx + 1}").strip()
+        content = sanitize_katex_syntax(format_template_string(str(opt.get("content") or opt.get("value") or ""), variables))
+        if not content:
+            raise ValueError(f"[STAGE0-P2] option '{oid}' missing content.")
+        is_req = bool(opt.get("is_required") if "is_required" in opt else opt.get("is_correct", False))
+        did = opt.get("distractor_id") or opt.get("did")
+        did_norm = str(did).strip().replace("_", "-") if did else None
+        opt_lookup = dict(opt)
+        if not opt_lookup.get("error_rationale") and did_norm and did_norm in rats_map:
+            opt_lookup["error_rationale"] = rats_map[did_norm]
+        rat = _resolve_distractor_rationale(
+            opt_lookup,
+            did_norm,
+            cta_distractors_map,
+            f"Verifica la validez analítica del supuesto {content}.",
+            variables=variables,
+        )
+        p2_entry: Dict[str, Any] = {
+            "id": oid,
+            "content": content,
+            "is_required": is_req,
+            "error_rationale": rat,
+        }
+        if did_norm:
+            p2_entry["distractor_id"] = did_norm
+        p2_opts.append(p2_entry)
+        if is_req:
+            p2_answer.append(oid)
+    if not p2_answer:
+        raise ValueError("[STAGE0-P2] phase2_assumptions must require at least 1 active assumption.")
+    rng.shuffle(p2_opts)
+
+    input_mode = str(p3.get("input_mode") or "select").strip().lower()
+    if input_mode not in ("select", "symbolic"):
+        raise ValueError(f"[STAGE0-P3] Invalid phase3_formulation input_mode '{input_mode}'.")
+
+    p3_compiled: Dict[str, Any] = {
+        "prompt": sanitize_katex_syntax(format_template_string(str(p3.get("prompt") or "Formula la condición formal:"), variables)),
+        "input_mode": input_mode,
+    }
+    p3_answer: Any
+    if input_mode == "select":
+        raw_p3_opts = p3.get("options") or []
+        if len(raw_p3_opts) < 2:
+            raise ValueError("[STAGE0-P3] select mode requires at least 2 options.")
+        p3_opts: List[Dict[str, Any]] = []
+        p3_corr_id: Optional[str] = None
+        for idx, opt in enumerate(raw_p3_opts):
+            if not isinstance(opt, dict):
+                raise ValueError(f"[STAGE0-P3] option[{idx}] must be a dict.")
+            oid = str(opt.get("id") or f"F{idx + 1}").strip()
+            content = sanitize_katex_syntax(format_template_string(str(opt.get("content") or opt.get("value") or ""), variables))
+            is_corr = bool(opt.get("is_correct", False))
+            entry: Dict[str, Any] = {"id": oid, "content": content, "is_correct": is_corr}
+            if is_corr:
+                p3_corr_id = oid
+            else:
+                did = opt.get("distractor_id") or opt.get("did")
+                did_norm = str(did).strip().replace("_", "-") if did else None
+                opt_lookup = dict(opt)
+                if not opt_lookup.get("error_rationale") and did_norm and did_norm in rats_map:
+                    opt_lookup["error_rationale"] = rats_map[did_norm]
+                entry["error_rationale"] = _resolve_distractor_rationale(
+                    opt_lookup,
+                    did_norm,
+                    cta_distractors_map,
+                    "La formulación elegida no representa correctamente la condición del modelo.",
+                    variables=variables,
+                )
+                if did_norm:
+                    entry["distractor_id"] = did_norm
+            p3_opts.append(entry)
+        if not p3_corr_id:
+            raise ValueError("[STAGE0-P3] phase3_formulation select mode must have a correct option.")
+        rng.shuffle(p3_opts)
+        p3_compiled["options"] = p3_opts
+        p3_answer = p3_corr_id
+    else:
+        raw_expr = p3.get("correct_expression")
+        if not isinstance(raw_expr, dict):
+            raw_expr = {"expression": str(raw_expr or "")}
+        expr_val = _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(raw_expr.get("expression") or raw_expr.get("value") or ""), variables)))
+        if not expr_val:
+            raise ValueError("[STAGE0-P3] symbolic mode requires non-empty correct_expression.")
+        eqs = [
+            _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(e), variables)))
+            for e in (raw_expr.get("accepted_equivalents") or [])
+            if str(e).strip()
+        ]
+        if expr_val not in eqs:
+            eqs = [expr_val] + eqs
+        p3_compiled["correct_expression"] = {
+            "expression": expr_val,
+            "value": expr_val,
+            "canonical_algebraic": expr_val,
+            "accepted_equivalents": eqs,
+            "tolerance": float(raw_expr.get("tolerance", 0.001)),
+        }
+        p3_diag = _assemble_diagnostic_distractors(
+            {"ds": p3.get("diagnostic_distractors") or []},
+            {"rats": rats_map},
+            variables,
+            cta_distractors_map,
+        )
+        if p3_diag:
+            p3_compiled["diagnostic_distractors"] = p3_diag
+        p3_answer = p3_compiled["correct_expression"]
+
+    compiled_um = {
+        "phase1_variables": {
+            "prompt": sanitize_katex_syntax(format_template_string(str(p1.get("prompt") or "Clasifica cada variable o dato del enunciado:"), variables)),
+            "roles": roles,
+            "items": p1_items,
+        },
+        "phase2_assumptions": {
+            "prompt": sanitize_katex_syntax(format_template_string(str(p2.get("prompt") or "Selecciona los supuestos o restricciones activos:"), variables)),
+            "options": p2_opts,
+        },
+        "phase3_formulation": p3_compiled,
+    }
+    correct_answer = {
+        "phase1": p1_answer,
+        "phase2": sorted(p2_answer),
+        "phase3": p3_answer,
+    }
+    return compiled_um, correct_answer
+
+
+_PURE_NUM_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
+
+
+def _coerce_num_if_numeric(val: Any) -> Any:
+    """Convert pure numeric strings ('-?\\d+(?:\\.\\d+)?') to int/float; leave other values unchanged."""
+    if isinstance(val, str):
+        s = val.strip()
+        if _PURE_NUM_RE.fullmatch(s):
+            return float(s) if "." in s else int(s)
+    return val
+
+
+def _assemble_invariant_canvas(
+    raw_ic: Any,
+    variables: Dict[str, Any],
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]],
+    rats_map: Dict[str, str],
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    if not isinstance(raw_ic, dict):
+        raise ValueError("[CANVAS-INVALID] invariant_canvas payload must be a dict.")
+    mode = str(raw_ic.get("mode") or "cartesian").strip().lower()
+    if mode not in ("cartesian", "tree"):
+        raise ValueError(f"[CANVAS-MODE] Invalid invariant_canvas mode '{mode}'.")
+
+    if mode == "cartesian":
+        invariants_raw = raw_ic.get("invariants") or []
+        if not isinstance(invariants_raw, list) or not invariants_raw:
+            raise ValueError("[CANVAS-INVARIANTS] cartesian mode requires non-empty 'invariants'.")
+
+        sliders: List[Dict[str, Any]] = []
+        for sl in raw_ic.get("sliders") or []:
+            if isinstance(sl, dict):
+                sliders.append({
+                    **sl,
+                    "label": sanitize_katex_syntax(format_template_string(str(sl.get("label") or sl.get("id") or ""), variables)),
+                })
+
+        def _fmt_curves(c_list: Any) -> List[Dict[str, Any]]:
+            out_c: List[Dict[str, Any]] = []
+            for cv in c_list or []:
+                if not isinstance(cv, dict):
+                    continue
+                nc = dict(cv)
+                if isinstance(nc.get("expression"), str):
+                    nc["expression"] = format_template_string(nc["expression"], variables)
+                if isinstance(nc.get("fn"), str):
+                    nc["fn"] = format_template_string(nc["fn"], variables)
+                if isinstance(nc.get("label"), str):
+                    nc["label"] = sanitize_katex_syntax(format_template_string(nc["label"], variables))
+                out_c.append(nc)
+            return out_c
+
+        points_out: List[Dict[str, Any]] = []
+        for pt in raw_ic.get("interactive_points") or []:
+            if isinstance(pt, dict):
+                np_d = dict(pt)
+                if isinstance(np_d.get("label"), str):
+                    np_d["label"] = sanitize_katex_syntax(format_template_string(np_d["label"], variables))
+                points_out.append(np_d)
+
+        invs_out: List[Dict[str, Any]] = []
+        for idx, inv in enumerate(invariants_raw):
+            if not isinstance(inv, dict):
+                raise ValueError(f"[CANVAS-INVARIANT-KIND] invariant[{idx}] must be a dict.")
+            ni = dict(inv)
+            ni.setdefault("id", f"INV{idx + 1}")
+            inv_kind = str(ni.get("kind") or "").strip()
+            if inv_kind not in VALID_CANVAS_INVARIANT_KINDS:
+                raise ValueError(
+                    f"[CANVAS-INVARIANT-KIND] invariant[{idx}] has invalid kind '{inv_kind}'. "
+                    f"Allowed: {sorted(VALID_CANVAS_INVARIANT_KINDS)}"
+                )
+            ni["kind"] = inv_kind
+            if isinstance(ni.get("expr"), str):
+                ni["expr"] = format_template_string(ni["expr"], variables)
+            for num_k in (
+                "target_x", "target_y", "x", "y",
+                "expected", "target_slope", "target_value", "value",
+                "target", "min", "max", "tolerance",
+            ):
+                if isinstance(ni.get(num_k), str):
+                    ni[num_k] = _coerce_num_if_numeric(format_template_string(ni[num_k], variables))
+            if inv_kind in ("slider_eq", "slope_at", "slider_range") and ni.get("target") is None:
+                for alias_k in ("target_value", "target_slope", "expected", "value"):
+                    if ni.get(alias_k) is not None:
+                        ni["target"] = ni[alias_k]
+                        break
+            if inv_kind == "point_coords":
+                if ni.get("target_x") is None and ni.get("x") is not None:
+                    ni["target_x"] = ni["x"]
+                if ni.get("target_y") is None and ni.get("y") is not None:
+                    ni["target_y"] = ni["y"]
+            if inv_kind == "inequality_state":
+                for ik in ("expected_style", "expected_shade"):
+                    if isinstance(ni.get(ik), str):
+                        ni[ik] = format_template_string(ni[ik], variables).strip()
+                if ni.get("expected_style") not in ("solid", "dashed"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] invariant[{idx}] (inequality_state) requires "
+                        f"expected_style in ('solid', 'dashed') (got {ni.get('expected_style')!r})."
+                    )
+                if ni.get("expected_shade") not in ("above", "below"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] invariant[{idx}] (inequality_state) requires "
+                        f"expected_shade in ('above', 'below') (got {ni.get('expected_shade')!r})."
+                    )
+            did = ni.get("distractor_id") or ni.get("did")
+            did_norm = str(did).strip().replace("_", "-") if did else None
+            if not ni.get("error_rationale") and did_norm and did_norm in rats_map:
+                ni["error_rationale"] = rats_map[did_norm]
+            ni["error_rationale"] = _resolve_distractor_rationale(
+                ni,
+                did_norm,
+                cta_distractors_map,
+                "La configuración geométrica o paramétrica no satisface el invariante requerido.",
+                variables=variables,
+            )
+            if did_norm:
+                ni["distractor_id"] = did_norm
+            invs_out.append(ni)
+
+        compiled_ic: Dict[str, Any] = {
+            "mode": "cartesian",
+            "x_range": raw_ic.get("x_range", [0, 10]),
+            "y_range": raw_ic.get("y_range", [0, 10]),
+            "step": raw_ic.get("step", 1),
+            "x_label": sanitize_katex_syntax(format_template_string(str(raw_ic.get("x_label") or "x"), variables)),
+            "y_label": sanitize_katex_syntax(format_template_string(str(raw_ic.get("y_label") or "y"), variables)),
+            "sliders": sliders,
+            "fixed_curves": _fmt_curves(raw_ic.get("fixed_curves")),
+            "interactive_curves": _fmt_curves(raw_ic.get("interactive_curves")),
+            "interactive_points": points_out,
+            "invariants": invs_out,
+        }
+        if raw_ic.get("snap") is not None:
+            compiled_ic["snap"] = raw_ic["snap"]
+
+        def _fmt_coord_val(v: Any) -> Any:
+            return _coerce_num_if_numeric(format_template_string(v, variables)) if isinstance(v, str) else v
+
+        def _fmt_label_item(obj: Dict[str, Any]) -> Dict[str, Any]:
+            out_d = dict(obj)
+            if isinstance(out_d.get("label"), str):
+                out_d["label"] = sanitize_katex_syntax(format_template_string(out_d["label"], variables))
+            return out_d
+
+        if raw_ic.get("fixed_points"):
+            compiled_ic["fixed_points"] = [
+                {
+                    **_fmt_label_item(fp),
+                    "x": _fmt_coord_val(fp.get("x")),
+                    "y": _fmt_coord_val(fp.get("y")),
+                }
+                for fp in raw_ic["fixed_points"]
+                if isinstance(fp, dict)
+            ]
+        if raw_ic.get("segments"):
+            compiled_ic["segments"] = [
+                {
+                    **_fmt_label_item(seg),
+                    "from": [_fmt_coord_val(seg["from"][0]), _fmt_coord_val(seg["from"][1])] if isinstance(seg.get("from"), (list, tuple)) and len(seg["from"]) == 2 else seg.get("from"),
+                    "to": [_fmt_coord_val(seg["to"][0]), _fmt_coord_val(seg["to"][1])] if isinstance(seg.get("to"), (list, tuple)) and len(seg["to"]) == 2 else seg.get("to"),
+                }
+                for seg in raw_ic["segments"]
+                if isinstance(seg, dict)
+            ]
+        if raw_ic.get("polygons"):
+            compiled_ic["polygons"] = [
+                {
+                    **_fmt_label_item(pg),
+                    "vertices": [
+                        [_fmt_coord_val(vt[0]), _fmt_coord_val(vt[1])]
+                        for vt in (pg.get("vertices") or [])
+                        if isinstance(vt, (list, tuple)) and len(vt) == 2
+                    ],
+                }
+                for pg in raw_ic["polygons"]
+                if isinstance(pg, dict)
+            ]
+        if raw_ic.get("shaded_regions"):
+            sr_out: List[Dict[str, Any]] = []
+            for sr in raw_ic["shaded_regions"]:
+                if not isinstance(sr, dict):
+                    continue
+                nsr = _fmt_label_item(sr)
+                for ek in ("curve_top", "curve_bottom", "y_top", "y_bottom"):
+                    if isinstance(nsr.get(ek), str):
+                        nsr[ek] = format_template_string(nsr[ek], variables)
+                if isinstance(nsr.get("domain"), (list, tuple)) and len(nsr["domain"]) == 2:
+                    nsr["domain"] = [_fmt_coord_val(nsr["domain"][0]), _fmt_coord_val(nsr["domain"][1])]
+                sr_out.append(nsr)
+            compiled_ic["shaded_regions"] = sr_out
+        if raw_ic.get("inequality") is not None:
+            if not isinstance(raw_ic.get("inequality"), dict):
+                raise ValueError("[CANVAS-INEQUALITY] 'inequality' must be a dict.")
+            ineq = dict(raw_ic["inequality"])
+            for ik in ("curve_id", "initial_style", "initial_shade"):
+                if isinstance(ineq.get(ik), str):
+                    ineq[ik] = format_template_string(ineq[ik], variables).strip()
+            declared_curve_ids = {
+                str(cv.get("id")).strip()
+                for cv in (compiled_ic["fixed_curves"] + compiled_ic["interactive_curves"])
+                if isinstance(cv, dict) and cv.get("id") is not None and str(cv.get("id")).strip()
+            }
+            cid_ineq = str(ineq.get("curve_id") or "").strip()
+            if not cid_ineq or cid_ineq not in declared_curve_ids:
+                raise ValueError(
+                    f"[CANVAS-INEQUALITY] inequality.curve_id '{cid_ineq}' must reference a declared curve "
+                    f"in fixed_curves/interactive_curves (declared: {sorted(declared_curve_ids)})."
+                )
+            if "initial_style" in ineq and ineq["initial_style"] is not None:
+                if ineq["initial_style"] not in ("solid", "dashed"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] inequality.initial_style must be 'solid' or 'dashed' (got {ineq['initial_style']!r})."
+                    )
+            if "initial_shade" in ineq and ineq["initial_shade"] is not None:
+                if ineq["initial_shade"] not in ("above", "below"):
+                    raise ValueError(
+                        f"[CANVAS-INEQUALITY] inequality.initial_shade must be 'above' or 'below' (got {ineq['initial_shade']!r})."
+                    )
+            compiled_ic["inequality"] = ineq
+
+        def _fmt_target_state(obj: Any) -> Any:
+            if isinstance(obj, str):
+                return _coerce_num_if_numeric(format_template_string(obj, variables))
+            if isinstance(obj, dict):
+                return {k: _fmt_target_state(v) for k, v in obj.items()}
+            if isinstance(obj, (list, tuple)):
+                return [_fmt_target_state(v) for v in obj]
+            return obj
+
+        formatted_target_state = None
+        if raw_ic.get("target_state"):
+            formatted_target_state = _fmt_target_state(raw_ic["target_state"])
+            compiled_ic["target_state"] = formatted_target_state
+        correct_answer = {
+            "mode": "cartesian",
+            "target_state": formatted_target_state if formatted_target_state is not None else {"invariants_count": len(invs_out)},
+        }
+        return compiled_ic, correct_answer
+
+    nodes = raw_ic.get("nodes") or []
+    edges = raw_ic.get("edges") or []
+    tree_inv = raw_ic.get("tree_invariants") or {}
+    if not isinstance(nodes, list) or len(nodes) < 2 or not isinstance(edges, list) or not edges:
+        raise ValueError("[CANVAS-TREE] tree mode requires nodes (>=2) and edges.")
+    if not isinstance(tree_inv, dict):
+        raise ValueError("[CANVAS-TREE] tree mode requires 'tree_invariants' dict.")
+
+    formatted_nodes = []
+    for nd in nodes:
+        if isinstance(nd, dict):
+            nnd = dict(nd)
+            if isinstance(nnd.get("label"), str):
+                nnd["label"] = sanitize_katex_syntax(format_template_string(nnd["label"], variables))
+            formatted_nodes.append(nnd)
+
+    formatted_edges = []
+    for ed in edges:
+        if isinstance(ed, dict):
+            ned = dict(ed)
+            if isinstance(ned.get("label"), str):
+                ned["label"] = sanitize_katex_syntax(format_template_string(ned["label"], variables))
+            formatted_edges.append(ned)
+
+    ti = dict(tree_inv)
+    did = ti.get("distractor_id") or ti.get("did")
+    did_norm = str(did).strip().replace("_", "-") if did else None
+    for rk, default_msg in (
+        ("edge_error_rationale", "La selección de ramas en el árbol no corresponde al equilibrio o estrategia válida."),
+        ("info_set_error_rationale", "La partición de conjuntos de información no refleja correctamente quién observa qué historia."),
+    ):
+        raw_r = ti.get(rk)
+        if not raw_r and did_norm and did_norm in rats_map:
+            raw_r = rats_map[did_norm]
+        ti[rk] = _resolve_distractor_rationale(
+            {"error_rationale": raw_r},
+            did_norm,
+            cta_distractors_map,
+            default_msg,
+            variables=variables,
+        )
+    if did_norm:
+        ti["distractor_id"] = did_norm
+
+    compiled_ic = {
+        "mode": "tree",
+        "width": raw_ic.get("width", 520),
+        "height": raw_ic.get("height", 320),
+        "interaction_mode": raw_ic.get("interaction_mode", "both"),
+        "nodes": formatted_nodes,
+        "edges": formatted_edges,
+        "tree_invariants": ti,
+    }
+    correct_answer = {
+        "mode": "tree",
+        "required_edges": ti.get("required_edges") or [],
+        "required_info_sets": ti.get("required_info_sets") or [],
+    }
+    return compiled_ic, correct_answer
+
+
+def _assemble_concept_matching(
+    raw_cm: Any,
+    variables: Dict[str, Any],
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]],
+    rng: random.Random,
+    rats_map: Dict[str, str],
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    if not isinstance(raw_cm, dict):
+        raise ValueError("[MATCHING-INVALID] concept_matching payload must be a dict.")
+    premises_raw = raw_cm.get("premises") or []
+    targets_raw = raw_cm.get("targets") or []
+    correct_pairs_raw = raw_cm.get("correct_pairs") or {}
+    if not isinstance(premises_raw, list) or len(premises_raw) < 2:
+        raise ValueError("[MATCHING-PREMISES] concept_matching requires at least 2 premises.")
+    if not isinstance(targets_raw, list) or len(targets_raw) < len(premises_raw):
+        raise ValueError("[MATCHING-TARGETS] targets length must be >= premises length.")
+    if not isinstance(correct_pairs_raw, dict) or len(correct_pairs_raw) < len(premises_raw):
+        raise ValueError("[MATCHING-PAIRS] correct_pairs must map every premise id.")
+
+    premises: List[Dict[str, Any]] = []
+    premise_ids: Set[str] = set()
+    for idx, pr in enumerate(premises_raw):
+        if not isinstance(pr, dict):
+            raise ValueError(f"[MATCHING-PREMISE] premise[{idx}] must be a dict.")
+        pid = str(pr.get("id") or f"L{idx + 1}").strip()
+        content = sanitize_katex_syntax(format_template_string(str(pr.get("content") or ""), variables))
+        if not pid or not content:
+            raise ValueError(f"[MATCHING-PREMISE] premise[{idx}] missing id or content.")
+        premise_ids.add(pid)
+        premises.append({"id": pid, "content": content})
+
+    targets: List[Dict[str, Any]] = []
+    target_ids: Set[str] = set()
+    for idx, tg in enumerate(targets_raw):
+        if not isinstance(tg, dict):
+            raise ValueError(f"[MATCHING-TARGET] target[{idx}] must be a dict.")
+        tid = str(tg.get("id") or f"R{idx + 1}").strip()
+        content = sanitize_katex_syntax(format_template_string(str(tg.get("content") or ""), variables))
+        if not tid or not content:
+            raise ValueError(f"[MATCHING-TARGET] target[{idx}] missing id or content.")
+        target_ids.add(tid)
+        is_dist = bool(tg.get("is_distractor", False))
+        entry: Dict[str, Any] = {"id": tid, "content": content, "is_distractor": is_dist}
+        did = tg.get("distractor_id") or tg.get("did")
+        did_norm = str(did).strip().replace("_", "-") if did else None
+        if tg.get("error_rationale") or tg.get("rationale") or did_norm or is_dist:
+            tg_lookup = dict(tg)
+            if not tg_lookup.get("error_rationale") and did_norm and did_norm in rats_map:
+                tg_lookup["error_rationale"] = rats_map[did_norm]
+            entry["error_rationale"] = _resolve_distractor_rationale(
+                tg_lookup,
+                did_norm,
+                cta_distractors_map,
+                f"La asociación seleccionada con '{content}' no corresponde al principio causal correcto.",
+                variables=variables,
+            )
+            if did_norm:
+                entry["distractor_id"] = did_norm
+        targets.append(entry)
+
+    clean_pairs: Dict[str, str] = {}
+    for pid in premise_ids:
+        tid = correct_pairs_raw.get(pid)
+        if not tid or str(tid) not in target_ids:
+            raise ValueError(f"[MATCHING-PAIR-REF] Missing or invalid target mapping for premise '{pid}'.")
+        clean_pairs[pid] = str(tid)
+
+    pair_rationales: Dict[str, str] = {}
+    for pk, pv in (raw_cm.get("pair_rationales") or {}).items():
+        if isinstance(pv, str) and pv.strip():
+            pair_rationales[str(pk)] = sanitize_katex_syntax(format_template_string(pv, variables))
+
+    rng.shuffle(premises)
+    rng.shuffle(targets)
+
+    compiled_cm: Dict[str, Any] = {
+        "left_title": sanitize_katex_syntax(format_template_string(str(raw_cm.get("left_title") or "Premisa"), variables)),
+        "right_title": sanitize_katex_syntax(format_template_string(str(raw_cm.get("right_title") or "Consecuencia"), variables)),
+        "premises": premises,
+        "targets": targets,
+        "correct_pairs": clean_pairs,
+    }
+    if pair_rationales:
+        compiled_cm["pair_rationales"] = pair_rationales
+
+    return compiled_cm, {"pairs": clean_pairs}
+
+
 def assemble_question(
     template: Dict[str, Any],
     gen_result: Dict[str, Any],
@@ -690,6 +1384,7 @@ def assemble_question(
     question_index: int,
     cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
     seed: Optional[int] = None,
+    stem_variant_index: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Assemble a single question JSON conforming to platform specification.
     
@@ -700,6 +1395,8 @@ def assemble_question(
         question_index: 1-indexed counter.
         cta_distractors_map: Map of distractor_id -> distractor metadata from cta.json.
         seed: Random seed for option shuffling.
+        stem_variant_index: Optional explicit index into template['stem_variants'] for
+            deterministic without-replacement variant rotation.
     """
     rng = random.Random(seed) if seed is not None else random.Random()
     variables = gen_result.get("vars", {})
@@ -708,7 +1405,10 @@ def assemble_question(
     stem_raw = template.get("stem", "")
     stem_variants = template.get("stem_variants")
     if stem_variants and len(stem_variants) > 0:
-        var_idx = (seed % len(stem_variants)) if seed is not None else 0
+        if stem_variant_index is not None:
+            var_idx = int(stem_variant_index) % len(stem_variants)
+        else:
+            var_idx = (seed % len(stem_variants)) if seed is not None else 0
         stem_raw = stem_variants[var_idx]
     stem = sanitize_katex_syntax(format_template_string(stem_raw, variables))
     if not isinstance(stem, str) or not stem.strip():
@@ -934,6 +1634,182 @@ def assemble_question(
             "accepted_equivalents": equivalents,
             "tolerance": tolerance,
         }
+        diag_dists = _assemble_diagnostic_distractors(gen_result, template, variables, cta_distractors_map)
+        if diag_dists:
+            assembled["diagnostic_distractors"] = diag_dists
+
+    elif interaction_type == "open_symbolic":
+        ans_val = gen_result.get("correct")
+        if ans_val is None:
+            ans_val = gen_result.get("expression")
+        if ans_val is None:
+            ans_val = gen_result.get("value", "")
+
+        str_val = _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(ans_val).strip(), variables)))
+        if not str_val:
+            raise ValueError(f"open_symbolic correct answer expression cannot be empty for {competency_id} #{question_index}")
+
+        raw_canonical = gen_result.get("canonical_algebraic")
+        if raw_canonical is not None:
+            canonical_val = _strip_outer_math_dollars(
+                sanitize_katex_syntax(format_template_string(str(raw_canonical).strip(), variables))
+            )
+        else:
+            canonical_val = str_val
+
+        raw_equivalents = gen_result.get("accepted_equivalents")
+        if raw_equivalents is None:
+            raw_equivalents = gen_result.get("equivalents")
+        if raw_equivalents is None:
+            raw_equivalents = [str_val]
+
+        equivalents: List[str] = []
+        for eq in raw_equivalents:
+            if isinstance(eq, (int, float)):
+                formatted_eq = str(eq)
+            elif isinstance(eq, str):
+                formatted_eq = _strip_outer_math_dollars(
+                    sanitize_katex_syntax(format_template_string(eq.strip(), variables))
+                )
+            else:
+                formatted_eq = str(eq)
+            if formatted_eq and formatted_eq not in equivalents:
+                equivalents.append(formatted_eq)
+        if str_val not in equivalents:
+            equivalents = [str_val] + equivalents
+
+        tolerance = gen_result.get("tolerance", 0.001)
+        sym_cfg_raw = gen_result.get("symbolic_config") or template.get("symbolic_config")
+        sym_cfg = dict(sym_cfg_raw) if isinstance(sym_cfg_raw, dict) else {}
+        if isinstance(gen_result.get("variables"), list) and "variables" not in sym_cfg:
+            sym_cfg["variables"] = [str(x) for x in gen_result["variables"]]
+
+        assembled["interface_config"] = {
+            "allow_calculator": False,
+            "input_placeholder": sym_cfg.get("placeholder"),
+            "expected_format": "open_symbolic",
+            "grading_policy": "symbolic_ast_equivalence",
+        }
+        assembled["options"] = []
+        assembled["correct_answer"] = {
+            "expression": str_val,
+            "value": str_val,
+            "canonical_algebraic": canonical_val,
+            "accepted_equivalents": equivalents,
+            "tolerance": tolerance,
+        }
+        if sym_cfg:
+            assembled["symbolic_config"] = sym_cfg
+        diag_dists = _assemble_diagnostic_distractors(gen_result, template, variables, cta_distractors_map)
+        if diag_dists:
+            assembled["diagnostic_distractors"] = diag_dists
+
+    elif interaction_type == "proof_dag":
+        try:
+            from engine.proof_compiler import compile_and_verify_proof_dag
+        except ImportError:
+            from .proof_compiler import compile_and_verify_proof_dag
+        raw_dag = gen_result.get("proof_dag") or gen_result.get("dag") or template.get("proof_dag")
+        rats_map = template.get("rats") if isinstance(template.get("rats"), dict) else {}
+        compiled_dag, corr_ans = compile_and_verify_proof_dag(
+            raw_dag,
+            variables=variables,
+            cta_distractors_map=cta_distractors_map,
+            rng=rng,
+            rats_map=rats_map,
+        )
+        assembled["interface_config"] = {
+            "allow_calculator": False,
+            "input_placeholder": None,
+            "expected_format": "proof_dag",
+            "grading_policy": "topological_dag",
+        }
+        assembled["options"] = []
+        assembled["proof_dag"] = compiled_dag
+        assembled["correct_answer"] = corr_ans
+
+    elif interaction_type == "adversarial_break":
+        try:
+            from engine.adversarial_generator import compile_and_verify_adversarial
+        except ImportError:
+            from .adversarial_generator import compile_and_verify_adversarial
+        raw_adv = gen_result.get("adversarial_break") or gen_result.get("adversarial") or template.get("adversarial_break")
+        rats_map = template.get("rats") if isinstance(template.get("rats"), dict) else {}
+        compiled_adv, corr_ans = compile_and_verify_adversarial(
+            raw_adv,
+            variables=variables,
+            cta_distractors_map=cta_distractors_map,
+            rng=rng,
+            rats_map=rats_map,
+        )
+        assembled["interface_config"] = {
+            "allow_calculator": False,
+            "input_placeholder": None,
+            "expected_format": "adversarial_break",
+            "grading_policy": f"adversarial_{compiled_adv['mode']}",
+        }
+        assembled["options"] = []
+        assembled["adversarial_break"] = compiled_adv
+        assembled["correct_answer"] = corr_ans
+
+    elif interaction_type == "unstructured_model":
+        raw_um = gen_result.get("unstructured_model") or gen_result.get("stage0") or template.get("unstructured_model")
+        rats_map = template.get("rats") if isinstance(template.get("rats"), dict) else {}
+        compiled_um, corr_ans = _assemble_unstructured_model(
+            raw_um,
+            variables=variables,
+            cta_distractors_map=cta_distractors_map,
+            rng=rng,
+            rats_map=rats_map,
+        )
+        assembled["interface_config"] = {
+            "allow_calculator": False,
+            "input_placeholder": None,
+            "expected_format": "unstructured_model",
+            "grading_policy": "stage0_3phase_sequential",
+        }
+        assembled["options"] = []
+        assembled["unstructured_model"] = compiled_um
+        assembled["correct_answer"] = corr_ans
+
+    elif interaction_type == "invariant_canvas":
+        raw_ic = gen_result.get("invariant_canvas") or gen_result.get("canvas") or template.get("invariant_canvas")
+        rats_map = template.get("rats") if isinstance(template.get("rats"), dict) else {}
+        compiled_ic, corr_ans = _assemble_invariant_canvas(
+            raw_ic,
+            variables=variables,
+            cta_distractors_map=cta_distractors_map,
+            rats_map=rats_map,
+        )
+        assembled["interface_config"] = {
+            "allow_calculator": False,
+            "input_placeholder": None,
+            "expected_format": "invariant_canvas",
+            "grading_policy": f"canvas_{compiled_ic['mode']}",
+        }
+        assembled["options"] = []
+        assembled["invariant_canvas"] = compiled_ic
+        assembled["correct_answer"] = corr_ans
+
+    elif interaction_type == "concept_matching":
+        raw_cm = gen_result.get("concept_matching") or gen_result.get("matching") or template.get("concept_matching")
+        rats_map = template.get("rats") if isinstance(template.get("rats"), dict) else {}
+        compiled_cm, corr_ans = _assemble_concept_matching(
+            raw_cm,
+            variables=variables,
+            cta_distractors_map=cta_distractors_map,
+            rng=rng,
+            rats_map=rats_map,
+        )
+        assembled["interface_config"] = {
+            "allow_calculator": False,
+            "input_placeholder": None,
+            "expected_format": "concept_matching",
+            "grading_policy": "matching_all_pairs",
+        }
+        assembled["options"] = []
+        assembled["concept_matching"] = compiled_cm
+        assembled["correct_answer"] = corr_ans
 
     elif interaction_type == "multiple_select":
         raw_options = gen_result.get("options", [])

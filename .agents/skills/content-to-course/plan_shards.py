@@ -28,7 +28,15 @@ try:
     MIN_ARCHETYPES = _SC_MIN_ARCHETYPES if _SC_MIN_ARCHETYPES >= 4 else 4
 except Exception:
     MIN_ARCHETYPES = 4
-from engine.stage_contract import competency_contract, global_contract, render_contract_tokens  # noqa: E402
+from engine.stage_contract import (  # noqa: E402
+    DEFAULT_TEMPLATES_PER_MODALITY,
+    MAX_MODALITIES_PER_COMPETENCY,
+    MIN_MODALITIES_PER_COMPETENCY,
+    competency_contract,
+    global_contract,
+    render_contract_tokens,
+    required_templates_for_competency,
+)
 
 # =============================================================================
 # SHARD & TEMPLATE SCALING CONFIGURATION
@@ -71,13 +79,21 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
 # Self-contained reference for shard authors so they never read engine code
 DSL_REFERENCE: Dict[str, Any] = {
     "min_archetypes": MIN_ARCHETYPES,
-    "description": "Form-C / Form-B (min_archetypes = 4) parametric exercise architecture (direct, inverse, perturbation, boundary_or_edge_case)",
-    "canonical_template_schema": "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)",
+    "templates_per_modality": DEFAULT_TEMPLATES_PER_MODALITY,
+    "min_modalities": MIN_MODALITIES_PER_COMPETENCY,
+    "max_modalities": MAX_MODALITIES_PER_COMPETENCY,
+    "description": "Form-C Quad-Band dicts in TEMPLATES (or 9-tupla legacy) with min_archetypes = 4 (direct, inverse, perturbation, boundary_or_edge_case) and N_min = max(4, M * K) (Skill: 0 MC7; Concept/Fact: <= 1 MC7 y >= 80% activo => N_min = max(4, 5, 1 + (M-1)*K) si el plan incluye MC7)",
+    "canonical_template_schema": "{'id': '^T-...', 'cid': '...', 'qtype': '...', 'archetype': '...', 'band': (diff, bloom), 'gen': gen_fn, 'ver': ver_fn, 'stem_variants': [...], 'hints': [...], 'sol': '...', 'rats': RATS}",
     "supported_question_types": [
-        "multiple_choice",
+        "multiple_choice_7_options",
         "fill_in_the_blank",
         "multiple_select",
-        "open_ended",
+        "open_symbolic",
+        "proof_dag",
+        "adversarial_break",
+        "unstructured_model",
+        "invariant_canvas",
+        "concept_matching",
     ],
     "distractor_rules": {
         "mc7_tuple_format": "(did, val, rationale_con_@var@)",
@@ -106,32 +122,42 @@ DSL_REFERENCE: Dict[str, Any] = {
             "Toda la información necesaria está embebida en tu archivo de shard asignado."
         ),
         "validation_command": (
-            "python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
+            f"python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4 --templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}"
         ),
         "quotas": (
-            "Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de 4 plantillas paramétricas disjuntas "
-            "(1 por arquetipo bajo contrato Form-C / Form-B, min_archetypes = 4: 'direct', 'inverse', 'perturbation', "
-            "'boundary_or_edge_case', cubriendo >= 2 niveles Bloom con práctica activa multimodal: FIB sin signos de dólar "
-            "externos, MS [2-4 distractores/semilla] y MC7 [6 distractores/semilla] con 3-tuplas dinámicas). "
-            "Si una competencia declara en cta.json más distractores de los que caben en una sola semilla de las plantillas "
-            "base (MC7 = 6 distractores/semilla, MS = 2-4 distractores/semilla, FIB = 0), el autor DEBE agregar plantillas "
-            "MC7 adicionales (no intentar cubrir por rotación entre semillas si TPL-D3 evalúa una semilla, manteniendo el "
-            "contrato multimodal) en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json."
+            f"Para CADA competencia asignada: autorar un MÍNIMO OBLIGATORIO de N_min = max(4, M * K) plantillas paramétricas (si una competencia Concept/Fact incluye MC7: exactamente 1 MC7 y N_min = max(4, 5, 1 + (M-1)*K); en Skill MC7 está prohibido, [M20-MC7-CAP]/[M20-ACTIVE-QUOTA]) "
+            f"disjuntas (con K = {DEFAULT_TEMPLATES_PER_MODALITY} por defecto vía --templates-per-modality K, M = len(recommended_modalities) "
+            f"en [{MIN_MODALITIES_PER_COMPETENCY}..{MAX_MODALITIES_PER_COMPETENCY}], cubriendo >= K plantillas distintas por cada modalidad recomendada, "
+            f"los 4 arquetipos Form-C 'direct', 'inverse', 'perturbation', 'boundary_or_edge_case', las 3 bandas easy/medium/hard y >= 2 niveles Bloom). "
+            f"Las modalidades concretas se rigen por las 'recommended_modalities' decididas por el CTA Architect para cada competencia "
+            f"(catálogo activo: FIB con 'ds', open_symbolic, MS, MC7, proof_dag, adversarial_break, unstructured_model, "
+            f"invariant_canvas, concept_matching; sin cuotas fijas rígidas por tipo). "
+            f"Si una competencia declara en cta.json más distractores de los que caben en una sola plantilla, "
+            f"cubre 100% de distractor_ids mediante 'ds' diagnósticos en FIB/open_symbolic, MS, modalidades Bloom Superior "
+            f"o MC7 si forma parte del plan del CTA Architect."
+        ),
+        "anti_clone": (
+            "4 Candados Deterministas Anti-Clon intra-competencia en compile_shard.py: "
+            "(1) [TPL-CLONE-AST]: AST normalizado de 'gen' estrictamente distinto dentro de la misma modalidad o arquetipo; "
+            "(2) [TPL-CLONE-BAND]: tupla (archetype, difficulty, bloom) única dentro de cada modalidad cuando K <= 4; "
+            "(3) [TPL-CLONE-STEM]: similitud léxica Jaccard < 0.70 en stem_variants entre plantillas de igual modalidad o arquetipo; "
+            "(4) [TPL-CLONE-SYMPY]: expresiones algebraicas no equivalentes bajo SymPy dentro del mismo arquetipo."
+        ),
+        "bloom_coherence": (
+            "[M3-BLOOM-COHERENCE] y [M3-TARGET-BLOOM]: Respeta los rangos coherentes modalidad x arquetipo x Bloom "
+            "(MC7 <= Apply; concept_matching <= Analyze; FIB direct <= Apply y FIB <= Analyze; "
+            "adversarial_break/unstructured_model >= Analyze; proof_dag >= Apply). En competencias Concept/Skill v2, "
+            "al menos 1 plantilla (idealmente boundary_or_edge_case o perturbation) debe alcanzar el target_bloom factible."
         ),
         "form_b_triband": (
-            "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla "
-            "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution). Toda competencia "
-            "debe cubrir los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') con >= 2 niveles Bloom y práctica activa obligatoria (FIB / MS / MC7)."
+            "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla o dict Form-C "
+            "por competencia cubriendo los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') "
+            "con >= 2 niveles Bloom y las modalidades decididas en 'recommended_modalities' por el CTA Architect."
         ),
         "distractor_coverage": (
-            "Regla TPL-D3: 100% de los distractor_ids declarados en cta.json deben usarse en al menos una plantilla "
-            "(evaluado por semilla). "
-            "Regla TPL-D2: Cada plantilla MC7 requiere exactamente 6 distractores por semilla estructurados como 3-tuplas "
-            "obligatorias (did, val, rationale_con_@var@) con longitud >= 20 caracteres interpolando variables paramétricas; "
-            "cada MS admite 2-4 distractores/semilla; FIB no usa distractores. "
-            "Cuando n_distractors > capacidad_base de las 4 plantillas mínimas, agrega plantillas MC7 adicionales "
-            "(mínimo ceil(n_distractors / 6) MC7 si cubres solo con MC7, o ceil(max(0, n_distractors - 4) / 6) MC7 "
-            "combinando con 1 MS de 4 distractores) para lograr 100% de cobertura TPL-D3."
+            "Regla TPL-D3: 100% de los distractor_ids declarados en cta.json deben cubrirse en la semilla representativa "
+            "de las plantillas de la competencia (via 'ds' en FIB/open_symbolic, MS, pasos falaces/distractores en modalidades "
+            "Bloom Superior o MC7 con exactamente 6 distractores en 3-tupla (did, val, rationale_con_@var@)). Sin cuotas rígidas fijas por tipo."
         ),
         "dynamic_rationale": (
             "[TPL-DYNAMIC-RATIONALE]: En MC7, cada distractor DEBE declararse como una 3-tupla (did, val, rationale_con_@var@) "
@@ -139,7 +165,7 @@ DSL_REFERENCE: Dict[str, Any] = {
             "'error_rationale' interpolando @var@. Prohibido omitir rationale."
         ),
         "fib_naked_contract": (
-            "[FIB-NAKED]: En fill_in_the_blank, el valor numérico o algebraico esperado en 'correct' y 'answer_contract' "
+            "[TPL-FIB-KATEX]: En fill_in_the_blank, el valor numérico o algebraico esperado en 'correct' y 'answer_contract' "
             "no debe incluir signos de dólar externos '$...$'."
         ),
         "katex_prose_overflow": (
@@ -184,7 +210,7 @@ DSL_REFERENCE: Dict[str, Any] = {
         "shard_isolated_script": (
             "SCRIPT INDEPENDIENTE: Cada shard escribe exclusivamente su propio script work/shards/<shard_id>_data.py. "
             "Valida únicamente tu shard asignado: python .agents/skills/content-to-course/compile_shard.py "
-            "--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
+            f"--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4 --templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}"
         ),
         "modular_per_comp_overrides": (
             "SOPORTE MODULAR DE CORRECCIONES POR COMPETENCIA: Si una competencia específica requiere corrección "
@@ -329,6 +355,38 @@ DSL_REFERENCE: Dict[str, Any] = {
 }
 
 
+def _dsl_reference_for_k(k: int) -> Dict[str, Any]:
+    """Return DSL_REFERENCE with templates_per_modality / K strings aligned to the effective K."""
+    import copy as _copy
+    ref = _copy.deepcopy(DSL_REFERENCE)
+    try:
+        k_int = max(1, int(k))
+    except (TypeError, ValueError):
+        return ref
+    if k_int == DEFAULT_TEMPLATES_PER_MODALITY:
+        return ref
+    ref["templates_per_modality"] = k_int
+
+    def _sub(node: Any) -> Any:
+        if isinstance(node, str):
+            return (
+                node.replace(
+                    f"--templates-per-modality {DEFAULT_TEMPLATES_PER_MODALITY}",
+                    f"--templates-per-modality {k_int}",
+                ).replace(
+                    f"K = {DEFAULT_TEMPLATES_PER_MODALITY} por defecto",
+                    f"K = {k_int} por defecto",
+                )
+            )
+        if isinstance(node, dict):
+            return {kk: _sub(vv) for kk, vv in node.items()}
+        if isinstance(node, list):
+            return [_sub(x) for x in node]
+        return node
+
+    return _sub(ref)
+
+
 def is_skill_competency(comp: Dict[str, Any]) -> bool:
     """Return True if competency is classified as a Skill (Hab)."""
     ctype = str(comp.get("type", "")).lower().strip()
@@ -428,13 +486,19 @@ def calculate_competency_weight(comp: Dict[str, Any]) -> float:
 
     distractors_raw = comp.get("distractors")
     distractors_count = len(distractors_raw) if isinstance(distractors_raw, list) else 0
-    return round(base + (0.1 * distractors_count), 2)
+    extra_templates = 0.0
+    rec_mods_w = comp.get("recommended_modalities")
+    if isinstance(rec_mods_w, list) and rec_mods_w:
+        n_mods_w = len({str(m).strip().lower() for m in rec_mods_w if str(m).strip()})
+        n_req_w = required_templates_for_competency(n_mods_w, DEFAULT_TEMPLATES_PER_MODALITY)
+        extra_templates = 0.5 * max(0, n_req_w - MIN_ARCHETYPES)
+    return round(base + (0.1 * distractors_count) + extra_templates, 2)
 
 
 def _compute_distractor_template_guidance(
     competencies: List[Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
-    """Compute per-competency MC7 template requirements when distractors exceed base capacity."""
+    """Compute per-competency distractor coverage guidance aligned with CTA recommended_modalities."""
     guidance: Dict[str, Dict[str, Any]] = {}
     for comp in competencies:
         if not isinstance(comp, dict):
@@ -444,26 +508,27 @@ def _compute_distractor_template_guidance(
             continue
         distractors_raw = comp.get("distractors")
         n_distractors = len(distractors_raw) if isinstance(distractors_raw, list) else 0
-        # Base multimodal 4-template capacity: 1 MC7 (6) + 1 MS (2-4) + FIB (0) -> max 10 distractors;
-        # single MC7 capacity is 6 distractors/seed.
+        rec_mods = comp.get("recommended_modalities") or []
         if n_distractors > 6:
-            min_mc7_only = math.ceil(n_distractors / 6)
-            min_mc7_with_ms4 = max(1, math.ceil(max(0, n_distractors - 4) / 6))
+            max_mc7_allowed = 0 if is_skill_competency(comp) else 1
+            min_mc7_only = max_mc7_allowed
+            min_mc7_with_ms4 = max_mc7_allowed
             exceeds_base_multimodal = n_distractors > 10
             entry: Dict[str, Any] = {
                 "n_distractors": n_distractors,
+                "recommended_modalities": list(rec_mods),
                 "mc7_capacity_per_seed": 6,
                 "ms_capacity_per_seed": "2-4",
+                "max_mc7_allowed": max_mc7_allowed,
                 "min_mc7_if_mc7_only": min_mc7_only,
                 "min_mc7_with_ms4": min_mc7_with_ms4,
                 "exceeds_base_multimodal": exceeds_base_multimodal,
             }
             if exceeds_base_multimodal:
                 entry["warning"] = (
-                    f"{cid} declara {n_distractors} distractores (> capacidad base multimodal 10 = 1 MC7 + 1 MS). "
-                    f"Para cumplir TPL-D3 (100% cobertura por semilla) sin romper el contrato multimodal, "
-                    f"agrega plantillas MC7 adicionales (mínimo {min_mc7_with_ms4} MC7 combinando con 1 MS de 4 distractores, "
-                    f"o {min_mc7_only} MC7 si cubres solo con MC7)."
+                    f"{cid} declara {n_distractors} distractores. Para cumplir TPL-D3 (100% cobertura por semilla) "
+                    f"respetando las modalidades decididas por el CTA Architect ({rec_mods or 'libre elección'}), "
+                    f"distribuye los distractor_ids mediante 'ds' en FIB/open_symbolic, MS o modalidades Bloom Superior."
                 )
             guidance[cid] = entry
     return guidance
@@ -636,12 +701,31 @@ def plan_shards(
     cta_path: Union[str, Path],
     output_dir: Union[str, Path],
     k: Optional[int] = None,
-    max_comps: Optional[int] = DEFAULT_COMPS_PER_SHARD,
+    max_comps: Optional[int] = None,
     max_wave_size: int = DEFAULT_MAX_WAVE_SIZE,
     isolate_skills: bool = True,
-    max_skills: int = MAX_SKILLS_PER_SHARD,
+    max_skills: Optional[int] = None,
+    templates_per_modality: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Execute sharding on cta.json and write pre_shard_manifest.json (v3.3 canonical)."""
+    eff_tpl_per_mod = (
+        DEFAULT_TEMPLATES_PER_MODALITY
+        if templates_per_modality is None
+        else max(1, int(templates_per_modality))
+    )
+    eff_max_skills = (
+        (1 if eff_tpl_per_mod >= 3 else MAX_SKILLS_PER_SHARD)
+        if max_skills is None
+        else max(1, int(max_skills))
+    )
+    eff_max_comps = (
+        (2 if eff_tpl_per_mod >= 3 else DEFAULT_COMPS_PER_SHARD)
+        if max_comps is None
+        else max(1, int(max_comps))
+    )
+    if max_comps is not None and max_skills is None:
+        eff_max_skills = min(eff_max_skills, eff_max_comps)
+
     cta_file = Path(cta_path).resolve()
     if not cta_file.is_file():
         raise FileNotFoundError(f"CTA file does not exist: {cta_file}")
@@ -704,11 +788,20 @@ def plan_shards(
     for c in competencies:
         if isinstance(c, dict):
             c.setdefault("assumptions", [])
+            rec_mods = c.get("recommended_modalities") or []
+            dists = c.get("distractors") or []
+            if isinstance(rec_mods, list) and "multiple_choice_7_options" in rec_mods and len(dists) < 6:
+                cid_label = c.get("id", "<unknown>")
+                raise ValueError(
+                    f"[CTA-MC7-DISTRACTORS] Competency '{cid_label}' includes "
+                    f"'multiple_choice_7_options' (MC7) in recommended_modalities but only declares "
+                    f"{len(dists)} distractors (MC7 requires >= 6 distinct distractors)."
+                )
 
     # Partitioning Strategy Selection
     if k is not None or not isolate_skills:
         # Legacy explicit K partitioning
-        shard_count = determine_shard_count(competencies, requested_k=k, max_comps_per_shard=max_comps)
+        shard_count = determine_shard_count(competencies, requested_k=k, max_comps_per_shard=eff_max_comps)
         shards = partition_competencies_into_shards(competencies, shard_count)
         total_shards = len(shards)
         total_waves = math.ceil(total_shards / max_wave_size) if total_shards > 0 else 1
@@ -721,8 +814,8 @@ def plan_shards(
         # Milestone 7.4 Weighted Cognitive Sharding & Anti-Straggler SLA
         raw_shards = partition_competencies_weighted(
             competencies,
-            max_comps=max_comps,
-            max_skills=max_skills,
+            max_comps=eff_max_comps,
+            max_skills=eff_max_skills,
         )
         # Heaviest-First Ordering:
         # Sort descending by weight (breaking ties deterministically by curriculum index).
@@ -750,7 +843,17 @@ def plan_shards(
     manifest_shards = []
     # Stage 4 authority: type is read exactly as run.py --stage build reads it (comp["type"]).
     cta_type_by_cid = {
-        str(c.get("id")): str(c.get("type", "concept"))
+        str(c.get("id")): ("skill" if is_skill_competency(c) else str(c.get("type", "concept")))
+        for c in competencies
+        if isinstance(c, dict) and c.get("id")
+    }
+    cta_rec_mods_by_cid = {
+        str(c.get("id")): list(c.get("recommended_modalities") or [])
+        for c in competencies
+        if isinstance(c, dict) and c.get("id")
+    }
+    cta_bloom_by_cid = {
+        str(c.get("id")): str(c.get("bloom") or "").strip()
         for c in competencies
         if isinstance(c, dict) and c.get("id")
     }
@@ -803,12 +906,26 @@ def plan_shards(
                 matched_sources.append(doc)
 
         wave_idx = shard.get("wave_index", (idx // max_wave_size) + 1)
-        s4_by_cid = {
-            cid_s4: competency_contract(cta_type_by_cid.get(cid_s4, "concept"))
-            for cid_s4 in shard["competency_ids"]
-        }
+        s4_by_cid = {}
+        for cid_s4 in shard["competency_ids"]:
+            rec_mods_s4 = cta_rec_mods_by_cid.get(cid_s4) or []
+            _mc7_aliases = {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"}
+            _canon_alias = {"fib": "fill_in_the_blank", "ms": "multiple_select", **{a: "multiple_choice_7_options" for a in _mc7_aliases}}
+            norm_mods_s4 = list(dict.fromkeys(
+                _canon_alias.get(str(m).strip().lower(), str(m).strip().lower()) for m in rec_mods_s4 if str(m).strip()
+            ))
+            num_mods_s4 = len(norm_mods_s4)
+            has_mc7_s4 = "multiple_choice_7_options" in norm_mods_s4
+            s4_by_cid[cid_s4] = competency_contract(
+                cta_type_by_cid.get(cid_s4, "concept"),
+                num_modalities=num_mods_s4,
+                templates_per_modality=eff_tpl_per_mod,
+                has_mc7=has_mc7_s4,
+                target_bloom=cta_bloom_by_cid.get(cid_s4) or None,
+            )
         shard_entry = {
             "shard_id": s_id,
+            "templates_per_modality": eff_tpl_per_mod,
             "stage4_contract": s4_by_cid,
             "shard_index": idx,
             "wave_index": wave_idx,
@@ -833,6 +950,7 @@ def plan_shards(
             "total_shards": len(shards),
             "total_waves": shard.get("total_waves", math.ceil(len(shards) / max_wave_size)),
             "max_wave_size": max_wave_size,
+            "templates_per_modality": eff_tpl_per_mod,
             "weight": shard["weight"],
             "estimated_weight": shard.get("estimated_weight", shard["weight"]),
             "competency_ids": shard["competency_ids"],
@@ -843,8 +961,8 @@ def plan_shards(
             "shard_data_path": shard_data_path_abs,
             "templates_dir": templates_dir_abs,
             "source_files": matched_sources,
-            "dsl_reference": DSL_REFERENCE,
-            "stage4_contract": {"global": global_contract(), "per_competency": s4_by_cid},
+            "dsl_reference": _dsl_reference_for_k(eff_tpl_per_mod),
+            "stage4_contract": {"global": global_contract(templates_per_modality=eff_tpl_per_mod), "per_competency": s4_by_cid},
         }
         if distractor_guidance:
             shard_payload["distractor_guidance"] = distractor_guidance
@@ -867,7 +985,10 @@ def plan_shards(
         "total_waves": total_waves,
         "max_wave_size": max_wave_size,
         "min_archetypes": MIN_ARCHETYPES,
-        "stage4_contract": global_contract(),
+        "templates_per_modality": eff_tpl_per_mod,
+        "max_skills_per_shard": eff_max_skills,
+        "comps_per_shard": eff_max_comps,
+        "stage4_contract": global_contract(templates_per_modality=eff_tpl_per_mod),
         "waves": waves_summary,
         "shards": manifest_shards,
     }
@@ -892,8 +1013,9 @@ def main():
     parser.add_argument("--cta", required=True, help="Path to cta.json")
     parser.add_argument("--output-dir", required=True, help="Output directory for shards (e.g. work/shards)")
     parser.add_argument("--k", type=int, default=None, help="Force specific shard count K")
-    parser.add_argument("--comps-per-shard", type=int, default=DEFAULT_COMPS_PER_SHARD, help="Target max non-skill competencies per shard (default: 3; MAX_SKILLS_PER_SHARD = 2)")
-    parser.add_argument("--max-skills-per-shard", type=int, default=MAX_SKILLS_PER_SHARD, help="Max skill competencies per shard (default: 2)")
+    parser.add_argument("--comps-per-shard", type=int, default=None, help="Target max non-skill competencies per shard (default: 3, or 2 when templates-per-modality >= 3)")
+    parser.add_argument("--max-skills-per-shard", type=int, default=None, help="Max skill competencies per shard (default: 2, or 1 when templates-per-modality >= 3)")
+    parser.add_argument("--templates-per-modality", type=int, default=DEFAULT_TEMPLATES_PER_MODALITY, help=f"Minimum distinct templates per recommended modality (default: {DEFAULT_TEMPLATES_PER_MODALITY})")
     parser.add_argument("--max-wave-size", type=int, default=DEFAULT_MAX_WAVE_SIZE, help="Maximum number of author shards dispatched per wave (default: 100)")
     parser.add_argument("--no-isolate-skills", action="store_true", default=False, help="Disable 1-Skill-per-shard isolation rule")
     args = parser.parse_args()
@@ -907,6 +1029,7 @@ def main():
             max_wave_size=args.max_wave_size,
             isolate_skills=not args.no_isolate_skills,
             max_skills=args.max_skills_per_shard,
+            templates_per_modality=args.templates_per_modality,
         )
     except FileNotFoundError as ex:
         if "BLOCKER::" in str(ex):

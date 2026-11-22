@@ -4,7 +4,9 @@
     "unit_title": "El Modelo de Crecimiento Económico de Solow (1956)",
     "detected_objective": "Comprender, formular y resolver dinámicamente el modelo neoclásico de crecimiento económico de Solow (1956), analizando sus propiedades de estabilidad, implicaciones de precios factoriales, dinámicas de transición y extensiones analíticas.",
     "total_competencies": 25,
-    "total_questions": 580
+    "total_questions": 580,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-21 18:53:50"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -54,5 +56,8 @@
       "severity": "INFO",
       "description": "Verifica que las transiciones de notación intencionales entre fuentes académicas (ej. $k \\equiv K/L$ en Chiang vs. $r \\equiv K/L$ en Solow 1956) cuenten con un reactivo o rationale puente explícito que aclare el cambio de variable para evitar la desorientación del estudiante."
     }
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-21 18:53:50",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

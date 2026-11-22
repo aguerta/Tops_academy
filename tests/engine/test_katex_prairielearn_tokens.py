@@ -133,7 +133,7 @@ def test_multiple_select_variable_interpolation_and_invariants():
                 "error_rationale": None,
             },
             {
-                "content": "No converge en probabilidad.",
+                "content": "No converge en probabilidad bajo ningún supuesto.",
                 "is_correct": False,
                 "error_rationale": "Sí converge bajo @var_type@.",
             },

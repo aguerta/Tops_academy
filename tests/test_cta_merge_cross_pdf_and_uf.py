@@ -266,8 +266,9 @@ def test_union_find_transitive_merge_and_merged_type(tmp_path: Path):
     comps = final_cta["competencies"]
     assert len(comps) == 1
     survivor = comps[0]
-    assert survivor["id"] == "H-01"
+    assert survivor["id"] == "C-01"
     assert survivor["type"] == "concept"
+    assert all(d["id"].startswith("D-C01-") for d in survivor["distractors"])
     assert survivor["name"] == "Estimador Unificado"
     assert survivor["description_latex"] == r"Descripción unificada con $\hat{\theta}$."
     assert all(d.get("omitted_step") is None for d in survivor["distractors"])

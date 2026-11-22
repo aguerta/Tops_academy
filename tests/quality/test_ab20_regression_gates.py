@@ -269,7 +269,8 @@ def test_cta_module_contract_version_2_emitted() -> None:
             "concept", "C-01", "Concepto 1", "Descripción matemática del concepto 1.", "Understand",
             "doc.pdf", 1, [],
             [("D1", "Error 1", "Verdad 1", "$1$", "Hint 1 con longitud suficiente para test.", None)],
-            [("A-C01-01", "$x > 0$", "Consecuencia de violación formal de al menos 10 caracteres.")]
+            [("A-C01-01", "$x > 0$", "Consecuencia de violación formal de al menos 10 caracteres.")],
+            ["MC7", "FIB"],
         )
     ]
     res = compile_cta_module(raw_tuples, require_assumptions=True)
@@ -432,7 +433,7 @@ TEMPLATES = [
                 "id": "Hab-01",
                 "type": "skill",
                 "name": "Competencia 1",
-                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 7)],
+                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 3)],
                 "assumptions": [{"id": "A-Hab01-01", "statement_latex": "$x > 0$", "violation_consequence": "Invalida el modelo."}],
             }
         ],
@@ -515,7 +516,7 @@ TEMPLATES = [
                 "id": "Hab-01",
                 "type": "skill",
                 "name": "Competencia 1",
-                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 7)],
+                "distractors": [{"id": f"D-H01-{i:02d}"} for i in range(1, 3)],
                 "assumptions": [{"id": "A-Hab01-01", "statement_latex": "$x > 0$", "violation_consequence": "Invalida el modelo."}],
             }
         ],

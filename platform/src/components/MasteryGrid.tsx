@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { Course, CourseMasteryRecord, Competency, MasteryTier } from '../types';
-import { TIER_COLORS, isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
+import {
+  getCompetencyRetrievability,
+  isUnitCompleted,
+  isUnitStarted,
+  TIER_COLORS,
+} from '../utils/masteryStorage';
+import { formatCooldownRemaining, getCooldownRemainingMs } from '../utils/fsrsEngine';
 import { MathText } from './MathText';
 
 interface MasteryGridProps {
@@ -52,6 +58,21 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
           firstEvidence?.page ?? firstEvidence?.slide ?? firstEvidence?.pages?.[0];
         const hasAssumptions = Boolean(unit.assumptions && unit.assumptions.length > 0);
         const isAssumptionsOpen = Boolean(expandedAssumptions[unit.id]);
+        const isDecayReview = Boolean(
+          compMastery?.needs_review && compMastery.review_reason === 'decay'
+        );
+        const hasFsrsCard = Boolean(
+          compMastery?.fsrs && compMastery.fsrs.state !== 0 && compMastery.fsrs.last_review
+        );
+        const retrievabilityPct = hasFsrsCard
+          ? Math.round(getCompetencyRetrievability(compMastery) * 100)
+          : null;
+        const cooldownMs =
+          tier === 'Proficient'
+            ? getCooldownRemainingMs(
+                compMastery?.last_tier_promotion_at || compMastery?.last_practiced
+              )
+            : 0;
 
         return (
           <div
@@ -96,8 +117,14 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     {compMastery?.needs_review && (
                       <span
                         data-testid={`red-dot-${unit.id}`}
-                        className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-sm animate-pulse"
-                        title="Requiere repaso (laguna conceptual detectada)"
+                        className={`w-2.5 h-2.5 rounded-full inline-block shadow-sm animate-pulse ${
+                          isDecayReview ? 'bg-amber-500' : 'bg-rose-500'
+                        }`}
+                        title={
+                          isDecayReview
+                            ? `Repaso espaciado sugerido (R(t) ${retrievabilityPct ?? '--'}%)`
+                            : 'Requiere repaso (laguna conceptual detectada)'
+                        }
                       />
                     )}
                   </div>
@@ -176,7 +203,13 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     .map((t) => t.last_avg_seconds_per_question)
                     .filter((n): n is number => n !== undefined)[0];
 
-                  if (bestAvg === undefined && lastAvg === undefined && !compMastery?.needs_review) {
+                  if (
+                    bestAvg === undefined &&
+                    lastAvg === undefined &&
+                    !compMastery?.needs_review &&
+                    retrievabilityPct === null &&
+                    cooldownMs <= 0
+                  ) {
                     return null;
                   }
 
@@ -193,12 +226,43 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                           Último: {lastAvg}s/preg
                         </span>
                       )}
+                      {retrievabilityPct !== null && (
+                        <span
+                          data-testid={`fsrs-retention-pill-${unit.id}`}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                            retrievabilityPct >= 85
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : retrievabilityPct >= 50
+                              ? 'bg-amber-50 text-amber-900 border-amber-200'
+                              : 'bg-rose-50 text-rose-800 border-rose-200'
+                          }`}
+                        >
+                          <span>🧠 R(t) {retrievabilityPct}%</span>
+                        </span>
+                      )}
+                      {cooldownMs > 0 && (
+                        <span
+                          data-testid={`cooldown-pill-${unit.id}`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200"
+                          title="Ventana mínima de consolidación antes de poder ascender a Mastered"
+                        >
+                          <span>⏳ Cooldown 12h ({formatCooldownRemaining(cooldownMs)})</span>
+                        </span>
+                      )}
                       {compMastery?.needs_review && (
                         <span
                           data-testid={`needs-review-badge-${unit.id}`}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold border ${
+                            isDecayReview
+                              ? 'bg-amber-100 text-amber-900 border-amber-300'
+                              : 'bg-rose-100 text-rose-800 border-rose-300'
+                          }`}
                         >
-                          <span>🔴 Requiere repaso</span>
+                          <span>
+                            {isDecayReview
+                              ? `⏳ Repaso FSRS (${retrievabilityPct ?? '--'}%)`
+                              : '🔴 Requiere repaso'}
+                          </span>
                         </span>
                       )}
                     </div>

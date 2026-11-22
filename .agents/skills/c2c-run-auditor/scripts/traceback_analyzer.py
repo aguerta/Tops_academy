@@ -490,7 +490,15 @@ class ForensicsEngine:
             # check if subsequent step had error
             for res in turn.get("results", []):
                 content = res.get("content", "")
-                if "exceeded the output token limit" in content or "cut off" in content or res.get("type") == "ERROR_MESSAGE":
+                low_c = content.lower()
+                is_rate_limit = any(
+                    tok in low_c for tok in ("429", "resource_exhausted", "exhausted your capacity")
+                )
+                if (
+                    "exceeded the output token limit" in content
+                    or "cut off" in content
+                    or (res.get("type") == "ERROR_MESSAGE" and not is_rate_limit)
+                ):
                     cutoff_detected = True
                     cutoff_step = turn.get("step_index")
 
@@ -661,7 +669,13 @@ class ForensicsEngine:
                     last_tool_calls = s.get("tool_calls", []) or []
 
                 if stype == "ERROR_MESSAGE":
-                    categories["Token Limit Cutoff (Model Truncation)"].append({
+                    low_err = content.lower()
+                    cat_key = (
+                        "API Rate Limit (429 RESOURCE_EXHAUSTED)"
+                        if any(tok in low_err for tok in ("429", "resource_exhausted", "exhausted your capacity"))
+                        else "Token Limit Cutoff (Model Truncation)"
+                    )
+                    categories[cat_key].append({
                         "agent": agent_name,
                         "step_index": s_idx,
                         "snippet": content[:140].strip(),

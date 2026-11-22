@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Competency, TimingStats } from '../types';
+import { Competency, SessionType, TimingStats } from '../types';
 import { MathText } from './MathText';
 import { formatTimingSeconds } from '../utils/masteryStorage';
 
@@ -8,7 +8,7 @@ interface PreExerciseModalProps {
   questionCount: number;
   onStart: () => void;
   onBack: () => void;
-  sessionType?: 'practice' | 'quiz' | 'test' | 'challenge';
+  sessionType?: SessionType;
   timingRecord?: TimingStats;
   courseTitle?: string;
 }
@@ -46,6 +46,10 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
   const displayTitle =
     sessionType === 'challenge'
       ? 'Course challenge'
+      : sessionType === 'mastery_challenge'
+      ? 'Mastery challenge'
+      : sessionType === 'misconception_drill'
+      ? 'Practicar trampas'
       : sessionType === 'test'
       ? 'Unit test'
       : sessionType === 'quiz'
@@ -55,6 +59,10 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
   const heading =
     sessionType === 'challenge'
       ? 'Ready for the Course Challenge?'
+      : sessionType === 'mastery_challenge'
+      ? '¿Listo para tu Mastery Challenge (6 preg.)?'
+      : sessionType === 'misconception_drill'
+      ? '¿Listo para superar tus trampas frecuentes?'
       : sessionType === 'test'
       ? 'Ready for the Unit Test?'
       : sessionType === 'quiz'
@@ -64,6 +72,10 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
   const subtitle =
     sessionType === 'challenge'
       ? 'Test your cumulative mastery across the entire course.'
+      : sessionType === 'mastery_challenge'
+      ? 'Refresca tus competencias con menor retención FSRS y asciende a Mastered.'
+      : sessionType === 'misconception_drill'
+      ? 'Practica preguntas portadoras de tus distractores activos hasta lograr racha ≥ 2.'
       : sessionType === 'test'
       ? 'Prove your full mastery of this unit!'
       : sessionType === 'quiz'

@@ -135,67 +135,81 @@ class TestDryArchetypesAndDistractorInheritance:
         shard_code = '''"""Shard 06 Data with 4 Disjoint Archetypes for Hab-06."""
 import random
 
-# Archetype 1: Directo (MC7, easy, Remember)
+# Archetype 1: Directo (MS, easy, Apply)
 def gen_directo(rng):
     base = rng.randint(20, 80)
     step = rng.randint(2, 6)
     v_corr = base + 3 * step
+    d1, d2, d3 = base + step, base + 2 * step, base + 4 * step
+    d4, d5, d6 = base + 5 * step, base + 6 * step, base + 7 * step
+    opts = [
+        {"value": r"$@ans@$ es el estimador lineal directo", "is_correct": True},
+        {"value": r"El incremento acumulado es $3(@step@)$ sobre @base@", "is_correct": True},
+        {"value": r"$@d1@$", "is_correct": False, "distractor_id": "D-Hab06-01", "error_rationale": "Error al estimar por omitir el término base @base@ en el cálculo inicial."},
+        {"value": r"$@d2@$", "is_correct": False, "distractor_id": "D-Hab06-02", "error_rationale": "Confusión en la escala del incremento de paso @step@ dentro del modelo lineal."},
+        {"value": r"$@d3@$", "is_correct": False, "distractor_id": "D-Hab06-03", "error_rationale": "Desplazamiento erróneo del parámetro base @base@ en la estimación directa."},
+        {"value": r"$@d4@$", "is_correct": False, "distractor_id": "D-Hab06-04", "error_rationale": "Multiplicación incorrecta del incremento @step@ durante la estimación lineal."},
+    ]
     return {
         "vars": {
             "base": base, "step": step, "ans": v_corr,
-            "d1": base + step, "d2": base + 2 * step, "d3": base + 4 * step,
-            "d4": base + 5 * step, "d5": base + 6 * step, "d6": base + 7 * step,
+            "d1": d1, "d2": d2, "d3": d3, "d4": d4,
         },
-        "correct": r"$@ans@$",
-        "distractors": [
-            ("D-Hab06-01", r"$@d1@$", "Error al estimar por omitir el término base @base@ en el cálculo inicial."),
-            ("D-Hab06-02", r"$@d2@$", "Confusión en la escala del incremento de paso @step@ dentro del modelo lineal."),
-            ("D-Hab06-03", r"$@d3@$", "Desplazamiento erróneo del parámetro base @base@ en la estimación directa."),
-            ("D-Hab06-04", r"$@d4@$", "Multiplicación incorrecta del incremento @step@ durante la estimación lineal."),
-            ("D-Hab06-05", r"$@d5@$", "Suma espuria acumulada sobre el parámetro base @base@ observado inicialmente."),
-            ("D-Hab06-06", r"$@d6@$", "Error sistemático al evaluar el múltiplo del parámetro @step@ en la ecuación."),
-        ],
+        "options": opts,
     }
 
 def ver_directo(res):
-    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    if v.get("ans") != v.get("base", 0) + 3 * v.get("step", 0):
+        return False
+    opts = res.get("options", [])
+    exp_t = {r"$@ans@$ es el estimador lineal directo", r"El incremento acumulado es $3(@step@)$ sobre @base@"}
+    exp_f = {f"$@d{i}@$": f"D-Hab06-0{i}" for i in range(1, 5)}
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_t
+        and len(f_opts) == 4
+        and all(
+            o.get("value") in exp_f
+            and o.get("distractor_id") == exp_f[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
 
-# Archetype 2: Inverso (MC7, medium, Apply)
+# Archetype 2: Inverso (FIB, medium, Apply)
 def gen_inverso(rng):
     target = rng.randint(50, 120)
     factor = rng.randint(2, 5)
     ans = target // factor
+    d5 = target * factor
     return {
         "vars": {
-            "target": target, "factor": factor, "ans": ans,
-            "d1": ans - 1, "d2": ans + 1, "d3": ans + 2,
-            "d4": ans + 3, "d5": ans + 4, "d6": ans + 5,
+            "target": target, "factor": factor, "ans": ans, "d5": d5,
         },
-        "correct": r"$@ans@$",
-        "distractors": [
-            ("D-Hab06-01", r"$@d1@$", "Inversión errónea al operar con el valor objetivo @target@ observado."),
-            ("D-Hab06-02", r"$@d2@$", "Fallo sistemático en la escala del factor @factor@ al efectuar la división."),
-            ("D-Hab06-03", r"$@d3@$", "Desvío positivo en el cálculo del objetivo @target@ del modelo estructural."),
-            ("D-Hab06-04", r"$@d4@$", "Sesgo positivo acumulado usando el factor @factor@ del estimador inverso."),
-            ("D-Hab06-05", r"$@d5@$", "Error aditivo injustificado sobre el valor objetivo @target@ observado."),
-            ("D-Hab06-06", r"$@d6@$", "Desplazamiento numérico de orden superior con el factor @factor@ aplicado."),
-        ],
+        "correct": str(ans),
+        "ds": [("D-Hab06-05", str(d5), "Multiplica @target@ por @factor@ en vez de dividir obteniendo el error @d5@.")],
     }
 
 def ver_inverso(res):
-    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
+    return bool(res and isinstance(res.get("vars"), dict) and str(res.get("vars", {}).get("ans")) == str(res.get("correct")))
 
 # Archetype 3: Perturbacion (FIB, medium, Analyze)
 def gen_perturbacion(rng):
     x = rng.randint(10, 40)
     dx = rng.randint(1, 4)
     ans = x + dx
+    d6 = x - dx
     return {
         "vars": {
-            "x": x, "dx": dx, "ans": ans,
+            "x": x, "dx": dx, "ans": ans, "d6": d6,
         },
         "correct": str(ans),
-        "distractors": [],
+        "ds": [("D-Hab06-06", str(d6), "Resta el incremento @dx@ del nivel base @x@ provocando el error @d6@.")],
     }
 
 def ver_perturbacion(res):
@@ -239,7 +253,7 @@ hints_frontera = [
 
 TEMPLATES = [
     (
-        "T-Hab06-01", "Hab-06", "multiple_choice_7_options",
+        "T-Hab06-01", "Hab-06", "multiple_select",
         gen_directo, ver_directo, ("easy", "Apply"),
         [
             "Calcule el valor del estimador lineal directo bajo base {base} y paso {step}.",
@@ -251,13 +265,13 @@ TEMPLATES = [
         "Resolucion directa formal: el estimador es ans = base + 3*step = {ans}."
     ),
     (
-        "T-Hab06-02", "Hab-06", "multiple_choice_7_options",
+        "T-Hab06-02", "Hab-06", "fill_in_the_blank",
         gen_inverso, ver_inverso, ("medium", "Apply"),
         [
             "Deduzca el parametro invertido sabiendo que el producto objetivo es {target} con factor {factor}.",
             "A partir del valor objetivo {target}, determine el parametro estructural inverso con factor {factor}.",
-            "En el contexto inverso formal, evalue la cantidad estimada correspondiente para factor {factor}.",
-            "Despeje rigurosamente el parametro del modelo sabiendo el objetivo {target}.",
+            "En el contexto inverso formal, evalue la cantidad estimada correspondiente para objetivo {target} y factor {factor}.",
+            "Despeje rigurosamente el parametro del modelo sabiendo el objetivo {target} y factor {factor}.",
         ],
         hints_inverso,
         "Resolucion inversa formal: el parametro despejado es ans = target / factor = {ans}."
@@ -268,8 +282,8 @@ TEMPLATES = [
         [
             "Evalue la respuesta ante una perturbacion de magnitud {dx} sobre el valor inicial {x}.",
             "Considere el desplazamiento marginal {dx} aplicado al sistema con nivel {x} y determine la respuesta.",
-            "Bajo el supuesto de una perturbacion {dx}, calcule el estado final del estimador.",
-            "Analice la sensibilidad analitica y halle el valor desplazado con variacion {dx}.",
+            "Bajo el supuesto de una perturbacion {dx} desde el nivel {x}, calcule el estado final del estimador.",
+            "Analice la sensibilidad analitica desde {x} y halle el valor desplazado con variacion {dx}.",
         ],
         hints_perturbacion,
         "Resolucion de perturbacion: el valor perturbado es x + dx = {ans}."
@@ -422,16 +436,22 @@ hints = [
 TEMPLATES = [
     ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen, ver, ("medium", "Apply"),
      [
-         "Variante stem A con {v}",
-         "Variante stem B con {v}",
-         "Variante stem C con {v}",
-         "Variante stem D con {v}",
-         "Variante stem E con {v}",
-         "Variante stem F con {v}",
-         "Variante stem G con {v}",
-         "Variante stem H con {v}",
-         "Variante stem I con {v}",
-         "Variante stem J con {v}",
+         "Calcule la estimación directa del parámetro observado {v}",
+         "Determine el valor analítico correspondiente al parámetro {v}",
+         "Halle la magnitud estructural derivada de evaluar {v}",
+         "Obtenga el resultado numérico fijando la entrada en {v}",
+         "Evalúe rigurosamente la expresión base para el valor {v}",
+         "Deduzca la cantidad resultante tomando como referencia {v}",
+         "Verifique el monto esperado cuando el parámetro vale {v}",
+         "Encuentre la solución numérica asociada al dato {v}",
+         "Establezca el equilibrio lineal fijando el parámetro {v}",
+         "Compute la respuesta formal requerida bajo el nivel {v}",
+         "Analice la relación paramétrica usando la variable {v}",
+         "Identifique la cuantía final obtenida a partir de {v}",
+         "Califique el efecto numérico observado al imponer {v}",
+         "Formule el cálculo operativo requerido para el caso {v}",
+         "Estime la salida analítica correspondiente al valor {v}",
+         "Contraste el resultado derivado tras fijar el parámetro {v}",
      ],
      hints, "Solucion formal detallada paso a paso evaluando el parametro observado {v}.")
 ]
@@ -712,26 +732,26 @@ TEMPLATES = [
     ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("easy", "Apply"), [
         r"Enfoque Directo: En un modelo salarial con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@, y ratio de fiabilidad q = @q@, calcule el estadistico de Hausman H:",
         r"A partir de estimaciones directas con datos de gemelos con b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
-        r"Para contrastar frontalmente la presencia de endogeneidad en gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico H:",
-        r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, compute el estadistico H:",
+        r"Para contrastar frontalmente la presencia de endogeneidad en gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y q = @q@, determine el estadistico H:",
+        r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y q = @q@, compute el estadistico H:",
     ], hints_h06_1, r"El estadistico de Hausman univariado directo calculado paso a paso es H = @ans@."),
     ("T-Hab06-02", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("medium", "Apply"), [
-        r"A partir de una estimacion MCO atenuada b_LS = @b_ls@ y fiabilidad observada q = @q@ en datos de gemelos, calcule el estadistico H:",
-        r"Diagnostico inverso: Sabiendo que el sesgo de atenuacion reduce el coeficiente con fiabilidad q = @q@, halle el estadistico H:",
-        r"Despeje analiticamente el efecto causal con varianzas V_LS = @v_ls@ y V_IV = @v_iv@, compute H:",
-        r"En el modelo de gemelos con fiabilidad q = @q@ y estimadores observados, obtenga el estadistico H:",
+        r"A partir de una estimacion MCO atenuada b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y fiabilidad observada q = @q@ en datos de gemelos, calcule el estadistico H:",
+        r"Diagnostico inverso: Sabiendo que el sesgo de atenuacion reduce el coeficiente con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@ y fiabilidad q = @q@, halle el estadistico H:",
+        r"Despeje analiticamente el efecto causal con b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@ y fiabilidad q = @q@, compute H:",
+        r"En el modelo de gemelos con fiabilidad q = @q@, b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, obtenga el estadistico H:",
     ], hints_h06_2, r"El estadistico de Hausman univariado inverso despejado paso a paso es H = @ans@."),
     ("T-Hab06-03", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("medium", "Analyze"), [
-        r"Sensibilidad: Si el ratio de fiabilidad varia con varianzas V_LS = @v_ls@ y V_IV = @v_iv@, determine H:",
-        r"Analisis perturbado: Evaluando una perturbacion marginal en la medicion de fiabilidad con b_LS = @b_ls@, calcule H:",
-        r"Estudio de perturbacion: Ante un cambio en la medicion partiendo de V_LS = @v_ls@ y V_IV = @v_iv@, halle H:",
-        r"Impacto de perturbacion: Con variacion en las condiciones de estimacion bajo b_LS = @b_ls@, determine H:",
+        r"Sensibilidad: Si el ratio de fiabilidad es q = @q@ con b_LS = @b_ls@, b_IV = @b_iv@ y varianzas V_LS = @v_ls@, V_IV = @v_iv@, determine H:",
+        r"Analisis perturbado: Evaluando una perturbacion marginal en q = @q@ con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, calcule H:",
+        r"Estudio de perturbacion: Ante un cambio en la medicion q = @q@ partiendo de b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, halle H:",
+        r"Impacto de perturbacion: Con variacion en q = @q@ bajo b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine H:",
     ], hints_h06_3, r"El estadistico de Hausman univariado bajo perturbacion marginal es H = @ans@."),
     ("T-Hab06-04", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("hard", "Evaluate"), [
-        r"Frontera: En el limite teorico de medicion donde b_LS = @b_ls@, V_LS = @v_ls@ y b_IV = @b_iv@, V_IV = @v_iv@, halle H:",
-        r"Regimen de frontera: Si las varianzas son V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico de Hausman H:",
-        r"Caso frontera extrema: Cuando la fiabilidad alcanza su cota maxima con b_LS = @b_ls@, calcule el contraste H:",
-        r"Condicion asintotica de frontera: Con estimadores observados b_LS = @b_ls@, b_IV = @b_iv@, deduzca H:",
+        r"Frontera: En el limite teorico de medicion con q = @q@ donde b_LS = @b_ls@, V_LS = @v_ls@ y b_IV = @b_iv@, V_IV = @v_iv@, halle H:",
+        r"Regimen de frontera: Si q = @q@, b_LS = @b_ls@, b_IV = @b_iv@ y las varianzas son V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico de Hausman H:",
+        r"Caso frontera extrema: Cuando la fiabilidad alcanza q = @q@ con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, calcule el contraste H:",
+        r"Condicion asintotica de frontera: Con q = @q@, b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, deduzca H:",
     ], hints_h06_4, r"El estadistico de Hausman univariado en la frontera teorica resulta H = @ans@."),
 ]
 '''
@@ -1248,42 +1268,43 @@ def _gen_c01(rng, arch):
     n = rng.randint(20, 200)
     if arch == 1:
         ans = n + 10
-        distractors = [
-            ("D-C01-01", "$@d1@$", "Calculo aditivo incorrecto al operar con parametro @n@ en paso inicial."),
-            ("D-C01-02", "$@d2@$", "Desplazamiento positivo erroneo al evaluar valor base @n@ del modelo."),
-            ("D-C01-03", "$@d3@$", "Error de escala acumulado sobre el parametro @n@ del modelo lineal."),
-            ("D-C01-04", "$@d4@$", "Ajuste residual equivocado aplicado sobre parametro @n@ evaluado."),
-            ("D-C01-05", "$@d5@$", "Sesgo sistematico en combinacion lineal para parametro observado @n@."),
-            ("D-C01-06", "$@d6@$", "Inversion indebida de signos al computar con parametro base @n@."),
+        rats = [
+            "Calculo aditivo incorrecto al operar con parametro @n@ en paso inicial.",
+            "Desplazamiento positivo erroneo al evaluar valor base @n@ del modelo.",
+            "Error de escala acumulado sobre el parametro @n@ del modelo lineal.",
+            "Ajuste residual equivocado aplicado sobre parametro @n@ evaluado.",
+        ]
+        d_vals = [ans - 2, ans + 2, ans + 4, ans + 6]
+        opts = [
+            {"value": "El estimador directo lineal suma diez unidades al parametro @n@ dando @ans@.", "is_correct": True},
+            {"value": "La estimacion aditiva para base @n@ es exactamente @ans@.", "is_correct": True},
+        ]
+        opts += [
+            {"value": f"$@d{i}@$", "is_correct": False, "distractor_id": f"D-C01-0{i}", "error_rationale": rat}
+            for i, rat in enumerate(rats, 1)
         ]
         return {
-            "vars": {"n": n, "ans": ans, "d1": ans - 2, "d2": ans + 2, "d3": ans + 4, "d4": ans + 6, "d5": ans + 8, "d6": ans + 10},
-            "correct": "$@ans@$",
-            "distractors": distractors,
+            "vars": {"n": n, "ans": ans, **{f"d{i}": d for i, d in enumerate(d_vals, 1)}},
+            "options": opts,
         }
     elif arch == 2:
         ans = n * 2
-        distractors = [
-            ("D-C01-01", "$@d1@$", "Calculo multiplicativo fallido con parametro @n@ en el paso inicial."),
-            ("D-C01-02", "$@d2@$", "Desplazamiento inverso erroneo al evaluar el valor base @n@ analizado."),
-            ("D-C01-03", "$@d3@$", "Error de proporcion acumulada sobre parametro @n@ del modelo lineal."),
-            ("D-C01-04", "$@d4@$", "Ajuste de factor equivocado aplicado sobre parametro @n@ evaluado."),
-            ("D-C01-05", "$@d5@$", "Sesgo sistematico en la razon inversa para parametro @n@ analizado."),
-            ("D-C01-06", "$@d6@$", "Inversion indebida de factores al computar con parametro base @n@."),
-        ]
+        d5 = n * 4
         return {
-            "vars": {"n": n, "ans": ans, "d1": ans - 5, "d2": ans + 5, "d3": ans + 10, "d4": ans + 15, "d5": ans + 20, "d6": ans + 25},
-            "correct": "$@ans@$",
-            "distractors": distractors,
+            "vars": {"n": n, "ans": ans, "d5": d5},
+            "correct": str(ans),
+            "ds": [("D-C01-05", str(d5), "Sesgo sistematico en combinacion lineal multiplicando @n@ por cuatro hacia @d5@.")],
         }
     elif arch == 3:
         ans = n + 5
+        d6 = n - 5
         return {
-            "vars": {"n": n, "ans": ans},
+            "vars": {"n": n, "ans": ans, "d6": d6},
             "correct": str(ans),
+            "ds": [("D-C01-06", str(d6), "Inversion indebida de signo al restar cinco unidades sobre parametro base @n@ dando @d6@.")],
         }
     else:  # arch == 4
-        ans = n * 3
+        ans = n * n + 1
         return {
             "vars": {"n": n, "ans": ans},
             "correct": str(ans),
@@ -1294,10 +1315,34 @@ def gen_c01_2(rng): return _gen_c01(rng, 2)
 def gen_c01_3(rng): return _gen_c01(rng, 3)
 def gen_c01_4(rng): return _gen_c01(rng, 4)
 
-def ver_c01_1(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@ans@$" and res["vars"]["ans"] == res["vars"]["n"] + 10)
-def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@ans@$" and res["vars"]["ans"] == res["vars"]["n"] * 2)
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    if v.get("ans") != v.get("n", 0) + 10:
+        return False
+    opts = res.get("options", [])
+    exp_t = {
+        "El estimador directo lineal suma diez unidades al parametro @n@ dando @ans@.",
+        "La estimacion aditiva para base @n@ es exactamente @ans@.",
+    }
+    exp_f = {f"$@d{i}@$": f"D-C01-0{i}" for i in range(1, 5)}
+    t_opts = [o for o in opts if o.get("is_correct") is True]
+    f_opts = [o for o in opts if o.get("is_correct") is False]
+    return (
+        len(t_opts) == 2
+        and {o.get("value") for o in t_opts} == exp_t
+        and len(f_opts) == 4
+        and all(
+            o.get("value") in exp_f
+            and o.get("distractor_id") == exp_f[o.get("value")]
+            and len(str(o.get("error_rationale") or "")) >= 20
+            for o in f_opts
+        )
+    )
+def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] * 2)
 def ver_c01_3(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] + 5)
-def ver_c01_4(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] * 3)
+def ver_c01_4(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] * res["vars"]["n"] + 1)
 
 stem_c01_1 = [
     "Calcule la estimacion directa del modelo lineal para parametro base @n@.",
@@ -1321,11 +1366,11 @@ stem_c01_3 = [
     "Evalue el impacto de la perturbacion aditiva sobre base @n@.",
 ]
 stem_c01_4 = [
-    "Evalue el comportamiento en el regimen frontera con parametro de escala @n@.",
-    "Determine el valor en el regimen frontera para parametro de escala @n@.",
-    "Calcule el resultado en la frontera del regimen con parametro @n@.",
-    "Halle la cota extrema del regimen considerando parametro @n@.",
-    "Obtenga el valor limite en la frontera del regimen con parametro @n@.",
+    "Evalue el comportamiento cuadratico en el regimen frontera con parametro de escala @n@.",
+    "Determine el valor cuadratico en el regimen frontera para parametro de escala @n@.",
+    "Calcule el resultado cuadratico en la frontera del regimen con parametro @n@.",
+    "Halle la cota cuadratica extrema del regimen considerando parametro @n@.",
+    "Obtenga el valor cuadratico limite en la frontera del regimen con parametro @n@.",
 ]
 
 hints_1 = [
@@ -1344,20 +1389,20 @@ hints_3 = [
     "Confirme que la variacion neta corresponda a la respuesta abierta.",
 ]
 hints_4 = [
-    "Evalúe la variable de escala en el limite del dominio analizado.",
-    "Triplique el valor del parametro de escala en el regimen frontera.",
-    "Valide que el resultado entero coincida con la cota extrema calculada.",
+    "Evalúe la variable de escala elevada al cuadrado en el limite del dominio analizado.",
+    "Sume la unidad al cuadrado del parametro de escala en el regimen frontera.",
+    "Valide que el resultado entero coincida con la cota cuadratica extrema calculada.",
 ]
 
 TEMPLATES = [
     (
-        "T-C01-01", "C-01", "multiple_choice_7_options",
+        "T-C01-01", "C-01", "multiple_select",
         gen_c01_1, ver_c01_1, ("easy", "Apply"),
         stem_c01_1, hints_1,
         "Resolucion directa formal: el estimador es ans = n + 10 = @ans@."
     ),
     (
-        "T-C01-02", "C-01", "multiple_choice_7_options",
+        "T-C01-02", "C-01", "fill_in_the_blank",
         gen_c01_2, ver_c01_2, ("medium", "Apply"),
         stem_c01_2, hints_2,
         "Resolucion inversa formal: el parametro es ans = n * 2 = @ans@."
@@ -1372,7 +1417,7 @@ TEMPLATES = [
         "T-C01-04", "C-01", "fill_in_the_blank",
         gen_c01_4, ver_c01_4, ("hard", "Evaluate"),
         stem_c01_4, hints_4,
-        "Resolucion en la frontera: la cota extrema es ans = n * 3 = @ans@."
+        "Resolucion en la frontera: la cota cuadratica extrema es ans = n*n + 1 = @ans@."
     ),
 ]
 '''

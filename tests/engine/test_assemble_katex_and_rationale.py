@@ -238,7 +238,7 @@ def test_assemble_question_preserves_author_error_rationale_ms():
             {"content": "El estimador IV es consistente bajo supuestos de rango.", "is_correct": True},
             {"content": "El estimador OLS es insesgado bajo exogeneidad estricta.", "is_correct": True},
             {
-                "content": "La consistencia implica que el estimador es insesgado para cualquier tamaño muestral.",
+                "content": "La consistencia implica insesgadez en toda muestra.",
                 "is_correct": False,
                 "distractor_id": "D-MS-01",
                 "error_rationale": author_rat_ms,

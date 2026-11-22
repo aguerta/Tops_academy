@@ -1,27 +1,31 @@
 import React, { useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import {
+  AdaptiveExamSummary,
   Competency,
   Course,
   ChallengeExecutionSummary,
   IronDeferredReviewItem,
   MasteryTier,
   MetacognitiveAudit,
+  SessionType,
 } from '../types';
 import { MathText } from './MathText';
 import { formatTimingSeconds, TIER_COLORS, TIER_POINTS } from '../utils/masteryStorage';
+import { formatCooldownRemaining } from '../utils/fsrsEngine';
 
 interface CompletionScreenProps {
   course: Course;
   competency?: Competency;
   score: number;
   total: number;
-  sessionType: 'practice' | 'quiz' | 'test' | 'challenge';
+  sessionType: SessionType;
   onTryAgain: () => void;
   onUpNext: () => void;
   onBackToCourse: () => void;
   onRemediateCompetency?: (comp: Competency) => void;
   challengeSummary?: ChallengeExecutionSummary | null;
+  adaptiveSummary?: AdaptiveExamSummary | null;
   metacognitiveAudit?: MetacognitiveAudit | null;
   deferredReview?: IronDeferredReviewItem[];
   timingData?: {
@@ -50,6 +54,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
   onBackToCourse,
   onRemediateCompetency,
   challengeSummary,
+  adaptiveSummary,
   metacognitiveAudit,
   deferredReview,
   timingData,
@@ -118,6 +123,10 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
   const titlePrefix =
     sessionType === 'challenge'
       ? '¡Examen Modo Hierro completado!'
+      : sessionType === 'mastery_challenge'
+      ? '¡Mastery Challenge completado!'
+      : sessionType === 'misconception_drill'
+      ? '¡Sesión de Trampas completada!'
       : sessionType === 'test'
       ? 'Unit test complete!'
       : sessionType === 'quiz'
@@ -374,14 +383,24 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
                   {skillsMaintainedList.map((skill) => (
                     <div
                       key={skill.competency_id}
-                      className="p-1.5 bg-slate-50 border border-slate-200 rounded text-xs flex items-center justify-between"
+                      className="p-1.5 bg-slate-50 border border-slate-200 rounded text-xs flex flex-col gap-1"
                     >
-                      <span className="truncate font-medium text-slate-700 max-w-[200px]">
-                        <MathText text={skill.competency_name} inline />
-                      </span>
-                      <span className="font-semibold text-slate-500 text-[11px] shrink-0">
-                        {skill.new_tier} (0 pts)
-                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-medium text-slate-700 max-w-[200px]">
+                          <MathText text={skill.competency_name} inline />
+                        </span>
+                        <span className="font-semibold text-slate-500 text-[11px] shrink-0">
+                          {skill.new_tier} (0 pts)
+                        </span>
+                      </div>
+                      {skill.cooldown_remaining_ms !== undefined && skill.cooldown_remaining_ms > 0 && (
+                        <span
+                          data-testid={`cooldown-notice-${skill.competency_id}`}
+                          className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5 self-start"
+                        >
+                          ⏳ Cooldown 12h: faltan {formatCooldownRemaining(skill.cooldown_remaining_ms)} para Mastered
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -435,6 +454,116 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
             </p>
           </div>
         </div>
+
+        {/* M14-B Adaptive 2-Module Post-Exam Projection & Unit Breakdown */}
+        {adaptiveSummary && (
+          <section
+            data-testid="adaptive-exam-summary"
+            className="w-full max-w-4xl bg-white rounded-2xl border border-purple-200 shadow-sm p-4 sm:p-6 space-y-4 min-w-0"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-extrabold text-slate-900">
+                  Diagnóstico de Examen Parcial Adaptativo (2 Módulos)
+                </h2>
+                <p className="text-xs text-slate-600">
+                  Enrutamiento SAT Bluebook (corte {adaptiveSummary.cutoffPercentage}% en Módulo 1) hacia{' '}
+                  <strong>
+                    {adaptiveSummary.routedTier === 'advanced' ? 'Módulo 2 Avanzado' : 'Módulo 2 Estándar'}
+                  </strong>.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span
+                  data-testid="adaptive-projected-grade"
+                  className="px-3 py-1 rounded-full bg-purple-100 border border-purple-300 text-purple-900 text-xs sm:text-sm font-extrabold"
+                >
+                  Proyección: {adaptiveSummary.projectedGrade20.toFixed(1)} / 20.0
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+              <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 min-w-0">
+                <div className="font-bold text-indigo-900">Módulo 1 • Diagnóstico</div>
+                <div className="text-xl font-extrabold text-indigo-700 mt-0.5">
+                  {adaptiveSummary.module1.score}/{adaptiveSummary.module1.total} ({adaptiveSummary.module1.percentage}%)
+                </div>
+                <div className="text-[11px] text-indigo-700">
+                  Tiempo: {formatTimingSeconds(adaptiveSummary.module1.elapsedSeconds)}
+                </div>
+              </div>
+              <div
+                className={`p-3 rounded-xl border min-w-0 ${
+                  adaptiveSummary.routedTier === 'advanced'
+                    ? 'bg-purple-50 border-purple-200'
+                    : 'bg-sky-50 border-sky-200'
+                }`}
+              >
+                <div
+                  className={`font-bold ${
+                    adaptiveSummary.routedTier === 'advanced' ? 'text-purple-900' : 'text-sky-900'
+                  }`}
+                >
+                  Módulo 2 • {adaptiveSummary.routedTier === 'advanced' ? 'Avanzado' : 'Estándar'}
+                </div>
+                <div
+                  className={`text-xl font-extrabold mt-0.5 ${
+                    adaptiveSummary.routedTier === 'advanced' ? 'text-purple-700' : 'text-sky-700'
+                  }`}
+                >
+                  {adaptiveSummary.module2.score}/{adaptiveSummary.module2.total} ({adaptiveSummary.module2.percentage}%)
+                </div>
+                <div
+                  className={`text-[11px] ${
+                    adaptiveSummary.routedTier === 'advanced' ? 'text-purple-700' : 'text-sky-700'
+                  }`}
+                >
+                  Tiempo: {formatTimingSeconds(adaptiveSummary.module2.elapsedSeconds)}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 min-w-0">
+                <div className="font-bold text-slate-900">Ritmo Medio</div>
+                <div className="text-xl font-extrabold text-slate-800 mt-0.5">
+                  {adaptiveSummary.avgSecondsPerQuestion}s / preg.
+                </div>
+                <div className="text-[11px] text-slate-600">
+                  Techo escala: {adaptiveSummary.routedTier === 'advanced' ? '20.0/20' : '15.5/20'}
+                </div>
+              </div>
+            </div>
+
+            {adaptiveSummary.unitBreakdown.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500">
+                      <th className="py-1.5 pr-3 font-bold">Unidad / Competencia</th>
+                      <th className="py-1.5 px-2 font-bold text-right">Aciertos</th>
+                      <th className="py-1.5 pl-2 font-bold text-right">Tiempo prom.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adaptiveSummary.unitBreakdown.map((u) => (
+                      <tr key={u.competencyId} className="border-b border-slate-100 last:border-b-0">
+                        <td className="py-1.5 pr-3 text-slate-800 font-medium break-words">
+                          <span className="font-bold text-slate-500 mr-1.5">{u.competencyId}</span>
+                          <MathText text={u.competencyName} inline />
+                        </td>
+                        <td className="py-1.5 px-2 text-right font-bold whitespace-nowrap">
+                          {u.correct}/{u.total} ({u.percentage}%)
+                        </td>
+                        <td className="py-1.5 pl-2 text-right text-slate-600 whitespace-nowrap">
+                          {u.avgSeconds}s
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* M20 Deferred Metacognitive Audit Summary (Modo Hierro) */}
         {metacognitiveAudit && (

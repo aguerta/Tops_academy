@@ -24,12 +24,15 @@ import {
   getCorrectOptionIds,
   isOptionCorrect,
 } from './questionUtils';
+import { extractOptionDistractors } from './distractorExtractor';
 
 export interface IronQuestionGradeResult {
   isCorrect: boolean;
   answered: boolean;
   userSummary: string;
   diagnosticRationale?: string;
+  matchedDistractorIds?: string[];
+  matchedDistractorRationales?: Record<string, string>;
 }
 
 /**
@@ -148,11 +151,15 @@ export function gradeIronExamQuestion(
     case 'multiple_choice_7_options': {
       const opt = q.options.find((o) => o.id === draft.selectedOption);
       const ok = draft.selectedOption !== null && isOptionCorrect(q, draft.selectedOption);
+      const ext = !ok && draft.selectedOption ? extractOptionDistractors(q, [draft.selectedOption]) : null;
       return {
         isCorrect: ok,
         answered: true,
         userSummary: opt ? opt.content : String(draft.selectedOption || ''),
         diagnosticRationale: !ok ? opt?.error_rationale ?? undefined : undefined,
+        ...(ext && ext.ids.length > 0
+          ? { matchedDistractorIds: ext.ids, matchedDistractorRationales: ext.rationales }
+          : {}),
       };
     }
 
@@ -169,17 +176,22 @@ export function gradeIronExamQuestion(
         .filter((o) => draft.selectedMultiOptions.includes(o.id) && !isOptionCorrect(q, o.id))
         .map((o) => o.error_rationale)
         .filter(Boolean);
+      const ext = !ok ? extractOptionDistractors(q, draft.selectedMultiOptions) : null;
       return {
         isCorrect: ok,
         answered: true,
         userSummary: chosenContents.join(' | ') || 'Selección múltiple',
         diagnosticRationale: !ok ? rationales[0] ?? undefined : undefined,
+        ...(ext && ext.ids.length > 0
+          ? { matchedDistractorIds: ext.ids, matchedDistractorRationales: ext.rationales }
+          : {}),
       };
     }
 
     case 'fill_in_the_blank': {
       const ok = checkMathEquivalence(draft.fillBlankValue, q.correct_answer as any);
       let diagRationale: string | undefined;
+      let matchedId: string | undefined;
       if (!ok && q.diagnostic_distractors?.length) {
         const res = validateSymbolicAnswer(
           draft.fillBlankValue,
@@ -188,12 +200,19 @@ export function gradeIronExamQuestion(
           q.symbolic_config
         );
         diagRationale = res.diagnosticRationale || res.syntaxError;
+        matchedId = res.matchedDistractorId;
       }
       return {
         isCorrect: ok,
         answered: true,
         userSummary: draft.fillBlankValue,
         diagnosticRationale: diagRationale,
+        ...(matchedId
+          ? {
+              matchedDistractorIds: [matchedId],
+              ...(diagRationale ? { matchedDistractorRationales: { [matchedId]: diagRationale } } : {}),
+            }
+          : {}),
       };
     }
 
@@ -208,11 +227,20 @@ export function gradeIronExamQuestion(
         q.diagnostic_distractors,
         q.symbolic_config
       );
+      const diagRationale = !res.isCorrect ? res.diagnosticRationale || res.syntaxError : undefined;
       return {
         isCorrect: res.isCorrect,
         answered: true,
         userSummary: expr,
-        diagnosticRationale: !res.isCorrect ? res.diagnosticRationale || res.syntaxError : undefined,
+        diagnosticRationale: diagRationale,
+        ...(!res.isCorrect && res.matchedDistractorId
+          ? {
+              matchedDistractorIds: [res.matchedDistractorId],
+              ...(diagRationale
+                ? { matchedDistractorRationales: { [res.matchedDistractorId]: diagRationale } }
+                : {}),
+            }
+          : {}),
       };
     }
 
@@ -229,11 +257,20 @@ export function gradeIronExamQuestion(
         sVal.justifications,
         q.proof_dag
       );
+      const diagRationale = !res.isCorrect ? res.diagnosticRationale : undefined;
       return {
         isCorrect: res.isCorrect,
         answered: true,
         userSummary: `Secuencia: ${sVal.orderedStepIds.join(' → ')}`,
-        diagnosticRationale: !res.isCorrect ? res.diagnosticRationale : undefined,
+        diagnosticRationale: diagRationale,
+        ...(!res.isCorrect && res.matchedDistractorId
+          ? {
+              matchedDistractorIds: [res.matchedDistractorId],
+              ...(diagRationale
+                ? { matchedDistractorRationales: { [res.matchedDistractorId]: diagRationale } }
+                : {}),
+            }
+          : {}),
       };
     }
 
@@ -250,11 +287,20 @@ export function gradeIronExamQuestion(
         q.adversarial_break.mode === 'find_fallacy'
           ? `Paso ${aVal.selectedStepId || '—'}${aVal.selectedReasonId ? ` (${aVal.selectedReasonId})` : ''}`
           : JSON.stringify(aVal.witnessValues);
+      const diagRationale = !res.isCorrect ? res.diagnosticRationale : undefined;
       return {
         isCorrect: res.isCorrect,
         answered: true,
         userSummary: summary,
-        diagnosticRationale: !res.isCorrect ? res.diagnosticRationale : undefined,
+        diagnosticRationale: diagRationale,
+        ...(!res.isCorrect && res.matchedDistractorId
+          ? {
+              matchedDistractorIds: [res.matchedDistractorId],
+              ...(diagRationale
+                ? { matchedDistractorRationales: { [res.matchedDistractorId]: diagRationale } }
+                : {}),
+            }
+          : {}),
       };
     }
 
@@ -275,11 +321,9 @@ export function gradeIronExamQuestion(
       const p2 = validateStage0Phase(2, uVal, q.unstructured_model);
       const p3 = validateStage0Phase(3, uVal, q.unstructured_model);
       const ok = p1.isCorrect && p2.isCorrect && p3.isCorrect;
-      const firstError =
-        (!p1.isCorrect && p1.diagnosticRationale) ||
-        (!p2.isCorrect && p2.diagnosticRationale) ||
-        (!p3.isCorrect && p3.diagnosticRationale) ||
-        undefined;
+      const firstFailed = !p1.isCorrect ? p1 : !p2.isCorrect ? p2 : !p3.isCorrect ? p3 : null;
+      const firstError = firstFailed?.diagnosticRationale || undefined;
+      const matchedId = firstFailed?.matchedDistractorId;
       const p3Summary =
         q.unstructured_model.phase3_formulation.input_mode === 'select'
           ? q.unstructured_model.phase3_formulation.options?.find(
@@ -293,6 +337,12 @@ export function gradeIronExamQuestion(
         answered: true,
         userSummary: `F1: ${Object.keys(uVal.phase1Roles).length} vars • F2: ${uVal.phase2SelectedIds.length} sup. • F3: ${p3Summary}`,
         diagnosticRationale: firstError,
+        ...(matchedId
+          ? {
+              matchedDistractorIds: [matchedId],
+              ...(firstError ? { matchedDistractorRationales: { [matchedId]: firstError } } : {}),
+            }
+          : {}),
       };
     }
 
@@ -330,11 +380,20 @@ export function gradeIronExamQuestion(
         q.invariant_canvas.mode === 'tree'
           ? `Ramas: [${cVal.selectedEdgeIds.join(', ')}], InfoSets: ${cVal.infoSets.length}`
           : `Sliders: ${JSON.stringify(cVal.sliderValues)}, Puntos: ${JSON.stringify(cVal.pointPositions)}`;
+      const diagRationale = !res.isCorrect ? res.diagnosticRationale : undefined;
       return {
         isCorrect: res.isCorrect,
         answered: true,
         userSummary: summary,
-        diagnosticRationale: !res.isCorrect ? res.diagnosticRationale : undefined,
+        diagnosticRationale: diagRationale,
+        ...(!res.isCorrect && res.matchedDistractorId
+          ? {
+              matchedDistractorIds: [res.matchedDistractorId],
+              ...(diagRationale
+                ? { matchedDistractorRationales: { [res.matchedDistractorId]: diagRationale } }
+                : {}),
+            }
+          : {}),
       };
     }
 
@@ -345,11 +404,20 @@ export function gradeIronExamQuestion(
         return { isCorrect: false, answered: true, userSummary: 'Sin especificación matching' };
       }
       const res = validateConceptMatchingSubmission(pVal, q.concept_matching);
+      const diagRationale = !res.isCorrect ? res.diagnosticRationale : undefined;
       return {
         isCorrect: res.isCorrect,
         answered: true,
         userSummary: `${Object.keys(pVal).length} emparejamientos`,
-        diagnosticRationale: !res.isCorrect ? res.diagnosticRationale : undefined,
+        diagnosticRationale: diagRationale,
+        ...(!res.isCorrect && res.matchedDistractorId
+          ? {
+              matchedDistractorIds: [res.matchedDistractorId],
+              ...(diagRationale
+                ? { matchedDistractorRationales: { [res.matchedDistractorId]: diagRationale } }
+                : {}),
+            }
+          : {}),
       };
     }
 
