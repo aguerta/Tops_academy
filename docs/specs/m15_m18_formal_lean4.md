@@ -3,7 +3,7 @@
 
 > **Documento de Especificación Técnica, Verificación Formal y Kernel Matemático**  
 > **Hitos Vinculados:** Milestones 15, 16, 17 y 18 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
-> **Estado:** Fases 1 (isomórficas en Python) ✅ CERRADAS; M17 (DAG + Clausura Epistémica + $\alpha_{\text{Kernel}}=0$, **P0**); M16 F2 acotado a **`z3-solver` en Python** (**P1**, sin lemas Lean 4); M18 acotado a **Compuerta Prompt-Compiler CI** (`tests/pipeline/test_system_prompts_compile_clean.py` ✅ ampliada con micro-ejemplos M20 y `C-02`) + **Benchmark SLA** (**P1**); M15 F2 (binario nativo Lean 4 Perceus C FFI) diferido a **P3 Investigación** (DRT `Hypothesis` Python como mejora ligera).  
+> **Estado:** Fases 1 (isomórficas en Python) ✅ CERRADAS; M17 (**✅ Cerrado: DAG `cta_merge.py` ✅, $\alpha_{\text{Kernel}}=0$ `judge.py` ✅ y Clausura Epistémica `engine/epistemic_closure.py` ✅** con **hard gate quirúrgico `[TPL-EPISTEMIC-CLOSURE]` en `open_symbolic` `expected_answer`** [`0/497` falsos positivos] y modo `WARN` en `detailed_solution`); M16 F2 (**Fase 1 `[Z3-RULE-WARNING]` en `engine/shard_ast_transforms.py` ✅** en modo sombra, `0` falsos positivos en `805` plantillas; Fase 2 AST acotado en `check_templates.py` **P1**); M18 (**Compuerta Prompt-Compiler CI ✅** + Benchmark SLA **P1**); M15 F2 (**DRT `Hypothesis` `tests/pipeline/test_c2c_hook_guard_drt.py` ✅**, binario Lean 4 FFI diferido a **P3 Investigación**).  
 > **Regla de Sincronización:** Cualquier ajuste en los teoremas formales, contratos de `formal/TopsAcademyC2C.lean`, esquemas en `engine/interstage_schemas.py` o hooks de `c2c_hook_guard.py` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
 
 ---
@@ -40,19 +40,19 @@ El código Lean 4 se compila mediante `lake build` a binario nativo C vía *Perc
   - **Colisiones y clones con dominio (`TPL-D4` / `If` / `x > 0, α ∈ (0,1)`):** `z3` resuelve colisión rara (`2a = b²` en `[2, 20]`) en **`10.994 ms`** (`sat`, `[a=18, b=6]`) y prueba plantilla segura (`2a+1 = 2b`) en **`2.192 ms`** (`unsat`), frente a `107.10 ms` (Stage 3, `50` seeds) / `129.93 ms` (Stage 4) y frente a `SymPy` sin suposiciones que falla (`False`, `85.058 ms`) donde `z3` certifica equivalencia en **`2.283 ms`** (`unsat`).
   - **No lineal pesado vs. Trascendentes:** `z3` resolvió los 3 casos no lineales (`NRA` 4 vars grado 5 en `9.499 ms` `sat`, `NIA` 6 vars en `28.325 ms` `sat`, Cobb-Douglas cúbica en `6.282 ms` `unsat`), mientras `cvc5` devolvió `unknown` en los 3 (`245–563 ms`). En trascendentes (`exp`, `ln`, `sin`), `z3` no aplica y `cvc5` hizo timeout/`unknown` en `ln(ab)=ln(a)+ln(b)` (`1093.38 ms`), `sin²+cos²=1` (`503.64 ms`) y `exp(x)=2` (`505.01 ms`), ganando **`SymPy` (`positive=True`, `12.88 ms`) + `seeds` numéricas (`0.046 ms`, error `1.33e-15`)**.
 - **Por qué no desaparecen los `seeds`:** Stage 4 debe instanciar reactivos reales (`~8.3–8.5 s` en Mateco/Estadística) y Stage 3 validar KaTeX/texto y funciones trascendentes; traducir Python imperativo libre de `generate(rng)` a Z3 tomaría ~1–2 semanas sin cubrir el 100%.
-- **Implementación recomendada en 2 fases (~1–2 días total, alto ROI):**
-  1. **Fase 1 (`~3–4 h`):** integrar `z3-solver` solo en **`[TPL-CLONE-SYMPY]`** (`engine/shard_ast_transforms.py`) reutilizando el AST de `SymPy` ya existente, con `timeout=150 ms` y fallback silencioso (respaldo del Candado 1 de M19).
+- **Implementación en 2 fases (~1–2 días total, alto ROI):**
+  1. **Fase 1 (`✅` en modo sombra `[Z3-RULE-WARNING]`):** `_z3_check_sympy_equiv(..., timeout_ms=150)` integrado en [`engine/shard_ast_transforms.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/shard_ast_transforms.py) cuando `SymPy` falla o no reduce a cero, emitiendo `[Z3-RULE-WARNING]` sin bloquear Stage 3. Medido sobre los 3 cursos reales (`mateco_4_optimizacion_v20_k_3`, `estadistica_3_pre_pc2_m20`, `solow_m20_v5`, `805` plantillas totales): **`0` falsos positivos**, **`68.12–127.93 ms`** totales de análisis anti-clon.
   2. **Fase 2 (`~1 día`):** analizador AST acotado en `check_templates.py` únicamente para plantillas declarativas simples (sin bucles ni trascendentes) para certificar `TPL_D4_Universal` sobre todo `rng.randint(a, b)`, manteniendo `SymPy` (`positive=True`) + `seeds` para el resto. *(Se descartan `cvc5`, traducción imperativa completa y lemas manuales Lean 4 por ROI).*
 
 ---
 
 ## 3. DAG Curricular, Clausura Epistémica y Arbitraje Ciego (Milestone 17 — P0)
 
-1. **Certificación del DAG Curricular (`ReglasStage1`):** Ordenamiento topológico estricto, detección de aciclicidad y conectividad en `cta_merge.py`, garantizando monotonicidad $K_t \subseteq K_{t+1}$ en ejecuciones `--append`.
-2. **Auditor de Clausura Epistémica de Símbolos Libres:** Linter léxico-simbólico que verifica que el conjunto de símbolos matemáticos en la solución satisfaga $S_{\text{sol}} \subseteq S_{\text{stem}} \cup S_{\text{std}}$, bloqueando enunciados incompletos (como `Hab-19` sin función de utilidad o `C-01` con ambigüedad de dominio).
-3. **Arbitraje Neuro-Simbólico Bicameral con $\alpha_{\text{Kernel}} = 0$:**
-   - **Cámara Formal (`SymPy`/`z3-solver`):** Certifica la verdad matemática con poder de veto absoluto.
-   - **Cámara Epistémica LLM (1 semilla pre-verificada por plantilla):** Evalúa exclusivamente claridad verbal, ausencia de giveaways y tono pedagógico sin gastar tokens re-resolviendo álgebra.
+1. ✅ **Certificación del DAG Curricular (`ReglasStage1`):** Ordenamiento topológico estable (`cta_merge.py`), conectividad y aciclicidad (`connected_components == 1`, `root_ratio <= 0.20`) y monotonicidad epistémica $K_t \subseteq K_{t+1}$ en ejecuciones `--append`.
+2. ✅ **Auditor de Clausura Epistémica de Símbolos Libres ([`engine/epistemic_closure.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/epistemic_closure.py)):** Reutiliza `KaTeXAST.parse` (corrigiendo de paso un bucle infinito ante `}` huérfana en `KaTeXParser.parse_item()`) y opera con alcance dual en `check_templates.py`:
+   - **Hard Gate quirúrgico `[TPL-EPISTEMIC-CLOSURE]` en `open_symbolic` (`expected_answer`):** bloquea en Stage 3 variables simbólicas de respuesta no declaradas en `stem_variants` (en `$...$` o `` `var` ``), certificado con **`0/497` (`0.00%`) falsos positivos** en Mateco (`0/177`), Estadística (`0/224`) y Solow (`0/96`).
+   - **Modo `WARN` `[EPISTEMIC-CLOSURE-WARNING]` en `detailed_solution`:** informativo no bloqueante tras calibración (`12.36%` Mateco, `15.47%` Estadística, `20.60%` Solow) sin disparar re-compilaciones LLM por notación explicativa.
+3. ✅ **Arbitraje Neuro-Simbólico Bicameral con $\alpha_{\text{Kernel}} = 0$:** Implementado en [`judge.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/judge.py#L1902) (dominancia formal matemática absoluta + Cámara Epistémica LLM de 1 semilla por plantilla).
 
 ---
 
