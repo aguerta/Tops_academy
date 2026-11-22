@@ -1448,18 +1448,24 @@ class ExecutionAuditor:
         first_compile_rules: List[str] = []
 
         timestamps = []
+        planner_timestamps = []
+        user_input_timestamps = []
         steps_summary = []
 
         for rec in records:
             ts_str = rec.get("created_at")
+            rec_type = rec.get("type")
             if ts_str:
                 try:
                     ts = datetime.datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
                     timestamps.append(ts)
+                    if rec_type == "PLANNER_RESPONSE":
+                        planner_timestamps.append(ts)
+                    elif rec_type == "USER_INPUT":
+                        user_input_timestamps.append(ts)
                 except Exception:
                     pass
 
-            rec_type = rec.get("type")
             status = rec.get("status")
 
             if status == "ERROR":
@@ -1556,7 +1562,14 @@ class ExecutionAuditor:
                                 "thinking_snippet": last_thinking[-300:].strip()
                             })
 
-        start_time = min(timestamps) if timestamps else None
+        if planner_timestamps:
+            first_planner_ts = min(planner_timestamps)
+            pre_planner_users = [ts for ts in user_input_timestamps if ts <= first_planner_ts]
+            effective_start = max(pre_planner_users) if pre_planner_users else first_planner_ts
+            active_timestamps = [ts for ts in timestamps if ts >= effective_start]
+            start_time = min(active_timestamps) if active_timestamps else first_planner_ts
+        else:
+            start_time = min(timestamps) if timestamps else None
         end_time = max(timestamps) if timestamps else None
         start_iso = start_time.isoformat() if start_time else None
         end_iso = end_time.isoformat() if end_time else None

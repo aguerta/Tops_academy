@@ -1,0 +1,839 @@
+{
+  "course_id": "solow_m20_v5",
+  "conversation_id": "58060ef0-0f95-4375-b21d-0dd50d2c68b3",
+  "run_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\reports\\c2c_audits\\20261121_194509_solow_m20_v5_58060ef0",
+  "total_shards": 14,
+  "total_repairs": 4,
+  "median_wall_time_s": 239.0,
+  "median_repair_wall_time_s": 90.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_07",
+    "label": "Shard Author shard_07",
+    "conversation_id": "ffa52761-5c8e-48bb-ae57-5b10740c4cc0",
+    "wall_time_s": 137.0,
+    "pre_1st_compile_s": 82.0,
+    "post_1st_compile_s": 55.0,
+    "compile_runs": 2,
+    "compile_fails": 1,
+    "edits_count": 2,
+    "turns_count": 8,
+    "active_tokens": 79733,
+    "thinking_tokens": 2400,
+    "competencies_count": 1,
+    "error_codes": [
+      "[TPL-ORPHAN-VARS]",
+      "[TPL-DYNAMIC-RATIONALE]",
+      "[TPL-STATIC-OPT]"
+    ],
+    "error_snippets": [
+      "</SYSTEM_MESSAGE>"
+    ],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": ""
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "a9662195-5974-4f10-be4a-8dde6c87d354",
+      "wall_time_s": 341.0,
+      "pre_1st_compile_s": 133.0,
+      "post_1st_compile_s": 208.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 3,
+      "turns_count": 16,
+      "active_tokens": 185457,
+      "thinking_tokens": 3419,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-VAR]",
+        "[TPL-CONST-DISTRACTOR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "6cd3ab7d-cac9-4d13-9a2c-6d28607c9857",
+      "wall_time_s": 317.0,
+      "pre_1st_compile_s": 132.0,
+      "post_1st_compile_s": 185.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 4,
+      "turns_count": 14,
+      "active_tokens": 175050,
+      "thinking_tokens": 3635,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]",
+        "[TPL-CONST-DISTRACTOR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_13",
+      "label": "Shard Author shard_13",
+      "conversation_id": "fe777e68-0f6a-46f1-ac01-52ae9f485513",
+      "wall_time_s": 290.0,
+      "pre_1st_compile_s": 98.0,
+      "post_1st_compile_s": 192.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 5,
+      "turns_count": 14,
+      "active_tokens": 167432,
+      "thinking_tokens": 3335,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-STATIC-OPT]",
+        "[R-19]",
+        "[TPL-VAR]",
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]",
+        "[TPL-DYNAMIC-RATIONALE]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "ca7c9eb8-daf7-4dd8-a6b8-5fb6e6b2b67f",
+      "wall_time_s": 278.0,
+      "pre_1st_compile_s": 115.0,
+      "post_1st_compile_s": 163.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 13,
+      "active_tokens": 171871,
+      "thinking_tokens": 2599,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]",
+        "[VERIFIER-TAUTOLOGY-DETECTED]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "bd94872a-09cd-4a59-a090-e7ee5dd37f94",
+      "wall_time_s": 270.0,
+      "pre_1st_compile_s": 89.0,
+      "post_1st_compile_s": 181.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 118120,
+      "thinking_tokens": 2868,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "ffa52761-5c8e-48bb-ae57-5b10740c4cc0",
+      "wall_time_s": 137.0,
+      "pre_1st_compile_s": 82.0,
+      "post_1st_compile_s": 55.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 79733,
+      "thinking_tokens": 2400,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "379244c0-bbc8-474c-9980-5e47b98e3c2e",
+      "wall_time_s": 170.0,
+      "pre_1st_compile_s": 83.0,
+      "post_1st_compile_s": 87.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 98737,
+      "thinking_tokens": 2930,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[TPL-STEM-VARIANT-PARITY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_14",
+      "label": "Shard Author shard_14",
+      "conversation_id": "b7476c0a-e274-4046-a59f-e79056e06570",
+      "wall_time_s": 174.0,
+      "pre_1st_compile_s": 83.0,
+      "post_1st_compile_s": 91.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 8,
+      "active_tokens": 97558,
+      "thinking_tokens": 2422,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (8 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "391f082c-cf45-4c3d-8061-846fee054e8f",
+      "wall_time_s": 201.0,
+      "pre_1st_compile_s": 75.0,
+      "post_1st_compile_s": 126.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 12,
+      "active_tokens": 123429,
+      "thinking_tokens": 2778,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "119ed70c-fc5b-492e-b26e-6734253c5a82",
+      "wall_time_s": 210.0,
+      "pre_1st_compile_s": 97.0,
+      "post_1st_compile_s": 113.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 164918,
+      "thinking_tokens": 3445,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D4]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "a9662195-5974-4f10-be4a-8dde6c87d354",
+      "wall_time_s": 341.0,
+      "pre_1st_compile_s": 133.0,
+      "post_1st_compile_s": 208.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 3,
+      "turns_count": 16,
+      "active_tokens": 185457,
+      "thinking_tokens": 3419,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-VAR]",
+        "[TPL-CONST-DISTRACTOR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "6cd3ab7d-cac9-4d13-9a2c-6d28607c9857",
+      "wall_time_s": 317.0,
+      "pre_1st_compile_s": 132.0,
+      "post_1st_compile_s": 185.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 4,
+      "turns_count": 14,
+      "active_tokens": 175050,
+      "thinking_tokens": 3635,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]",
+        "[TPL-CONST-DISTRACTOR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_13",
+      "label": "Shard Author shard_13",
+      "conversation_id": "fe777e68-0f6a-46f1-ac01-52ae9f485513",
+      "wall_time_s": 290.0,
+      "pre_1st_compile_s": 98.0,
+      "post_1st_compile_s": 192.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 5,
+      "turns_count": 14,
+      "active_tokens": 167432,
+      "thinking_tokens": 3335,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-STATIC-OPT]",
+        "[R-19]",
+        "[TPL-VAR]",
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]",
+        "[TPL-DYNAMIC-RATIONALE]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "ca7c9eb8-daf7-4dd8-a6b8-5fb6e6b2b67f",
+      "wall_time_s": 278.0,
+      "pre_1st_compile_s": 115.0,
+      "post_1st_compile_s": 163.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 13,
+      "active_tokens": 171871,
+      "thinking_tokens": 2599,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]",
+        "[VERIFIER-TAUTOLOGY-DETECTED]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "bd94872a-09cd-4a59-a090-e7ee5dd37f94",
+      "wall_time_s": 270.0,
+      "pre_1st_compile_s": 89.0,
+      "post_1st_compile_s": 181.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 118120,
+      "thinking_tokens": 2868,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "8212dd3c-ff6b-422d-a260-9c3290158114",
+      "wall_time_s": 251.0,
+      "pre_1st_compile_s": 97.0,
+      "post_1st_compile_s": 154.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 117499,
+      "thinking_tokens": 2534,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[R-19]",
+        "[TPL-VAR]",
+        "[TPL-D4]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "54831a57-85d3-4828-9792-29caa3775a35",
+      "wall_time_s": 239.0,
+      "pre_1st_compile_s": 105.0,
+      "post_1st_compile_s": 134.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 11,
+      "active_tokens": 125999,
+      "thinking_tokens": 4506,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "[INVARIANT]",
+        "NameError: name 'g0' is not defined\r",
+        "NameError: name 'g0' is not defined. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos. | Acción: Ampliar los rangos de las variables aleatorias en generate_py.\r"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "44ab7bb7-0403-40c0-a07d-e2b1aecc9ced",
+      "wall_time_s": 227.0,
+      "pre_1st_compile_s": 106.0,
+      "post_1st_compile_s": 121.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 127129,
+      "thinking_tokens": 3015,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-STEM-GRAMMAR]",
+        "[TPL-CONST-DISTRACTOR]",
+        "[R-19]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "5ec28b4a-e9aa-4a34-a562-1e2b5a826077",
+      "wall_time_s": 218.0,
+      "pre_1st_compile_s": 82.0,
+      "post_1st_compile_s": 136.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 101723,
+      "thinking_tokens": 2876,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-STEM-GRAMMAR]",
+        "[TPL-STEM-VARIANT-PARITY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "119ed70c-fc5b-492e-b26e-6734253c5a82",
+      "wall_time_s": 210.0,
+      "pre_1st_compile_s": 97.0,
+      "post_1st_compile_s": 113.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 164918,
+      "thinking_tokens": 3445,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-D4]",
+        "[TPL-STEM-VARIANT-PARITY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "391f082c-cf45-4c3d-8061-846fee054e8f",
+      "wall_time_s": 201.0,
+      "pre_1st_compile_s": 75.0,
+      "post_1st_compile_s": 126.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 12,
+      "active_tokens": 123429,
+      "thinking_tokens": 2778,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-AD-HOC-PERTURBATION]",
+        "[TPL-UNBOUNDED-LOOP]",
+        "[TPL-STATIC-OPT]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>",
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_14",
+      "label": "Shard Author shard_14",
+      "conversation_id": "b7476c0a-e274-4046-a59f-e79056e06570",
+      "wall_time_s": 174.0,
+      "pre_1st_compile_s": 83.0,
+      "post_1st_compile_s": 91.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 8,
+      "active_tokens": 97558,
+      "thinking_tokens": 2422,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-VERIFIER-UNSOUND]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (8 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "379244c0-bbc8-474c-9980-5e47b98e3c2e",
+      "wall_time_s": 170.0,
+      "pre_1st_compile_s": 83.0,
+      "post_1st_compile_s": 87.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 98737,
+      "thinking_tokens": 2930,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-VAR]",
+        "[TPL-STEM-VARIANT-PARITY]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "ffa52761-5c8e-48bb-ae57-5b10740c4cc0",
+      "wall_time_s": 137.0,
+      "pre_1st_compile_s": 82.0,
+      "post_1st_compile_s": 55.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 79733,
+      "thinking_tokens": 2400,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    }
+  ],
+  "repairs": [
+    {
+      "shard_id": "Repair Engineer Hab-07",
+      "label": "Repair Engineer Hab-07",
+      "conversation_id": "0512348c-075d-42b4-b453-bee5cc0d9d15",
+      "wall_time_s": 100.0,
+      "pre_1st_compile_s": 70.0,
+      "post_1st_compile_s": 30.0,
+      "compile_runs": 0,
+      "compile_fails": 0,
+      "edits_count": 11,
+      "turns_count": 3,
+      "active_tokens": 66760,
+      "thinking_tokens": 3450,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial file analysis suggests a task relating to data repair. The files likely contain instructions or data relevant to a repair operation. The goal is to understand the context of this repair task.   "
+    },
+    {
+      "shard_id": "Repair Engineer Hab-07",
+      "label": "Repair Engineer Hab-07",
+      "conversation_id": "d3feae78-ecb4-4e07-b734-5a6d8701538f",
+      "wall_time_s": 90.0,
+      "pre_1st_compile_s": 44.0,
+      "post_1st_compile_s": 46.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 5,
+      "turns_count": 10,
+      "active_tokens": 87498,
+      "thinking_tokens": 1261,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STEM-GRAMMAR]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": ""
+    },
+    {
+      "shard_id": "Repair Engineer C-08",
+      "label": "Repair Engineer C-08",
+      "conversation_id": "c7e0b2e6-e661-4a14-b72e-b34189bcfe9d",
+      "wall_time_s": 47.0,
+      "pre_1st_compile_s": 25.0,
+      "post_1st_compile_s": 22.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 5,
+      "active_tokens": 54218,
+      "thinking_tokens": 751,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "Repair Engineer C-04",
+      "label": "Repair Engineer C-04",
+      "conversation_id": "43a8415f-9f6b-4e05-9018-ea33c9e20ebd",
+      "wall_time_s": 33.0,
+      "pre_1st_compile_s": 17.0,
+      "post_1st_compile_s": 16.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 1,
+      "turns_count": 5,
+      "active_tokens": 51392,
+      "thinking_tokens": 439,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    }
+  ]
+}

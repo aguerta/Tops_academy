@@ -4148,5 +4148,175 @@
       "usd_per_page": 0.2284
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261121_191752_estadistica_3_pre_pc2_m20_76d10933",
+    "timestamp": "2026-11-22T00:17:52.680208+00:00",
+    "course_id": "estadistica_3_pre_pc2_m20",
+    "course_title": "Estadistica 3 Pre Pc2 M20",
+    "conversation_id": "76d10933-dd9f-42b3-bdf8-c3caaeb435b1",
+    "workload": {
+      "source_files_count": 4,
+      "pages_or_slides": 129,
+      "input_mb": 1.88,
+      "competencies": 58,
+      "questions": 1396,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1436.0,
+      "agent_compute_seconds": 9003.0,
+      "speedup": 6.27,
+      "total_tokens": 24102638,
+      "total_active_tokens": 4883378,
+      "input_tokens": 3262703,
+      "output_tokens": 1332687,
+      "total_input_tokens": 3497361,
+      "total_output_tokens": 1386017,
+      "cache_read_tokens": 19219260,
+      "pricing_model": "gemini-4-hydrogen",
+      "total_cost_usd": 17.0826,
+      "cost_breakdown_usd": {
+        "input_usd": 5.246,
+        "output_usd": 10.3951,
+        "cache_read_usd": 1.4414,
+        "total_usd": 17.0826
+      },
+      "stage_costs_usd": {
+        "stage_1a_vision": 0.0,
+        "stage_1b_cta": 1.584,
+        "stage_3_authors": 12.0895,
+        "stage_3b_repairs": 0.7058,
+        "stage_5_judges": 1.5957,
+        "orchestrator": 1.1076,
+        "other_subagents": 0.0,
+        "total_usd": 17.0826
+      },
+      "total_turns": 391,
+      "subagents_count": 55,
+      "tool_errors": 42,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 171.0,
+      "stage_3_max_wall": 415.0,
+      "orchestrator_interventions": 2,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (122/122 REACTIVOS)",
+        "batch_items_count": 122,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 2,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 5 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 5 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 4 ola(s) de jueces ejecutada(s) (2 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 122 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 186842.2,
+      "active_tokens_per_page": 37855.6,
+      "tokens_per_input_kb": 12543.8,
+      "tokens_per_competency": 415562.7,
+      "active_tokens_per_competency": 84196.2,
+      "author_tokens_per_competency": 54806.4,
+      "tokens_per_question": 17265.5,
+      "active_tokens_per_question": 3498.1,
+      "seconds_per_page": 11.13,
+      "seconds_per_question": 1.03,
+      "questions_per_minute": 58.33,
+      "agent_seconds_per_question": 6.45,
+      "output_tokens_per_question": 992.8,
+      "usd_per_question": 0.0122,
+      "usd_per_competency": 0.2945,
+      "usd_per_page": 0.1324
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261121_194509_solow_m20_v5_58060ef0",
+    "timestamp": "2026-11-22T00:45:09.365889+00:00",
+    "course_id": "solow_m20_v5",
+    "course_title": "Solow M20 V5",
+    "conversation_id": "58060ef0-0f95-4375-b21d-0dd50d2c68b3",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 19,
+      "questions": 597,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1565.0,
+      "agent_compute_seconds": 6069.0,
+      "speedup": 3.88,
+      "total_tokens": 16565044,
+      "total_active_tokens": 3371921,
+      "input_tokens": 2094338,
+      "output_tokens": 821734,
+      "total_input_tokens": 2495228,
+      "total_output_tokens": 876693,
+      "cache_read_tokens": 13193123,
+      "pricing_model": "gemini-4-hydrogen",
+      "total_cost_usd": 11.3075,
+      "cost_breakdown_usd": {
+        "input_usd": 3.7428,
+        "output_usd": 6.5752,
+        "cache_read_usd": 0.9895,
+        "total_usd": 11.3075
+      },
+      "stage_costs_usd": {
+        "stage_1a_vision": 0.0,
+        "stage_1b_cta": 0.5138,
+        "stage_3_authors": 6.861,
+        "stage_3b_repairs": 0.7408,
+        "stage_5_judges": 1.8837,
+        "orchestrator": 1.3082,
+        "other_subagents": 0.0,
+        "total_usd": 11.3075
+      },
+      "total_turns": 281,
+      "subagents_count": 45,
+      "tool_errors": 28,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 108.0,
+      "stage_3_max_wall": 341.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 5 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 5 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 3 ola(s) de jueces ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 120 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 460140.1,
+      "active_tokens_per_page": 93664.5,
+      "tokens_per_input_kb": 10877.5,
+      "tokens_per_competency": 871844.4,
+      "active_tokens_per_competency": 177469.5,
+      "author_tokens_per_competency": 97613.4,
+      "tokens_per_question": 27747.1,
+      "active_tokens_per_question": 5648.1,
+      "seconds_per_page": 43.47,
+      "seconds_per_question": 2.62,
+      "questions_per_minute": 22.89,
+      "agent_seconds_per_question": 10.17,
+      "output_tokens_per_question": 1468.5,
+      "usd_per_question": 0.0189,
+      "usd_per_competency": 0.5951,
+      "usd_per_page": 0.3141
+    },
+    "bottlenecks_count": 1
   }
 ]
