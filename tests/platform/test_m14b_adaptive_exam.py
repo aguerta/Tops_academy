@@ -174,3 +174,109 @@ def test_m14b_ui_contracts_present() -> None:
     assert "buildAdaptiveModule1" in app_src
     assert "buildAdaptiveModule2" in app_src
     assert "computeAdaptiveExamSummary" in app_src
+
+
+def test_m14b_small_course_repeated_qid_preserves_distinct_module_telemetry(tmp_path: Path) -> None:
+    """When a small course (<13 questions) reuses IDs across Module 1 & 2, unitBreakdown keeps both records."""
+    shuffler_ts = PLATFORM_SRC / "utils" / "sessionShuffler.ts"
+    bundle_mjs = tmp_path / "shuffler_small.mjs"
+    esbuild = _find_esbuild()
+
+    res_build = subprocess.run(
+        [
+            str(esbuild),
+            str(shuffler_ts),
+            "--bundle",
+            "--format=esm",
+            "--platform=node",
+            f"--outfile={bundle_mjs}",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert res_build.returncode == 0, f"esbuild failed: {res_build.stderr}"
+
+    driver_mjs = tmp_path / "test_small_course_driver.mjs"
+    driver_mjs.write_text(
+        f"""
+import assert from 'node:assert/strict';
+import {{
+  buildAdaptiveModule1,
+  buildAdaptiveModule2,
+  computeAdaptiveExamSummary,
+}} from {bundle_mjs.as_uri()!r};
+
+const competencies = ['C-01', 'C-02'].map((id) => ({{
+  id,
+  code: id,
+  name: `Comp ${{id}}`,
+  category: 'Concept',
+  description: `Desc ${{id}}`,
+  mastery_target: 100,
+}}));
+
+const questions = [
+  {{ id: 'Q-1', competency_id: 'C-01', type: 'fill_in_the_blank', difficulty: 'medium', stem: 'Q1', options: [], correct_answer: {{ value: '1', tolerance: 0.01 }}, hints: ['h'], solution: '1' }},
+  {{ id: 'Q-2', competency_id: 'C-01', type: 'fill_in_the_blank', difficulty: 'easy', stem: 'Q2', options: [], correct_answer: {{ value: '1', tolerance: 0.01 }}, hints: ['h'], solution: '1' }},
+  {{ id: 'Q-3', competency_id: 'C-02', type: 'fill_in_the_blank', difficulty: 'medium', stem: 'Q3', options: [], correct_answer: {{ value: '1', tolerance: 0.01 }}, hints: ['h'], solution: '1' }},
+  {{ id: 'Q-4', competency_id: 'C-02', type: 'fill_in_the_blank', difficulty: 'hard', stem: 'Q4', options: [], correct_answer: {{ value: '1', tolerance: 0.01 }}, hints: ['h'], solution: '1' }},
+];
+
+const course = {{
+  course_id: 'small_m14b',
+  title: 'Small M14-B',
+  description: 'Test',
+  version: '1.0.0',
+  competencies,
+  questions,
+}};
+
+const mod1 = buildAdaptiveModule1(course, 12);
+assert.equal(mod1.length, 4);
+const mod1Ids = new Set(mod1.map((q) => q.id));
+const mod2Plan = buildAdaptiveModule2(course, 0, mod1Ids, new Set(['C-01', 'C-02']), 12);
+assert.equal(mod2Plan.questions.length, 4);
+
+const mod1Tel = [
+  {{ question_id: 'Q-1', competency_id: 'C-01', is_correct: false, hints_used: 0, seconds_spent: 10 }},
+  {{ question_id: 'Q-2', competency_id: 'C-01', is_correct: false, hints_used: 0, seconds_spent: 20 }},
+  {{ question_id: 'Q-3', competency_id: 'C-02', is_correct: false, hints_used: 0, seconds_spent: 10 }},
+  {{ question_id: 'Q-4', competency_id: 'C-02', is_correct: false, hints_used: 0, seconds_spent: 10 }},
+];
+const mod2Tel = [
+  {{ question_id: 'Q-1', competency_id: 'C-01', is_correct: true, hints_used: 0, seconds_spent: 30 }},
+  {{ question_id: 'Q-2', competency_id: 'C-01', is_correct: true, hints_used: 0, seconds_spent: 40 }},
+  {{ question_id: 'Q-3', competency_id: 'C-02', is_correct: true, hints_used: 0, seconds_spent: 30 }},
+  {{ question_id: 'Q-4', competency_id: 'C-02', is_correct: true, hints_used: 0, seconds_spent: 30 }},
+];
+
+const combinedQ = [...mod1, ...mod2Plan.questions];
+const combinedTel = [...mod1Tel, ...mod2Tel];
+
+const summary = computeAdaptiveExamSummary(
+  course,
+  {{ moduleIndex: 1, tier: 'diagnostic', score: 0, total: 4, percentage: 0, elapsedSeconds: 50 }},
+  {{ moduleIndex: 2, tier: 'standard', score: 4, total: 4, percentage: 100, elapsedSeconds: 130 }},
+  combinedTel,
+  combinedQ
+);
+
+const byId = Object.fromEntries(summary.unitBreakdown.map((u) => [u.competencyId, u]));
+assert.equal(byId['C-01'].total, 4);
+assert.equal(byId['C-01'].correct, 2);
+assert.equal(byId['C-01'].percentage, 50);
+assert.equal(byId['C-01'].avgSeconds, 25);
+
+assert.equal(byId['C-02'].total, 4);
+assert.equal(byId['C-02'].correct, 2);
+assert.equal(byId['C-02'].percentage, 50);
+assert.equal(byId['C-02'].avgSeconds, 20);
+console.log('M14B_SMALL_COURSE_OK');
+""",
+        encoding="utf-8",
+    )
+
+    res_node = subprocess.run(["node", str(driver_mjs)], capture_output=True, text=True, check=False)
+    assert res_node.returncode == 0, f"Node test failed:\nSTDOUT:{res_node.stdout}\nSTDERR:{res_node.stderr}"
+    assert "M14B_SMALL_COURSE_OK" in res_node.stdout
