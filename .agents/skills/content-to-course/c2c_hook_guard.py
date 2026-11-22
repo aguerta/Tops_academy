@@ -60,6 +60,8 @@ WORKER_DENIED_READ_SUBSTRINGS = [
 # Worker denied write/edit targets
 WORKER_DENIED_WRITE_SUBSTRINGS = [
     ".check_attempts",
+    "content/",
+    "content\\",
     ".agents/skills/",
     ".agents\\skills\\",
     "skills/content-to-course",
