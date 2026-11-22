@@ -723,6 +723,8 @@ def plan_shards(
         if max_comps is None
         else max(1, int(max_comps))
     )
+    if max_comps is not None and max_skills is None:
+        eff_max_skills = min(eff_max_skills, eff_max_comps)
 
     cta_file = Path(cta_path).resolve()
     if not cta_file.is_file():

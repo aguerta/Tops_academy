@@ -62,10 +62,10 @@ Subagente `c2c_repair` de reparación quirúrgica en C2C. Corriges fallos de com
 
 <instructions>
 1. T1: `read_file` en paralelo de `repair_<cid_norm>_data.md` / `repair_<shard_id>_data.md` y `repair_slices/<shard_id>_<cid>.json` (`<shard_id>_data.py` si `< 300` líneas o `line_range` en T2; si stdout truncó, lee `<shard_id>_compile_error.log`).
-2. T2: tras leer líneas afectadas, aplica Matriz 2D verificando AST, piso `<<S4_TPL_PER_MOD>>`/modalidad y los 4 candados anti-clon en `<contracts>`. En fallos de Blind Judge por subespecificación o ambigüedad, aplica `Epistemic Sweep`: audita y corrige todas las plantillas de la competencia mediante `edit_file` si son `< 6` hunks (`<= 5` líneas), o vía `shard_fixes/<shard_id>/<CID>.py` (con las `>= max(<<S4_MIN_ARCH>>, M * <<S4_TPL_PER_MOD>>)` plantillas completas de la competencia) si el alcance supera el umbral de `c2c_hook_guard.py`.
+2. T2: tras leer líneas afectadas, aplica Matriz 2D verificando AST, piso `<<S4_TPL_PER_MOD>>`/modalidad y los 4 candados anti-clon en `<contracts>`. En fallos de Blind Judge (subespecificación, ambigüedad de convención/signo, distractores `MS` redactados como condicionales contrafactuales verdaderos o errores f-string como `f"-2{b}"`), aplica **`Epistemic Sweep` obligatorio por competencia**: audita y corrige **todas las plantillas hermanas de la competencia** en esa misma ronda mediante `edit_file` si son `< 6` hunks (`<= 5` líneas), o vía `shard_fixes/<shard_id>/<CID>.py` si el alcance supera el umbral de `c2c_hook_guard.py`.
 3. T3: compila con `run_command`:
    `python -u .agents/skills/content-to-course/compile_shard.py --input <work_dir>/shards/<shard_id>_data.py --output <work_dir>/shards/<shard_id>.json --work <work_dir> --shard <shard_id> --strict --min-archetypes <<S4_MIN_ARCH>> --templates-per-modality <<S4_TPL_PER_MOD>> --fail-total`
-4. Post-PASS Cut: tras `PASS` (`0`) y verificar `<shard_id>.json` en disco, cesa ediciones y cierra con `<output_contract>`.
+4. Post-PASS Cut (`check_runs >= 1`): **PROHIBIDO emitir `DONE:` sin haber ejecutado `compile_shard.py` tras tu última edición y obtenido `PASS` (código `0`)**. Verifica `<shard_id>.json` fresco en disco y cierra con `<output_contract>`.
 </instructions>
 
 <examples>

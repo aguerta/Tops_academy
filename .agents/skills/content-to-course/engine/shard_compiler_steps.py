@@ -44,6 +44,7 @@ from engine.template_healing import (
     auto_heal_template_data,
     detect_frankenstein_sum,
     heal_control_chars_in_obj,
+    heal_katex_display_str,
     heal_shard_source_text,
     is_trivial_verifier,
     normalize_double_braces,
@@ -667,7 +668,12 @@ cross_check=verify
                     )
                     if step5_err_fn(err_msg):
                         return fail_fn(err_msg)
-                m_comma = re.search(r",\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}", clean_for_punct)
+                m_comma = re.search(
+                    r",\s+(?:El|La|Los|Las|Un|Una|Unos|Unas|Dado|Dada|Dados|Dadas|Para|Con|Sin|Por|Que|Cuando|Donde|"
+                    r"Determine|Calcule|Halle|Eval[uú]e|Sea|Sean|Indique|Seleccione|Marque|Obtenga|Considere|"
+                    r"Suponga|Demuestre|Verifique|Identifique|Asuma|Encuentre)\b",
+                    clean_for_punct,
+                )
                 if m_comma:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
                     err_msg = (
@@ -1313,11 +1319,39 @@ cross_check=verify
                     c_test = _format_with_fmt(c_test, fmt_str)
                     res_test["correct"] = c_test
 
-                # Soundness check
+                # Soundness check (with pre-interpolation fallback for MS & M20 verifiers expecting rendered values)
+                def _interpolate_payload_vars(obj: Any, vars_map: Dict[str, Any]) -> Any:
+                    if isinstance(obj, str):
+                        if "@" not in obj:
+                            return obj
+                        def _sub_tok(m: re.Match) -> str:
+                            k = m.group(1)
+                            if k not in vars_map:
+                                return m.group(0)
+                            val = vars_map[k]
+                            fmt = m.group(2)
+                            if fmt and isinstance(val, (int, float)):
+                                try:
+                                    return format(val, fmt)
+                                except Exception:
+                                    pass
+                            return str(val)
+                        return re.sub(r"@([a-zA-Z0-9_]+)(?::([^@\s{}]+))?@", _sub_tok, obj)
+                    if isinstance(obj, list):
+                        return [_interpolate_payload_vars(x, vars_map) for x in obj]
+                    if isinstance(obj, dict):
+                        return {
+                            k: (v if k == "vars" else _interpolate_payload_vars(v, vars_map))
+                            for k, v in obj.items()
+                        }
+                    return obj
+
                 is_instance_verifier = (
                     (not c_test and isinstance(res_test.get("options"), list))
                     or (interaction_type in STRUCTURED_M20_TYPES)
                 )
+                used_interp_payload = False
+                res_interp_test = None
                 if callable(ver_raw) and is_instance_verifier:
                     # Multiple Select & structured M20 modalities: el verificador recibe la instancia completa.
                     try:
@@ -1325,6 +1359,23 @@ cross_check=verify
                         sound_res = call_with_timeout(ver_raw, args=(res_test,), timeout=0.8, seed=test_seed)
                     except TypeError:
                         sound_res = run_ver(c_test, v_test, res_test)
+                    if hasattr(sound_res, "item"):
+                        sound_res = sound_res.item()
+                    if sound_res is not True and v_test:
+                        res_interp_test = _interpolate_payload_vars(res_test, v_test)
+                        if res_interp_test != res_test:
+                            try:
+                                from engine.sandbox import call_with_timeout
+                                sound_interp = call_with_timeout(ver_raw, args=(res_interp_test,), timeout=0.8, seed=test_seed)
+                            except TypeError:
+                                sound_interp = run_ver(c_test, v_test, res_interp_test)
+                            except Exception:
+                                sound_interp = False
+                            if hasattr(sound_interp, "item"):
+                                sound_interp = sound_interp.item()
+                            if sound_interp is True:
+                                sound_res = True
+                                used_interp_payload = True
                 else:
                     sound_res = run_ver(c_test, v_test, res_test)
                 if hasattr(sound_res, "item"):
@@ -1384,9 +1435,10 @@ cross_check=verify
                                 break
 
                 # Multiple Select adversarial verification
-                is_ms = (interaction_type == "multiple_select") or (isinstance(res_test.get("options"), list) and not res_test.get("distractors"))
-                if is_ms and isinstance(res_test.get("options"), list) and not tautology_recorded:
-                    opts_t = res_test.get("options") or []
+                ms_base_test = res_interp_test if (used_interp_payload and isinstance(res_interp_test, dict)) else res_test
+                is_ms = (interaction_type == "multiple_select") or (isinstance(ms_base_test.get("options"), list) and not ms_base_test.get("distractors"))
+                if is_ms and isinstance(ms_base_test.get("options"), list) and not tautology_recorded:
+                    opts_t = ms_base_test.get("options") or []
                     t_indices = [i for i, o in enumerate(opts_t) if isinstance(o, dict) and o.get("is_correct") is True]
                     f_indices = [i for i, o in enumerate(opts_t) if isinstance(o, dict) and o.get("is_correct") is False]
                     if t_indices and f_indices:
@@ -1404,7 +1456,7 @@ cross_check=verify
                             return r_res is True
 
                         # a) Invert is_correct between one True and one False option
-                        mut_a = copy.deepcopy(res_test)
+                        mut_a = copy.deepcopy(ms_base_test)
                         mut_a["options"][t_indices[0]]["is_correct"] = False
                         mut_a["options"][f_indices[0]]["is_correct"] = True
                         pass_a = _call_ms_ver(mut_a)
@@ -1413,19 +1465,19 @@ cross_check=verify
                         pass_b = None
                         did_idx = next((i for i in f_indices if opts_t[i].get("distractor_id")), None)
                         if did_idx is not None:
-                            mut_b = copy.deepcopy(res_test)
+                            mut_b = copy.deepcopy(ms_base_test)
                             mut_b["options"][did_idx]["distractor_id"] = "__INVALID_DID__"
                             pass_b = _call_ms_ver(mut_b)
 
                         # c1) Empty error_rationale (and Form-C alias rationale) in false option only
-                        mut_c1 = copy.deepcopy(res_test)
+                        mut_c1 = copy.deepcopy(ms_base_test)
                         mut_c1["options"][f_indices[0]]["error_rationale"] = ""
                         if "rationale" in mut_c1["options"][f_indices[0]]:
                             mut_c1["options"][f_indices[0]]["rationale"] = ""
                         pass_c1 = _call_ms_ver(mut_c1)
 
                         # c2) Mutate value/content to sentinel in true option only
-                        mut_c2 = copy.deepcopy(res_test)
+                        mut_c2 = copy.deepcopy(ms_base_test)
                         mut_c2["options"][t_indices[0]]["value"] = "__MUTATED__"
                         if "content" in mut_c2["options"][t_indices[0]]:
                             mut_c2["options"][t_indices[0]]["content"] = "__MUTATED__"
@@ -1433,7 +1485,7 @@ cross_check=verify
 
                         # c3) Mutate value/content to syntactically valid but false LaTeX assertion in true option only
                         false_latex = "$1 = 2$" if str(opts_t[t_indices[0]].get("value", "")).strip() == "$0 = 1$" else "$0 = 1$"
-                        mut_c3 = copy.deepcopy(res_test)
+                        mut_c3 = copy.deepcopy(ms_base_test)
                         mut_c3["options"][t_indices[0]]["value"] = false_latex
                         if "content" in mut_c3["options"][t_indices[0]]:
                             mut_c3["options"][t_indices[0]]["content"] = false_latex
@@ -1494,16 +1546,17 @@ cross_check=verify
                             if step5_err_fn(err_msg):
                                 return fail_fn(err_msg)
 
-        # Normalize non-variable double curly braces {{token}} -> {token} before R-20 validation
-        stem_es = normalize_double_braces(stem_es, declared_vars)
-        stem_variants = [normalize_double_braces(sv, declared_vars) for sv in stem_variants]
-        hints = [normalize_double_braces(h, declared_vars) for h in hints]
+        # Normalize non-variable double curly braces {{token}} -> {token} and heal safe KaTeX display leaks before R-20 validation
+        stem_es = heal_katex_display_str(normalize_double_braces(stem_es, declared_vars))
+        stem_variants = [heal_katex_display_str(normalize_double_braces(sv, declared_vars)) for sv in stem_variants]
+        hints = [heal_katex_display_str(normalize_double_braces(h, declared_vars)) for h in hints]
         healed_solution = normalize_double_braces(sol_raw, declared_vars)
         healed_solution = re.sub(
             r"\{\{([A-Za-z0-9_]+)\}\}",
             lambda m: f"{{{m.group(1)}}}" if m.group(1) not in declared_vars else m.group(0),
             healed_solution,
         )
+        healed_solution = heal_katex_display_str(healed_solution)
 
         for s_idx, sv in enumerate(stem_variants):
             sv_katex = validate_katex_syntax(sv, f"stem_variant[{s_idx}] in '{tpl_id}'", allow_template_vars=True)

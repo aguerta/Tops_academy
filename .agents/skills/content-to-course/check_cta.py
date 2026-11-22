@@ -766,6 +766,27 @@ def _validate_competencies_rules(
                 comp_schema_errs.setdefault((loc, err.message), []).append(cid)
 
         ctype = comp.get("type", "").lower()
+
+        # Rule CTA-PREFIX-TYPE-MISMATCH: Canonical ID prefixes must match competency category
+        # (accepts Spanish 'H-' = Hecho = fact as well as 'F-' / 'Fact-' = fact)
+        cid_low = str(cid or "").lower()
+        for prefixes, valid_types, expected_rule in (
+            (("hab-", "skill-"), ("skill",), "Hab-/Skill- -> skill"),
+            (("h-", "f-", "fact-"), ("fact",), "H- (Hecho) / F- (Fact) -> fact"),
+            (("c-", "concept-"), ("concept",), "C-/Concept- -> concept"),
+            (("pre-",), ("fact", "concept"), "PRE- -> fact/concept"),
+        ):
+            if cid_low.startswith(prefixes) and ctype in ("fact", "concept", "skill") and ctype not in valid_types:
+                line_no_pfx = locator.get_line(cid) if locator else None
+                line_tag_pfx = f" [Línea {line_no_pfx}]" if line_no_pfx else ""
+                warn_pfx = (
+                    f"WARNING: [CTA-PREFIX-TYPE-MISMATCH]{line_tag_pfx} Competency '{cid}' declares type='{ctype}' "
+                    f"incompatible with ID prefix (expected {expected_rule})."
+                )
+                if warnings is not None:
+                    warnings.append(warn_pfx)
+                print(warn_pfx, file=sys.stderr)
+                break
         distractors = comp.get("distractors", [])
 
         # Rule CTA-D1: >=3 distractors per comp, >=6 per Skill with >=2 omitted_step
@@ -1118,6 +1139,138 @@ def check_cta_bloom_portfolio(
     return []
 
 
+_DISAMBIG_STOPWORDS: Set[str] = {
+    "de", "la", "el", "en", "y", "a", "o", "e", "los", "las", "del", "al",
+    "un", "una", "unos", "unas", "por", "para", "con", "sin", "sobre", "su",
+    "sus", "que", "se", "es", "son", "como", "entre", "the", "of", "and",
+    "in", "to", "for", "with", "on", "by", "as", "an", "or", "is", "are",
+    "concepto", "concept", "hecho", "fact", "habilidad", "skill",
+    "competencia", "competency", "description", "descripcion",
+}
+
+
+def _normalize_disambig_text(text: str) -> str:
+    """Fold accents, strip non-alphanumeric chars, and lowercase for lexical comparison."""
+    if not text:
+        return ""
+    folded = "".join(
+        ch for ch in unicodedata.normalize("NFKD", str(text))
+        if unicodedata.category(ch) != "Mn"
+    ).lower()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", folded)).strip()
+
+
+def _tokenize_disambig_text(text: str, cid: str = "") -> Set[str]:
+    """Extract normalized non-stopword alphanumeric tokens (len >= 2), excluding own CID tokens."""
+    norm = _normalize_disambig_text(text)
+    if not norm:
+        return set()
+    cid_toks = set(_normalize_disambig_text(cid).split()) if cid else set()
+    return {
+        t for t in norm.split()
+        if len(t) >= 2 and t not in _DISAMBIG_STOPWORDS and t not in cid_toks
+    }
+
+
+def _skeleton_without_index(name: str, cid: str) -> str:
+    """Mask ID and trailing/ordinal index tokens so intentionally indexed pairs are distinguished."""
+    s = _normalize_disambig_text(name)
+    cid_norm = _normalize_disambig_text(cid)
+    if cid_norm:
+        s = re.sub(rf"\b{re.escape(cid_norm)}\b", " ", s)
+    s = re.sub(r"\b(?:[pv]?\d+|i{1,3}|iv|vi{0,3})\b", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def check_cta_disambiguation(
+    competencies: List[Dict[str, Any]],
+    existing_comp_ids: Optional[Set[str]] = None,
+    locator: Optional[JsonLineLocator] = None,
+    warnings: Optional[List[str]] = None,
+) -> List[str]:
+    """D1 curricular disambiguation gate across same-category competencies."""
+    errors: List[str] = []
+    base_ids = set(existing_comp_ids or ())
+    prepared: List[Dict[str, Any]] = []
+
+    for idx, comp in enumerate(competencies):
+        if not isinstance(comp, dict):
+            continue
+        cid = str(comp.get("id") or f"comp_{idx}")
+        ctype = str(comp.get("type") or "").strip().lower()
+        if ctype not in ("fact", "concept", "skill"):
+            continue
+        name = str(comp.get("name") or "")
+        desc = str(comp.get("description_latex") or comp.get("description") or "")
+        norm_name = _normalize_disambig_text(name)
+        skel_name = _skeleton_without_index(name, cid)
+        name_tokens = _tokenize_disambig_text(name, cid=cid)
+        tokens = _tokenize_disambig_text(f"{name} {desc}", cid=cid)
+        prepared.append({
+            "id": cid,
+            "type": ctype,
+            "norm_name": norm_name,
+            "skel_name": skel_name,
+            "name_tokens": name_tokens,
+            "tokens": tokens,
+            "desc_len": len(desc.strip()),
+        })
+
+    for i in range(len(prepared)):
+        c1 = prepared[i]
+        for j in range(i + 1, len(prepared)):
+            c2 = prepared[j]
+            if c1["type"] != c2["type"]:
+                continue
+            if base_ids and c1["id"] in base_ids and c2["id"] in base_ids:
+                continue
+
+            norm1, norm2 = c1["norm_name"], c2["norm_name"]
+            if (
+                norm1 != norm2
+                and c1["skel_name"]
+                and c1["skel_name"] == c2["skel_name"]
+            ):
+                continue
+
+            nt1, nt2 = c1["name_tokens"], c2["name_tokens"]
+            name_sim = 0.0
+            if norm1 and norm2 and norm1 == norm2:
+                name_sim = 1.0
+            elif len(nt1) >= 2 and len(nt2) >= 2:
+                nt_union = nt1 | nt2
+                if nt_union:
+                    name_sim = len(nt1 & nt2) / len(nt_union)
+
+            toks1, toks2 = c1["tokens"], c2["tokens"]
+            jaccard = 0.0
+            if len(toks1) >= 4 and len(toks2) >= 4:
+                union = toks1 | toks2
+                if union:
+                    jaccard = len(toks1 & toks2) / len(union)
+
+            line_no = locator.get_line(c1["id"]) if locator else None
+            line_tag = f" [Línea {line_no}]" if line_no else ""
+            high_jaccard = jaccard >= 0.45 and (
+                (c1["desc_len"] >= 80 and c2["desc_len"] >= 80) or name_sim > 0.0
+            )
+            if name_sim >= 0.60 or high_jaccard:
+                errors.append(
+                    f"[CTA-OVERLAP-HIGH]{line_tag} Solapamiento curricular severo en categoría '{c1['type']}' "
+                    f"entre '{c1['id']}' y '{c2['id']}' (name_sim={name_sim:.2f}, jaccard={jaccard:.2f}). "
+                    f"Desambigua alcance/evaluación o fusionalas antes de particionar shards."
+                )
+            elif jaccard >= 0.30:
+                if warnings is not None:
+                    warnings.append(
+                        f"WARNING: [CTA-OVERLAP-WARN]{line_tag} Solapamiento moderado en categoría '{c1['type']}' "
+                        f"entre '{c1['id']}' y '{c2['id']}' (jaccard={jaccard:.2f}, name_sim={name_sim:.2f}). "
+                        f"Verifica frontera pedagógica clara."
+                    )
+
+    return errors
+
+
 def validate_cta_rules(
     cta_data: Dict[str, Any],
     manifest_data: Optional[Dict[str, Any]] = None,
@@ -1182,11 +1335,20 @@ def validate_cta_rules(
         )
         errors.extend(bloom_errors)
 
-    # 3. Prerequisites DAG check (respecting base competencies in --append mode)
+    # 3. Curricular disambiguation gate (D1 overlap check on delta/new pairs)
+    disambig_errors = check_cta_disambiguation(
+        competencies=competencies,
+        existing_comp_ids=existing_comp_ids,
+        locator=locator,
+        warnings=comp_warnings,
+    )
+    errors.extend(disambig_errors)
+
+    # 4. Prerequisites DAG check (respecting base competencies in --append mode)
     dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_comp_ids)
     errors.extend(dag_errors)
 
-    # 4. KaTeX syntax validation
+    # 5. KaTeX syntax validation
     katex_errors = check_cta_katex(cta_data, locator=locator)
     errors.extend(katex_errors)
 

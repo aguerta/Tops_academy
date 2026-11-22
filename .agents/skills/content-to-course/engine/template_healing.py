@@ -84,6 +84,53 @@ def heal_control_chars_in_obj(obj: Any) -> Any:
     return obj
 
 
+_MATH_SEGMENT_RE = re.compile(r"(\$\$[\s\S]*?\$\$|\$[^\$]+?\$)")
+_HEAL_SCI_RE = re.compile(r"(?<![A-Za-z0-9_\\])(\d+(?:\.\d+)?)[eE]([+-])?0*(\d+)(?![A-Za-z0-9_])")
+
+
+def heal_katex_display_str(text: str) -> str:
+    """Apply safe mechanical KaTeX fixes inside $...$/$$...$$ display blocks only.
+
+    Heals:
+    - ASCII control chars via heal_control_chars_in_str
+    - Digit-placeholder concatenation (e.g. 2@c@ -> 2 \\cdot @c@)
+    - Adjacent placeholders inside math (e.g. @a@@b@ -> @a@ \\cdot @b@)
+    - Leaked SymPy ** and sqrt(...) inside KaTeX math blocks
+    - Raw Python scientific notation (e.g. 1e-05 -> 1 \\times 10^{-5})
+    """
+    if not isinstance(text, str) or not text:
+        return text
+
+    healed = heal_control_chars_in_str(text)
+    if "$" not in healed:
+        return healed
+
+    def _repl_sci(m: re.Match) -> str:
+        sign = "-" if m.group(2) == "-" else ""
+        exp = m.group(3)
+        return rf"{m.group(1)} \times 10^{{{sign}{exp}}}"
+
+    def _heal_math_segment(m: re.Match) -> str:
+        block = m.group(1)
+        delim = "$$" if block.startswith("$$") else "$"
+        inner = block[len(delim):-len(delim)]
+        if not inner:
+            return block
+        inner = re.sub(r"(?<![A-Za-z0-9_^\\])(\d+)@([a-zA-Z_]\w*)@", r"\1 \\cdot @\2@", inner)
+        inner = re.sub(r"@([a-zA-Z_]\w*)@(?=\d)", r"@\1@ \\cdot ", inner)
+        inner = re.sub(
+            r"(@[a-zA-Z_]\w*(?::[^@\s]*)?@)(?=@[a-zA-Z_]\w*(?::[^@\s]*)?@)",
+            r"\1 \\cdot ",
+            inner,
+        )
+        inner = re.sub(r"([A-Za-z0-9_)\]])\*\*([A-Za-z0-9_]+)", r"\1^{\2}", inner)
+        inner = re.sub(r"(?<![\\a-zA-Z])sqrt\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", inner)
+        inner = _HEAL_SCI_RE.sub(_repl_sci, inner)
+        return f"{delim}{inner}{delim}"
+
+    return _MATH_SEGMENT_RE.sub(_heal_math_segment, healed)
+
+
 def _heal_code_control_chars(code_str: str) -> str:
     """Restores corrupted ASCII control characters in Python code strings.
     Distinguishes raw string literals (r'...') where single backslash is needed
@@ -423,15 +470,15 @@ def auto_heal_template_data(
             continue
         tid = tpl.get("id", "T-XX")
 
-        # 1. Heal control characters in stem, stem_es, solution, explanation_es, detailed_solution
+        # 1. Heal control characters and safe KaTeX display leaks in stem, stem_es, solution, explanation_es, detailed_solution
         for s_field in ("stem", "stem_es", "solution", "explanation_es", "detailed_solution"):
             val = tpl.get(s_field)
             if isinstance(val, str):
-                new_val = heal_control_chars_in_str(val)
+                new_val = heal_katex_display_str(val)
                 if new_val != val:
                     tpl[s_field] = new_val
                     modified = True
-                    fixes.append(f"{tid}.{s_field}: restored ASCII control char to LaTeX backslash")
+                    fixes.append(f"{tid}.{s_field}: healed KaTeX display / control chars")
 
         # Heal control characters in Python code fields
         for c_field in ("generate_py", "cross_check_py", "generator_code", "verifier_code"):
@@ -443,17 +490,17 @@ def auto_heal_template_data(
                     modified = True
                     fixes.append(f"{tid}.{c_field}: restored ASCII control char to LaTeX backslash in Python code")
 
-        # Heal control characters in list fields: stem_variants, hints
+        # Heal control characters and safe KaTeX display leaks in list fields: stem_variants, hints
         for list_field in ("stem_variants", "hints"):
             items = tpl.get(list_field)
             if isinstance(items, list):
                 for i, item in enumerate(items):
                     if isinstance(item, str):
-                        new_item = heal_control_chars_in_str(item)
+                        new_item = heal_katex_display_str(item)
                         if new_item != item:
                             items[i] = new_item
                             modified = True
-                            fixes.append(f"{tid}.{list_field}[{i}]: restored ASCII control char")
+                            fixes.append(f"{tid}.{list_field}[{i}]: healed KaTeX display / control chars")
 
         # 2. Auto-export local variables in generate_py referenced as {var} in text fields
         gen_py = tpl.get("generate_py", "")
@@ -656,7 +703,7 @@ def auto_heal_template_data(
                     for rkey in ("rationale", "manifestation", "description"):
                         if isinstance(da.get(rkey), str):
                             old_r = da[rkey]
-                            new_r = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r))
+                            new_r = heal_katex_display_str(_wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r)))
                             if new_r != old_r:
                                 da[rkey] = new_r
                                 modified = True
@@ -674,7 +721,7 @@ def auto_heal_template_data(
                             fixes.append(f"{tid}.options: auto-populated error_rationale for {did} from CTA")
                     elif isinstance(cur_rat, str):
                         old_r = cur_rat
-                        new_r = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r))
+                        new_r = heal_katex_display_str(_wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r)))
                         if new_r != old_r:
                             opt["error_rationale"] = new_r
                             modified = True

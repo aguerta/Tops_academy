@@ -52,6 +52,10 @@ inputs:
     type: string
     description: Pedagogical competency granularity (fine, standard, coarse)
     default: standard
+  comps_per_shard:
+    type: integer
+    description: Optional override for max competencies per shard (e.g. 2 or 1) forwarded to --stage shard / run_workflow
+    required: false
   skip_judges:
     type: boolean
     description: Bypass independent blind judge report verification on publish
@@ -107,24 +111,26 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >   ```
 >   *(Si el usuario no especifica modo o granularidad, usa `--cta-mode mapreduce --granularity standard` (default). Si el usuario pide explícitamente `cta_direct`/`direct`, pasa `--cta-mode direct`: la instrucción del usuario SIEMPRE prevalece y NUNCA se promueve a mapreduce por número de páginas o archivos. Si es extensión incremental de un curso existente, añade `--append --base-course courses/<id>.json`).*
 > - **Turno 2**: Lee en paralelo (en 1 solo turno, solo lecturas = costo de generación casi nulo) todos los archivos devueltos en `type_spec_files` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json` y, si existe, `c2c_cta_harmonizer.json`).
-> - **Turno 3 (arranque mínimo, solo `c2c_cta_architect`)**: Registra **únicamente** `c2c_cta_architect` vía `define_subagent` (NO registres aún los demás tipos para no retrasar el arranque).
-> - **Turno 4 (lanzamiento inmediato CTA vía `run_workflow`, `< 2s`)**: Llama **ÚNICAMENTE** a `run_workflow` (sin combinarlo con `define_subagent` en el mismo turno, porque el runtime espera a terminar de generar todos los argumentos del turno antes de ejecutar la primera herramienta):
+> - **Turno 3 (arranque mínimo o registro completo si usas `full_pipeline`)**: Registra `c2c_cta_architect` (y `c2c_cta_harmonizer` si existe) vía `define_subagent` — si vas a lanzar `mode="full_pipeline"` directo en Turno 4, registra los 5 tipos (`c2c_cta_architect`, `c2c_cta_harmonizer`, `c2c_shard_author`, `c2c_judge`, `c2c_repair`) en Turno 3 para que `run_workflow` ejecute todo de frente incluyendo reparaciones.
+> - **Turno 4 (lanzamiento vía `run_workflow`, `< 2s`)**: Llama **ÚNICAMENTE** a `run_workflow` (sin combinarlo con `define_subagent` en el mismo turno). Opciones principales:
+>   - **Modo 1-paso completo (`mode="full_pipeline"`):** corre de frente CTA -> Harmonizer -> Sharding -> Autores -> Templates -> Build -> Jueces -> Gates -> hasta 2 rondas de Repair+Rejudge automáticas.
+>   - **Modo en 2 fases (`mode="cta_pipeline"` y luego `mode="post_cta_pipeline"`):** útil cuando quieres inspeccionar `cta.json` antes de lanzar Stage 2–6B.
 >   ```python
 >   run_workflow(
 >       ScriptPath="<workflow_script_path absoluto devuelto por --stage bootstrap>",
->       Description="Ejecutar ola CTA MapReduce con barrera N/N determinista",
->       Args={"work_dir": "<work_dir>", "mode": "cta"},
+>       Description="Ejecutar pipeline C2C completo (CTA -> Autores -> Jueces -> Repairs)",
+>       Args={"work_dir": "<work_dir>", "mode": "full_pipeline"},  # o "cta_pipeline"
 >   )
 >   ```
-> - **Turno 5 (registro diferido mientras `run_workflow` ya corre en segundo plano)**: Con la ola CTA ya en ejecución en segundo plano, registra en un único turno paralelo los 4 tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair` y `c2c_cta_harmonizer` si existe) usando los JSON ya leídos en el Turno 2. Luego detén tu turno hasta que `run_workflow` notifique el cierre `N/N`.
->   *(Solo usa `invoke_subagent` manual + `schedule` como fallback si `run_workflow` no está disponible en el entorno).*
+>   *(Gobernanza unificada: **100% `run_workflow`**, nunca mezcles `invoke_subagent` ni `manage_subagents` manuales en el flujo estándar).*
+> - **Turno 5 (solo si lanzaste `cta_pipeline` o `cta`)**: Con la ola CTA ya corriendo en segundo plano, registra en paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, y `c2c_cta_harmonizer` si faltaba) y espera el cierre.
 
 ---
 
 > [!IMPORTANT]
 > ## ROL FUNDAMENTAL: LA CONVERSACIÓN PRINCIPAL ES EL DIRECTOR DE PROYECTO
 >
-> La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
+> La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas en olas mediante `run_workflow` (`workflows/c2c_wave_workflow.py`)** sin ediciones manuales ni gobernanza híbrida.
 >
 > ### 🏛️ ARQUITECTURA C2C v4.0 FORMAL "MÁS CON MENOS":
 > - **Fast Bootstrap & Promoción MapReduce (SLA ≤ 60–90s)**: Inicialización atómica CLI (`run.py --stage bootstrap`) sin rasterizado, selección determinista de modo CTA y particionado `slice_pdf_lossless` ($k = \lceil P/20 \rceil$) cuando supera 25 páginas.
@@ -139,12 +145,12 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > - **Recibos Criptográficos `*.cert.json` (< 5 ms)**: `compile_shard.py` emite certificados sellados por SHA-256. En `--stage templates` y `--stage certify`, la verificación criptográfica salta por completo re-ejecutar el sandbox sobre shards inalterados.
 > - **Arquitectura de 1 Único `SystemPrompt` por Rol + `[SCOPE-LOCK]` en Mensaje Inicial**: Las reglas estáticas residen exclusivamente en `system_prompts/lean/prompt_*.md` ($\le 5\text{ KB}$ en `cta`, `judge`, `repair`; bloque canónico Form-C en `author`). El mensaje inicial (`Prompt`) de cada subagente define su contrato estricto `[SCOPE-LOCK]` con las rutas exactas permitidas (`READ`/`WRITE`/`COMPILE`/`DONE`), mientras que `dispatch/items/*.json` y `prompts/repair/*.json` contienen únicamente datos puros de la partición sin repetir el `SystemPrompt` ni incluir el literal `"DONE:"` en disco.
 > - **Unicidad Diagnóstica por Slot de Distractor ($\ge 80.0\%$ por `(competency_id, distractor_id)`)**: Métrica unificada por slot de distractor entre Stage 3 (`check_templates.py`) y Stage 6 (`standardized_audit_engine.py`). Cada distractor dentro de una competencia debe tener un `error_rationale` causal específico y disjunto ($\ge 80.0\%$ de slots únicos); queda estrictamente prohibido el uso de prefijos taxonómicos rotativos (`"Error conceptual:"`, `"Trampa algebraica:"`, etc.) o tuplas de múltiples paráfrasis por semilla.
-> - **Orquestación de Olas en Código con `run_workflow` (`workflows/c2c_wave_workflow.py`)**: Además de la barrera reactiva protegida por hooks (`invoke_subagent`), el Director puede ejecutar las olas de Stage 3–5 de forma determinista en código mediante `run_workflow(ScriptPath="<workflow_script_path absoluto devuelto por --stage bootstrap>", Args={"work_dir": "<work_dir>", "mode": "authors|judges|repair|repair_and_rejudge|post_cta_pipeline"})`, eliminando sondeos manuales de `manage_subagents` y errores por `kill_all` prematuro.
+> - **Orquestación de Olas 100% en Código con `run_workflow` (`workflows/c2c_wave_workflow.py`)**: Todo el pipeline agéntico —desde ejecución completa en 1 llamada (`full_pipeline`: CTA + Harmonizer + Autores + Jueces + hasta 2 rondas de `repair_and_rejudge` integradas) hasta ejecución en fases (`cta_pipeline`, `cta` + `cta_harmonize`, `post_cta_pipeline`, `authors`/`judges`/`repair`, y `repair_and_rejudge`)— se ejecuta exclusivamente vía `run_workflow(ScriptPath="<workflow_script_path absoluto devuelto por --stage bootstrap>", Args={...})`. Incorpora semáforo anti-`429` (`max_concurrency=12` + jitter), auto-retry en colapsos silenciosos `< 5s`/`UNKNOWN`, y validación `check_runs >= 1` en `Repair Engineer`, eliminando la gobernanza híbrida con `invoke_subagent` y `manage_subagents(kill_all)`.
 > - **Fail-Total en Compilador (`--fail-total`)**: `compile_shard.py` opera con `--fail-total` tanto en autoría como en reparación para abortar ante errores fatales sin tolerar compilaciones inconsistentes.
 > - **Herramientas Nativas Estándar**: Subagentes y runner operan con herramientas nativas de plataforma (`read_file`, `write_file`, `edit_file`, `run_command`, `send_message`) con soporte retrocompatible.
 > - **Juez Epistémico 1-Seed con Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$)**: 1 única semilla pre-verificada por plantilla enfocada en suficiencia epistémica y no-giveaway semántico; ninguna objeción heurística revoca una prueba matemática formal.
-> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: Al iniciar una ola, el Director emite 1 línea mínima (`Iniciando etapa: <nombre> (<N> unidades).`). En despertares reactivos parciales (`k < N` sin `BLOCKED:` ni timer), no ejecuta herramientas ni emite texto visible (`tools=[]`, respuesta vacía) y finaliza en `< 2s`. Solo vuelve a hablar al completar `N/N` (`Listo, se completó la etapa de <nombre> (<N>/<N>).`), cuando vence el timer del watchdog, o si un subagente reporta `BLOCKED:`.
-> - **Weighted Waves (`1 Hab/shard`, olas ≤ 100)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$ (soporte continuo de hasta 100 shards concurrentes en una sola ola paralela). Para filtrar una ola concreta usa `dispatch.py dispatch-authors --work-dir <work> --wave <N>`. **Regla de espera y remediación consolidada:** si un comando encadena `judge-compare` y `gates` y `gates` pasa a segundo plano, espera su finalización (`manage_task`/barrera reactiva) y consolida TODAS las discrepancias de jueces y fallos de Quality Gates antes de lanzar reparación. Tras finalizar `gates` + `repair-matrix`, prefiere `run_workflow` con `mode="repair_and_rejudge"` (o un único `dispatch-repair --ids <todos>`), nunca despaches reparación con resultados parciales y **nunca** ejecutes `rejudge-compare` mientras una tarea `run_workflow` siga activa en segundo plano.
+> - **Protocolo de Cierre Limpio (`run_workflow`) y Barrera Reactiva Silenciosa (`k < N`)**: Al despachar una ola vía `run_workflow`, el Director espera pasivamente su notificación final sin emitir `manage_subagents` ni `manage_task`. El hook `c2c_hook_guard.py` mantiene además la Barrera Reactiva Silenciosa (`k < N`) como salvaguarda para impedir transiciones prematuras mientras haya tareas activas en segundo plano.
+> - **Weighted Waves (`1-2 Hab/shard`, `<= 3 Concept/Fact` default o `--comps-per-shard N` opcional)**: Priorización *Heaviest-First*. Por defecto `plan_shards.py` agrupa hasta `2 Hab-*` por shard y hasta `3 C-*/H-*` por shard; si el usuario solicita explícitamente otro tamaño (p. ej. `2` competencias/shard globalmente), el Director pasa `comps_per_shard` en `Args` de `run_workflow` o `--comps-per-shard` en `run.py --stage bootstrap`/`shard`. Para filtrar una ola concreta usa `dispatch.py dispatch-authors --work-dir <work> --wave <N>`. **Regla de espera y remediación consolidada:** espera siempre la finalización de `run_workflow` o `gates` antes de consolidar reparaciones; tras finalizar `gates` + `repair-matrix`, usa `run_workflow` con `mode="repair_and_rejudge"`, nunca despaches reparación con resultados parciales y **nunca** ejecutes `rejudge-compare` mientras una tarea `run_workflow` siga activa en segundo plano.
 > - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada ante objeciones de jueces no resueltas o incumplimiento psicométrico (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad diagnóstica por slot de distractor `(competency_id, distractor_id)` $\ge 80.0\%$, 0 hard penalties).
 > - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`.
 
@@ -222,40 +228,20 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 
 ---
 
-## ⚡ Regla de Oro: Protocolo de Barrera Reactiva Silenciosa y Batch-Kill en Barrera N/N
+## ⚡ Regla de Oro: Cero Gobernanza Híbrida y Protección de Barreras
 
-El Director de Proyecto debe mantener una interacción conversacional ultra-eficiente (~12–16 turnos en toda la corrida).
+El Director de Proyecto debe mantener una interacción conversacional ultra-eficiente (~10–14 turnos en toda la corrida) delegando el ciclo de vida de los subagentes exclusivamente a `run_workflow` (`c2c_wave_workflow.py`).
 
 > [!CAUTION]
-> **BARRERA REACTIVA EN DESPERTARES PARCIALES (`k < N`) — CERO ALUCINACIÓN DE CIERRE:**
-> - **Al iniciar la ola:** Emite únicamente **1 línea mínima** (ej. `Iniciando etapa: Autores (17 shards).`) y **detén el turno**.
-> - **Cuando un subagente finaliza (`DONE:`) y aún restan trabajadores activos (`k < N`):**
->   1. **`tools=[]` obligatorio:** 🚫 **PROHIBIDO** llamar a `manage_subagents(Action='kill', ...)`, `manage_subagents(Action='kill_all')`, `Get-ChildItem`, `dir`, `run.py`, `view_file` o cualquier herramienta en despertares parciales (salvo excepción explícita de un subagente que reporte `BLOCKED:`).
->   2. **Respuesta mínima de 1 sola línea (NO respuesta vacía):** Antigravity exige texto no vacío cuando `tools=[]`. Emite **exactamente 1 línea** (`Esperando: k/N.`) y **detén inmediatamente tu generación**.
->   3. **🚫 PROHIBIDO SIMULAR O NARRAR ETAPAS FUTURAS:** JAMÁS escribas `"Listo, se completó..."`, `"Iniciando etapa: Jueces Ciegos"`, `"Iniciando etapa: Publicación"` ni `"# 🎓 Curso Creado y Publicado con Éxito"` en un turno de espera. Solo puedes emitir el mensaje final de curso publicado en el turno inmediatamente posterior a recibir **`Command exited with code 0`** real de `run.py --stage publish` con las métricas reales del QA Evaluator en `stdout`.
-> - **Al completar `N/N` (verificado por haber recibido `N` mensajes `SYSTEM_MESSAGE` con `DONE:` distintos):** Emite **1 línea** de cierre (ej. `Listo, se completó la etapa de Autores (17/17).`) y ejecuta el Batch-Kill para pasar a la siguiente etapa.
-> - **Si un subagente reporta `BLOCKED:` / `CIRCUIT BREAKER`:** Avisa en **1 línea** qué unidad se bloqueó y gestiona su reparación.
-
-> [!IMPORTANT]
-> **BATCH-KILL EN BARRERA N/N (CERTIFICACIÓN + FRESCURA EN DISCO):**
-> Solo cuando **todos** los `N/N` subagentes de la ola (`Pendientes: []`) hayan reportado `DONE:` en su turno terminal `PLANNER_RESPONSE` (o `BLOCKED:`/`CIRCUIT BREAKER`) **y** los artefactos de la ola estén certificados y frescos en disco respecto a `dispatched_at` (para `authors`/`shards`/`repair`: `<shard_id>.cert.json` con `passed_50_seeds: true` y `<shard_id>.json` con `compiled_status: "PASS"`, nunca `"FAIL"`; para `judges.json`: `judge_responses_XX.json` con `mtime >= dispatched_at`; para `cta_parts`/`cta.json`: `pass_cta_<part_id>.json` = `PASS` con `mtime >= dispatched_at`), el Director debe ejecutar un **único** apagado en lote:
-> ```python
-> manage_subagents(Action='kill_all')
-> ```
-> El hook `PreToolUse` (`c2c_hook_guard.py`, configurado con `manage_subagents` y `run_command` en `.agents/hooks.json` / `.agents/hooks.template.json`) ignora salidas `GENERIC` de `read_file` para evitar falsos positivos y bloqueará cualquier `kill`, `kill_all`, transición `run.py --stage` prematura (`cta`, `cta-reduce`, `cta-apply`, `cta-merge`, `shard`, `templates`, `build`, `verify`, `publish`, `repair-matrix`, `judge-compare`, `rejudge-compare`, `gates`, `certify`, `unlock`) o `dispatch.py` (`dispatch-cta-reduce`, `dispatch-authors`, `dispatch-judges`) mientras queden subagentes sin `DONE:`/`BLOCKED:` o artefactos sin certificar/frescos (salvo `kill` individual sobre UUIDs cuyo `transcript.jsonl` contenga `BLOCKED:` explícito). Nota operativa: Antigravity carga cambios de `.agents/hooks.json` al iniciar nuevas invocaciones/subagentes, no a mitad de turno.
-
-> [!NOTE]
-> **GESTIÓN DE STRAGGLERS A LOS 10 MINUTOS (WATCHDOG ACTIVO):**
-> Si un subagente de shard o reparación supera el timer del watchdog sin reportar `DONE:` y el watchdog despierta al Director:
-> 1. El Director debe leer el transcript del subagente (`transcript.jsonl`) para auditar su estado real.
-> 2. **Si el subagente está convergiendo y terminando sus últimas verificaciones:** déjalo continuar y reprograma el watchdog.
-> 3. **Si el subagente está ciclado o atascado:** envíale un mensaje de ayuda directa analítica (`send_message(Recipient=cid, Message="...")`) indicándole la causa exacta del bloqueo y cómo destrabarlo.
-> 4. **Resumen al usuario:** Únicamente cuando venza este timer, emite **1 resumen breve** de la situación (`k/N` completados, cuáles siguen pendientes y la acción tomada).
+> **REGLAS DE ESPERA Y CERO ALUCINACIÓN DE CIERRE:**
+> - **Prohibido mezclar `invoke_subagent` o `manage_subagents` manuales** en el flujo estándar: toda ejecución paralela de CTA, CTA Harmonizer, Autores, Jueces y Reparaciones corre encapsulada en `run_workflow`.
+> - **🚫 PROHIBIDO SIMULAR O NARRAR ETAPAS FUTURAS:** JAMÁS escribas `"Listo, se completó..."`, `"Iniciando etapa: Jueces Ciegos"`, `"Iniciando etapa: Publicación"` ni `"# 🎓 Curso Creado y Publicado con Éxito"` antes de recibir **`Command exited with code 0`** real de `run.py --stage publish` con las métricas reales del QA Evaluator en `stdout`.
+> - **Salvaguarda de `c2c_hook_guard.py` (Silent Reactive Barrier / `k < N`):** El hook `PreToolUse` bloquea cualquier transición `run.py --stage` o `dispatch.py` mientras exista una tarea `run_workflow` o de validación activa en segundo plano, o artefactos sin certificar/frescos en disco respecto a `dispatched_at`. Nota operativa: Antigravity carga cambios de `.agents/hooks.json` al iniciar nuevas invocaciones/subagentes, no a mitad de turno.
 
 > [!TIP]
 > **MANEJO DE I/O EN WINDOWS (NTFS) Y PREVENCIÓN DE SONDEOS ERRÓNEOS:**
 > 1. **Búfer de Escritura NTFS:** Tras recibir `DONE:` de una etapa o subagente, espera un retardo preventivo de 500 ms antes de invocar la siguiente etapa CLI o leer archivos para asegurar el vaciado (*flush*) del búfer del sistema de archivos NTFS en Windows.
-> 2. **Sondeo de Tareas Asíncronas vs Subagentes:** NUNCA llames a `manage_task(Action='kill', ...)` o `manage_task(Action='status', ...)` sobre subagentes; los subagentes se gestionan EXCLUSIVAMENTE con `manage_subagents(Action='kill', ConversationIds=[...])`. NUNCA sondees o intentes matar tareas en estado `DONE`.
+> 2. **Sondeo de Tareas Asíncronas:** NUNCA llames a `manage_task(Action='kill', ...)` o `manage_task(Action='status', ...)` sobre subagentes ni sobre tareas en estado `DONE`; la orquestación de olas vive dentro de `run_workflow`.
 > 3. **Paginación Inteligente en `edit_file`:** Prohibido aplicar `edit_file` sobre bloques mayores a 30 líneas tras lecturas parciales truncadas; exige leer previamente con `read_file` el bloque específico indicando líneas exactas (`StartLine` y `EndLine`).
 > 4. **Pre-Validación Psicométrica [R-15]:** La longitud en caracteres de las 4 opciones visibles no debe diferir en más de un 15% antes de llamar a `write_file` ([R-15]).
 
@@ -298,44 +284,41 @@ Este comando ejecuta en `< 1s`:
 - Inicialización de `.c2c_subagent_lock.json` con metadatos de gobernanza formal.
 - Generación inmediata de las órdenes de trabajo de CTA (`Subagents` en el JSON de salida de `bootstrap`).
 
-### Paso 1: Lanzamiento de CTA y Registro Diferido de Subagentes (Turnos 2, 3 y 4)
+### Paso 1: Lanzamiento de CTA y Registro Diferido de Subagentes (Turnos 2, 3, 4 y 5)
 1. **Turno 2**: Lee en paralelo los archivos de `<work_dir>/dispatch/types/*.json` listados en `type_spec_files` (solo lecturas).
-2. **Turno 3**: Registra **solo** `c2c_cta_architect` vía `define_subagent`, invoca `invoke_subagent` (`Model="inherit"`) para cada elemento de `Subagents` devuelto por `bootstrap`, y agenda el watchdog a 7 minutos mediante `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
-3. **Turno 4**: Mientras los architects trabajan, registra en un único turno paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, `c2c_cta_harmonizer` si existe) con `define_subagent`, y entra a la barrera.
-4. Aplica el Protocolo de Barrera Silenciosa hasta recibir `DONE:` de todos los arquitectos CTA (`1/1` en modo `direct` o `N/N` `part_XX` en modo `mapreduce`).
-
-### Paso 2: Validación Curricular Simétrica (CTA -> CTA-Reduce -> CTA-Apply) y Sharding
-1. Certifica el currículo compilado. En modo `mapreduce` (o bajo `--append`), el runner procesa las partes, despacha `c2c_cta_harmonizer` (`run.py --stage cta-reduce`) y consolida las directivas mediante `run.py --stage cta-apply` produciendo `cta.json`:
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage cta --work-dir <work_dir>
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage cta-apply --work-dir <work_dir>
+2. **Turno 3**: Registra **solo** `c2c_cta_architect` (y `c2c_cta_harmonizer` si existe) vía `define_subagent`.
+3. **Turno 4**: Ejecuta la ola CTA completa (Mappers + Harmonizer) exclusivamente vía `run_workflow`:
+   ```python
+   run_workflow(
+       ScriptPath="<workflow_script_path absoluto devuelto por --stage bootstrap>",
+       Description="Ejecutar Stage 1B CTA (Mappers + Harmonizer)",
+       Args={"work_dir": "<work_dir>", "mode": "cta_pipeline"},
+   )
    ```
-2. Realiza la partición ponderada en shards (aislando cada `Hab-*` en un shard exclusivo y asignando todos los shards en **1 sola ola** ordenada *Heaviest-First*):
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
-   ```
+4. **Turno 5**: Mientras `run_workflow` corre en segundo plano, registra en un único turno paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, y `c2c_cta_harmonizer` si faltaba) con `define_subagent`, y espera la notificación de término de `run_workflow`.
 
-### Paso 3 y 4: Ejecución Determinista Post-CTA con `run_workflow` (VÍA POR DEFECTO)
-1. **Orquestación Determinista en Código (`workflows/c2c_wave_workflow.py` — OBLIGATORIA POR DEFECTO):**
-   Una vez certificado `cta.json` (tras `cta-apply`), ejecuta **toda la secuencia post-CTA** (`shard -> dispatch-authors -> parallel(authors) -> templates -> build -> dispatch-judges -> parallel(judges) -> judge-compare -> gates`, con hasta 1 pase consolidado de reparación por shard y re-arbitraje quirúrgico) en una sola llamada a `run_workflow`, sin despertares parciales del Director:
+### Paso 2: Validación Curricular Simétrica (CTA) y Sharding Opcional
+1. Si usaste `mode="cta"` en lugar de `cta_pipeline`, ejecuta `run.py --stage cta` y, si `dispatch/cta_reduce.json` se genera, corre `run_workflow(..., Args={"work_dir": "<work_dir>", "mode": "cta_harmonize"})` seguido de `run.py --stage cta`. (`mode="cta_pipeline"` ya automatiza todo este flujo).
+2. *(Opcional si deseas inspeccionar shards antes de Stage 3):* puedes correr `run.py --stage shard --work-dir <work_dir>` (agregando `--comps-per-shard 2` si el usuario pidió tope de 2 competencias por shard). De lo contrario, `post_cta_pipeline` ejecuta Stage 2 directamente.
+
+### Paso 3 y 4: Ejecución Determinista Post-CTA con `run_workflow` (VÍA ÚNICA)
+1. **Orquestación Determinista en Código (`workflows/c2c_wave_workflow.py` — OBLIGATORIA):**
+   Una vez certificado `cta.json`, ejecuta **toda la secuencia post-CTA** (`shard -> dispatch-authors -> parallel(authors) -> templates -> build -> dispatch-judges -> parallel(judges) -> judge-compare -> gates`, con semáforo anti-`429`, auto-retry en colapsos silenciosos y hasta 1 pase consolidado de reparación por shard con `check_runs >= 1` + re-arbitraje quirúrgico) en una sola llamada a `run_workflow`:
    ```python
    run_workflow(
        ScriptPath="<workflow_script_path absoluto devuelto por --stage bootstrap>",
        Description="Ejecutar pipeline post-CTA C2C (Autores -> Templates -> Build -> Jueces -> Gates)",
-       Args={"work_dir": "<work_dir>", "mode": "post_cta_pipeline"},
+       Args={
+           "work_dir": "<work_dir>",
+           "mode": "post_cta_pipeline",
+           # Opcional solo si el usuario solicita un tope distinto (ej. 2 comps/shard):
+           # "comps_per_shard": 2,
+           # "max_concurrency": 12,
+       },
    )
    ```
-   *(También admite olas individuales con `mode="authors"`, `"judges"` o `"repair"`. Las reglas estáticas viven solo en `system_prompts/lean/prompt_*.md`, cada `Prompt` inicial inyecta `[SCOPE-LOCK]` con rutas exactas, y los payloads en disco son datos puros: `author_XX_data.md`, `judge_XX_items.json`, `repair_*_data.md`.)*
+   *(También admite olas individuales con `mode="cta"`, `"cta_harmonize"`, `"authors"`, `"judges"` o `"repair"`. Si `gates` posteriores o `certify` detectan fallos adicionales, ejecuta `run_workflow` con `mode="repair_and_rejudge"` — nunca mezcles `invoke_subagent` manual ni ejecutes `rejudge-compare` mientras `run_workflow` siga activo en segundo plano).*
 2. Al concluir `run_workflow`, ejecuta la certificación y publicación final (Paso 5):
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
-   ```
-3. *(Fallback únicamente si `run_workflow` no está disponible):* ejecuta `dispatch.py dispatch-authors`, invoca subagentes con `invoke_subagent` respetando la Barrera Reactiva (`Esperando: k/N.`), luego `--stage templates`, `--stage build`, `dispatch-judges`, `--stage judge-compare`, `--stage gates` y `--stage repair-matrix`.
-   ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge --ids <CID1> <CID2> --work-dir <work_dir>
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge-compare --work-dir <work_dir>
-   ```
-5. **Certificación formal obligatoria**: ejecuta `--stage certify` (valida criptográficamente `*.cert.json` en `< 5 ms` para templates y re-ejecuta compuertas deterministas):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
    ```
