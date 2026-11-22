@@ -93,3 +93,25 @@ def test_anti_clone_emits_non_blocking_z3_warning_on_sympy_miss(caplog):
     assert "[Z3-RULE-WARNING]" in warnings_out[0]
     assert "T-C01-01" in warnings_out[0] and "T-C01-02" in warnings_out[0]
     assert any("[Z3-RULE-WARNING]" in rec.message for rec in caplog.records)
+
+
+def test_z3_helper_rejects_unsat_domain_and_scopes_piecewise_constraints():
+    """Unsatisfiable domains must yield None (never vacuous True), and Piecewise branch constraints stay scoped."""
+    x0 = sympy.Symbol("x0", real=True)
+
+    # Under x0 > 0, sqrt(-x0) makes domain (-x0 >= 0) unsatisfiable -> must return None, not True.
+    assert _z3_check_sympy_equiv(sympy.sqrt(-x0), x0 + 1) is None
+
+    # Branch-scoped sqrt(x0 - 5) must not force x0 >= 5 globally across the fallback branch.
+    pw1 = sympy.Piecewise((sympy.sqrt(x0 - 5), x0 >= 5), (0, True))
+    pw2 = sympy.Piecewise((sympy.sqrt(x0 - 5), x0 >= 5), (999, True))
+    assert _z3_check_sympy_equiv(pw1, pw2) is False
+
+    # Last-branch condition x0 < 0 must stay guarded by Not(x0 > 5), not asserted globally with x0 > 0.
+    pw3 = sympy.Piecewise((x0, x0 > 5), (0, x0 < 0))
+    assert _z3_check_sympy_equiv(pw3, 123 * x0 + 9) is False
+
+    # Genuinely equivalent Piecewise expressions still resolve to True.
+    pw_eq1 = sympy.Piecewise((x0 + 1, x0 >= 2), (2 * x0, True))
+    pw_eq2 = sympy.Piecewise((1 + x0, x0 >= 2), (x0 + x0, True))
+    assert _z3_check_sympy_equiv(pw_eq1, pw_eq2) is True

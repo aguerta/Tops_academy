@@ -185,6 +185,28 @@ def test_run_wave_from_manifest_retries_collapse(tmp_path: Path) -> None:
     assert res == ["DONE: report.md"]
 
 
+def test_run_wave_from_manifest_propagates_cancelled_error(tmp_path: Path) -> None:
+    manifest = tmp_path / "authors.json"
+    manifest.write_text(
+        json.dumps({"Subagents": [{"Role": "Author 01", "Prompt": "Work. DONE: ok"}]}),
+        encoding="utf-8",
+    )
+    attempts = 0
+
+    async def _cancelled_agent(**kwargs: Any) -> str:
+        nonlocal attempts
+        attempts += 1
+        raise asyncio.CancelledError()
+
+    wf, _ = _load_workflow(
+        {"work_dir": str(tmp_path), "worker_max_retries": 2, "retry_backoff_s": 0.01, "startup_stagger_s": 0.0},
+        agent_fn=_cancelled_agent,
+    )
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(wf.run_wave_from_manifest(str(manifest), "Cancel Check"))
+    assert attempts == 1
+
+
 def test_repair_close_guard_retries_missing_check_runs(tmp_path: Path) -> None:
     work_dir = tmp_path / "work"
     dispatch_dir = work_dir / "dispatch"
@@ -339,6 +361,76 @@ def test_cta_pipeline_and_full_pipeline_orchestration(tmp_path: Path) -> None:
     assert any("--stage shard" in c and "--comps-per-shard 2" in c for c in cli_cmds)
 
 
+def test_post_cta_pipeline_clears_stale_repair_matrix_after_round_1(tmp_path: Path) -> None:
+    work_dir = tmp_path / "work"
+    dispatch_dir = work_dir / "dispatch"
+    shards_dir = work_dir / "shards"
+    dispatch_dir.mkdir(parents=True)
+    shards_dir.mkdir(parents=True)
+    (work_dir / "cta.json").write_text('{"competencies": []}', encoding="utf-8")
+
+    repair_matrix_calls = 0
+
+    async def _agent_fn(**kwargs: Any) -> str:
+        role = str(kwargs.get("role") or kwargs.get("Role") or "")
+        if "Repair" in role:
+            (shards_dir / "shard_01.json").write_text("{}", encoding="utf-8")
+        return "DONE: ok"
+
+    async def _cli_fn(cmd: str, label: str = "", env_extra: Any = None) -> str:
+        nonlocal repair_matrix_calls
+        if "dispatch-authors" in cmd:
+            (dispatch_dir / "authors.json").write_text(
+                json.dumps({"Subagents": [{"Role": "Author 01", "Prompt": "Write. DONE: ok"}]}),
+                encoding="utf-8",
+            )
+        elif "dispatch-judges" in cmd:
+            (dispatch_dir / "judges.json").write_text(
+                json.dumps({"Subagents": [{"Role": "Judge 01", "Prompt": "Judge. DONE: ok"}]}),
+                encoding="utf-8",
+            )
+        elif "--stage gates" in cmd:
+            # Real `--stage gates` never overwrites repair_matrix.json
+            if repair_matrix_calls == 0:
+                return "FAIL: dispatch-repair needed for Hab-01"
+            return "PASS: all gates clean"
+        elif "--stage repair-matrix" in cmd:
+            repair_matrix_calls += 1
+            (work_dir / "repair_matrix.json").write_text(
+                json.dumps({"failing_competencies": ["Hab-01"]}),
+                encoding="utf-8",
+            )
+        elif "dispatch-repair" in cmd:
+            (dispatch_dir / "repair.json").write_text(
+                json.dumps({"Subagents": [{"Role": "Repair 01", "shard_id": "shard_01", "assigned_competencies": ["Hab-01"], "Prompt": "Repair. DONE: ok"}]}),
+                encoding="utf-8",
+            )
+        elif "--stage" in cmd and "rejudge" in cmd and "compare" not in cmd:
+            (dispatch_dir / "judges.json").write_text(
+                json.dumps({"Subagents": [{"Role": "Rejudge 01", "Prompt": "Rejudge. DONE: ok"}]}),
+                encoding="utf-8",
+            )
+        return "ok"
+
+    wf, _ = _load_workflow(
+        {
+            "work_dir": str(work_dir),
+            "mode": "post_cta_pipeline",
+            "max_repair_rounds": 2,
+            "startup_stagger_s": 0.0,
+        },
+        agent_fn=_agent_fn,
+        run_cli_fn=_cli_fn,
+    )
+    wf.run_cli = _cli_fn
+    summary = asyncio.run(wf.run_c2c_workflow())
+
+    assert repair_matrix_calls == 1
+    assert summary["repair_rounds_executed"] == 1
+    assert summary["remaining_failing_ids"] == []
+    assert not (work_dir / "repair_matrix.json").exists()
+
+
 # ---------------------------------------------------------------------------
 # 2. plan_shards default 3 + explicit 2 cap, prompt_repair & SKILL alignment
 # ---------------------------------------------------------------------------
@@ -431,6 +523,22 @@ def test_heal_katex_display_str_preserves_eval_and_heals_display() -> None:
     assert r"1 \times 10^{-5}" in tpl["solution"]
     assert "'correct': '2*@c@'" in tpl["generate_py"]
     assert "'accepted_equivalents': ['x**2']" in tpl["generate_py"]
+
+
+def test_heal_katex_display_str_preserves_euler_and_escaped_dollar() -> None:
+    euler_text = "Compare $2e-1$, $3e+2$, y $2e-3$ frente a $1e-05$ y $2.5E+08$."
+    healed_euler = heal_katex_display_str(euler_text)
+    assert "$2e-1$" in healed_euler
+    assert "$3e+2$" in healed_euler
+    assert "$2e-3$" in healed_euler
+    assert r"$1 \times 10^{-5}$" in healed_euler
+    assert r"$2.5 \times 10^{8}$" in healed_euler
+    assert heal_katex_display_str("$1e-00$") == r"$1 \times 10^{0}$"
+
+    escaped_currency = r"El costo es \$100 y la curva es $x**2$ con paso $1e-05$."
+    healed_currency = heal_katex_display_str(escaped_currency)
+    assert r"\$100 y la curva es $x^{2}$" in healed_currency
+    assert r"$1 \times 10^{-5}$" in healed_currency
 
 
 def test_shard_compiler_proper_noun_comma_allowed_and_ms_pre_interp_fallback() -> None:
