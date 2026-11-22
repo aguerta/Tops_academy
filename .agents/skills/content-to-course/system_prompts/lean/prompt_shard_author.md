@@ -221,7 +221,7 @@ H_IC1=[r"Sustituya $x_1=@xk@$ en $@p1@x_1+@p2@x_2=@m@$.",r"Reste $@p1@ \cdot @xk
 H_IC2=[r"Una desigualdad $\le$ usa frontera sólida.",r"Sombree debajo de la recta al exigir $\le @m@$.",r"Ajuste el deslizador al presupuesto exacto $@m@$."]
 SOL_MC1=r"Paso 1: Fije $x_1=0$ en $@p1@x_1+@p2@x_2=@m@$. Paso 2: Despeje $x_2=@m@/@p2@=@ans@$ unidades."
 SOL_OS1=r"Paso 1: Derive $@a@x^{1/2}$ bajando factor $1/2$. Paso 2: Resultado $@a@/(2\sqrt{x})=@ans@$ exacto."
-SOL_OS2=r"Paso 1: Pase $@p1@x$ restando a $@m@$. Paso 2: Divida por $@p2@$ para obtener $(@m@-@p1@x)/@p2@=@ans@$."
+SOL_OS2=r"Paso 1: Pase $@p1@x$ restando a $@m@$, quedando $@p2@x_2=@m@-@p1@x$. Paso 2: Divida por $@p2@$ para obtener $x_2=@ans@$."
 SOL_IC1=r"Paso 1: Evalúe $@p1@(@xk@)+@p2@x_2=@m@$. Paso 2: Despeje $x_2=@yk@$ ubicando $P_1=(@xk@,@yk@)$."
 SOL_IC2=r"Paso 1: Por $\le$, frontera sólida y sombra inferior. Paso 2: Fije el deslizador en $m=@m@$."
 TEMPLATES=[

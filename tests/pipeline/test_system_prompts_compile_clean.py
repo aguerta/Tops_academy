@@ -12,7 +12,9 @@ Validates:
 
 from __future__ import annotations
 
+import ast
 import json
+import random
 import re
 import sys
 from pathlib import Path
@@ -30,7 +32,11 @@ for p in (c2c_dir, qa_dir, repo_root):
 
 from compile_shard import compile_shard
 from compile_cta import compile_cta
+from engine.adversarial_generator import compile_and_verify_adversarial
+from engine.assemble import assemble_question
 from engine.instantiate import instantiate_competency
+from engine.invariants import check_instance_invariants
+from engine.proof_compiler import compile_and_verify_proof_dag
 from validator.core import validate_course_content
 from standardized_audit_engine import run_full_audit
 
@@ -235,3 +241,197 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
         if "archetype" in issue.get("linter", "").lower() or "entropy" in issue.get("linter", "").lower()
     ]
     assert len(archetype_issues) == 0, f"ArchetypeEntropyLinter issues detected: {archetype_issues}"
+
+
+def test_all_lean_prompt_python_blocks_parse_cleanly():
+    """Ensures every fenced Python block in system_prompts/lean/*.md parses cleanly via ast.parse."""
+    lean_dir = c2c_dir / "system_prompts" / "lean"
+    md_files = sorted(lean_dir.glob("*.md"))
+    assert md_files, f"No markdown prompt files found in {lean_dir}"
+
+    total_blocks = 0
+    for md_path in md_files:
+        text = md_path.read_text(encoding="utf-8")
+        blocks = re.findall(r"```python\s+(.+?)```", text, re.DOTALL)
+        for idx, block in enumerate(blocks):
+            total_blocks += 1
+            try:
+                ast.parse(block)
+            except SyntaxError as exc:
+                pytest.fail(
+                    f"SyntaxError in {md_path.name} Python block #{idx} line {exc.lineno}: {exc.msg}"
+                )
+    assert total_blocks >= 8, f"Expected >= 8 fenced Python blocks across lean prompts, found {total_blocks}"
+
+
+def test_m20_micro_examples_in_prompt_shard_author_compile_clean():
+    """Validates M20 Form-C micro-examples (proof_dag, adversarial_break, unstructured_model, concept_matching) in prompt_shard_author.md."""
+    shard_author_prompt = c2c_dir / "system_prompts" / "lean" / "prompt_shard_author.md"
+    prompt_text = shard_author_prompt.read_text(encoding="utf-8")
+
+    blocks = re.findall(r"```python\s+(.+?)```", prompt_text, re.DOTALL)
+    m20_block = next((b for b in blocks if "def gen_pd(" in b and "def gen_cm(" in b), None)
+    assert m20_block is not None, "Missing M20 micro-examples Python block in prompt_shard_author.md"
+
+    rats = {
+        f"D-C01-0{i}": f"Diagnóstico de error conceptual D-C01-0{i} sobre derivación polinomial en x."
+        for i in range(1, 7)
+    }
+    ns = {"RATS": rats}
+    exec(compile(m20_block, "prompt_shard_author_m20_examples", "exec"), ns)
+
+    cta_distractors_map = {
+        did: {"id": did, "name": did, "error_rationale": rat}
+        for did, rat in rats.items()
+    }
+
+    cases = [
+        ("proof_dag", "gen_pd", "ver_pd", "T-C01-PD"),
+        ("adversarial_break", "gen_adv_ff", "ver_adv_ff", "T-C01-AF"),
+        ("adversarial_break", "gen_adv_ce", "ver_adv_ce", "T-C01-CE"),
+        ("unstructured_model", "gen_um", "ver_um", "T-C01-UM"),
+        ("concept_matching", "gen_cm", "ver_cm", "T-C01-CM"),
+    ]
+
+    for itype, gen_name, ver_name, tpl_id in cases:
+        gen_fn = ns[gen_name]
+        ver_fn = ns[ver_name]
+        for seed in range(100, 108):
+            rng = random.Random(seed)
+            raw = gen_fn(rng)
+            assert ver_fn(raw) is True, f"{ver_name} returned False on seed={seed}"
+
+            if itype == "proof_dag":
+                compiled_dag, corr_ans = compile_and_verify_proof_dag(
+                    raw["proof_dag"],
+                    variables=raw.get("vars", {}),
+                    cta_distractors_map=cta_distractors_map,
+                    rng=random.Random(seed),
+                    rats_map=rats,
+                )
+                assert len(compiled_dag["steps"]) >= 3
+                assert len(corr_ans.get("canonical_order", [])) >= 3
+            elif itype == "adversarial_break":
+                compiled_adv, _ = compile_and_verify_adversarial(
+                    raw["adversarial_break"],
+                    variables=raw.get("vars", {}),
+                    cta_distractors_map=cta_distractors_map,
+                    rng=random.Random(seed),
+                    rats_map=rats,
+                )
+                if compiled_adv["mode"] == "find_fallacy":
+                    assert len(compiled_adv["steps"]) >= 3
+
+            template_stub = {
+                "id": tpl_id,
+                "competency_id": "C-01",
+                "interaction_type": itype,
+                "archetype": "direct",
+                "difficulty": "medium",
+                "bloom_level": "Analyze",
+                "stem_variants": [f"Resuelva el ejercicio {tpl_id} para el parámetro dado."],
+                "hints": [
+                    "Identifique primero la estructura analítica del problema.",
+                    "Aplique cuidadosamente la regla de derivación o contraste solicitada.",
+                    "Verifique coherencia dimensional y de signo antes de responder.",
+                ],
+                "solution": "Paso 1: Analice el enunciado. Paso 2: Verifique la respuesta obtenida.",
+                "rats": rats,
+            }
+            assembled = assemble_question(
+                template=template_stub,
+                gen_result=raw,
+                competency_id="C-01",
+                question_index=1,
+                cta_distractors_map=cta_distractors_map,
+                seed=seed,
+            )
+            check_instance_invariants(assembled, itype)
+
+
+def test_c02_m20_shard_example_in_prompt_shard_author_compiles_clean(tmp_path: Path):
+    """Validates the second full Form-C shard example (C-02: MC7 + open_symbolic + invariant_canvas) compiles cleanly."""
+    shard_author_prompt = c2c_dir / "system_prompts" / "lean" / "prompt_shard_author.md"
+    prompt_text = shard_author_prompt.read_text(encoding="utf-8")
+
+    blocks = re.findall(r"```python\s+(.+?)```", prompt_text, re.DOTALL)
+    c02_block = next((b for b in blocks if "T-C02-01" in b and "invariant_canvas" in b), None)
+    assert c02_block is not None, "Missing C-02 Form-C shard example in prompt_shard_author.md"
+
+    work_dir = tmp_path / "work_c02"
+    shards_dir = work_dir / "shards"
+    templates_dir = work_dir / "templates"
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    templates_dir.mkdir(parents=True, exist_ok=True)
+
+    pre_cta = {
+        "course_id": "micro_course",
+        "title": "Microeconomia Fundamentos",
+        "files": [{"doc": "micro.pdf", "file_index": 0, "total_pages": 30, "valid_page_range": [1, 30]}],
+    }
+    (work_dir / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
+
+    cta_data_code = (
+        'CTA_CONTRACT_VERSION = 2\n'
+        'COURSE_ID = "micro_course"\n'
+        'COURSE_TITLE = "Microeconomia Fundamentos"\n'
+        'COMPETENCIES = [\n'
+        '    (\n'
+        '        "concept",\n'
+        '        "C-02",\n'
+        '        "Restricción Presupuestaria",\n'
+        '        r"Analiza la recta presupuestaria $p_1 x_1 + p_2 x_2 = m$, sus interceptos y su región factible.",\n'
+        '        "Analyze",\n'
+        '        "micro.pdf",\n'
+        '        2,\n'
+        '        [],\n'
+        '        [\n'
+        '            ("Olvida factor 1/2", r"$a/\\sqrt{x}$", r"$\\frac{a}{2\\sqrt{x}}$", r"Error de coeficiente", "Revisar minuciosamente la regla de potencia y el exponente fraccionario al derivar radicales.", "Omitir 1/2."),\n'
+        '            ("Suma gasto al ingreso", r"$(m+p_1 x)/p_2$", r"$(m-p_1 x)/p_2$", r"Signo invertido", "Revisar minuciosamente el signo negativo al trasladar el gasto en x_1 al despejar la recta.", "Sumar gasto."),\n'
+        '            ("Frontera punteada", r"$>$", r"$\\le$", r"Región opuesta", "Revisar minuciosamente la diferencia entre desigualdad débil sólida y región factible inferior.", "Frontera punteada."),\n'
+        '            ("Divide por suma de precios", r"$m/(p_1+p_2)$", r"$m/p_2$", r"Denominador erróneo", "Revisar minuciosamente que cuando x_1=0 solo interviene el precio del bien 2 en el intercepto.", "Sumar precios."),\n'
+        '            ("Multiplica ingreso y precio", r"$m p_2$", r"$m/p_2$", r"Producto espurio", "Revisar minuciosamente que la cantidad máxima se obtiene dividiendo el ingreso entre el precio.", "Multiplicar."),\n'
+        '            ("Resta precio al ingreso", r"$m-p_2$", r"$m/p_2$", r"Diferencia espuria", "Revisar minuciosamente la relación de cociente lineal entre el presupuesto total y el precio.", "Restar precio."),\n'
+        '        ],\n'
+        '        [\n'
+        '            ("A-C02-01", r"Precios e ingreso estrictamente positivos $p_1,p_2,m>0$", r"Permite definir interceptos finitos y pendiente negativa."),\n'
+        '        ],\n'
+        '        ["MC7", "open_symbolic", "invariant_canvas"],\n'
+        '    )\n'
+        ']\n'
+    )
+    (work_dir / "cta_data.py").write_text(cta_data_code, encoding="utf-8")
+    cta_ok, _, cta_errs, _ = compile_cta(work_dir / "cta_data.py", work_dir, require_assumptions=True)
+    assert cta_ok, f"compile_cta failed: {cta_errs}"
+
+    cta_obj = json.loads((work_dir / "cta.json").read_text(encoding="utf-8"))
+    for idx, d in enumerate(cta_obj["competencies"][0]["distractors"], start=1):
+        d["id"] = f"D-C02-{idx:02d}"
+    (work_dir / "cta.json").write_text(json.dumps(cta_obj, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    manifest_payload = {
+        "min_archetypes": 4,
+        "shards": [
+            {
+                "shard_id": "shard_02",
+                "min_archetypes": 4,
+                "competency_ids": ["C-02"],
+                "competencies": cta_obj["competencies"],
+            }
+        ],
+    }
+    (shards_dir / "pre_shard_manifest.json").write_text(
+        json.dumps(manifest_payload, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    (shards_dir / "shard_02_data.py").write_text(c02_block.strip(), encoding="utf-8")
+
+    success, errors = compile_shard(
+        work_dir_or_path=work_dir,
+        shard_id="shard_02",
+        strict=True,
+        seeds=50,
+        min_archetypes=4,
+        templates_per_modality=2,
+    )
+    assert success, f"compile_shard failed on C-02 prompt example: {errors}"
+    assert errors == []
