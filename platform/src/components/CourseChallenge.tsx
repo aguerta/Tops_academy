@@ -5,6 +5,7 @@ interface CourseChallengeProps {
   course: Course;
   totalQuestions: number;
   onStart: () => void;
+  onStartAdaptive?: () => void;
   onBack: () => void;
 }
 
@@ -12,6 +13,7 @@ export const CourseChallenge: React.FC<CourseChallengeProps> = ({
   course,
   totalQuestions,
   onStart,
+  onStartAdaptive,
   onBack,
 }) => {
   useEffect(() => {
@@ -109,14 +111,27 @@ export const CourseChallenge: React.FC<CourseChallengeProps> = ({
           ←
         </button>
 
-        <button
-          type="button"
-          data-testid="start-challenge-btn"
-          onClick={onStart}
-          className="px-6 sm:px-8 py-2.5 sm:py-3 bg-indigo-700 hover:bg-indigo-800 text-white text-sm sm:text-base font-bold rounded shadow-md transition-colors shrink-0 cursor-pointer"
-        >
-          Iniciar Modo Hierro
-        </button>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+          {onStartAdaptive && (
+            <button
+              type="button"
+              data-testid="start-adaptive-challenge-btn"
+              onClick={onStartAdaptive}
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-purple-700 hover:bg-purple-800 text-white text-xs sm:text-sm font-bold rounded shadow-md transition-colors shrink-0 cursor-pointer"
+              title="Módulo 1 Diagnóstico (12 preg.) → Módulo 2 Estándar o Avanzado según corte ≥ 70%"
+            >
+              Simulador Adaptativo (2 Módulos)
+            </button>
+          )}
+          <button
+            type="button"
+            data-testid="start-challenge-btn"
+            onClick={onStart}
+            className="px-5 sm:px-8 py-2.5 sm:py-3 bg-indigo-700 hover:bg-indigo-800 text-white text-sm sm:text-base font-bold rounded shadow-md transition-colors shrink-0 cursor-pointer"
+          >
+            Iniciar Modo Hierro
+          </button>
+        </div>
       </footer>
     </div>
   );

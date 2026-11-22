@@ -695,3 +695,33 @@ export interface IronDeferredReviewItem {
   user_summary: string;
   diagnostic_rationale?: string;
 }
+
+export type AdaptiveModuleTier = 'diagnostic' | 'standard' | 'advanced';
+
+export interface AdaptiveModuleResult {
+  moduleIndex: 1 | 2;
+  tier: AdaptiveModuleTier;
+  score: number;
+  total: number;
+  percentage: number;
+  elapsedSeconds: number;
+}
+
+export interface AdaptiveUnitBreakdownItem {
+  competencyId: string;
+  competencyName: string;
+  correct: number;
+  total: number;
+  percentage: number;
+  avgSeconds: number;
+}
+
+export interface AdaptiveExamSummary {
+  module1: AdaptiveModuleResult;
+  module2: AdaptiveModuleResult;
+  routedTier: 'standard' | 'advanced';
+  cutoffPercentage: number;
+  projectedGrade20: number;
+  avgSecondsPerQuestion: number;
+  unitBreakdown: AdaptiveUnitBreakdownItem[];
+}

@@ -1,4 +1,14 @@
-import { Competency, MasteryTier, Question, QuestionOption } from '../types';
+import {
+  AdaptiveExamSummary,
+  AdaptiveModuleResult,
+  AdaptiveUnitBreakdownItem,
+  Competency,
+  Course,
+  MasteryTier,
+  Question,
+  QuestionOption,
+  QuestionTelemetry,
+} from '../types';
 import { normalizeQuestion } from './questionUtils';
 
 /**
@@ -290,4 +300,208 @@ export function buildInterleavedSessionQuestions(
 
   // Shuffle the combined interleaved session so the learner must discriminate which concept applies
   return shuffleArray(combined);
+}
+
+export const ADAPTIVE_MODULE_CUTOFF_PCT = 70;
+
+function pickBalancedAcrossCompetencies(
+  course: Course,
+  pool: Question[],
+  count: number,
+  priorityFn: (q: Question) => number,
+  prioritizeCompKeys?: Set<string>
+): Question[] {
+  if (pool.length === 0 || count <= 0) return [];
+  const targetCount = Math.min(count, pool.length);
+
+  // Group by normalized competency id, preserving stratified sampling across all course units
+  const buckets = new Map<string, Question[]>();
+  for (const q of shuffleArray(pool)) {
+    const key = (q.competency_id || '__other__').trim().toLowerCase();
+    const list = buckets.get(key) || [];
+    list.push(q);
+    buckets.set(key, list);
+  }
+
+  for (const [key, list] of buckets.entries()) {
+    list.sort((a, b) => priorityFn(a) - priorityFn(b));
+    buckets.set(key, list);
+  }
+
+  const allKeys = [
+    ...course.competencies
+      .map((c) => c.id.trim().toLowerCase())
+      .filter((k) => buckets.has(k)),
+    ...Array.from(buckets.keys()).filter(
+      (k) => !course.competencies.some((c) => c.id.trim().toLowerCase() === k)
+    ),
+  ];
+  const prioritized = prioritizeCompKeys
+    ? shuffleArray(allKeys.filter((k) => prioritizeCompKeys.has(k)))
+    : [];
+  const rest = prioritizeCompKeys
+    ? shuffleArray(allKeys.filter((k) => !prioritizeCompKeys.has(k)))
+    : shuffleArray(allKeys);
+  const orderedKeys = [...prioritized, ...rest];
+
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+  while (selected.length < targetCount && madeProgress) {
+    madeProgress = false;
+    for (const key of orderedKeys) {
+      if (selected.length >= targetCount) break;
+      const list = buckets.get(key);
+      if (!list) continue;
+      while (list.length > 0 && usedIds.has(list[0].id)) {
+        list.shift();
+      }
+      if (list.length > 0) {
+        const picked = list.shift()!;
+        usedIds.add(picked.id);
+        selected.push(picked);
+        madeProgress = true;
+      }
+    }
+  }
+
+  return prepareSessionQuestions(shuffleArray(selected), false);
+}
+
+/**
+ * M14-B: Builds Adaptive Module 1 (10-12 questions, default 12) stratified across units
+ * with mixed/medium ZPD diagnostic calibration.
+ */
+export function buildAdaptiveModule1(course: Course, count: number = 12): Question[] {
+  const diffRank = (q: Question): number => {
+    const d = (q.difficulty || 'medium').toLowerCase();
+    if (d === 'medium') return 0;
+    if (d === 'easy') return 1;
+    return 2;
+  };
+  return pickBalancedAcrossCompetencies(course, course.questions, count, diffRank);
+}
+
+/**
+ * M14-B: Routes to Adaptive Module 2 (10-12 questions, default 12) based on Module 1 score:
+ * - >= 70%: 'advanced' (prioritizes hard / expert ZPD questions, no repeats)
+ * - < 70%: 'standard' (prioritizes medium/easy reinforcement + missed competencies)
+ */
+export function buildAdaptiveModule2(
+  course: Course,
+  module1Percentage: number,
+  usedQuestionIds: Set<string>,
+  missedCompetencyIds: Set<string>,
+  count: number = 12
+): {
+  tier: 'standard' | 'advanced';
+  cutoffPercentage: number;
+  questions: Question[];
+} {
+  const tier: 'standard' | 'advanced' =
+    module1Percentage >= ADAPTIVE_MODULE_CUTOFF_PCT ? 'advanced' : 'standard';
+
+  const unused = course.questions.filter((q) => !usedQuestionIds.has(q.id));
+  const pool = unused.length > 0 ? unused : course.questions;
+  const missedLower = new Set(
+    Array.from(missedCompetencyIds).map((id) => id.trim().toLowerCase())
+  );
+
+  const priorityFn = (q: Question): number => {
+    const d = (q.difficulty || 'medium').toLowerCase();
+    if (tier === 'advanced') {
+      return d === 'hard' ? 0 : d === 'medium' ? 1 : 2;
+    }
+    return d === 'medium' ? 0 : d === 'easy' ? 1 : 2;
+  };
+
+  return {
+    tier,
+    cutoffPercentage: ADAPTIVE_MODULE_CUTOFF_PCT,
+    questions: pickBalancedAcrossCompetencies(
+      course,
+      pool,
+      count,
+      priorityFn,
+      tier === 'standard' ? missedLower : undefined
+    ),
+  };
+}
+
+/**
+ * M14-B: Computes post-exam diagnostic summary, per-unit breakdown, and projected 0-20 university grade.
+ */
+export function computeAdaptiveExamSummary(
+  course: Course,
+  module1: AdaptiveModuleResult,
+  module2: AdaptiveModuleResult,
+  combinedTelemetry: QuestionTelemetry[],
+  combinedQuestions: Question[]
+): AdaptiveExamSummary {
+  const routedTier: 'standard' | 'advanced' =
+    module2.tier === 'advanced' ? 'advanced' : 'standard';
+
+  const ceiling20 = routedTier === 'advanced' ? 20.0 : 15.5;
+  const rawProjected =
+    routedTier === 'advanced'
+      ? 0.4 * (module1.percentage / 100) * ceiling20 +
+        0.6 * (module2.percentage / 100) * ceiling20
+      : 0.45 * (module1.percentage / 100) * ceiling20 +
+        0.55 * (module2.percentage / 100) * ceiling20;
+  const projectedGrade20 = Math.round(Math.min(ceiling20, Math.max(0, rawProjected)) * 10) / 10;
+
+  const compNameById = new Map<string, string>();
+  for (const c of course.competencies) {
+    compNameById.set(c.id.trim().toLowerCase(), c.name);
+  }
+
+  const telemetryByQid = new Map<string, QuestionTelemetry>();
+  for (const t of combinedTelemetry) {
+    telemetryByQid.set(t.question_id, t);
+  }
+
+  const unitMap = new Map<
+    string,
+    { competencyId: string; competencyName: string; correct: number; total: number; seconds: number }
+  >();
+
+  for (const q of combinedQuestions) {
+    const cid = q.competency_id || 'unknown';
+    const key = cid.trim().toLowerCase();
+    const t = telemetryByQid.get(q.id);
+    const entry = unitMap.get(key) || {
+      competencyId: cid,
+      competencyName: compNameById.get(key) || cid,
+      correct: 0,
+      total: 0,
+      seconds: 0,
+    };
+    entry.total += 1;
+    if (t?.is_correct) entry.correct += 1;
+    entry.seconds += t ? t.seconds_spent : 0;
+    unitMap.set(key, entry);
+  }
+
+  const unitBreakdown: AdaptiveUnitBreakdownItem[] = Array.from(unitMap.values()).map((u) => ({
+    competencyId: u.competencyId,
+    competencyName: u.competencyName,
+    correct: u.correct,
+    total: u.total,
+    percentage: u.total > 0 ? Math.round((u.correct / u.total) * 100) : 0,
+    avgSeconds: u.total > 0 ? Math.round((u.seconds / u.total) * 10) / 10 : 0,
+  }));
+
+  const totalCount = Math.max(1, combinedQuestions.length);
+  const totalElapsed = Math.max(1, module1.elapsedSeconds + module2.elapsedSeconds);
+  const avgSecondsPerQuestion = Math.round((totalElapsed / totalCount) * 10) / 10;
+
+  return {
+    module1,
+    module2,
+    routedTier,
+    cutoffPercentage: ADAPTIVE_MODULE_CUTOFF_PCT,
+    projectedGrade20,
+    avgSecondsPerQuestion,
+    unitBreakdown,
+  };
 }

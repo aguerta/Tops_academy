@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+  AdaptiveExamSummary,
+  AdaptiveModuleResult,
   Course,
   CourseSummary,
   Competency,
@@ -8,6 +10,7 @@ import {
   QuestionTelemetry,
   ChallengeExecutionSummary,
   MasteryTier,
+  MetacognitiveAudit,
 } from './types';
 import {
   loadCourseMastery,
@@ -19,7 +22,12 @@ import {
   isUnitCompleted,
   isUnitStarted,
 } from './utils/masteryStorage';
-import { buildInterleavedSessionQuestions } from './utils/sessionShuffler';
+import {
+  buildAdaptiveModule1,
+  buildAdaptiveModule2,
+  buildInterleavedSessionQuestions,
+  computeAdaptiveExamSummary,
+} from './utils/sessionShuffler';
 import { normalizeQuestion } from './utils/questionUtils';
 import {
   loadManifest,
@@ -115,9 +123,19 @@ export const App: React.FC = () => {
     );
   };
 
-  // Milestone 14 & 20: Timing, Telemetry, Challenge Execution Summary & Iron Exam Outcome
+  // Milestone 14, 14-B & 20: Timing, Telemetry, Challenge Execution Summary & Iron Exam Outcome
   const [challengeSummary, setChallengeSummary] = useState<ChallengeExecutionSummary | null>(null);
   const [ironOutcome, setIronOutcome] = useState<IronExamCompletionOutcome | null>(null);
+  const [adaptiveSummary, setAdaptiveSummary] = useState<AdaptiveExamSummary | null>(null);
+  const [adaptiveExamState, setAdaptiveExamState] = useState<{
+    phase: 'module1' | 'routing' | 'module2';
+    mod1Questions: Question[];
+    mod1Result?: AdaptiveModuleResult;
+    mod1Outcome?: IronExamCompletionOutcome;
+    mod1Telemetry?: QuestionTelemetry[];
+    mod2Tier?: 'standard' | 'advanced';
+    mod2Questions?: Question[];
+  } | null>(null);
   const [latestTimingData, setLatestTimingData] = useState<{
     totalSeconds?: number;
     avgSeconds?: number;
@@ -409,6 +427,8 @@ export const App: React.FC = () => {
     clearActiveSession();
     setRestoredSnapshot(null);
     setIronOutcome(null);
+    setAdaptiveExamState(null);
+    setAdaptiveSummary(null);
 
     let targetComp = comp;
     // In practice/quiz/test, if comp is not passed, attempt recovery from sessionCompetency or selectedUnitIndex
@@ -492,11 +512,46 @@ export const App: React.FC = () => {
     launchSession('challenge', null, true);
   };
 
+  // Start M14-B Adaptive 2-Module Exam inside Modo Hierro
+  const handleBeginAdaptiveChallenge = () => {
+    if (!activeCourse) return;
+    clearActiveSession();
+    setRestoredSnapshot(null);
+    setIronOutcome(null);
+    setAdaptiveSummary(null);
+    setSessionCompetency(null);
+    setFocusCompetencyId(null);
+    setSessionType('challenge');
+
+    const mod1Questions = buildAdaptiveModule1(activeCourse, 12);
+    if (mod1Questions.length === 0) {
+      setSessionQuestions([]);
+      return;
+    }
+    setAdaptiveExamState({
+      phase: 'module1',
+      mod1Questions,
+    });
+    setSessionQuestions(mod1Questions);
+    setSessionKey((prev) => prev + 1);
+    const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
+    navigateView('practice', { replace: shouldReplace });
+  };
+
+  const handleStartAdaptiveModule2 = () => {
+    if (!adaptiveExamState?.mod2Questions || adaptiveExamState.mod2Questions.length === 0) return;
+    setAdaptiveExamState((prev) => (prev ? { ...prev, phase: 'module2' } : null));
+    setSessionQuestions(adaptiveExamState.mod2Questions);
+    setSessionKey((prev) => prev + 1);
+  };
+
   // Safe quit from session: replaces current transient state with overview so back never re-enters quizzes
   const handleQuitSession = () => {
     clearActiveSession();
     setRestoredSnapshot(null);
     setIronOutcome(null);
+    setAdaptiveExamState(null);
+    setAdaptiveSummary(null);
     setShowQuitConfirm(false);
     setFocusCompetencyId(sessionType === 'challenge' ? null : sessionCompetency?.id ?? null);
     setViewMode('overview');
@@ -506,7 +561,7 @@ export const App: React.FC = () => {
     });
   };
 
-  // Handle Practice / Iron Exam Session Completion with Milestone 14 Telemetry & Calibration
+  // Handle Practice / Iron Exam Session Completion with Milestone 14, 14-B & 20 Telemetry
   const handleCompleteSession = (
     score: number,
     total: number,
@@ -516,11 +571,136 @@ export const App: React.FC = () => {
   ) => {
     clearActiveSession();
     setRestoredSnapshot(null);
+    const sec = totalSeconds ?? 0;
+
+    // M14-B Module 1 -> Routing Gate -> Module 2
+    if (sessionType === 'challenge' && activeCourse && adaptiveExamState?.phase === 'module1') {
+      const mod1Pct = total > 0 ? Math.round((score / total) * 100) : 0;
+      const mod1Result: AdaptiveModuleResult = {
+        moduleIndex: 1,
+        tier: 'diagnostic',
+        score,
+        total,
+        percentage: mod1Pct,
+        elapsedSeconds: sec,
+      };
+      const usedIds = new Set(adaptiveExamState.mod1Questions.map((q) => q.id));
+      const missedCompIds = new Set(
+        (telemetryData || []).filter((t) => !t.is_correct).map((t) => t.competency_id)
+      );
+      const mod2Plan = buildAdaptiveModule2(activeCourse, mod1Pct, usedIds, missedCompIds, 12);
+      setAdaptiveExamState({
+        phase: 'routing',
+        mod1Questions: adaptiveExamState.mod1Questions,
+        mod1Result,
+        mod1Outcome: ironOutcomeParam,
+        mod1Telemetry: telemetryData || [],
+        mod2Tier: mod2Plan.tier,
+        mod2Questions: mod2Plan.questions,
+      });
+      return;
+    }
+
+    // M14-B Module 2 Completion -> Merge Module 1 + Module 2 & Compute University Projection
+    if (
+      sessionType === 'challenge' &&
+      activeCourse &&
+      adaptiveExamState?.phase === 'module2' &&
+      adaptiveExamState.mod1Result
+    ) {
+      const mod2Tier = adaptiveExamState.mod2Tier || 'standard';
+      const mod2Pct = total > 0 ? Math.round((score / total) * 100) : 0;
+      const mod2Result: AdaptiveModuleResult = {
+        moduleIndex: 2,
+        tier: mod2Tier,
+        score,
+        total,
+        percentage: mod2Pct,
+        elapsedSeconds: sec,
+      };
+      const combinedTelemetry = [
+        ...(adaptiveExamState.mod1Telemetry || []),
+        ...(telemetryData || []),
+      ];
+      const combinedQuestions = [
+        ...adaptiveExamState.mod1Questions,
+        ...sessionQuestions,
+      ];
+      const mod1Outcome = adaptiveExamState.mod1Outcome;
+      let mergedOutcome: IronExamCompletionOutcome | null = ironOutcomeParam ?? mod1Outcome ?? null;
+      if (mod1Outcome && ironOutcomeParam) {
+        const mergedItems = [
+          ...mod1Outcome.metacognitiveAudit.items,
+          ...ironOutcomeParam.metacognitiveAudit.items,
+        ];
+        const totalItems = Math.max(1, mergedItems.length);
+        const calCount = mergedItems.filter((i) => i.quadrant === 'calibrated_mastery').length;
+        const knownGaps = mergedItems.filter((i) => i.quadrant === 'known_gap').length;
+        const mergedAudit: MetacognitiveAudit = {
+          global_confidence: ironOutcomeParam.metacognitiveAudit.global_confidence,
+          total_questions: mergedItems.length,
+          answered_count:
+            mod1Outcome.metacognitiveAudit.answered_count +
+            ironOutcomeParam.metacognitiveAudit.answered_count,
+          correct_count:
+            mod1Outcome.metacognitiveAudit.correct_count +
+            ironOutcomeParam.metacognitiveAudit.correct_count,
+          calibrated_mastery_count: calCount,
+          illusions_of_competence_count:
+            mod1Outcome.metacognitiveAudit.illusions_of_competence_count +
+            ironOutcomeParam.metacognitiveAudit.illusions_of_competence_count,
+          lucky_guesses_count:
+            mod1Outcome.metacognitiveAudit.lucky_guesses_count +
+            ironOutcomeParam.metacognitiveAudit.lucky_guesses_count,
+          known_gaps_count: knownGaps,
+          calibration_score: Math.round(((calCount + knownGaps) / totalItems) * 100),
+          items: mergedItems,
+        };
+        mergedOutcome = {
+          metacognitiveAudit: mergedAudit,
+          deferredReview: [...mod1Outcome.deferredReview, ...ironOutcomeParam.deferredReview],
+        };
+      }
+
+      const combinedScore = adaptiveExamState.mod1Result.score + score;
+      const combinedTotal = adaptiveExamState.mod1Result.total + total;
+      const combinedSeconds = adaptiveExamState.mod1Result.elapsedSeconds + sec;
+
+      const summary = updateCourseChallengeWithSkillCalibration(
+        activeCourse,
+        combinedTelemetry,
+        combinedSeconds
+      );
+      const adaptiveReport = computeAdaptiveExamSummary(
+        activeCourse,
+        adaptiveExamState.mod1Result,
+        mod2Result,
+        combinedTelemetry,
+        combinedQuestions
+      );
+
+      setIronOutcome(mergedOutcome);
+      setAdaptiveSummary(adaptiveReport);
+      setAdaptiveExamState(null);
+      setSessionScore(combinedScore);
+      setSessionTotal(combinedTotal);
+      setMastery({ ...summary.record });
+      setChallengeSummary(summary);
+      setLatestTimingData({
+        totalSeconds: summary.total_seconds,
+        avgSeconds: summary.avg_seconds_per_question,
+        isNewRecord: summary.is_new_record,
+      });
+      setLatestMisconceptions(summary.misconceptions);
+      navigateView('completed', { replace: true });
+      return;
+    }
+
+    setAdaptiveSummary(null);
+    setAdaptiveExamState(null);
     setIronOutcome(sessionType === 'challenge' ? (ironOutcomeParam ?? null) : null);
     setSessionScore(score);
     setSessionTotal(total);
-
-    const sec = totalSeconds ?? 0;
 
     if (activeCourse) {
       if (sessionType === 'challenge' && telemetryData && telemetryData.length > 0) {
@@ -580,6 +760,10 @@ export const App: React.FC = () => {
   // Handle "Try again" from Completion - preserves sessionType and performs fresh reshuffle directly
   const handleTryAgain = () => {
     if (!activeCourse) return;
+    if (sessionType === 'challenge' && adaptiveSummary) {
+      handleBeginAdaptiveChallenge();
+      return;
+    }
     let targetComp = sessionCompetency;
     if (!targetComp && sessionType !== 'challenge' && sessionQuestions.length > 0) {
       const qCompId = sessionQuestions[0].competency_id;
@@ -681,16 +865,96 @@ export const App: React.FC = () => {
         />
       )}
 
-      {viewMode === 'practice' && sessionType === 'challenge' && (
+      {viewMode === 'practice' && sessionType === 'challenge' && adaptiveExamState?.phase === 'routing' && (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 sm:p-6">
+          <div
+            data-testid="adaptive-routing-card"
+            className="w-full max-w-xl bg-slate-900 text-white rounded-2xl border border-indigo-500/40 shadow-2xl p-6 sm:p-8 text-center space-y-5"
+          >
+            <span className="inline-block px-3 py-1 rounded-full bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 text-xs font-extrabold uppercase tracking-wider">
+              Enrutamiento Adaptativo • Corte 70%
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold">
+              Módulo 1 Completado: {adaptiveExamState.mod1Result?.percentage ?? 0}%
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Obtuviste{' '}
+              <strong>
+                {adaptiveExamState.mod1Result?.score}/{adaptiveExamState.mod1Result?.total}
+              </strong>{' '}
+              aciertos.{' '}
+              {adaptiveExamState.mod2Tier === 'advanced' ? (
+                <>
+                  Superaste el corte de 70% y avanzas al{' '}
+                  <span className="text-purple-300 font-bold">Módulo 2 Avanzado</span> (ZPD experto,
+                  escala hasta 20/20).
+                </>
+              ) : (
+                <>
+                  Tu desempeño (&lt; 70%) te enruta al{' '}
+                  <span className="text-sky-300 font-bold">Módulo 2 Estándar</span> (consolidación
+                  y refuerzo de brechas detectadas).
+                </>
+              )}
+            </p>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleQuitSession}
+                className="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold cursor-pointer"
+              >
+                Salir
+              </button>
+              <button
+                type="button"
+                data-testid="start-adaptive-module2-btn"
+                onClick={handleStartAdaptiveModule2}
+                className={`px-6 py-2.5 rounded-lg text-white text-sm font-bold shadow-md cursor-pointer ${
+                  adaptiveExamState.mod2Tier === 'advanced'
+                    ? 'bg-purple-600 hover:bg-purple-700'
+                    : 'bg-sky-600 hover:bg-sky-700'
+                }`}
+              >
+                Iniciar Módulo 2 ({adaptiveExamState.mod2Tier === 'advanced' ? 'Avanzado' : 'Estándar'}) ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'practice' && sessionType === 'challenge' && adaptiveExamState?.phase !== 'routing' && (
         <IronExamSession
           key={sessionKey}
           sessionTitle={
             restoredSnapshot?.sessionTitle ||
-            `Examen Modo Hierro • ${activeCourse?.title || 'Curso'}`
+            (adaptiveExamState
+              ? `Simulador Parcial • ${activeCourse?.title || 'Curso'}`
+              : `Examen Modo Hierro • ${activeCourse?.title || 'Curso'}`)
           }
           questions={sessionQuestions}
           courseId={activeCourse?.course_id}
           courseTitle={activeCourse?.title}
+          moduleIndex={
+            adaptiveExamState?.phase === 'module2'
+              ? 2
+              : adaptiveExamState?.phase === 'module1'
+              ? 1
+              : undefined
+          }
+          moduleTier={
+            adaptiveExamState?.phase === 'module2'
+              ? adaptiveExamState.mod2Tier || 'standard'
+              : adaptiveExamState?.phase === 'module1'
+              ? 'diagnostic'
+              : undefined
+          }
+          timeLimitSeconds={
+            adaptiveExamState ? Math.max(180, sessionQuestions.length * 90) : undefined
+          }
+          submitButtonLabel={
+            adaptiveExamState?.phase === 'module1' ? 'Finalizar Módulo 1' : undefined
+          }
+          persistSession={!adaptiveExamState}
           initialSnapshot={restoredSnapshot}
           onComplete={handleCompleteSession}
           onQuit={() => setShowQuitConfirm(true)}
@@ -732,6 +996,7 @@ export const App: React.FC = () => {
           total={sessionTotal}
           sessionType={sessionType}
           challengeSummary={challengeSummary}
+          adaptiveSummary={adaptiveSummary}
           metacognitiveAudit={ironOutcome?.metacognitiveAudit}
           deferredReview={ironOutcome?.deferredReview}
           timingData={latestTimingData}
@@ -774,6 +1039,7 @@ export const App: React.FC = () => {
               course={activeCourse}
               totalQuestions={Math.min(30, activeCourse.questions.length)}
               onStart={handleBeginCourseChallenge}
+              onStartAdaptive={handleBeginAdaptiveChallenge}
               onBack={() => setShowQuitConfirm(true)}
             />
           </main>
