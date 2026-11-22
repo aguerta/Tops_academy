@@ -84,8 +84,8 @@ def heal_control_chars_in_obj(obj: Any) -> Any:
     return obj
 
 
-_MATH_SEGMENT_RE = re.compile(r"(\$\$[\s\S]*?\$\$|\$[^\$]+?\$)")
-_HEAL_SCI_RE = re.compile(r"(?<![A-Za-z0-9_\\])(\d+(?:\.\d+)?)[eE]([+-])?0*(\d+)(?![A-Za-z0-9_])")
+_MATH_SEGMENT_RE = re.compile(r"((?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|(?<!\\)\$(?!\$)(?:\\.|[^$\\])+?(?<!\\)\$)")
+_HEAL_SCI_RE = re.compile(r"(?<![A-Za-z0-9_\\])(\d+(?:\.\d+)?)[eE]([+-])(\d{2,})(?![A-Za-z0-9_])")
 
 
 def heal_katex_display_str(text: str) -> str:
@@ -107,7 +107,9 @@ def heal_katex_display_str(text: str) -> str:
 
     def _repl_sci(m: re.Match) -> str:
         sign = "-" if m.group(2) == "-" else ""
-        exp = m.group(3)
+        exp = m.group(3).lstrip("0") or "0"
+        if exp == "0":
+            sign = ""
         return rf"{m.group(1)} \times 10^{{{sign}{exp}}}"
 
     def _heal_math_segment(m: re.Match) -> str:

@@ -1278,6 +1278,7 @@ def _sympy_rel_to_z3(
 ) -> Optional[Any]:
     """Translate SymPy boolean/relational condition into a Z3 boolean formula."""
     import sympy
+    from sympy.core.relational import Relational
     import z3
 
     if cond is True or cond is sympy.S.true:
@@ -1293,7 +1294,7 @@ def _sympy_rel_to_z3(
     if isinstance(cond, sympy.Not):
         sub = _sympy_rel_to_z3(cond.args[0], var_map, extra_constraints, aux_counter)
         return None if sub is None else z3.Not(sub)
-    if isinstance(cond, sympy.Relational):
+    if isinstance(cond, Relational):
         lhs = _sympy_to_z3_expr(cond.lhs, var_map, extra_constraints, aux_counter)
         rhs = _sympy_to_z3_expr(cond.rhs, var_map, extra_constraints, aux_counter)
         if lhs is None or rhs is None:
@@ -1323,22 +1324,35 @@ def _sympy_piecewise_to_z3(
     """Translate SymPy Piecewise (val, cond) branches recursively into nested z3.If."""
     if not pairs:
         return None
+    import sympy
     import z3
 
     val_s, cond_s = pairs[0]
-    val_z = _sympy_to_z3_expr(val_s, var_map, extra_constraints, aux_counter)
+    cond_z = _sympy_rel_to_z3(cond_s, var_map, extra_constraints, aux_counter)
+    if cond_z is None:
+        return None
+    val_constraints: List[Any] = []
+    val_z = _sympy_to_z3_expr(val_s, var_map, val_constraints, aux_counter)
     if val_z is None:
         return None
     if len(pairs) == 1:
-        cond_z = _sympy_rel_to_z3(cond_s, var_map, extra_constraints, aux_counter)
-        if cond_z is None:
-            return None
-        extra_constraints.append(cond_z)
+        is_always_true = cond_s is True or cond_s is sympy.S.true
+        if val_constraints:
+            if is_always_true:
+                extra_constraints.extend(val_constraints)
+            else:
+                extra_constraints.append(z3.Implies(cond_z, z3.And(*val_constraints)))
+        if not is_always_true:
+            extra_constraints.append(cond_z)
         return val_z
-    cond_z = _sympy_rel_to_z3(cond_s, var_map, extra_constraints, aux_counter)
-    rest_z = _sympy_piecewise_to_z3(pairs[1:], var_map, extra_constraints, aux_counter)
-    if cond_z is None or rest_z is None:
+    rest_constraints: List[Any] = []
+    rest_z = _sympy_piecewise_to_z3(pairs[1:], var_map, rest_constraints, aux_counter)
+    if rest_z is None:
         return None
+    if val_constraints:
+        extra_constraints.append(z3.Implies(cond_z, z3.And(*val_constraints)))
+    if rest_constraints:
+        extra_constraints.append(z3.Implies(z3.Not(cond_z), z3.And(*rest_constraints)))
     return z3.If(cond_z, val_z, rest_z)
 
 
@@ -1364,6 +1378,8 @@ def _z3_check_sympy_equiv(expr_i: Any, expr_j: Any, timeout_ms: int = 150) -> Op
             solver.add(v > 0)
         for c in extra_constraints:
             solver.add(c)
+        if solver.check() != z3.sat:
+            return None
         solver.add(z_i != z_j)
         res = solver.check()
         if res == z3.unsat:

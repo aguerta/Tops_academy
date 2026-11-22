@@ -267,11 +267,11 @@ async def run_wave_from_manifest(
                 await asyncio.sleep(delay)
 
         async with sem:
-            last_err: Optional[BaseException] = None
+            last_err: Optional[Exception] = None
             last_res: Any = ""
             for attempt in range(eff_retries + 1):
                 t0 = time.monotonic()
-                err_caught: Optional[BaseException] = None
+                err_caught: Optional[Exception] = None
                 res: Any = ""
                 try:
                     res = await agent(
@@ -282,7 +282,7 @@ async def run_wave_from_manifest(
                         workspace="inherit",
                         schema={"type": "string"},
                     )
-                except BaseException as exc:
+                except Exception as exc:
                     err_caught = exc
                 elapsed = time.monotonic() - t0
                 collapsed, reason = _is_worker_collapse(prompt_text, res, err_caught, elapsed)
@@ -736,6 +736,9 @@ async def _run_post_cta_pipeline(
         if not round_targets:
             failing_cids = []
             break
+        _unlink_if_exists(work_path / "repair_matrix.json")
+        _unlink_if_exists(dispatch_dir / "repair_matrix.json")
+        cycle_start = time.time()
         round_repairs, _ = await _execute_repair_and_rejudge_cycle(
             work_path=work_path,
             work_dir_arg=work_dir_arg,
@@ -752,8 +755,8 @@ async def _run_post_cta_pipeline(
         repair_rounds_executed += 1
         failing_cids = _collect_failing_competencies(
             work_path,
-            matrix_min_mtime=repair_matrix_start,
-            judge_min_mtime=repair_matrix_start,
+            matrix_min_mtime=cycle_start,
+            judge_min_mtime=cycle_start,
         )
         needs_repair = bool(failing_cids)
 
