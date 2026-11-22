@@ -27,6 +27,7 @@ skill_dir = Path(__file__).parent.resolve()
 if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
 
+from engine import fast_json
 from engine.assemble import assemble_question
 from engine.invariants import check_instance_invariants
 from engine.sandbox import execute_sandbox_instance, execute_verifier_code
@@ -137,7 +138,7 @@ def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
     if path.is_file():
         raw_bytes = path.read_bytes()
         file_sha = hashlib.sha256(raw_bytes).hexdigest()
-        content = json.loads(raw_bytes.decode("utf-8"))
+        content = fast_json.loads(raw_bytes)
         if isinstance(content, dict):
             if "templates" in content:
                 for t in content["templates"]:
@@ -163,7 +164,7 @@ def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
             try:
                 raw_bytes = file.read_bytes()
                 file_sha = hashlib.sha256(raw_bytes).hexdigest()
-                data = json.loads(raw_bytes.decode("utf-8"))
+                data = fast_json.loads(raw_bytes)
                 if isinstance(data, dict):
                     if "templates" in data:
                         for t in data["templates"]:
@@ -963,23 +964,23 @@ def generate_judge_batch(
     v_dir.mkdir(parents=True, exist_ok=True)
 
     batch_path = work / "judge_batch.json"
-    batch_json_str = json.dumps(judge_batch_items, indent=2, ensure_ascii=False)
-    batch_path.write_text(batch_json_str, encoding="utf-8")
-    (v_dir / "judge_batch.json").write_text(batch_json_str, encoding="utf-8")
+    batch_json_bytes = fast_json.dumps_bytes(judge_batch_items, indent=True)
+    batch_path.write_bytes(batch_json_bytes)
+    (v_dir / "judge_batch.json").write_bytes(batch_json_bytes)
 
     truth_path = work / "judge_ground_truth.json"
-    truth_json_str = json.dumps(ground_truth, indent=2, ensure_ascii=False)
-    truth_path.write_text(truth_json_str, encoding="utf-8")
-    (v_dir / "judge_ground_truth.json").write_text(truth_json_str, encoding="utf-8")
+    truth_json_bytes = fast_json.dumps_bytes(ground_truth, indent=True)
+    truth_path.write_bytes(truth_json_bytes)
+    (v_dir / "judge_ground_truth.json").write_bytes(truth_json_bytes)
 
     answer_key_path = work / "answer_key.json"
-    answer_key_path.write_text(truth_json_str, encoding="utf-8")
-    (v_dir / "answer_key.json").write_text(truth_json_str, encoding="utf-8")
+    answer_key_path.write_bytes(truth_json_bytes)
+    (v_dir / "answer_key.json").write_bytes(truth_json_bytes)
 
     if refuted_templates:
-        refuted_json_str = json.dumps(refuted_templates, indent=2, ensure_ascii=False)
-        (work / "refuted_templates.json").write_text(refuted_json_str, encoding="utf-8")
-        (v_dir / "refuted_templates.json").write_text(refuted_json_str, encoding="utf-8")
+        refuted_json_bytes = fast_json.dumps_bytes(refuted_templates, indent=True)
+        (work / "refuted_templates.json").write_bytes(refuted_json_bytes)
+        (v_dir / "refuted_templates.json").write_bytes(refuted_json_bytes)
 
     # Clean up stale split batches in verification and work so dispatch_judges slices the new batch fresh
     for stale_split in list(v_dir.glob("judge_batch_*.json")) + list(work.glob("judge_batch_*.json")):

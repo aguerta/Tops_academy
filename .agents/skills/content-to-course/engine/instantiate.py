@@ -164,14 +164,14 @@ def instantiate_template(
     instantiated_questions: List[Dict[str, Any]] = []
 
     attempt = 0
-    batch_size = 20
 
     seeds_evaluated_count = 0
     seeds_retried_count = 0
 
     while len(instantiated_questions) < target_count and attempt < max_attempts:
+        cur_batch_size = min(20, max(6, target_count * 2)) if attempt == 0 else 20
         current_batch_seeds = [
-            seed_offset + attempt + i for i in range(min(batch_size, max_attempts - attempt))
+            seed_offset + attempt + i for i in range(min(cur_batch_size, max_attempts - attempt))
         ]
         attempt += len(current_batch_seeds)
 

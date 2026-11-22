@@ -42,6 +42,7 @@ if str(_src_dir) not in sys.path and _src_dir.is_dir():
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
+from engine import fast_json
 from engine.assemble import assemble_question, format_template_string
 from engine.diversity import (
     evaluate_competency_diversity,
@@ -1625,6 +1626,13 @@ def _eval_comp_diversity_and_parity_worker(
     return c_errors
 
 
+def _bounded_worker_count(item_count: int) -> int:
+    """Caps ProcessPool workers to leave host cores responsive on Windows."""
+    if item_count <= 1:
+        return 1
+    return max(1, min(6, max(1, (os.cpu_count() or 4) - 2), item_count))
+
+
 def check_templates_file_or_dir(
     target_path: Union[Path, List[Path], str, List[str]],
     cta_path: Optional[Path] = None,
@@ -1769,7 +1777,7 @@ def check_templates_file_or_dir(
     errors_by_comp: Dict[str, List[str]] = {}
 
     if len(template_files) > 1:
-        max_workers = min(os.cpu_count() or 4, len(template_files))
+        max_workers = _bounded_worker_count(len(template_files))
 
         def _run_pool(pool_cls, workers, files):
             with pool_cls(max_workers=workers) as executor:
@@ -1838,7 +1846,7 @@ def check_templates_file_or_dir(
         if pending:
             # Validation is CPU-bound (GIL): prefer processes, fall back to threads if
             # the pool cannot be used (e.g. virtual stdout without fileno, unpicklable args, or restricted environment).
-            workers = min(os.cpu_count() or 4, len(pending))
+            workers = _bounded_worker_count(len(pending))
             stdout_is_virtual = False
             if not hasattr(sys.stdout, "fileno"):
                 stdout_is_virtual = True
@@ -1972,7 +1980,7 @@ def check_templates_file_or_dir(
                         )
                     for cid, fut in futs.items():
                         comp_results[cid] = fut.result()
-            w = min(os.cpu_count() or 4, len(to_run))
+            w = _bounded_worker_count(len(to_run))
             stdout_is_virtual = False
             if not hasattr(sys.stdout, "fileno"):
                 stdout_is_virtual = True

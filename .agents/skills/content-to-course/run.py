@@ -26,13 +26,16 @@ import json
 import logging
 import math
 import os
+import pickle
 import re
 import subprocess
 import sys
 import time
 import uuid
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures.process import BrokenProcessPool
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Set, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Union
 
 # Safe stdout encoding on Windows
 if hasattr(sys.stdout, "reconfigure"):
@@ -48,6 +51,12 @@ repo_root = skill_dir.parents[2]
 if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
 
+from engine import fast_json
+from engine.build_worker import (
+    build_course_comp_dict as _build_course_comp_dict,
+    init_stage4_worker as _init_stage4_worker,
+    instantiate_single_comp_worker as _instantiate_single_comp_worker,
+)
 from engine.interstage_schemas import ArtifactCertificate, RejectionSpec, verify_certificate
 
 try:
@@ -1309,7 +1318,7 @@ class PipelineRunner:
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
             raise FileNotFoundError(f"Missing templates in {templates_dir.resolve()}")
 
-        cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
+        cta_data = fast_json.read_json(cta_file)
         competencies = cta_data.get("competencies", [])
 
         # Build distractor map
@@ -1322,7 +1331,7 @@ class PipelineRunner:
         # Load all template files grouped by competency_id
         templates_by_comp: Dict[str, List[Dict[str, Any]]] = {}
         for tf in sorted(templates_dir.glob("*.json")):
-            tdata = json.loads(tf.read_text(encoding="utf-8"))
+            tdata = fast_json.read_json(tf)
             if isinstance(tdata, dict) and "templates" in tdata:
                 cid = tdata.get("competency_id", tf.stem)
                 for t in tdata["templates"]:
@@ -1339,55 +1348,62 @@ class PipelineRunner:
                     tdata["competency_id"] = cid
                 templates_by_comp.setdefault(cid, []).append(tdata)
 
-        # Parallel competency question instantiation
+        # Parallel competency question instantiation (process-isolated for QuickJS safety)
         import zlib
-        import os
-        from concurrent.futures import ThreadPoolExecutor
 
-        def _instantiate_single_comp(comp: Dict[str, Any]) -> Tuple[Dict[str, Any], List[Dict[str, Any]], Dict[str, Any]]:
+        worker_payloads: List[Tuple[Dict[str, Any], List[Dict[str, Any]], Optional[Dict[str, Dict[str, Any]]], int]] = []
+        for comp in competencies:
             cid = comp["id"]
-            cat = comp.get("type", "concept").title()
             name = comp.get("name", cid)
-            desc = comp.get("description_latex") or comp.get("description", "")
-            course_comp_dict = {
-                "id": cid,
-                "code": cid.upper(),
-                "name": name,
-                "category": cat,
-                "description": desc,
-                "mastery_target": 100,
-                "prerequisites": comp.get("prerequisites", []),
-            }
-            if cid.upper().startswith("PRE-") or comp.get("is_prerequisite"):
-                course_comp_dict["is_prerequisite"] = True
-            for opt_key in ("session", "unit_index", "evidence", "assumptions", "source_examples"):
-                opt_val = comp.get(opt_key)
-                if opt_val is not None and opt_val != "" and opt_val != []:
-                    course_comp_dict[opt_key] = opt_val
             comp_templates = templates_by_comp.get(cid, [])
             if not comp_templates:
                 raise ValueError(
                     f"No templates found for competency '{cid}' ({name}). "
                     f"Strict fail-fast requires all competencies to have templates."
                 )
-            comp_res = instantiate_competency(
-                competency=comp,
-                templates=comp_templates,
-                cta_distractors_map=distractor_map,
-                seed_offset_base=self.random_seed + (zlib.crc32(cid.encode("utf-8")) % 10000),
-            )
-            comp_questions = comp_res["questions"] if isinstance(comp_res, dict) and "questions" in comp_res else comp_res
-            for q in comp_questions:
-                check_instance_invariants(q, q["interaction_type"])
-            stems = [q["stem"] for q in comp_questions]
-            div_res = evaluate_competency_diversity(stems)
-            return course_comp_dict, comp_questions, div_res
+            seed_offset = self.random_seed + (zlib.crc32(cid.encode("utf-8")) % 10000)
+            worker_payloads.append((comp, comp_templates, None, seed_offset))
 
-        # Sequential execution: PyKaTeX QuickJS C-extension is not thread-safe.
-        # Sequential instantiation takes < 3s for 21 competencies and avoids C-level GIL deadlock.
         comp_results_map: Dict[str, Any] = {}
-        for comp in competencies:
-            comp_results_map[comp["id"]] = _instantiate_single_comp(comp)
+        max_workers = min(6, max(1, (os.cpu_count() or 4) - 2), len(worker_payloads))
+        main_mod = sys.modules.get("__main__")
+        main_file = getattr(main_mod, "__file__", None)
+        can_spawn_pool = bool(main_file and str(main_file) not in ("<stdin>", "-"))
+        if can_spawn_pool and len(worker_payloads) >= 4 and max_workers > 1:
+            # Longest-Processing-Time-First order minimizes tail straggler waiting
+            lpt_payloads = sorted(worker_payloads, key=lambda p: len(p[1]), reverse=True)
+            try:
+                with ProcessPoolExecutor(
+                    max_workers=max_workers,
+                    initializer=_init_stage4_worker,
+                    initargs=(distractor_map,),
+                ) as executor:
+                    for cid, course_comp_dict, comp_questions, div_res in executor.map(
+                        _instantiate_single_comp_worker, lpt_payloads
+                    ):
+                        comp_results_map[cid] = (course_comp_dict, comp_questions, div_res)
+            except (OSError, PermissionError, BrokenProcessPool, pickle.PicklingError) as pool_err:
+                logger.warning("Stage 4 ProcessPoolExecutor unavailable (%s); falling back to sequential.", pool_err)
+                comp_results_map.clear()
+
+        if len(comp_results_map) != len(worker_payloads):
+            for comp, comp_templates, _, seed_offset in worker_payloads:
+                cid = comp["id"]
+                course_comp_dict = _build_course_comp_dict(comp)
+                comp_res = instantiate_competency(
+                    competency=comp,
+                    templates=comp_templates,
+                    cta_distractors_map=distractor_map,
+                    seed_offset_base=seed_offset,
+                )
+                comp_questions = (
+                    comp_res["questions"]
+                    if isinstance(comp_res, dict) and "questions" in comp_res
+                    else comp_res
+                )
+                stems = [q["stem"] for q in comp_questions]
+                div_res = evaluate_competency_diversity(stems)
+                comp_results_map[cid] = (course_comp_dict, comp_questions, div_res)
 
         # Strictly preserve the exact pedagogical sequence of competencies as declared in cta.json
         all_questions: List[Dict[str, Any]] = []
@@ -1590,7 +1606,7 @@ class PipelineRunner:
         print(f"  [+] Anti-giveaway distribution: longest={longest_pct:.1f}%, shortest={shortest_pct:.1f}%")
 
         course_file = self.work_dir / "course.json"
-        course_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        fast_json.write_json(course_file, course_data, indent=True)
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "build", elapsed)
         record_stage_telemetry(self.work_dir, "04", "build", status="completed", metadata={"duration_seconds": elapsed, "total_questions": len(all_questions)}, conv_id=self._resolve_conversation_id())
