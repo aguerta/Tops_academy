@@ -1,9 +1,14 @@
 import {
   CompetencyMastery,
   CourseMasteryRecord,
+  FsrsCardState,
+  MisconceptionEntry,
+  QuestionType,
+  SrsReviewTelemetry,
   TimingStats,
   UnitTestRecord,
 } from '../types';
+import { MAX_MODALITY_LATENCY_WINDOW, MAX_SRS_TELEMETRY_ENTRIES } from './fsrsEngine';
 
 const PROGRESS_STORAGE_KEY = 'tops_academic_progress_v1';
 const SYNC_CONFIG_KEY = 'tops_gist_sync_v1';
@@ -125,6 +130,93 @@ function mergeUnitTest(a?: UnitTestRecord, b?: UnitTestRecord): UnitTestRecord |
   return parseTimestamp(a.completed_at) >= parseTimestamp(b.completed_at) ? a : b;
 }
 
+function mergeFsrsCard(
+  a?: FsrsCardState,
+  b?: FsrsCardState
+): FsrsCardState | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  const aMs = parseTimestamp(a.last_review);
+  const bMs = parseTimestamp(b.last_review);
+  if (aMs !== bMs) return aMs > bMs ? a : b;
+  return (a.reps ?? 0) >= (b.reps ?? 0) ? a : b;
+}
+
+function mergeModalityLatencies(
+  a?: Partial<Record<QuestionType, number[]>>,
+  b?: Partial<Record<QuestionType, number[]>>
+): Partial<Record<QuestionType, number[]>> | undefined {
+  if (!a && !b) return undefined;
+  const merged: Partial<Record<QuestionType, number[]>> = {};
+  const keys = new Set<QuestionType>([
+    ...((Object.keys(a || {}) as QuestionType[]) || []),
+    ...((Object.keys(b || {}) as QuestionType[]) || []),
+  ]);
+  for (const k of keys) {
+    const arrA = a?.[k] || [];
+    const arrB = b?.[k] || [];
+    const combined = arrA.length >= arrB.length ? [...arrB, ...arrA] : [...arrA, ...arrB];
+    merged[k] = combined.slice(-MAX_MODALITY_LATENCY_WINDOW);
+  }
+  return merged;
+}
+
+function maxTimestampIso(a?: string, b?: string): string | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return parseTimestamp(a) >= parseTimestamp(b) ? a : b;
+}
+
+function mergeMisconceptionLedger(
+  a?: Record<string, MisconceptionEntry>,
+  b?: Record<string, MisconceptionEntry>
+): Record<string, MisconceptionEntry> | undefined {
+  if (!a && !b) return undefined;
+  const merged: Record<string, MisconceptionEntry> = {};
+  const allIds = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  for (const id of allIds) {
+    const l = a?.[id];
+    const r = b?.[id];
+    if (!l && r) {
+      merged[id] = r;
+      continue;
+    }
+    if (l && !r) {
+      merged[id] = l;
+      continue;
+    }
+    if (!l || !r) continue;
+    const lMs = parseTimestamp(l.last_seen);
+    const rMs = parseTimestamp(r.last_seen);
+    const newer = lMs >= rMs ? l : r;
+    merged[id] = {
+      ...newer,
+      count: Math.max(l.count, r.count),
+    };
+  }
+  return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
+function mergeSrsTelemetry(
+  a?: SrsReviewTelemetry[],
+  b?: SrsReviewTelemetry[]
+): SrsReviewTelemetry[] | undefined {
+  if (!a && !b) return undefined;
+  const combined = [...(a || []), ...(b || [])];
+  if (combined.length === 0) return undefined;
+  const seen = new Set<string>();
+  const deduped: SrsReviewTelemetry[] = [];
+  for (const ev of combined) {
+    const key = `${ev.date}|${ev.competency_id}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push(ev);
+    }
+  }
+  deduped.sort((x, y) => parseTimestamp(x.date) - parseTimestamp(y.date));
+  return deduped.slice(-MAX_SRS_TELEMETRY_ENTRIES);
+}
+
 function mergeCompetencyMastery(
   localComp?: CompetencyMastery,
   remoteComp?: CompetencyMastery
@@ -156,6 +248,15 @@ function mergeCompetencyMastery(
   }
 
   const winner = localWins ? localComp : remoteComp;
+  const mergedFsrs = mergeFsrsCard(localComp.fsrs, remoteComp.fsrs);
+  const mergedPromoAt = maxTimestampIso(
+    localComp.last_tier_promotion_at,
+    remoteComp.last_tier_promotion_at
+  );
+  const mergedLatencies = mergeModalityLatencies(
+    localComp.modality_latencies,
+    remoteComp.modality_latencies
+  );
 
   return {
     status: winner.status,
@@ -165,6 +266,12 @@ function mergeCompetencyMastery(
     history: mergedHistory,
     timing: mergeCompetencyTiming(localComp.timing, remoteComp.timing, localWins),
     ...(winner.needs_review !== undefined ? { needs_review: winner.needs_review } : {}),
+    ...(winner.needs_review && winner.review_reason
+      ? { review_reason: winner.review_reason }
+      : {}),
+    ...(mergedPromoAt ? { last_tier_promotion_at: mergedPromoAt } : {}),
+    ...(mergedFsrs ? { fsrs: mergedFsrs } : {}),
+    ...(mergedLatencies ? { modality_latencies: mergedLatencies } : {}),
     ...(winner.recent_misconceptions !== undefined
       ? { recent_misconceptions: winner.recent_misconceptions }
       : {}),
@@ -256,10 +363,23 @@ export function mergeAllMasteryData(
       };
     }
 
+    const mergedLastMasteryAt = maxTimestampIso(
+      lRec.last_mastery_challenge_at,
+      rRec.last_mastery_challenge_at
+    );
+    const mergedLedger = mergeMisconceptionLedger(
+      lRec.misconception_ledger,
+      rRec.misconception_ledger
+    );
+    const mergedSrsTelemetry = mergeSrsTelemetry(lRec.srs_telemetry, rRec.srs_telemetry);
+
     merged[courseId] = {
       course_id: courseId,
       mastery_points: computeCourseProgressPercentage(mergedCompetencies, mergedChallenge),
       competencies: mergedCompetencies,
+      ...(mergedLastMasteryAt ? { last_mastery_challenge_at: mergedLastMasteryAt } : {}),
+      ...(mergedLedger ? { misconception_ledger: mergedLedger } : {}),
+      ...(mergedSrsTelemetry ? { srs_telemetry: mergedSrsTelemetry } : {}),
       ...(mergedChallenge ? { course_challenge: mergedChallenge } : {}),
     };
   }

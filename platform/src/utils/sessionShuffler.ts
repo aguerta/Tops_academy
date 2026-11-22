@@ -4,12 +4,15 @@ import {
   AdaptiveUnitBreakdownItem,
   Competency,
   Course,
+  CourseMasteryRecord,
   MasteryTier,
   Question,
   QuestionOption,
   QuestionTelemetry,
 } from '../types';
 import { normalizeQuestion } from './questionUtils';
+import { extractCarriedDistractorIds } from './distractorExtractor';
+import { computeRetrievability, getCooldownRemainingMs } from './fsrsEngine';
 
 /**
  * Standard Fisher-Yates array shuffling algorithm.
@@ -455,9 +458,11 @@ export function computeAdaptiveExamSummary(
     compNameById.set(c.id.trim().toLowerCase(), c.name);
   }
 
-  const telemetryByQid = new Map<string, QuestionTelemetry>();
+  const telemetryQueueByQid = new Map<string, QuestionTelemetry[]>();
   for (const t of combinedTelemetry) {
-    telemetryByQid.set(t.question_id, t);
+    const q = telemetryQueueByQid.get(t.question_id) || [];
+    q.push(t);
+    telemetryQueueByQid.set(t.question_id, q);
   }
 
   const unitMap = new Map<
@@ -468,7 +473,8 @@ export function computeAdaptiveExamSummary(
   for (const q of combinedQuestions) {
     const cid = q.competency_id || 'unknown';
     const key = cid.trim().toLowerCase();
-    const t = telemetryByQid.get(q.id);
+    const qQueue = telemetryQueueByQid.get(q.id);
+    const t = qQueue && qQueue.length > 0 ? qQueue.shift() : undefined;
     const entry = unitMap.get(key) || {
       competencyId: cid,
       competencyName: compNameById.get(key) || cid,
@@ -504,4 +510,172 @@ export function computeAdaptiveExamSummary(
     avgSecondsPerQuestion,
     unitBreakdown,
   };
+}
+
+/**
+ * M8: Builds a 6-question Mastery Challenge drawn strictly from already-started
+ * competencies, prioritized by:
+ * 1. FSRS decay due (lowest R(t) first)
+ * 2. Proficient competencies past the 12h per-skill cooldown
+ * 3. Familiar / Attempted / active error review competencies
+ * 4. Remaining Proficient (<12h cooldown) & Mastered competencies (lowest R(t) first)
+ */
+export function buildMasteryChallengeQuestions(
+  course: Course,
+  mastery: CourseMasteryRecord | undefined,
+  now: Date = new Date(),
+  count: number = 6
+): Question[] {
+  if (!mastery || count <= 0 || course.questions.length === 0) return [];
+
+  const startedComps = course.competencies.filter((c) => {
+    const m = mastery.competencies?.[c.id];
+    if (!m) return false;
+    const completed =
+      !!m.unit_test && m.unit_test.percentage === 100 && m.unit_test.total_questions > 0;
+    return (
+      completed ||
+      (m.history && m.history.length > 0) ||
+      m.status !== 'Not started' ||
+      m.points > 0 ||
+      !!m.unit_test
+    );
+  });
+
+  if (startedComps.length === 0) return [];
+
+  const questionsByComp = new Map<string, Question[]>();
+  for (const q of shuffleArray(course.questions)) {
+    const key = (q.competency_id || '').trim().toLowerCase();
+    if (!key) continue;
+    const list = questionsByComp.get(key) || [];
+    list.push(q);
+    questionsByComp.set(key, list);
+  }
+
+  const bucket1Decay: Array<{ comp: Competency; r: number }> = [];
+  const bucket2Eligible: Array<{ comp: Competency; r: number }> = [];
+  const bucket3Growing: Array<{ comp: Competency; r: number }> = [];
+  const bucket4Rest: Array<{ comp: Competency; r: number }> = [];
+
+  for (const comp of startedComps) {
+    const m = mastery.competencies[comp.id];
+    const r = computeRetrievability(m?.fsrs, now);
+    if (m?.needs_review && m.review_reason === 'decay') {
+      bucket1Decay.push({ comp, r });
+    } else if (
+      m?.status === 'Proficient' &&
+      getCooldownRemainingMs(m.last_tier_promotion_at || m.last_practiced, now) === 0
+    ) {
+      bucket2Eligible.push({ comp, r });
+    } else if (
+      m?.status === 'Familiar' ||
+      m?.status === 'Attempted' ||
+      (m?.needs_review && m.review_reason === 'error')
+    ) {
+      bucket3Growing.push({ comp, r });
+    } else {
+      bucket4Rest.push({ comp, r });
+    }
+  }
+
+  bucket1Decay.sort((a, b) => a.r - b.r);
+  bucket2Eligible.sort((a, b) => a.r - b.r);
+  bucket3Growing.sort((a, b) => a.r - b.r);
+  bucket4Rest.sort((a, b) => a.r - b.r);
+
+  const orderedComps = [
+    ...bucket1Decay.map((x) => x.comp),
+    ...bucket2Eligible.map((x) => x.comp),
+    ...bucket3Growing.map((x) => x.comp),
+    ...bucket4Rest.map((x) => x.comp),
+  ];
+
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+
+  while (selected.length < count && madeProgress) {
+    madeProgress = false;
+    for (const comp of orderedComps) {
+      if (selected.length >= count) break;
+      const key = comp.id.trim().toLowerCase();
+      const codeKey = (comp.code || '').trim().toLowerCase();
+      const pool = questionsByComp.get(key) || (codeKey ? questionsByComp.get(codeKey) : undefined) || [];
+      const nextQ = pool.find((q) => !usedIds.has(q.id));
+      if (nextQ) {
+        usedIds.add(nextQ.id);
+        selected.push(nextQ);
+        madeProgress = true;
+      }
+    }
+  }
+
+  return prepareSessionQuestions(shuffleArray(selected), false);
+}
+
+/**
+ * M8: Builds a targeted Misconception Drill session ("Practicar mis Trampas")
+ * selecting questions across the course that carry active distractor IDs (D-XX-YY).
+ */
+export function buildMisconceptionSession(
+  course: Course,
+  activeDistractorIds: string[],
+  count: number = 6
+): Question[] {
+  const orderedIds = Array.from(
+    new Set(activeDistractorIds.map((id) => id.trim()).filter(Boolean))
+  );
+  if (orderedIds.length === 0 || count <= 0 || course.questions.length === 0) {
+    return [];
+  }
+
+  const targetSet = new Set(orderedIds);
+  const shuffledPool = shuffleArray(course.questions);
+  const matchingByTrap = new Map<string, Question[]>();
+  const allMatches: Question[] = [];
+
+  for (const q of shuffledPool) {
+    const carried = extractCarriedDistractorIds(q);
+    const hits = carried.filter((id) => targetSet.has(id));
+    if (hits.length === 0) continue;
+    allMatches.push(q);
+    for (const did of hits) {
+      const list = matchingByTrap.get(did) || [];
+      list.push(q);
+      matchingByTrap.set(did, list);
+    }
+  }
+
+  if (allMatches.length === 0) return [];
+
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+
+  while (selected.length < count && madeProgress) {
+    madeProgress = false;
+    for (const did of orderedIds) {
+      if (selected.length >= count) break;
+      const list = matchingByTrap.get(did) || [];
+      const nextQ = list.find((q) => !usedIds.has(q.id));
+      if (nextQ) {
+        usedIds.add(nextQ.id);
+        selected.push(nextQ);
+        madeProgress = true;
+      }
+    }
+  }
+
+  if (selected.length < count) {
+    for (const q of allMatches) {
+      if (selected.length >= count) break;
+      if (!usedIds.has(q.id)) {
+        usedIds.add(q.id);
+        selected.push(q);
+      }
+    }
+  }
+
+  return prepareSessionQuestions(shuffleArray(selected), false);
 }
