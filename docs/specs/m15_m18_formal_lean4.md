@@ -3,7 +3,7 @@
 
 > **Documento de Especificación Técnica, Verificación Formal y Kernel Matemático**  
 > **Hitos Vinculados:** Milestones 15, 16, 17 y 18 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
-> **Estado:** Fases 1 (isomórficas en Python) ✅ CERRADAS; Fases 2 (Kernel nativo C, Z3, FFI y arnés `#print axioms`) 🛡️ EN HOJA DE RUTA ACTIVA.  
+> **Estado:** Fases 1 (isomórficas en Python) ✅ CERRADAS; M17 (DAG + Clausura Epistémica + $\alpha_{\text{Kernel}}=0$, **P0**); M16 F2 acotado a **`z3-solver` en Python** (**P1**, sin lemas Lean 4); M18 acotado a **Compuerta Prompt-Compiler CI** (`tests/pipeline/test_system_prompts_compile_clean.py` ✅ ampliada con micro-ejemplos M20 y `C-02`) + **Benchmark SLA** (**P1**); M15 F2 (binario nativo Lean 4 Perceus C FFI) diferido a **P3 Investigación** (DRT `Hypothesis` Python como mejora ligera).  
 > **Regla de Sincronización:** Cualquier ajuste en los teoremas formales, contratos de `formal/TopsAcademyC2C.lean`, esquemas en `engine/interstage_schemas.py` o hooks de `c2c_hook_guard.py` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
 
 ---
@@ -33,25 +33,31 @@ El código Lean 4 se compila mediante `lake build` a binario nativo C vía *Perc
 
 ---
 
-## 2. Deducción Algebraica Automática con Z3 y Lean 4 (Milestone 16 Fase 2)
+## 2. Deducción Algebraica Automática con `z3-solver` en Python (Milestone 16 Fase 2 — P1)
 
-- **Solver SMT Z3:** Demostración universal de invariantes `TPL_D4_Universal` y `Zero_Magic_Mult_Universal` directamente sobre expresiones simbólicas parametrizadas en $rng.randint(a, b)$.
-- **Tácticas Lean 4 (`omega`, `ring`, `grind`):** Certificación matemática de equivalencia algebraica entre la fórmula de la clave y las funciones generadoras, garantizando que los 4 arquetipos posean expresiones AST disjuntas.
+- **Elección de Arquitectura Híbrida (`z3-solver` + `SymPy` + `Seeds`, descartando `cvc5` y lemas Lean 4):** Benchmark empírico en Python `3.12` (Windows x64) comparando `z3-solver 5.4.1.0`, `cvc5 1.4.2`, `SymPy` y el pipeline actual (`check_templates.py`, `engine/instantiate.py`):
+  - **Arranque en frío:** `import z3` = **`68.34 ms`** | `import cvc5` + `pythonic` = **`184.84 ms`** (`172.18 + 12.66 ms`) | `import sympy` = **`432.55 ms`** | `warm_up_sandbox()` = **`856.32 ms`**.
+  - **Colisiones y clones con dominio (`TPL-D4` / `If` / `x > 0, α ∈ (0,1)`):** `z3` resuelve colisión rara (`2a = b²` en `[2, 20]`) en **`10.994 ms`** (`sat`, `[a=18, b=6]`) y prueba plantilla segura (`2a+1 = 2b`) en **`2.192 ms`** (`unsat`), frente a `107.10 ms` (Stage 3, `50` seeds) / `129.93 ms` (Stage 4) y frente a `SymPy` sin suposiciones que falla (`False`, `85.058 ms`) donde `z3` certifica equivalencia en **`2.283 ms`** (`unsat`).
+  - **No lineal pesado vs. Trascendentes:** `z3` resolvió los 3 casos no lineales (`NRA` 4 vars grado 5 en `9.499 ms` `sat`, `NIA` 6 vars en `28.325 ms` `sat`, Cobb-Douglas cúbica en `6.282 ms` `unsat`), mientras `cvc5` devolvió `unknown` en los 3 (`245–563 ms`). En trascendentes (`exp`, `ln`, `sin`), `z3` no aplica y `cvc5` hizo timeout/`unknown` en `ln(ab)=ln(a)+ln(b)` (`1093.38 ms`), `sin²+cos²=1` (`503.64 ms`) y `exp(x)=2` (`505.01 ms`), ganando **`SymPy` (`positive=True`, `12.88 ms`) + `seeds` numéricas (`0.046 ms`, error `1.33e-15`)**.
+- **Por qué no desaparecen los `seeds`:** Stage 4 debe instanciar reactivos reales (`~8.3–8.5 s` en Mateco/Estadística) y Stage 3 validar KaTeX/texto y funciones trascendentes; traducir Python imperativo libre de `generate(rng)` a Z3 tomaría ~1–2 semanas sin cubrir el 100%.
+- **Implementación recomendada en 2 fases (~1–2 días total, alto ROI):**
+  1. **Fase 1 (`~3–4 h`):** integrar `z3-solver` solo en **`[TPL-CLONE-SYMPY]`** (`engine/shard_ast_transforms.py`) reutilizando el AST de `SymPy` ya existente, con `timeout=150 ms` y fallback silencioso (respaldo del Candado 1 de M19).
+  2. **Fase 2 (`~1 día`):** analizador AST acotado en `check_templates.py` únicamente para plantillas declarativas simples (sin bucles ni trascendentes) para certificar `TPL_D4_Universal` sobre todo `rng.randint(a, b)`, manteniendo `SymPy` (`positive=True`) + `seeds` para el resto. *(Se descartan `cvc5`, traducción imperativa completa y lemas manuales Lean 4 por ROI).*
 
 ---
 
-## 3. DAG Curricular, Clausura Epistémica y Arbitraje Ciego (Milestone 17)
+## 3. DAG Curricular, Clausura Epistémica y Arbitraje Ciego (Milestone 17 — P0)
 
 1. **Certificación del DAG Curricular (`ReglasStage1`):** Ordenamiento topológico estricto, detección de aciclicidad y conectividad en `cta_merge.py`, garantizando monotonicidad $K_t \subseteq K_{t+1}$ en ejecuciones `--append`.
 2. **Auditor de Clausura Epistémica de Símbolos Libres:** Linter léxico-simbólico que verifica que el conjunto de símbolos matemáticos en la solución satisfaga $S_{\text{sol}} \subseteq S_{\text{stem}} \cup S_{\text{std}}$, bloqueando enunciados incompletos (como `Hab-19` sin función de utilidad o `C-01` con ambigüedad de dominio).
 3. **Arbitraje Neuro-Simbólico Bicameral con $\alpha_{\text{Kernel}} = 0$:**
-   - **Cámara Formal (`SymPy`/`Z3`/Lean 4):** Certifica la verdad matemática con poder de veto absoluto.
-   - **Cámara Epistémica LLM (1 semilla pre-verificada por plantilla):** Evalúa exclusivamente claridad verbal, ausencia de giveaways y tono pedagógico.
+   - **Cámara Formal (`SymPy`/`z3-solver`):** Certifica la verdad matemática con poder de veto absoluto.
+   - **Cámara Epistémica LLM (1 semilla pre-verificada por plantilla):** Evalúa exclusivamente claridad verbal, ausencia de giveaways y tono pedagógico sin gastar tokens re-resolviendo álgebra.
 
 ---
 
-## 4. Arnés de Certificación Continua y Anti-Drift (Milestone 18)
+## 4. Arnés de Certificación Continua y Anti-Drift (Milestone 18 — Recortado P1)
 
-1. **Contrato Único Tipado Inter-Etapa (`engine/interstage_schemas.py`):** Esquemas Pydantic únicos para `compile_<id>.json`, `pass_<id>.json`, `template_failures.json`, `publish_rejection_spec.json` y `*.cert.json`, impidiendo desincronizaciones de claves entre productor y consumidor.
-2. **Auditoría Anti-Trampas `#print axioms` con Nonce Criptográfico:** Verificador independiente que inyecta `#print axioms <teorema>` sellado con un nonce por corrida, certificando que las demostraciones dependen únicamente de `{propext, Classical.choice, Quot.sound}` y bloqueando `sorry`, `unsafe` o `axiom` espurios.
-3. **Compuerta CI de Auto-Compilación de Prompts (`test_system_prompts_compile_clean.py`):** Extrae los bloques canónicos ```python de los system prompts y los compila contra `compile_shard.py` con compuertas de Stage 6, impidiendo que el compilador evolucione dejando obsoletos los ejemplos de los agentes.
+1. **✅ Compuerta CI de Auto-Compilación de Prompts (`tests/pipeline/test_system_prompts_compile_clean.py`):** Extrae y valida en CI los bloques `Hab-01` y `C-02` (`MC7` + `open_symbolic` + `invariant_canvas`), los 5 micro-ejemplos M20 (`proof_dag`, `adversarial_break` `find_fallacy`/`counterexample`, `unstructured_model`, `concept_matching`) y `ast.parse` de todos los bloques Python en `system_prompts/lean/*.md`, evitando que el compilador evolucione dejando obsoletos los ejemplos de los subagentes.
+2. **⏳ Benchmark SLA C2C v4.0:** Control continuo de regresiones de tiempo (`< 12.0 min`), consumo de tokens (`< 12M`) y tasa de compilación en Turno 1.
+3. *(Elementos recortados/diferidos)*: Se descarta expandir `engine/interstage_schemas.py` hacia JSONs intermedios que el workflow en memoria (`c2c_wave_workflow.py`) ya no emite en disco; el arnés `#print axioms` con nonce queda condicionado a si se retoma `formal/TopsAcademyC2C.lean` en P3 Investigación.
