@@ -1417,3 +1417,150 @@ class TestHookGuardStep555ForensicRegression:
         assert res_fresh_win.get("decision") == "allow", f"Expected allow after Windows path mtime refresh: {res_fresh_win}"
 
 
+def test_run_stage_dispatch_forwards_wave_no_pointer_and_templates_per_modality(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """PipelineRunner.run_stage_dispatch and run_stage_dispatch_authors forward wave, no_pointer, and templates_per_modality."""
+    import run as run_mod
+
+    work = tmp_path / "work_dispatch_fwd"
+    work.mkdir(parents=True, exist_ok=True)
+    captured_build: Dict[str, Any] = {}
+    captured_authors: Dict[str, Any] = {}
+
+    def _fake_build_dispatch(**kwargs: Any) -> Dict[str, Any]:
+        captured_build.update(kwargs)
+        return {"Subagents": []}
+
+    def _fake_dispatch_authors(*args: Any, **kwargs: Any) -> Dict[str, Any]:
+        captured_authors["args"] = args
+        captured_authors.update(kwargs)
+        return {"Subagents": [], "item_files": []}
+
+    monkeypatch.setattr(run_mod, "build_dispatch", _fake_build_dispatch)
+    monkeypatch.setattr(run_mod, "dispatch_authors", _fake_dispatch_authors)
+
+    runner = PipelineRunner(
+        work_dir=work,
+        course_id="test_fwd",
+        role="author",
+        ids=["shard_02"],
+        ready_only=True,
+        wave=2,
+        no_pointer=True,
+        templates_per_modality=3,
+    )
+    runner.run_stage_dispatch()
+    assert captured_build["role"] == "author"
+    assert captured_build["wave_index"] == 2
+    assert captured_build["pointer"] is False
+    assert captured_build["templates_per_modality"] == 3
+    assert captured_build["ready_only"] is True
+    assert captured_build["ids"] == ["shard_02"]
+
+    runner.run_stage_dispatch_authors()
+    assert captured_authors["wave_index"] == 2
+    assert captured_authors["pointer"] is False
+    assert captured_authors["templates_per_modality"] == 3
+    assert captured_authors["ids"] == ["shard_02"]
+
+
+def test_dispatch_judges_cli_default_max_items_per_judge_is_20(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """dispatch.py dispatch-judges CLI defaults --max-items-per-judge to 20 matching dispatch_judges()."""
+    import dispatch as dispatch_mod
+
+    work = tmp_path / "work_judges_cli"
+    work.mkdir(parents=True, exist_ok=True)
+    captured: Dict[str, Any] = {}
+
+    def _fake_dispatch_judges(*args: Any, **kwargs: Any) -> Dict[str, Any]:
+        captured["args"] = args
+        captured.update(kwargs)
+        return {"Subagents": [], "item_files": []}
+
+    monkeypatch.setattr(dispatch_mod, "dispatch_judges", _fake_dispatch_judges)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["dispatch.py", "dispatch-judges", "--work-dir", str(work)],
+    )
+    dispatch_mod.main()
+    assert captured["max_items_per_judge"] == 20
+
+
+def test_hook_guard_denies_rejudge_and_lqas_stages_with_pending_subagents(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """c2c_hook_guard denies run.py --stage rejudge, lqas-rejudge, and lqas-compare while wave subagents are pending."""
+    monkeypatch.setattr(c2c_hook_guard, "USER_HOME", tmp_path)
+    c2c_hook_guard._DIRECTOR_TRANSCRIPT_CACHE.clear()
+
+    director_id = "dir-rejudge-lqas-test"
+    work_dir = tmp_path / "courses" / "x" / "work"
+    work_dir.mkdir(parents=True, exist_ok=True)
+    lock_file = work_dir / ".c2c_subagent_lock.json"
+
+    # Pending wave subagent registered in director transcript without completion
+    w_cid = "pending_judge_worker_01"
+    dir_log_dir = tmp_path / ".gemini" / "antigravity" / "brain" / director_id / ".system_generated" / "logs"
+    dir_log_dir.mkdir(parents=True, exist_ok=True)
+    (dir_log_dir / "transcript.jsonl").write_text(
+        "\n".join([
+            json.dumps({
+                "type": "PLANNER_RESPONSE",
+                "source": "MODEL",
+                "tool_calls": [{
+                    "name": "invoke_subagent",
+                    "args": {
+                        "TypeName": "c2c_judge",
+                        "Role": "Blind Judge 01",
+                        "Prompt": "Evaluate batch and reply with DONE: courses/x/work/verification/judge_responses_01.json",
+                    },
+                }],
+            }),
+            json.dumps({
+                "type": "GENERIC",
+                "source": "MODEL",
+                "content": f'Created the following subagent: {{"conversationId": "{w_cid}"}}',
+            }),
+        ]) + "\n",
+        encoding="utf-8",
+    )
+
+    w_log_dir = tmp_path / ".gemini" / "antigravity" / "brain" / w_cid / ".system_generated" / "logs"
+    w_log_dir.mkdir(parents=True, exist_ok=True)
+    (w_log_dir / "transcript.jsonl").write_text(
+        json.dumps({"type": "PLANNER_RESPONSE", "source": "MODEL", "content": "Working..."}) + "\n",
+        encoding="utf-8",
+    )
+
+    lock_file.write_text(
+        json.dumps({
+            "active": True,
+            "director_conversation_id": director_id,
+            "course_id": "x",
+            "work_dir": work_dir.resolve().as_posix(),
+            "created_at": "2026-11-18T19:00:00Z",
+            "exempt_conversation_ids": [],
+        }),
+        encoding="utf-8",
+    )
+
+    for stage_name in ("rejudge", "lqas-rejudge", "lqas-compare"):
+        payload = {
+            "conversationId": director_id,
+            "toolCall": {
+                "name": "run_command",
+                "args": {
+                    "CommandLine": f'python .agents/skills/content-to-course/run.py --stage {stage_name} --work-dir "{work_dir.as_posix()}"'
+                },
+            },
+        }
+        res = c2c_hook_guard.process_hook(payload, custom_lock_file=str(lock_file))
+        assert res.get("decision") == "deny", f"Expected deny for --stage {stage_name}, got: {res}"
+        assert f"run.py --stage {stage_name}" in res.get("reason", "")
+
+
+

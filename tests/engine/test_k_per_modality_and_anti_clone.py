@@ -374,6 +374,74 @@ class TestPlanShardsAndDispatchScaling:
         assert "--templates-per-modality 3" in author_01_md
         assert "obligatorio >= 3 plantillas distintas por modalidad" in author_01_md
 
+    def test_dispatch_authors_and_build_cli_accept_templates_per_modality_override(self, tmp_path: Path):
+        import subprocess
+
+        work = tmp_path / "work_cli_override"
+        _write_manifest(work)
+        comps = [
+            _make_cta_dict_comp("C-01", "concept", rec_mods=["mc7", "open_text"]),
+            _make_cta_dict_comp("Hab-01", "skill", rec_mods=["open_symbolic", "fill_in_the_blank"]),
+        ]
+        cta = {
+            "contract_version": 2,
+            "course_id": "test_k_course",
+            "title": "Curso CLI Override",
+            "macro_competency": "Macro",
+            "competencies": comps,
+        }
+        cta_path = work / "cta.json"
+        cta_path.write_text(json.dumps(cta, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        # Initial plan has K=2
+        res_k2 = plan_shards.plan_shards(cta_path, work / "shards", templates_per_modality=2)
+        assert res_k2["templates_per_modality"] == 2
+
+        # 1. dispatch-authors CLI with --templates-per-modality 3 overrides K=2 manifest
+        proc_da = subprocess.run(
+            [
+                sys.executable,
+                str(C2C_DIR / "dispatch.py"),
+                "dispatch-authors",
+                "--work-dir",
+                str(work),
+                "--templates-per-modality",
+                "3",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc_da.returncode == 0, f"dispatch-authors failed: {proc_da.stderr}"
+        author_01_md = (work / "dispatch" / "items" / "author_01_data.md").read_text(encoding="utf-8")
+        assert "--templates-per-modality 3" in author_01_md
+        assert "templates_per_modality:** `3`" in author_01_md
+        assert ">= 3 plantillas distintas" in author_01_md
+
+        # 2. build --role author CLI with --templates-per-modality 3 also succeeds and overrides K=2
+        (work / "dispatch" / "items" / "author_01_data.md").unlink()
+        proc_build = subprocess.run(
+            [
+                sys.executable,
+                str(C2C_DIR / "dispatch.py"),
+                "build",
+                "--role",
+                "author",
+                "--work-dir",
+                str(work),
+                "--templates-per-modality",
+                "3",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc_build.returncode == 0, f"dispatch.py build failed: {proc_build.stderr}"
+        author_01_md_build = (work / "dispatch" / "items" / "author_01_data.md").read_text(encoding="utf-8")
+        assert "--templates-per-modality 3" in author_01_md_build
+        assert "templates_per_modality:** `3`" in author_01_md_build
+        assert ">= 3 plantillas distintas" in author_01_md_build
+
 
 _RATS_HEADER = r'''
 RATS = {
