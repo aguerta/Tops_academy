@@ -11,12 +11,15 @@ import {
   ChallengeExecutionSummary,
   MasteryTier,
   MetacognitiveAudit,
+  SessionType,
 } from './types';
 import {
   loadCourseMastery,
   updateCompetencyScore,
   updateCourseChallengeCompleted,
   updateCourseChallengeWithSkillCalibration,
+  updateSessionWithCrossSkillCalibration,
+  getActiveMisconceptions,
   getTimingForCompetency,
   getTimingForChallenge,
   isUnitCompleted,
@@ -26,6 +29,8 @@ import {
   buildAdaptiveModule1,
   buildAdaptiveModule2,
   buildInterleavedSessionQuestions,
+  buildMasteryChallengeQuestions,
+  buildMisconceptionSession,
   computeAdaptiveExamSummary,
 } from './utils/sessionShuffler';
 import { normalizeQuestion } from './utils/questionUtils';
@@ -49,6 +54,7 @@ import { CompletionScreen } from './components/CompletionScreen';
 import { ShortcutHelp } from './components/ShortcutHelp';
 import { CourseChallenge } from './components/CourseChallenge';
 import { CourseLibrary } from './components/CourseLibrary';
+import { ProgressLogView } from './components/ProgressLogView';
 import {
   AppViewMode as ViewMode,
   NavigationState,
@@ -104,7 +110,7 @@ export const App: React.FC = () => {
 
   // Active session parameters
   const [sessionCompetency, setSessionCompetency] = useState<Competency | null>(null);
-  const [sessionType, setSessionType] = useState<'practice' | 'quiz' | 'test' | 'challenge'>('practice');
+  const [sessionType, setSessionType] = useState<SessionType>('practice');
   const [sessionQuestions, setSessionQuestions] = useState<Question[]>([]);
   const [sessionScore, setSessionScore] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
@@ -418,7 +424,7 @@ export const App: React.FC = () => {
 
   // Unified session launcher with ZPD difficulty calibration and pedagogical interleaving for Quiz & Unit Test
   const launchSession = (
-    type: 'practice' | 'quiz' | 'test' | 'challenge',
+    type: SessionType,
     comp: Competency | null,
     directToPractice: boolean = true
   ) => {
@@ -429,6 +435,43 @@ export const App: React.FC = () => {
     setIronOutcome(null);
     setAdaptiveExamState(null);
     setAdaptiveSummary(null);
+
+    if (type === 'mastery_challenge') {
+      const mRecord = mastery ?? loadCourseMastery(activeCourse);
+      const chosen = buildMasteryChallengeQuestions(activeCourse, mRecord, new Date(), 6);
+      setSessionCompetency(null);
+      setFocusCompetencyId(null);
+      setSessionType('mastery_challenge');
+      setSessionQuestions(chosen);
+      setSessionKey((prev) => prev + 1);
+      if (chosen.length === 0) return;
+      const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
+      if (directToPractice) {
+        navigateView('practice', { replace: shouldReplace });
+      } else {
+        navigateView('pre_exercise');
+      }
+      return;
+    }
+
+    if (type === 'misconception_drill') {
+      const mRecord = mastery ?? loadCourseMastery(activeCourse);
+      const activeIds = getActiveMisconceptions(mRecord).map((e) => e.distractor_id);
+      const chosen = buildMisconceptionSession(activeCourse, activeIds, 6);
+      setSessionCompetency(null);
+      setFocusCompetencyId(null);
+      setSessionType('misconception_drill');
+      setSessionQuestions(chosen);
+      setSessionKey((prev) => prev + 1);
+      if (chosen.length === 0) return;
+      const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
+      if (directToPractice) {
+        navigateView('practice', { replace: shouldReplace });
+      } else {
+        navigateView('pre_exercise');
+      }
+      return;
+    }
 
     let targetComp = comp;
     // In practice/quiz/test, if comp is not passed, attempt recovery from sessionCompetency or selectedUnitIndex
@@ -480,6 +523,18 @@ export const App: React.FC = () => {
     } else {
       navigateView('pre_exercise', { competencyId: targetComp?.id });
     }
+  };
+
+  const handleStartMasteryChallenge = () => {
+    launchSession('mastery_challenge', null, true);
+  };
+
+  const handleStartMisconceptionDrill = () => {
+    launchSession('misconception_drill', null, true);
+  };
+
+  const handleOpenProgressLog = () => {
+    navigateView('progress_log');
   };
 
   // Launch Practice Pre-Exercise
@@ -703,11 +758,18 @@ export const App: React.FC = () => {
     setSessionTotal(total);
 
     if (activeCourse) {
-      if (sessionType === 'challenge' && telemetryData && telemetryData.length > 0) {
-        const summary = updateCourseChallengeWithSkillCalibration(
+      if (
+        (sessionType === 'challenge' ||
+          sessionType === 'mastery_challenge' ||
+          sessionType === 'misconception_drill') &&
+        telemetryData &&
+        telemetryData.length > 0
+      ) {
+        const summary = updateSessionWithCrossSkillCalibration(
           activeCourse,
           telemetryData,
-          sec
+          sec,
+          sessionType
         );
         setMastery({ ...summary.record });
         setChallengeSummary(summary);
@@ -718,36 +780,52 @@ export const App: React.FC = () => {
         });
         setLatestMisconceptions(summary.misconceptions);
       } else if (sessionCompetency) {
-        setChallengeSummary(null);
-        const hints = (telemetryData || []).reduce((acc, t) => acc + t.hints_used, 0);
-        const updated = updateCompetencyScore(
-          activeCourse,
-          sessionCompetency.id,
-          score,
-          total,
-          sessionType,
-          { totalSeconds: sec, hintsUsed: hints },
-          telemetryData
+        const distinctCompIds = new Set(
+          (telemetryData || []).map((t) => t.competency_id).filter(Boolean)
         );
-        setMastery({ ...updated });
-        setLatestTimingData({
-          totalSeconds: updated.totalSeconds,
-          avgSeconds: updated.avgSeconds,
-          isNewRecord: updated.isNewRecord,
-          previousTier: updated.previousTier,
-          newTier: updated.newTier,
-        });
-        if (telemetryData) {
-          const missed = telemetryData
-            .filter((t) => !t.is_correct)
-            .map((t) => ({
-              question_id: t.question_id,
-              competency_id: sessionCompetency.id,
-              competency_name: sessionCompetency.name,
-              text: t.question_text || t.question_id,
-            }));
-          setLatestMisconceptions(missed);
+        const isInterleavedMultiSkill =
+          (sessionType === 'quiz' || sessionType === 'test') && distinctCompIds.size > 1;
+        const prevTier = mastery?.competencies?.[sessionCompetency.id]?.status;
+
+        if (telemetryData && telemetryData.length > 0) {
+          const summary = updateSessionWithCrossSkillCalibration(
+            activeCourse,
+            telemetryData,
+            sec,
+            sessionType,
+            { targetCompetencyId: sessionCompetency.id }
+          );
+          const nextTier = summary.record.competencies[sessionCompetency.id]?.status;
+          setMastery({ ...summary.record });
+          setChallengeSummary(isInterleavedMultiSkill ? summary : null);
+          setLatestTimingData({
+            totalSeconds: summary.total_seconds,
+            avgSeconds: summary.avg_seconds_per_question,
+            isNewRecord: summary.is_new_record,
+            previousTier: prevTier,
+            newTier: nextTier,
+          });
+          setLatestMisconceptions(summary.misconceptions);
         } else {
+          setChallengeSummary(null);
+          const hints = (telemetryData || []).reduce((acc, t) => acc + t.hints_used, 0);
+          const updated = updateCompetencyScore(
+            activeCourse,
+            sessionCompetency.id,
+            score,
+            total,
+            sessionType,
+            { totalSeconds: sec, hintsUsed: hints },
+            telemetryData
+          );
+          setMastery({ ...updated });
+          setLatestTimingData({
+            totalSeconds: updated.totalSeconds,
+            avgSeconds: updated.avgSeconds,
+            isNewRecord: updated.isNewRecord,
+            previousTier: updated.previousTier,
+            newTier: updated.newTier,
+          });
           setLatestMisconceptions([]);
         }
       }
@@ -764,6 +842,10 @@ export const App: React.FC = () => {
       handleBeginAdaptiveChallenge();
       return;
     }
+    if (sessionType === 'mastery_challenge' || sessionType === 'misconception_drill') {
+      launchSession(sessionType, null, true);
+      return;
+    }
     let targetComp = sessionCompetency;
     if (!targetComp && sessionType !== 'challenge' && sessionQuestions.length > 0) {
       const qCompId = sessionQuestions[0].competency_id;
@@ -774,7 +856,13 @@ export const App: React.FC = () => {
 
   // Handle "Up next" from Completion
   const handleUpNext = () => {
-    if (!activeCourse || !sessionCompetency) {
+    if (
+      !activeCourse ||
+      !sessionCompetency ||
+      sessionType === 'mastery_challenge' ||
+      sessionType === 'misconception_drill' ||
+      sessionType === 'challenge'
+    ) {
       navigateView('overview');
       return;
     }
@@ -816,10 +904,13 @@ export const App: React.FC = () => {
             mastery={mastery}
             selectedUnitIndex={selectedUnitIndex}
             isCourseChallengeActive={false}
+            isProgressLogActive={false}
+            activeMisconceptionCount={getActiveMisconceptions(mastery ?? undefined).length}
             onSelectUnit={(idx) => {
               setSelectedUnitIndex(idx);
               handleStartPractice(activeCourse.competencies[idx]);
             }}
+            onSelectProgressLog={handleOpenProgressLog}
             onSelectCourseChallenge={handleOpenCourseChallenge}
             onBackToLibrary={() => {
               setActiveCourse(null);
@@ -835,6 +926,42 @@ export const App: React.FC = () => {
               onStartQuiz={handleStartQuiz}
               onStartUnitTest={handleStartUnitTest}
               onStartCourseChallenge={handleOpenCourseChallenge}
+              onStartMasteryChallenge={handleStartMasteryChallenge}
+              onStartMisconceptionDrill={handleStartMisconceptionDrill}
+              onOpenProgressLog={handleOpenProgressLog}
+            />
+          </main>
+        </div>
+      )}
+
+      {viewMode === 'progress_log' && activeCourse && mastery && (
+        <div className="flex min-h-screen">
+          <Sidebar
+            course={activeCourse}
+            mastery={mastery}
+            selectedUnitIndex={null}
+            isCourseChallengeActive={false}
+            isProgressLogActive={true}
+            activeMisconceptionCount={getActiveMisconceptions(mastery ?? undefined).length}
+            onSelectUnit={(idx) => {
+              setSelectedUnitIndex(idx);
+              setFocusCompetencyId(activeCourse.competencies[idx]?.id ?? null);
+              navigateView('overview');
+            }}
+            onSelectProgressLog={() => {}}
+            onSelectCourseChallenge={handleOpenCourseChallenge}
+            onBackToLibrary={() => {
+              setActiveCourse(null);
+              navigateView('library');
+            }}
+          />
+          <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">
+            <ProgressLogView
+              course={activeCourse}
+              mastery={mastery}
+              onBackToCourse={() => navigateView('overview')}
+              onStartMasteryChallenge={handleStartMasteryChallenge}
+              onStartMisconceptionDrill={handleStartMisconceptionDrill}
             />
           </main>
         </div>
@@ -966,7 +1093,11 @@ export const App: React.FC = () => {
           key={sessionKey}
           sessionTitle={
             restoredSnapshot?.sessionTitle ||
-            (sessionType === 'quiz'
+            (sessionType === 'mastery_challenge'
+              ? `Mastery Challenge • ${activeCourse?.title || 'Curso'}`
+              : sessionType === 'misconception_drill'
+              ? `Practicar mis Trampas • ${activeCourse?.title || 'Curso'}`
+              : sessionType === 'quiz'
               ? `Quiz • ${sessionCompetency?.name || 'Unit'}`
               : sessionType === 'test'
               ? `Unit test • ${sessionCompetency?.name || 'Unit'}`
@@ -1024,10 +1155,13 @@ export const App: React.FC = () => {
             mastery={mastery}
             selectedUnitIndex={null}
             isCourseChallengeActive={true}
+            isProgressLogActive={false}
+            activeMisconceptionCount={getActiveMisconceptions(mastery ?? undefined).length}
             onSelectUnit={(idx) => {
               setSelectedUnitIndex(idx);
               navigateView('overview');
             }}
+            onSelectProgressLog={handleOpenProgressLog}
             onSelectCourseChallenge={() => {}}
             onBackToLibrary={() => {
               setActiveCourse(null);

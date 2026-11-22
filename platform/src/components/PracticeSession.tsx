@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Question, QuestionTelemetry, StructuredUserAnswer } from '../types';
+import { Question, QuestionTelemetry, SessionType, StructuredUserAnswer } from '../types';
 import { QuestionCard } from './QuestionCard';
 import { FeedbackToast } from './FeedbackToast';
 import { MathText } from './MathText';
@@ -16,6 +16,10 @@ import {
   requiresBlankFirstCurtain,
   createInitialStructuredAnswer,
 } from '../utils/questionUtils';
+import {
+  extractCarriedDistractorIds,
+  extractOptionDistractors,
+} from '../utils/distractorExtractor';
 import {
   validateAdversarialSubmission,
   validateConceptMatchingSubmission,
@@ -44,7 +48,7 @@ interface PracticeSessionProps {
   ) => void;
   onQuit: () => void;
   onRestart?: () => void;
-  sessionType?: 'practice' | 'quiz' | 'test' | 'challenge';
+  sessionType?: SessionType;
   courseId?: string;
   competencyId?: string | null;
   unitIndex?: number | null;
@@ -134,6 +138,55 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const questionStartTimeRef = useRef<number>(Date.now());
   const telemetryRef = useRef<QuestionTelemetry[]>(initialSnapshot?.telemetry ? [...initialSnapshot.telemetry] : []);
   const isInitialHydrationRef = useRef<boolean>(!!initialSnapshot);
+  const matchedDistractorsByQidRef = useRef<
+    Record<string, { ids: Set<string>; rationales: Record<string, string> }>
+  >({});
+
+  const recordMatchedDistractors = (
+    questionId: string,
+    ids: string[],
+    rationales: Record<string, string>
+  ) => {
+    if (ids.length === 0) return;
+    if (!matchedDistractorsByQidRef.current[questionId]) {
+      matchedDistractorsByQidRef.current[questionId] = {
+        ids: new Set(),
+        rationales: {},
+      };
+    }
+    const bucket = matchedDistractorsByQidRef.current[questionId];
+    for (const id of ids) {
+      if (id) bucket.ids.add(id);
+    }
+    Object.assign(bucket.rationales, rationales);
+  };
+
+  const buildQuestionTelemetry = (
+    q: Question,
+    correctVal: boolean,
+    spentSeconds: number
+  ): QuestionTelemetry => {
+    const matchedBucket = matchedDistractorsByQidRef.current[q.id];
+    const matchedIds = matchedBucket ? Array.from(matchedBucket.ids) : [];
+    const carriedIds = extractCarriedDistractorIds(q);
+    return {
+      question_id: q.id,
+      competency_id: q.competency_id,
+      is_correct: correctVal,
+      hints_used: hintsRevealed,
+      seconds_spent: spentSeconds,
+      question_text: q.stem,
+      question_type: q.type,
+      wrong_attempts: wrongAttemptsCount,
+      ...(matchedIds.length > 0
+        ? {
+            matched_distractor_ids: matchedIds,
+            matched_distractor_rationales: { ...matchedBucket.rationales },
+          }
+        : {}),
+      ...(carriedIds.length > 0 ? { carried_distractor_ids: carriedIds } : {}),
+    };
+  };
 
   const resetScroll = () => {
     window.scrollTo(0, 0);
@@ -368,10 +421,17 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
     let correct = false;
     let diagRationale: string | null = null;
+    let matchedIds: string[] = [];
+    const matchedRationales: Record<string, string> = {};
     setStage0PhaseNotice(null);
 
     if (currentQuestion.type === 'multiple_choice_7_options') {
       correct = selectedOption !== null && isOptionCorrect(currentQuestion, selectedOption);
+      if (!correct && selectedOption) {
+        const ext = extractOptionDistractors(currentQuestion, [selectedOption]);
+        matchedIds = ext.ids;
+        Object.assign(matchedRationales, ext.rationales);
+      }
     } else if (currentQuestion.type === 'multiple_select') {
       // Strictly all-or-nothing grading using canonical correct IDs
       const correctIds = getCorrectOptionIds(currentQuestion).sort();
@@ -380,6 +440,11 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       correct =
         sSorted.length === correctIds.length &&
         sSorted.every((val, idx) => val === correctIds[idx]);
+      if (!correct) {
+        const ext = extractOptionDistractors(currentQuestion, selectedMultiOptions);
+        matchedIds = ext.ids;
+        Object.assign(matchedRationales, ext.rationales);
+      }
     } else if (currentQuestion.type === 'fill_in_the_blank') {
       correct = checkMathEquivalence(fillBlankValue, currentQuestion.correct_answer as any);
       if (!correct && currentQuestion.diagnostic_distractors?.length) {
@@ -390,6 +455,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           currentQuestion.symbolic_config
         );
         diagRationale = res.diagnosticRationale || null;
+        if (res.matchedDistractorId) {
+          matchedIds = [res.matchedDistractorId];
+          if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+        }
       }
     } else if (currentQuestion.type === 'open_symbolic') {
       const expr = structuredAnswer?.kind === 'open_symbolic' ? structuredAnswer.expression : '';
@@ -401,6 +470,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       );
       correct = res.isCorrect;
       diagRationale = res.diagnosticRationale || res.syntaxError || null;
+      if (!correct && res.matchedDistractorId) {
+        matchedIds = [res.matchedDistractorId];
+        if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+      }
     } else if (currentQuestion.type === 'proof_dag' && currentQuestion.proof_dag) {
       const sVal =
         structuredAnswer?.kind === 'proof_dag'
@@ -413,6 +486,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       );
       correct = res.isCorrect;
       diagRationale = res.diagnosticRationale || null;
+      if (!correct && res.matchedDistractorId) {
+        matchedIds = [res.matchedDistractorId];
+        if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+      }
     } else if (
       currentQuestion.type === 'adversarial_break' &&
       currentQuestion.adversarial_break
@@ -424,6 +501,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const res = validateAdversarialSubmission(aVal, currentQuestion.adversarial_break);
       correct = res.isCorrect;
       diagRationale = res.diagnosticRationale || null;
+      if (!correct && res.matchedDistractorId) {
+        matchedIds = [res.matchedDistractorId];
+        if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+      }
     } else if (
       currentQuestion.type === 'unstructured_model' &&
       currentQuestion.unstructured_model
@@ -449,6 +530,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       }
       correct = res.isCorrect;
       diagRationale = res.diagnosticRationale || null;
+      if (!correct && res.matchedDistractorId) {
+        matchedIds = [res.matchedDistractorId];
+        if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+      }
     } else if (
       currentQuestion.type === 'invariant_canvas' &&
       currentQuestion.invariant_canvas
@@ -481,11 +566,23 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
             );
       correct = res.isCorrect;
       diagRationale = res.diagnosticRationale || null;
+      if (!correct && res.matchedDistractorId) {
+        matchedIds = [res.matchedDistractorId];
+        if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+      }
     } else if (currentQuestion.type === 'concept_matching' && currentQuestion.concept_matching) {
       const pVal = structuredAnswer?.kind === 'concept_matching' ? structuredAnswer.pairs : {};
       const res = validateConceptMatchingSubmission(pVal, currentQuestion.concept_matching);
       correct = res.isCorrect;
       diagRationale = res.diagnosticRationale || null;
+      if (!correct && res.matchedDistractorId) {
+        matchedIds = [res.matchedDistractorId];
+        if (diagRationale) matchedRationales[res.matchedDistractorId] = diagRationale;
+      }
+    }
+
+    if (!correct && matchedIds.length > 0) {
+      recordMatchedDistractors(currentQuestion.id, matchedIds, matchedRationales);
     }
 
     setMatchedDiagnosticRationale(diagRationale);
@@ -576,14 +673,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     const elapsedMs = now - questionStartTimeRef.current;
     const spentSeconds = Math.min(300, Math.max(1, Math.round(elapsedMs / 1000)));
 
-    const qTelemetry: QuestionTelemetry = {
-      question_id: currentQuestion.id,
-      competency_id: currentQuestion.competency_id,
-      is_correct: correctVal,
-      hints_used: hintsRevealed,
-      seconds_spent: spentSeconds,
-      question_text: currentQuestion.stem,
-    };
+    const qTelemetry = buildQuestionTelemetry(currentQuestion, correctVal, spentSeconds);
 
     const existingTelIdx = telemetryRef.current.findIndex((t) => t.question_id === currentQuestion.id);
     if (existingTelIdx >= 0) {
@@ -646,14 +736,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     const elapsedMs = now - questionStartTimeRef.current;
     const spentSeconds = Math.min(300, Math.max(1, Math.round(elapsedMs / 1000)));
 
-    const qTelemetry: QuestionTelemetry = {
-      question_id: currentQuestion.id,
-      competency_id: currentQuestion.competency_id,
-      is_correct: false,
-      hints_used: hintsRevealed,
-      seconds_spent: spentSeconds,
-      question_text: currentQuestion.stem,
-    };
+    const qTelemetry = buildQuestionTelemetry(currentQuestion, false, spentSeconds);
 
     const existingTelIdx = telemetryRef.current.findIndex((t) => t.question_id === currentQuestion.id);
     if (existingTelIdx >= 0) {

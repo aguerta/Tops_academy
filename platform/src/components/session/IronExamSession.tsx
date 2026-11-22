@@ -26,6 +26,7 @@ import {
   createInitialIronDraft,
   isDraftAnswered,
 } from '../../utils/ironExamGrading';
+import { extractCarriedDistractorIds } from '../../utils/distractorExtractor';
 import { MetacognitiveModal } from './MetacognitiveModal';
 
 export interface IronExamCompletionOutcome {
@@ -313,14 +314,30 @@ export const IronExamSession: React.FC<IronExamSessionProps> = ({
       flaggedIds
     );
 
-    const telemetry: QuestionTelemetry[] = questions.map((q) => ({
-      question_id: q.id,
-      competency_id: q.competency_id,
-      is_correct: gradedResults[q.id]?.isCorrect === true,
-      hints_used: 0,
-      seconds_spent: Math.max(1, Math.min(300, spentByQidRef.current[q.id] || 1)),
-      question_text: q.stem,
-    }));
+    const auditByQid = new Map(audit.items.map((it) => [it.question_id, it]));
+    const telemetry: QuestionTelemetry[] = questions.map((q) => {
+      const graded = gradedResults[q.id];
+      const carried = extractCarriedDistractorIds(q);
+      const auditItem = auditByQid.get(q.id);
+      return {
+        question_id: q.id,
+        competency_id: q.competency_id,
+        is_correct: graded?.isCorrect === true,
+        hints_used: 0,
+        seconds_spent: Math.max(1, Math.min(300, spentByQidRef.current[q.id] || 1)),
+        question_text: q.stem,
+        question_type: q.type,
+        wrong_attempts: 0,
+        ...(graded?.matchedDistractorIds?.length
+          ? { matched_distractor_ids: graded.matchedDistractorIds }
+          : {}),
+        ...(graded?.matchedDistractorRationales
+          ? { matched_distractor_rationales: graded.matchedDistractorRationales }
+          : {}),
+        ...(carried.length > 0 ? { carried_distractor_ids: carried } : {}),
+        ...(auditItem ? { metacognitive_quadrant: auditItem.quadrant } : {}),
+      };
+    });
 
     clearActiveSession();
     setShowMetaModal(false);

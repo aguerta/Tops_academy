@@ -8,16 +8,18 @@ import {
   IronDeferredReviewItem,
   MasteryTier,
   MetacognitiveAudit,
+  SessionType,
 } from '../types';
 import { MathText } from './MathText';
 import { formatTimingSeconds, TIER_COLORS, TIER_POINTS } from '../utils/masteryStorage';
+import { formatCooldownRemaining } from '../utils/fsrsEngine';
 
 interface CompletionScreenProps {
   course: Course;
   competency?: Competency;
   score: number;
   total: number;
-  sessionType: 'practice' | 'quiz' | 'test' | 'challenge';
+  sessionType: SessionType;
   onTryAgain: () => void;
   onUpNext: () => void;
   onBackToCourse: () => void;
@@ -121,6 +123,10 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
   const titlePrefix =
     sessionType === 'challenge'
       ? '¡Examen Modo Hierro completado!'
+      : sessionType === 'mastery_challenge'
+      ? '¡Mastery Challenge completado!'
+      : sessionType === 'misconception_drill'
+      ? '¡Sesión de Trampas completada!'
       : sessionType === 'test'
       ? 'Unit test complete!'
       : sessionType === 'quiz'
@@ -377,14 +383,24 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
                   {skillsMaintainedList.map((skill) => (
                     <div
                       key={skill.competency_id}
-                      className="p-1.5 bg-slate-50 border border-slate-200 rounded text-xs flex items-center justify-between"
+                      className="p-1.5 bg-slate-50 border border-slate-200 rounded text-xs flex flex-col gap-1"
                     >
-                      <span className="truncate font-medium text-slate-700 max-w-[200px]">
-                        <MathText text={skill.competency_name} inline />
-                      </span>
-                      <span className="font-semibold text-slate-500 text-[11px] shrink-0">
-                        {skill.new_tier} (0 pts)
-                      </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-medium text-slate-700 max-w-[200px]">
+                          <MathText text={skill.competency_name} inline />
+                        </span>
+                        <span className="font-semibold text-slate-500 text-[11px] shrink-0">
+                          {skill.new_tier} (0 pts)
+                        </span>
+                      </div>
+                      {skill.cooldown_remaining_ms !== undefined && skill.cooldown_remaining_ms > 0 && (
+                        <span
+                          data-testid={`cooldown-notice-${skill.competency_id}`}
+                          className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.5 self-start"
+                        >
+                          ⏳ Cooldown 12h: faltan {formatCooldownRemaining(skill.cooldown_remaining_ms)} para Mastered
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
