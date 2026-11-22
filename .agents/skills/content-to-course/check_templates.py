@@ -15,6 +15,7 @@ import ast
 import copy
 import hashlib
 import json
+import logging
 import os
 import re
 import sys
@@ -29,6 +30,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import jsonschema
+
+_logger = logging.getLogger(__name__)
 
 # Add skills root and project src to sys.path so engine and validator can be imported directly
 _skills_root = Path(__file__).parent.resolve()
@@ -48,6 +51,10 @@ from engine.diversity import (
     evaluate_competency_diversity,
     evaluate_slot_rationale_diversity,
     mask_stem_numbers,
+)
+from engine.epistemic_closure import (
+    check_epistemic_closure,
+    check_open_symbolic_answer_closure,
 )
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
@@ -959,6 +966,9 @@ def check_single_template(
     rendered_correct_answers: List[Any] = []
     distractor_contents_by_slot: Dict[Any, List[str]] = defaultdict(list)
     distractor_rationales_by_slot: Dict[Any, List[str]] = defaultdict(list)
+    epistemic_checked = False
+    checked_symbolic_stems: Set[str] = set()
+    epistemic_hard_reported = False
 
     for idx, item in enumerate(batch_results):
         if not item.get("success"):
@@ -1038,6 +1048,33 @@ def check_single_template(
             interaction_type,
             variables=gen_res.get("vars", {}),
         )
+        if is_valid and not epistemic_checked:
+            epistemic_checked = True
+            for ep_warn in check_epistemic_closure(assembled_q, interaction_type):
+                msg = f"{competency_id} ({tpl_id}, seed={seed_val}): {ep_warn}"
+                _logger.warning(msg)
+                if warnings_out is not None:
+                    warnings_out.append(msg)
+        if not epistemic_hard_reported:
+            stem_txt_ep = str(assembled_q.get("stem") or "")
+            if stem_txt_ep not in checked_symbolic_stems:
+                checked_symbolic_stems.add(stem_txt_ep)
+                hard_ep_errs = check_open_symbolic_answer_closure(assembled_q, interaction_type)
+                if hard_ep_errs:
+                    epistemic_hard_reported = True
+                    errors.append(format_diagnostic_error(
+                        "TPL-EPISTEMIC-CLOSURE: SÍMBOLO NO DEFINIDO EN EXPECTED_ANSWER",
+                        competency_id,
+                        tpl_id,
+                        f"seed={seed_val}",
+                        "stem_variants / expected_answer",
+                        str(assembled_q.get("expected_answer", ""))[:120],
+                        hard_ep_errs[0],
+                        [
+                            "Declara explícitamente todas las variables simbólicas requeridas por expected_answer en todas las variantes de stem_variants (en $...$ o `var`).",
+                            "Verifica que ninguna variante de stem_variants omita parámetros libres usados en la expresión esperada.",
+                        ],
+                    ))
         if not is_valid:
             has_collision = any("Distractor identical to correct answer" in e for e in inv_errors)
             for inv_err in inv_errors:
@@ -2043,6 +2080,22 @@ def check_templates_file_or_dir(
         for err in errors:
             if err not in errors_by_comp.get(only_cid, []):
                 errors_by_comp.setdefault(only_cid, []).append(err)
+
+    # Non-blocking cognitive rigor recommendation: Analyze+Evaluate >= 70% portfolio share
+    all_tpls_bloom = [t for tpls in templates_by_comp.values() for t in tpls if isinstance(t, dict)]
+    total_tpls_bloom = len(all_tpls_bloom)
+    if total_tpls_bloom >= 4:
+        sup_cnt = sum(1 for t in all_tpls_bloom if str(t.get("bloom") or "").strip() in ("Analyze", "Evaluate"))
+        sup_ratio = sup_cnt / total_tpls_bloom
+        if sup_ratio < 0.70:
+            bloom_warn = (
+                f"WARNING: [BLOOM-SUPERIOR-TARGET] Cuota Analyze+Evaluate = {sup_ratio * 100:.1f}% "
+                f"({sup_cnt}/{total_tpls_bloom} plantillas, < 70.0% recomendado). "
+                f"Recomendación no bloqueante: promueve plantillas aplicativas hacia Analyze/Evaluate si el material lo permite."
+            )
+            if warnings_out is not None:
+                warnings_out.append(bloom_warn)
+            print(bloom_warn, file=sys.stderr)
 
     is_clean = (len(errors) == 0)
 

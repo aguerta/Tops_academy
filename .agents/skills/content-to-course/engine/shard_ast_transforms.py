@@ -3,6 +3,7 @@
 import ast
 import copy
 import inspect
+import logging
 import re
 import textwrap
 import threading
@@ -11,6 +12,8 @@ from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from engine.shard_locator import ShardDataLineLocator
+
+_logger = logging.getLogger(__name__)
 
 _QTYPE_TO_INTERACTION: Dict[str, str] = {
     "mc7": "multiple_choice_7_options",
@@ -1136,6 +1139,242 @@ def _canon_syms(expr: Any) -> Any:
     return out.subs({sympy.Symbol(f"__t{k}"): sympy.Symbol(f"x{k}") for k in range(len(syms))})
 
 
+def _sympy_to_z3_expr(
+    expr: Any,
+    var_map: Dict[str, Any],
+    extra_constraints: List[Any],
+    aux_counter: List[int],
+) -> Optional[Any]:
+    """Translate a bounded algebraic/piecewise SymPy expression into a Z3 Real expression."""
+    import sympy
+    import z3
+
+    _TRANSCENDENTALS = (
+        sympy.exp,
+        sympy.log,
+        sympy.sin,
+        sympy.cos,
+        sympy.tan,
+        sympy.cot,
+        sympy.sec,
+        sympy.csc,
+        sympy.asin,
+        sympy.acos,
+        sympy.atan,
+        sympy.sinh,
+        sympy.cosh,
+        sympy.tanh,
+    )
+    if isinstance(expr, _TRANSCENDENTALS):
+        return None
+    if isinstance(expr, sympy.Symbol):
+        name = expr.name
+        if name not in var_map:
+            var_map[name] = z3.Real(name)
+        return var_map[name]
+    if isinstance(expr, sympy.Integer):
+        return z3.RealVal(int(expr))
+    if isinstance(expr, sympy.Rational):
+        return z3.Q(int(expr.p), int(expr.q))
+    if isinstance(expr, sympy.Float):
+        frac = sympy.Rational(str(expr))
+        return z3.Q(int(frac.p), int(frac.q))
+    if expr is sympy.S.Zero:
+        return z3.RealVal(0)
+    if expr is sympy.S.One:
+        return z3.RealVal(1)
+    if expr is sympy.S.NegativeOne:
+        return z3.RealVal(-1)
+    if expr is sympy.S.Half:
+        return z3.Q(1, 2)
+
+    if isinstance(expr, sympy.Add):
+        acc = None
+        for arg in expr.args:
+            sub = _sympy_to_z3_expr(arg, var_map, extra_constraints, aux_counter)
+            if sub is None:
+                return None
+            acc = sub if acc is None else (acc + sub)
+        return acc
+
+    if isinstance(expr, sympy.Mul):
+        acc = None
+        for arg in expr.args:
+            sub = _sympy_to_z3_expr(arg, var_map, extra_constraints, aux_counter)
+            if sub is None:
+                return None
+            acc = sub if acc is None else (acc * sub)
+        return acc
+
+    if isinstance(expr, sympy.Pow):
+        base_s, exp_s = expr.args
+        base_z = _sympy_to_z3_expr(base_s, var_map, extra_constraints, aux_counter)
+        if base_z is None:
+            return None
+        if isinstance(exp_s, sympy.Integer):
+            n = int(exp_s)
+            if abs(n) > 8:
+                return None
+            if n == 0:
+                return z3.RealVal(1)
+            if n > 0:
+                return base_z ** n
+            denom = base_z ** (-n)
+            extra_constraints.append(denom != 0)
+            return z3.RealVal(1) / denom
+        if exp_s == sympy.Rational(1, 2):
+            aux_idx = aux_counter[0]
+            aux_counter[0] += 1
+            root_var = z3.Real(f"__z3_sqrt_{aux_idx}")
+            extra_constraints.append(base_z >= 0)
+            extra_constraints.append(root_var >= 0)
+            extra_constraints.append(root_var * root_var == base_z)
+            return root_var
+        if exp_s == sympy.Rational(-1, 2):
+            aux_idx = aux_counter[0]
+            aux_counter[0] += 1
+            root_var = z3.Real(f"__z3_sqrt_{aux_idx}")
+            extra_constraints.append(base_z > 0)
+            extra_constraints.append(root_var > 0)
+            extra_constraints.append(root_var * root_var == base_z)
+            return z3.RealVal(1) / root_var
+        return None
+
+    if isinstance(expr, sympy.Abs):
+        arg_z = _sympy_to_z3_expr(expr.args[0], var_map, extra_constraints, aux_counter)
+        if arg_z is None:
+            return None
+        return z3.If(arg_z >= 0, arg_z, -arg_z)
+
+    if isinstance(expr, sympy.Min) and len(expr.args) >= 2:
+        args_z = [_sympy_to_z3_expr(a, var_map, extra_constraints, aux_counter) for a in expr.args]
+        if any(a is None for a in args_z):
+            return None
+        cur = args_z[0]
+        for nxt in args_z[1:]:
+            cur = z3.If(cur <= nxt, cur, nxt)
+        return cur
+
+    if isinstance(expr, sympy.Max) and len(expr.args) >= 2:
+        args_z = [_sympy_to_z3_expr(a, var_map, extra_constraints, aux_counter) for a in expr.args]
+        if any(a is None for a in args_z):
+            return None
+        cur = args_z[0]
+        for nxt in args_z[1:]:
+            cur = z3.If(cur >= nxt, cur, nxt)
+        return cur
+
+    if isinstance(expr, sympy.Piecewise):
+        return _sympy_piecewise_to_z3(expr.args, var_map, extra_constraints, aux_counter)
+
+    return None
+
+
+def _sympy_rel_to_z3(
+    cond: Any,
+    var_map: Dict[str, Any],
+    extra_constraints: List[Any],
+    aux_counter: List[int],
+) -> Optional[Any]:
+    """Translate SymPy boolean/relational condition into a Z3 boolean formula."""
+    import sympy
+    import z3
+
+    if cond is True or cond is sympy.S.true:
+        return z3.BoolVal(True)
+    if cond is False or cond is sympy.S.false:
+        return z3.BoolVal(False)
+    if isinstance(cond, sympy.And):
+        parts = [_sympy_rel_to_z3(a, var_map, extra_constraints, aux_counter) for a in cond.args]
+        return None if any(p is None for p in parts) else z3.And(*parts)
+    if isinstance(cond, sympy.Or):
+        parts = [_sympy_rel_to_z3(a, var_map, extra_constraints, aux_counter) for a in cond.args]
+        return None if any(p is None for p in parts) else z3.Or(*parts)
+    if isinstance(cond, sympy.Not):
+        sub = _sympy_rel_to_z3(cond.args[0], var_map, extra_constraints, aux_counter)
+        return None if sub is None else z3.Not(sub)
+    if isinstance(cond, sympy.Relational):
+        lhs = _sympy_to_z3_expr(cond.lhs, var_map, extra_constraints, aux_counter)
+        rhs = _sympy_to_z3_expr(cond.rhs, var_map, extra_constraints, aux_counter)
+        if lhs is None or rhs is None:
+            return None
+        rel_op = cond.rel_op
+        if rel_op == "==":
+            return lhs == rhs
+        if rel_op == "!=":
+            return lhs != rhs
+        if rel_op == "<":
+            return lhs < rhs
+        if rel_op == "<=":
+            return lhs <= rhs
+        if rel_op == ">":
+            return lhs > rhs
+        if rel_op == ">=":
+            return lhs >= rhs
+    return None
+
+
+def _sympy_piecewise_to_z3(
+    pairs: Tuple[Any, ...],
+    var_map: Dict[str, Any],
+    extra_constraints: List[Any],
+    aux_counter: List[int],
+) -> Optional[Any]:
+    """Translate SymPy Piecewise (val, cond) branches recursively into nested z3.If."""
+    if not pairs:
+        return None
+    import z3
+
+    val_s, cond_s = pairs[0]
+    val_z = _sympy_to_z3_expr(val_s, var_map, extra_constraints, aux_counter)
+    if val_z is None:
+        return None
+    if len(pairs) == 1:
+        cond_z = _sympy_rel_to_z3(cond_s, var_map, extra_constraints, aux_counter)
+        if cond_z is None:
+            return None
+        extra_constraints.append(cond_z)
+        return val_z
+    cond_z = _sympy_rel_to_z3(cond_s, var_map, extra_constraints, aux_counter)
+    rest_z = _sympy_piecewise_to_z3(pairs[1:], var_map, extra_constraints, aux_counter)
+    if cond_z is None or rest_z is None:
+        return None
+    return z3.If(cond_z, val_z, rest_z)
+
+
+def _z3_check_sympy_equiv(expr_i: Any, expr_j: Any, timeout_ms: int = 150) -> Optional[bool]:
+    """Check positive-domain algebraic equivalence via Z3 with silent fallback on unsupported ASTs."""
+    try:
+        import z3
+    except ImportError:
+        return None
+
+    try:
+        var_map: Dict[str, Any] = {}
+        extra_constraints: List[Any] = []
+        aux_counter = [0]
+        z_i = _sympy_to_z3_expr(expr_i, var_map, extra_constraints, aux_counter)
+        z_j = _sympy_to_z3_expr(expr_j, var_map, extra_constraints, aux_counter)
+        if z_i is None or z_j is None or not var_map:
+            return None
+
+        solver = z3.Solver()
+        solver.set("timeout", timeout_ms)
+        for v in var_map.values():
+            solver.add(v > 0)
+        for c in extra_constraints:
+            solver.add(c)
+        solver.add(z_i != z_j)
+        res = solver.check()
+        if res == z3.unsat:
+            return True
+        if res == z3.sat:
+            return False
+        return None
+    except Exception:
+        return None
+
+
 def _check_intra_competency_anti_clone(
     cid: str,
     source_name: str,
@@ -1144,6 +1383,7 @@ def _check_intra_competency_anti_clone(
     cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]],
     eff_k: int,
     norm_shard_id: str,
+    warnings_out: Optional[List[str]] = None,
 ) -> List[str]:
     """Enforce the 4 deterministic anti-clone gates within a competency."""
     if len(tpls) < 2:
@@ -1380,23 +1620,34 @@ def _check_intra_competency_anti_clone(
                         and getattr(s_expr_j, "free_symbols", None)
                         and len(s_expr_i.free_symbols) == len(s_expr_j.free_symbols)
                     ):
+                        s_expr_i = _canon_syms(s_expr_i)
+                        s_expr_j = _canon_syms(s_expr_j)
+                        is_equiv = False
                         try:
                             import sympy
-                            s_expr_i = _canon_syms(s_expr_i)
-                            s_expr_j = _canon_syms(s_expr_j)
                             is_equiv = (sympy.simplify(s_expr_i - s_expr_j) == 0)
                             if not is_equiv and s_expr_j != 0:
                                 ratio = sympy.simplify(s_expr_i / s_expr_j)
                                 if getattr(ratio, "is_number", False) and not getattr(ratio, "free_symbols", set()):
                                     is_equiv = True
-                            if is_equiv:
-                                errors.append(
-                                    f"{cid}.json ({source_name}): [TPL-CLONE-SYMPY] Plantillas '{tids[i]}' y '{tids[j]}' "
-                                    f"en '{cid}' (arquetipo '{archs[i]}') reducen a fórmulas algebraicas equivalentes "
-                                    f"o reescaladas trivialmente en SymPy ({s_expr_i} vs {s_expr_j})."
-                                )
                         except Exception:
-                            pass
+                            is_equiv = False
+
+                        if is_equiv:
+                            errors.append(
+                                f"{cid}.json ({source_name}): [TPL-CLONE-SYMPY] Plantillas '{tids[i]}' y '{tids[j]}' "
+                                f"en '{cid}' (arquetipo '{archs[i]}') reducen a fórmulas algebraicas equivalentes "
+                                f"o reescaladas trivialmente en SymPy ({s_expr_i} vs {s_expr_j})."
+                            )
+                        elif _z3_check_sympy_equiv(s_expr_i, s_expr_j, timeout_ms=150) is True:
+                            z3_warn_msg = (
+                                f"{cid}.json ({source_name}): [Z3-RULE-WARNING] Plantillas '{tids[i]}' y '{tids[j]}' "
+                                f"en '{cid}' (arquetipo '{archs[i]}') son algebraicamente equivalentes en Z3 bajo "
+                                f"dominio positivo ({s_expr_i} vs {s_expr_j}), aunque SymPy no las redujo."
+                            )
+                            _logger.warning(z3_warn_msg)
+                            if warnings_out is not None:
+                                warnings_out.append(z3_warn_msg)
 
     return errors
 

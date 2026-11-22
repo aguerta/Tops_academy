@@ -511,6 +511,9 @@ class KaTeXParser:
             and not self.s.startswith("{{", self.pos)
         ):
             self.pos += 1
+        if self.pos == start:
+            # Guard against unmatched '}' or trailing '\' causing an infinite loop
+            self.pos += 1
         return AtomNode(text=self.s[start:self.pos])
 
 
