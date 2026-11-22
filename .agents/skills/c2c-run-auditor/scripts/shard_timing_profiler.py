@@ -63,7 +63,7 @@ def _profile_agent_record(
     cid = s.get("conversation_id")
     label = s.get("label", "Unknown")
     shard_id = s.get("shard_id") or label
-    wall_time = float(s.get("duration_seconds", 0.0))
+    wall_time = round(float(s.get("duration_seconds", 0.0)), 2)
     spawn_time = parse_iso(s.get("spawn_time") or s.get("start_time"))
     end_time = parse_iso(s.get("end_time"))
 
@@ -280,10 +280,10 @@ def profile_conversation_shards(conv_id: str, run_dir: Optional[Path] = None) ->
 
     # Median wall times
     durations = [r["wall_time_s"] for r in results_shards]
-    median_dur = sorted(durations)[len(durations) // 2] if durations else 0.0
+    median_dur = round(sorted(durations)[len(durations) // 2], 2) if durations else 0.0
 
     rep_durations = [r["wall_time_s"] for r in results_repairs]
-    median_repair_dur = sorted(rep_durations)[len(rep_durations) // 2] if rep_durations else 0.0
+    median_repair_dur = round(sorted(rep_durations)[len(rep_durations) // 2], 2) if rep_durations else 0.0
 
     output = {
         "course_id": course_id,

@@ -877,8 +877,8 @@ class DeepDiveReportBuilder:
         lines.append(f"| **Tiempo de Pared Total** | **`{global_timings.get('wall_clock_minutes', 0.0)} min`** ({global_timings.get('wall_clock_seconds', 0.0)} s) | Tiempo transcurrido de extremo a extremo |")
         lines.append(f"| **Total de Turnos Analizados** | **`{global_timings.get('total_turns', 0)} turnos`** | Suma de orquestador y subagentes |")
         lines.append(f"| **Total de Errores Catalogados** | **`{global_timings.get('total_errors', 0)} errores`** | Clasificados en {len(error_taxonomy)} categorías técnicas (0% caja negra) |")
-        lines.append(f"| **Inferencia LLM Promedio** | **`{global_timings.get('avg_inference_pct', 95.0)}%`** | Porcentaje de tiempo dedicado a generación/thinking |")
-        lines.append(f"| **Ejecución Local de Tools** | **`{global_timings.get('avg_tool_pct', 5.0)}%`** | Porcentaje de tiempo consumido en I/O y terminal |")
+        lines.append(f"| **Inferencia LLM Promedio** | **`{global_timings.get('avg_inference_pct', 0.0)}%`** | Porcentaje de tiempo dedicado a generación/thinking |")
+        lines.append(f"| **Ejecución Local de Tools** | **`{global_timings.get('avg_tool_pct', 0.0)}%`** | Porcentaje de tiempo consumido en I/O y terminal |")
         lines.append(f"")
         lines.append(f"### 1.1. Distribución Empírica del Tiempo (Inferencia vs Tools)")
         lines.append(f"```text")
@@ -1241,13 +1241,43 @@ def run_traceback_audit(
 
     # 7. Global Timings
     orch_timings = ForensicsEngine.compute_agent_timings(root_steps, root_turns)
+    all_sub_timings: List[Dict[str, Any]] = []
+    if cta_data:
+        if "timings" in cta_data and isinstance(cta_data["timings"], dict):
+            all_sub_timings.append(cta_data["timings"])
+        else:
+            for c_info in cta_data.values():
+                if isinstance(c_info, dict) and isinstance(c_info.get("timings"), dict):
+                    all_sub_timings.append(c_info["timings"])
+    for s_info in shards_data.values():
+        if isinstance(s_info, dict) and isinstance(s_info.get("timings"), dict):
+            all_sub_timings.append(s_info["timings"])
+    for j_info in judges_data.values():
+        if isinstance(j_info, dict) and isinstance(j_info.get("timings"), dict):
+            all_sub_timings.append(j_info["timings"])
+
+    total_inf_sec = sum(float(t.get("inference_seconds", 0.0) or 0.0) for t in all_sub_timings)
+    total_tool_sec = sum(float(t.get("tool_seconds", 0.0) or 0.0) for t in all_sub_timings)
+    if (total_inf_sec + total_tool_sec) > 0:
+        avg_inf_pct = round((total_inf_sec / (total_inf_sec + total_tool_sec)) * 100.0, 2)
+        avg_tool_pct = round((total_tool_sec / (total_inf_sec + total_tool_sec)) * 100.0, 2)
+    else:
+        orch_inf = float(orch_timings.get("inference_seconds", 0.0) or 0.0)
+        orch_tool = float(orch_timings.get("tool_seconds", 0.0) or 0.0)
+        if (orch_inf + orch_tool) > 0:
+            avg_inf_pct = round((orch_inf / (orch_inf + orch_tool)) * 100.0, 2)
+            avg_tool_pct = round((orch_tool / (orch_inf + orch_tool)) * 100.0, 2)
+        else:
+            avg_inf_pct = 0.0
+            avg_tool_pct = 0.0
+
     global_timings = {
         "wall_clock_seconds": orch_timings.get("wall_time_seconds", 0.0),
         "wall_clock_minutes": orch_timings.get("wall_time_minutes", 0.0),
         "total_turns": sum(len(t) for t in all_agent_turns.values()),
         "total_errors": total_errors,
-        "avg_inference_pct": 95.8,
-        "avg_tool_pct": 4.2,
+        "avg_inference_pct": avg_inf_pct,
+        "avg_tool_pct": avg_tool_pct,
     }
 
     # 8. Output Directory

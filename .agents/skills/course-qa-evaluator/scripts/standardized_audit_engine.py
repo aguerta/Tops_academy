@@ -1400,9 +1400,9 @@ class ZPDProgressionCalibrationLinter(BaseLinter):
                 ),
             ))
 
-        bloom_weighted_index = round(bloom_weight_sum / bloom_evaluated, 3) if bloom_evaluated else 0.0
-        adaptive_bloom_floor = round(floor_weight_sum / bloom_evaluated, 3) if bloom_evaluated else 3.85
-        bloom_index_gap = round(max(0.0, adaptive_bloom_floor - bloom_weighted_index), 3) if bloom_evaluated else 0.0
+        bloom_weighted_index = round(bloom_weight_sum / bloom_evaluated, 2) if bloom_evaluated else 0.0
+        adaptive_bloom_floor = round(floor_weight_sum / bloom_evaluated, 2) if bloom_evaluated else 3.85
+        bloom_index_gap = round(max(0.0, adaptive_bloom_floor - bloom_weighted_index), 2) if bloom_evaluated else 0.0
         bloom_apply_plus_pct = round((bloom_apply_plus / bloom_evaluated * 100.0) if bloom_evaluated else 100.0, 2)
         bloom_superior_pct = round((bloom_superior / bloom_evaluated * 100.0) if bloom_evaluated else 100.0, 2)
 
@@ -2512,7 +2512,7 @@ class MsLengthBiasLinter(BaseLinter):
             ):
                 qid = q.get("id", "unknown")
                 cid = q.get("competency_id", "unassigned")
-                biased_items.append((qid, cid, round(ratio, 3)))
+                biased_items.append((qid, cid, round(ratio, 2)))
 
         biased_pct = round((len(biased_items) / evaluated_ms * 100.0) if evaluated_ms else 0.0, 2)
         if evaluated_ms > 0 and (len(biased_items) / evaluated_ms) > self.ITEM_PCT_THRESHOLD:
@@ -3635,7 +3635,7 @@ class AuditLinterRegistry:
             self.domain_linters[domain_key] = []
         self.domain_linters[domain_key].append(linter)
 
-    def execute_all(self, course_data: dict) -> TelemetryReport:
+    def execute_all(self, course_data: dict, judge_audit: Optional[dict] = None) -> TelemetryReport:
         course_id = course_data.get("course_id", "unknown_course")
         title = course_data.get("title") or course_data.get("course_title", course_id)
         comps = course_data.get("competencies", [])
@@ -3851,7 +3851,7 @@ class AuditLinterRegistry:
         warning_count = sum(1 for iss in issues if iss.severity == "warning")
         risk_score = round(min(100.0, ((critical_count * 3.0 + warning_count * 1.0) / total_q) * 50.0), 2)
         mastery_readiness = compute_mastery_path_readiness(summaries, len(comps), len(questions))
-        deterministic_rubric = compute_deterministic_rubric_scores(summaries, len(comps), len(questions), hard_penalties)
+        deterministic_rubric = compute_deterministic_rubric_scores(summaries, len(comps), len(questions), hard_penalties, judge_audit=judge_audit)
         final_score = deterministic_rubric["final_score"]
         quality_tier = deterministic_rubric["quality_tier"]
 
@@ -3873,10 +3873,10 @@ class AuditLinterRegistry:
         )
 
 
-def run_full_audit(course_data: dict) -> dict:
+def run_full_audit(course_data: dict, judge_audit: Optional[dict] = None) -> dict:
     """Entry point for python imports."""
     registry = AuditLinterRegistry()
-    telemetry = registry.execute_all(course_data)
+    telemetry = registry.execute_all(course_data, judge_audit=judge_audit)
     return asdict(telemetry)
 
 

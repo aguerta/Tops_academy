@@ -66,7 +66,7 @@ Esta skill orquesta la **auditoría completa y automática post-creación de cur
    - Consumo granular de tokens por subagente (entrada, salida, caché y tokens activos).
    - Detección de cuellos de botella en camino crítico, fenómenos *straggler* y barreras síncronas.
    - Taxonomía consolidada de errores y fricciones operativas en 12 categorías.
-   - Unit Economics normalizados (Tokens/pregunta, Segundos/pregunta, Preguntas/minuto) y **valorización en dólares (USD) por etapa y total bajo tarifas de Gemini 4 Hydrogen** (`\$1.50/1M` entrada, `\$7.50/1M` salida+thinking, `\$0.075/1M` caché).
+   - Unit Economics normalizados (Tokens/pregunta, Segundos/pregunta, Preguntas/minuto) y **valorización en dólares (USD) por etapa y total bajo tarifas de Gemini 4 Hydrogen** (`\$1.50/1M` entrada, `\$7.50/1M` salida+thinking, `\$0.08/1M` caché) con formato estricto de **máximo 2 decimales**.
 
 ---
 

@@ -153,7 +153,7 @@ Para comparar justamente corridas de diferente tamaño y complejidad pedagógica
 | **Throughput (QPM)** | $\frac{\text{Preguntas} \times 60}{\text{Segundos de Pared}}$ | 12 – 30 preguntas/min | $< 6$ preg/min: Cuello de botella en etapa de autores |
 | **Speedup Concurrente** | $\frac{\text{Tiempo Cómputo}}{\text{Tiempo Pared}}$ | $> 2.5\times$ en fan-out de autores | $\approx 1.0\times$: Subagentes operando de forma secuencial |
 | **Tokens / Página** | $\frac{\text{Tokens Totales}}{\text{Páginas Fuente}}$ | $30,000 – 80,000$ tokens/pág | $> 200,000$: Lectura redundante de corpus o transcripción dispersa |
-| **Valorización USD (Gemini 4 Hydrogen)** | `In * \$1.50/1M + Out * \$7.50/1M + Cache * \$0.075/1M` *(Out incluye thinking)* | Reportado por etapa (`Stage 1A..5`, `Orquestador`) y total + USD/pregunta | Desviación por loops de reparación o exceso de input sin cache |
+| **Valorización USD (Gemini 4 Hydrogen)** | `In * \$1.50/1M + Out * \$7.50/1M + Cache * \$0.08/1M` *(Out incluye thinking; todas las métricas en máx. 2 decimales)* | Reportado por etapa (`Stage 1A..5`, `Orquestador`) y total + USD/pregunta | Desviación por loops de reparación o exceso de input sin cache |
 
 ---
 

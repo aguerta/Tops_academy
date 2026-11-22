@@ -74,10 +74,10 @@ except Exception as ex:
         out_usd = (max(0, int(output_tokens or 0)) / 1_000_000.0) * 7.50
         cache_usd = (max(0, int(cache_read_tokens or 0)) / 1_000_000.0) * 0.075
         return {
-            "input_usd": round(inp_usd, 4),
-            "output_usd": round(out_usd, 4),
-            "cache_read_usd": round(cache_usd, 4),
-            "total_usd": round(inp_usd + out_usd + cache_usd, 4),
+            "input_usd": round(inp_usd, 2),
+            "output_usd": round(out_usd, 2),
+            "cache_read_usd": round(cache_usd, 2),
+            "total_usd": round(inp_usd + out_usd + cache_usd, 2),
         }
 
     def resolve_telemetry_costs(telemetry_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -339,14 +339,16 @@ def load_telemetry_and_traceback(
 def archive_original_files(
     course_id: str,
     conv_id: str,
-    run_dir: Optional[Path] = None
+    run_dir: Optional[Path] = None,
+    archive_base: Optional[Path] = None,
+    c2c_base: Optional[Path] = None,
 ) -> Path:
-    """Archive all individual, original audit files into reports/audits_archive/<course_id>/."""
-    archive_dir = ROOT_DIR / "reports" / "audits_archive" / course_id
+    """Archive all individual, original audit files into <archive_base>/<course_id>/."""
+    archive_dir = (archive_base / course_id) if archive_base else (ROOT_DIR / "reports" / "audits_archive" / course_id)
     archive_dir.mkdir(parents=True, exist_ok=True)
 
     qa_dir = ROOT_DIR / "reports" / "qa_audits"
-    c2c_dir = ROOT_DIR / "reports" / "c2c_audits"
+    c2c_dir = c2c_base or (ROOT_DIR / "reports" / "c2c_audits")
     short_cid = conv_id[:8]
 
     # 1. Copy QA individual original file (self-contained .md only)
@@ -359,7 +361,7 @@ def archive_original_files(
 
     # 2. Copy C2C individual original files from run_dir or c2c_dir
     effective_run_dir = run_dir if (run_dir and run_dir.exists()) else None
-    if not effective_run_dir:
+    if not effective_run_dir and c2c_dir.exists():
         for d in c2c_dir.iterdir():
             if d.is_dir() and short_cid in d.name:
                 effective_run_dir = d
@@ -440,6 +442,7 @@ def generate_merged_markdown_report(
     payload_data: Dict[str, Any],
     telemetry_data: Dict[str, Any],
     traceback_data: Dict[str, Any],
+    archived_dir: Optional[Path] = None,
 ) -> str:
     """Build the unified report strictly from deterministic statistics and empirical telemetry."""
     c_meta = qa_report.get("course_metadata", {})
@@ -457,10 +460,11 @@ def generate_merged_markdown_report(
     blind_l = dim_sum.get("blind_string_replacement_linter", {})
 
     hard_penalties = qa_report.get("penalties_applied") or audit_tel.get("hard_penalties", [])
-    total_penalty_pts = sum(float(p.get("deduction", 0.0)) for p in hard_penalties if isinstance(p, dict))
-    risk_score = audit_tel.get("risk_score", qa_report.get("risk_score", 0.0))
+    total_penalty_pts = round(sum(float(p.get("deduction", 0.0)) for p in hard_penalties if isinstance(p, dict)), 2)
+    risk_score = round(float(audit_tel.get("risk_score", qa_report.get("risk_score", 0.0))), 2)
     mpri_data = qa_report.get("mastery_path_readiness") or audit_tel.get("mastery_path_readiness", {})
-    mpri_score = mpri_data.get("mpri_score", "N/A")
+    raw_mpri = mpri_data.get("mpri_score", "N/A")
+    mpri_score = f"{float(raw_mpri):.2f}" if isinstance(raw_mpri, (int, float)) else raw_mpri
     mpri_tier = mpri_data.get("mpri_tier", "N/A")
     mpri_pillars = mpri_data.get("pillars", {})
     all_issues = audit_tel.get("all_issues", [])
@@ -475,20 +479,22 @@ def generate_merged_markdown_report(
     erg_l = dim_sum.get("katex_frontend_ergonomics_linter", {})
 
     has_semantic_scores = bool(qa_report.get("dimension_scores")) and not qa_report.get("is_deterministic_only", False)
-    final_score_str = f"{qa_report.get('final_score')} / 20.0 ({qa_report.get('quality_tier', 'N/A')})" if has_semantic_scores else f"N/A (Modo Headless Determinista — Risk Score: {risk_score})"
-    bloom_idx = zpd_l.get("bloom_weighted_index", 0.0)
-    bloom_floor = zpd_l.get("adaptive_bloom_floor", 3.85)
-    bloom_sup_pct = zpd_l.get("bloom_superior_pct", 0.0)
+    final_score_val = qa_report.get("final_score")
+    final_score_num_str = f"{float(final_score_val):.2f}" if isinstance(final_score_val, (int, float)) else str(final_score_val)
+    final_score_str = f"{final_score_num_str} / 20.0 ({qa_report.get('quality_tier', 'N/A')})" if has_semantic_scores else f"N/A (Modo Headless Determinista — Risk Score: {risk_score:.2f})"
+    bloom_idx = round(float(zpd_l.get("bloom_weighted_index", 0.0)), 2)
+    bloom_floor = round(float(zpd_l.get("adaptive_bloom_floor", 3.85)), 2)
+    bloom_sup_pct = round(float(zpd_l.get("bloom_superior_pct", 0.0)), 2)
     bloom_tier = zpd_l.get("bloom_tier", "N/A")
     bloom_coh_cnt = zpd_l.get("bloom_coherence_violations_count", 0)
-    bloom_summary_str = f"**{bloom_idx:.2f} / 5.0** (piso `{bloom_floor:.2f}` | `Analyze+Evaluate`: `{bloom_sup_pct:.1f}%` | Tier: **{bloom_tier}**)"
+    bloom_summary_str = f"**{bloom_idx:.2f} / 5.0** (piso `{bloom_floor:.2f}` | `Analyze+Evaluate`: `{bloom_sup_pct:.2f}%` | Tier: **{bloom_tier}**)"
 
     t_summary = telemetry_data.get("summary", {})
-    wall_sec = t_summary.get("wall_clock_seconds") or telemetry_data.get("wall_clock_seconds", 0.0)
-    comp_sec = t_summary.get("agent_compute_seconds") or telemetry_data.get("agent_compute_seconds", 0.0)
-    wall_min = t_summary.get("wall_clock_minutes") or round(wall_sec / 60.0, 2)
-    comp_min = t_summary.get("agent_compute_minutes") or round(comp_sec / 60.0, 2)
-    speedup = t_summary.get("parallel_speedup_factor", 1.0)
+    wall_sec = round(float(t_summary.get("wall_clock_seconds") or telemetry_data.get("wall_clock_seconds", 0.0)), 2)
+    comp_sec = round(float(t_summary.get("agent_compute_seconds") or telemetry_data.get("agent_compute_seconds", 0.0)), 2)
+    wall_min = round(float(t_summary.get("wall_clock_minutes") or (wall_sec / 60.0)), 2)
+    comp_min = round(float(t_summary.get("agent_compute_minutes") or (comp_sec / 60.0)), 2)
+    speedup = round(float(t_summary.get("parallel_speedup_factor", 1.0)), 2)
 
     u_econ = telemetry_data.get("unit_economics", {})
     workload = telemetry_data.get("workload", {})
@@ -498,13 +504,17 @@ def generate_merged_markdown_report(
     costs = resolve_telemetry_costs(telemetry_data)
     cost_cb = costs["cost_breakdown_usd"]
     stage_costs = costs["stage_costs_usd"]
-    total_cost_usd = costs["total_cost_usd"]
+    total_cost_usd = round(float(costs["total_cost_usd"]), 2)
     usd_per_q = u_econ.get("usd_per_question")
     if usd_per_q is None:
-        usd_per_q = round(total_cost_usd / total_questions, 4) if total_questions else 0.0
+        usd_per_q = round(total_cost_usd / total_questions, 2) if total_questions else 0.0
+    else:
+        usd_per_q = round(float(usd_per_q), 2)
     usd_per_comp = u_econ.get("usd_per_competency")
     if usd_per_comp is None:
-        usd_per_comp = round(total_cost_usd / total_comps, 4) if total_comps else 0.0
+        usd_per_comp = round(total_cost_usd / total_comps, 2) if total_comps else 0.0
+    else:
+        usd_per_comp = round(float(usd_per_comp), 2)
 
     months_es = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
     now = datetime.datetime.now()
@@ -520,22 +530,34 @@ def generate_merged_markdown_report(
     ascii_bars = []
     if cta_architects_map and isinstance(cta_architects_map, dict):
         for c_name, c_info in cta_architects_map.items():
+            if not isinstance(c_info, dict):
+                continue
             ct = c_info.get("timings", {})
             inf_pct = ct.get("inference_pct", 0.0)
-            filled = int(inf_pct / 2.5)
+            filled = max(0, min(40, int(inf_pct / 2.5)))
             bar = "█" * filled + "░" * (40 - filled)
             ascii_bars.append(f"{c_name:<23}: [{bar}] {int(ct.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(ct.get('tool_seconds', 0))}s Tools")
-    elif cta_data:
-        ct = cta_data.get("timings", {})
-        inf_pct = ct.get("inference_pct", 0.0)
-        filled = int(inf_pct / 2.5)
-        bar = "█" * filled + "░" * (40 - filled)
-        ascii_bars.append(f"Direct CTA Architect   : [{bar}] {int(ct.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(ct.get('tool_seconds', 0))}s Tools")
+    elif cta_data and isinstance(cta_data, dict):
+        if "timings" in cta_data and isinstance(cta_data["timings"], dict):
+            ct = cta_data.get("timings", {})
+            inf_pct = ct.get("inference_pct", 0.0)
+            filled = max(0, min(40, int(inf_pct / 2.5)))
+            bar = "█" * filled + "░" * (40 - filled)
+            ascii_bars.append(f"Direct CTA Architect   : [{bar}] {int(ct.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(ct.get('tool_seconds', 0))}s Tools")
+        else:
+            for c_name, c_info in cta_data.items():
+                if not isinstance(c_info, dict):
+                    continue
+                ct = c_info.get("timings", {})
+                inf_pct = ct.get("inference_pct", 0.0)
+                filled = max(0, min(40, int(inf_pct / 2.5)))
+                bar = "█" * filled + "░" * (40 - filled)
+                ascii_bars.append(f"{c_name:<23}: [{bar}] {int(ct.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(ct.get('tool_seconds', 0))}s Tools")
 
     for s_name, s_info in shards_data.items():
         st = s_info.get("timings", {})
         inf_pct = st.get("inference_pct", 0.0)
-        filled = int(inf_pct / 2.5)
+        filled = max(0, min(40, int(inf_pct / 2.5)))
         bar = "█" * filled + "░" * (40 - filled)
         ascii_bars.append(f"{s_name:<23}: [{bar}] {int(st.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(st.get('tool_seconds', 0))}s Tools")
 
@@ -544,14 +566,14 @@ def generate_merged_markdown_report(
         if r_name not in shards_data:
             rt = r_info.get("timings", {})
             inf_pct = rt.get("inference_pct", 0.0)
-            filled = int(inf_pct / 2.5)
+            filled = max(0, min(40, int(inf_pct / 2.5)))
             bar = "█" * filled + "░" * (40 - filled)
             ascii_bars.append(f"{r_name:<23}: [{bar}] {int(rt.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(rt.get('tool_seconds', 0))}s Tools")
 
     for j_name, j_info in judges_data.items():
         jt = j_info.get("timings", {})
         inf_pct = jt.get("inference_pct", 0.0)
-        filled = int(inf_pct / 2.5)
+        filled = max(0, min(40, int(inf_pct / 2.5)))
         bar = "█" * filled + "░" * (40 - filled)
         ascii_bars.append(f"{j_name:<23}: [{bar}] {int(jt.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(jt.get('tool_seconds', 0))}s Tools")
 
@@ -577,7 +599,7 @@ def generate_merged_markdown_report(
                 agents_str = ", ".join(agents[:3]) or "Múltiples agentes"
                 first_item = cat_val[0] if cat_val and isinstance(cat_val[0], dict) else {}
                 sample = first_item.get("snippet", "").replace("\n", " ").replace("|", "/").strip()[:90] or "—"
-                th_snip = (first_item.get("thinking_snippet") or first_item.get("last_thinking") or "").replace("\n", " ").replace("|", "/").strip()[:70]
+                th_snip = (first_item.get("thinking") or first_item.get("thinking_snippet") or first_item.get("last_thinking") or "").replace("\n", " ").replace("|", "/").strip()[:70]
                 if th_snip:
                     sample = f"{sample} *(Thinking: {th_snip})*"
             elif isinstance(cat_val, dict):
@@ -621,8 +643,8 @@ def generate_merged_markdown_report(
 **Calificación QM-OSCQR / Risk Score:** **{final_score_str}**  
 **Mastery Path Readiness Index (`MPRI`):** **`{mpri_score} / 100.0` ({mpri_tier})**  
 **Índice Bloom Ponderado (1–5):** {bloom_summary_str}  
-**Tiempo de Pared Global:** **{wall_min} minutos** | **Cómputo Total de Agentes:** **{comp_min} minutos** | **Speedup:** **{speedup}x**  
-**Costo Estimado Total (Gemini 4 Hydrogen):** **`${total_cost_usd:.4f} USD`** (`${usd_per_q:.4f} USD/preg` | In: `${cost_cb['input_usd']:.4f}`, Out+Think: `${cost_cb['output_usd']:.4f}`, Cache: `${cost_cb['cache_read_usd']:.4f}`)  
+**Tiempo de Pared Global:** **{wall_min:.2f} minutos** | **Cómputo Total de Agentes:** **{comp_min:.2f} minutos** | **Speedup:** **{speedup:.2f}x**  
+**Costo Estimado Total (Gemini 4 Hydrogen):** **`${total_cost_usd:.2f} USD`** (`${usd_per_q:.2f} USD/preg` | In: `${cost_cb['input_usd']:.2f}`, Out+Think: `${cost_cb['output_usd']:.2f}`, Cache: `${cost_cb['cache_read_usd']:.2f}`)  
 
 ---
 
@@ -800,12 +822,22 @@ def generate_merged_markdown_report(
     s1a_row = ""
     if s1a_count > 0 or stage_costs.get("stage_1a_vision", 0.0) > 0:
         s1a_row = (
-            f"| **Stage 1A: Visión / Diagramas** | `{s1a_count}` | `{stg1a.get('max_wall_time_seconds', 0.0)}s` | "
-            f"**`${stage_costs.get('stage_1a_vision', 0.0):.4f}`** | Crítico: `{stg1a.get('critical_path_agent', 'N/A')}` |\n"
+            f"| **Stage 1A: Visión / Diagramas** | `{s1a_count}` | `{round(float(stg1a.get('max_wall_time_seconds', 0.0)), 2)}s` | "
+            f"**`${stage_costs.get('stage_1a_vision', 0.0):.2f}`** | Crítico: `{stg1a.get('critical_path_agent', 'N/A')}` |\n"
         )
     other_sub_row = ""
     if stage_costs.get("other_subagents", 0.0) > 0:
-        other_sub_row = f"| **Otros Subagentes** | `—` | `—` | **`${stage_costs.get('other_subagents', 0.0):.4f}`** | Subagentes auxiliares fuera de etapas 1–5 |\n"
+        other_sub_row = f"| **Otros Subagentes** | `—` | `—` | **`${stage_costs.get('other_subagents', 0.0):.2f}`** | Subagentes auxiliares fuera de etapas 1–5 |\n"
+
+    subagents_list = telemetry_data.get("subagents", [])
+    sub_in_tokens = sum(int(s.get("input_tokens", 0) or 0) for s in subagents_list) if subagents_list else t_summary.get("total_input_tokens", 0)
+    sub_out_tokens = sum(int(s.get("output_tokens", 0) or 0) for s in subagents_list) if subagents_list else t_summary.get("total_output_tokens", 0)
+
+    eff_archive_dir = archived_dir or (ROOT_DIR / "reports" / "audits_archive" / course_id)
+    try:
+        archive_label = f"{eff_archive_dir.relative_to(ROOT_DIR).as_posix()}/"
+    except ValueError:
+        archive_label = f"{eff_archive_dir.as_posix()}/"
 
     # PART II: RUN AUDITOR
     md += f"""
@@ -817,24 +849,24 @@ def generate_merged_markdown_report(
 
 | Dimensión / Métrica | Valor Registrado | Observaciones de Ingeniería |
 | :--- | :--- | :--- |
-| **Material de Entrada (`pre_cta_manifest.json`)** | `{workload.get('source_files_count', len(workload.get('source_files', [])))} archivos` ({workload.get('pages_or_slides', workload.get('total_pages_or_slides', 0))} págs / {workload.get('input_mb', workload.get('total_input_mb', 0.0))} MB) | Ingesta directa PDF Zero-Waste (v3.2) |
+| **Material de Entrada (`pre_cta_manifest.json`)** | `{workload.get('source_files_count', len(workload.get('source_files', [])))} archivos` ({workload.get('pages_or_slides', workload.get('total_pages_or_slides', 0))} págs / {round(float(workload.get('input_mb', workload.get('total_input_mb', 0.0))), 2)} MB) | Ingesta directa PDF Zero-Waste (v3.2) |
 | **Competencias Extraídas (`cta.json`)** | **`{total_comps} competencias`** | Compiladas desde tuplas posicionales (`compile_cta.py`) |
 | **Shards Particionados (`pre_shard_manifest.json`)** | **`{workload.get('shards_count', len(shards_data) or 0)} shards`** | Compilados vía `compile_shard.py` |
 | **Subagentes Desplegados ($M$ CTA, $N$ Shards, $R$ Repairs, $K$ Judges)** | **`{t_summary.get('total_subagents_spawned', 0)} subagentes`** | Fan-out dinámico coordinado por orquestador (CTA: {cta_count}, Shards: {shards_count}, Repairs: {repairs_count}, Judges: {judges_count}) |
 | **Reactivos Finales Validados** | **`{total_questions} preguntas`** | Evaluadas en sandbox in-process |
-| **Tokens Entrada (Subagentes)** | **`{t_summary.get('total_input_tokens', 0):,} tokens`** | Contexto acumulativo enviado a subagentes |
-| **Tokens Salida (Subagentes)** | **`{t_summary.get('total_output_tokens', 0):,} tokens`** | Código de tuplas Python y JSON generado |
+| **Tokens Entrada (Subagentes)** | **`{sub_in_tokens:,} tokens`** | Contexto acumulativo enviado a subagentes |
+| **Tokens Salida (Subagentes)** | **`{sub_out_tokens:,} tokens`** | Código de tuplas Python y JSON generado |
 | **Tokens Caché (Leídos)** | **`{t_summary.get('total_cache_read_tokens', 0):,} tokens`** | Caché de contexto reutilizado por la API |
 | **Trazas de Pensamiento (`thinking_traces`)** | **`{total_thinking_turns} turnos` ({total_thinking_chars:,} chars)** | Razonamiento interno extraído de `transcript.jsonl` / `transcript_full.jsonl` |
 | **Gran Total Tokens Activos** | **`{t_summary.get('total_active_tokens', 0):,} tokens`** | Entrada + Salida neto (sin contar caché) |
 | **Gran Total Tokens (con Caché)** | **`{t_summary.get('total_tokens', 0):,} tokens`** | Consumo total de cuota facturable |
-| **Costo Estimado Total (Gemini 4 Hydrogen)** | **`${total_cost_usd:.4f} USD`** | In: `${cost_cb['input_usd']:.4f}` (`$1.50/1M`), Out+Think: `${cost_cb['output_usd']:.4f}` (`$7.50/1M`), Cache: `${cost_cb['cache_read_usd']:.4f}` (`$0.075/1M`) |
-| **Tiempo de Pared Total** | **`{wall_sec:.1f} s` ({wall_min} min)** | Tiempo transcurrido de principio a fin |
-| **Tiempo Cómputo Acumulado** | **`{comp_sec:.1f} s` ({comp_min} min)** | Suma escalar de tiempos de todos los agentes |
+| **Costo Estimado Total (Gemini 4 Hydrogen)** | **`${total_cost_usd:.2f} USD`** | In: `${cost_cb['input_usd']:.2f}` (`$1.50/1M`), Out+Think: `${cost_cb['output_usd']:.2f}` (`$7.50/1M`), Cache: `${cost_cb['cache_read_usd']:.2f}` (`$0.08/1M`) |
+| **Tiempo de Pared Total** | **`{wall_sec:.1f} s` ({wall_min:.2f} min)** | Tiempo transcurrido de principio a fin |
+| **Tiempo Cómputo Acumulado** | **`{comp_sec:.1f} s` ({comp_min:.2f} min)** | Suma escalar de tiempos de todos los agentes |
 | **Factor de Aceleración Paralela** | **`{speedup:.2f}x`** | Relación tiempo cómputo vs tiempo de pared |
 | **Tokens Totales por Pregunta** | **`{u_econ.get('tokens_per_question', 0.0):,.1f} tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
 | **Tokens Activos por Pregunta** | **`{u_econ.get('active_tokens_per_question', 0.0):,.1f} tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
-| **Costo Estimado por Pregunta (Hydrogen)** | **`${usd_per_q:.4f} USD/preg`** | Costo monetario por reactivo validado (`${usd_per_comp:.4f} USD/comp`) |
+| **Costo Estimado por Pregunta (Hydrogen)** | **`${usd_per_q:.2f} USD/preg`** | Costo monetario por reactivo validado (`${usd_per_comp:.2f} USD/comp`) |
 | **Tokens por Competencia (Global)** | **`{u_econ.get('tokens_per_competency', 0.0):,.1f} tokens/comp`** | Densidad de diseño instruccional del curso |
 | **Tokens de Autor por Competencia** | **`{u_econ.get('author_tokens_per_competency', 0.0):,.1f} tokens/comp`** | Costo puro de la etapa de autoría |
 | **Segundos de Pared por Pregunta** | **`{u_econ.get('seconds_per_question', 0.0):.2f} s/preg`** | Ritmo de entrega percibido |
@@ -844,8 +876,8 @@ def generate_merged_markdown_report(
 
 ## 7. Distribución Empírica del Tiempo: Inferencia LLM vs. Ejecución de Herramientas
 
-- **Porcentaje Promedio en Inferencia LLM:** `{avg_inf_pct}%`
-- **Porcentaje Promedio en Ejecución Local de Herramientas:** `{avg_tool_pct}%`
+- **Porcentaje Promedio en Inferencia LLM:** `{round(float(avg_inf_pct), 2)}%`
+- **Porcentaje Promedio en Ejecución Local de Herramientas:** `{round(float(avg_tool_pct), 2)}%`
 
 ```
 ========================================================================================
@@ -861,12 +893,12 @@ DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 
 | Etapa del Pipeline | Agentes / Shards | Tiempo de Pared (s) | Costo (USD) | Detalle Determinista |
 | :--- | :---: | :---: | :---: | :--- |
-{s1a_row}| **Stage 1B: CTA Architects** | `{stg1b.get('agents_count', stg1b.get('mappers_count', 0) + (1 if stg1b.get('harmonizer') else 0))}` | `{stg1b.get('total_stage_wall_time', 0.0)}s` | **`${stage_costs.get('stage_1b_cta', 0.0):.4f}`** | Mappers max: `{stg1b.get('mappers_max_wall_time', 0.0)}s`, Harmonizer: `{stg1b.get('harmonizer_duration', 0.0)}s` |
-| **Stage 3: Shard Authors** | `{stg3.get('shards_count', 0)}` | `{stg3.get('max_duration_seconds', 0.0)}s` | **`${stage_costs.get('stage_3_authors', 0.0):.4f}`** | Min: `{stg3.get('min_duration_seconds', 0.0)}s`, Mediana: `{stg3.get('median_duration_seconds', 0.0)}s`, Straggler: `{stg3.get('straggler_shard', 'N/A')}` (`+{stg3.get('straggler_delay_vs_median', 0.0)}s`) |
-| **Stage 3B: Repair Engineers** | `{stg3b.get('repairs_count', 0)}` | `{stg3b.get('max_duration_seconds', 0.0)}s` | **`${stage_costs.get('stage_3b_repairs', 0.0):.4f}`** | Min: `{stg3b.get('min_duration_seconds', 0.0)}s`, Mediana: `{stg3b.get('median_duration_seconds', 0.0)}s`, Straggler / Slowest: `{stg3b.get('slowest_repair', 'N/A')}` |
-| **Stage 5: Blind Judges** | `{stg5.get('judges_count', 0)}` | `{stg5.get('max_judge_duration', 0.0)}s` | **`${stage_costs.get('stage_5_judges', 0.0):.4f}`** | Lote: `{stg5.get('batch_items_count', 0)}` ítems, 1er intento: `{stg5.get('passed_first_attempt', True)}`, Auto-repair: `{stg5.get('repair_iterations', 0)}` |
-| **Orquestador Principal** | `1` | `{wall_sec:.1f}s` | **`${stage_costs.get('orchestrator', 0.0):.4f}`** | CLI: `{orch_td.get('cli_execution_seconds', 0.0)}s`, Barrera: `{orch_td.get('barrier_wait_seconds', 0.0)}s`, Intervenciones: `{orch.get('interventions_count', 0)}` (`{orch_td.get('supervisor_repair_seconds', 0.0)}s`) |
-{other_sub_row}| **TOTAL CORRIDA (Gemini 4 Hydrogen)** | **`{t_summary.get('total_subagents_spawned', 0) + 1}`** | **`{wall_sec:.1f}s`** | **`${total_cost_usd:.4f} USD`** | `${usd_per_q:.4f} USD/preg` (`${usd_per_comp:.4f} USD/comp`) |
+{s1a_row}| **Stage 1B: CTA Architects** | `{stg1b.get('agents_count', stg1b.get('mappers_count', 0) + (1 if stg1b.get('harmonizer') else 0))}` | `{round(float(stg1b.get('total_stage_wall_time', 0.0)), 2)}s` | **`${stage_costs.get('stage_1b_cta', 0.0):.2f}`** | Mappers max: `{round(float(stg1b.get('mappers_max_wall_time', 0.0)), 2)}s`, Harmonizer: `{round(float(stg1b.get('harmonizer_duration', 0.0)), 2)}s` |
+| **Stage 3: Shard Authors** | `{stg3.get('shards_count', 0)}` | `{round(float(stg3.get('max_duration_seconds', 0.0)), 2)}s` | **`${stage_costs.get('stage_3_authors', 0.0):.2f}`** | Min: `{round(float(stg3.get('min_duration_seconds', 0.0)), 2)}s`, Mediana: `{round(float(stg3.get('median_duration_seconds', 0.0)), 2)}s`, Straggler: `{stg3.get('straggler_shard', 'N/A')}` (`+{round(float(stg3.get('straggler_delay_vs_median', 0.0)), 2)}s`) |
+| **Stage 3B: Repair Engineers** | `{stg3b.get('repairs_count', 0)}` | `{round(float(stg3b.get('max_duration_seconds', 0.0)), 2)}s` | **`${stage_costs.get('stage_3b_repairs', 0.0):.2f}`** | Min: `{round(float(stg3b.get('min_duration_seconds', 0.0)), 2)}s`, Mediana: `{round(float(stg3b.get('median_duration_seconds', 0.0)), 2)}s`, Straggler / Slowest: `{stg3b.get('slowest_repair', 'N/A')}` |
+| **Stage 5: Blind Judges** | `{stg5.get('judges_count', 0)}` | `{round(float(stg5.get('max_judge_duration', 0.0)), 2)}s` | **`${stage_costs.get('stage_5_judges', 0.0):.2f}`** | Lote: `{stg5.get('batch_items_count', 0)}` ítems, 1er intento: `{stg5.get('passed_first_attempt', True)}`, Auto-repair: `{stg5.get('repair_iterations', 0)}` |
+| **Orquestador Principal** | `1` | `{wall_sec:.1f}s` | **`${stage_costs.get('orchestrator', 0.0):.2f}`** | CLI: `{round(float(orch_td.get('cli_execution_seconds', 0.0)), 2)}s`, Barrera: `{round(float(orch_td.get('barrier_wait_seconds', 0.0)), 2)}s`, Intervenciones: `{orch.get('interventions_count', 0)}` (`{round(float(orch_td.get('supervisor_repair_seconds', 0.0)), 2)}s`) |
+{other_sub_row}| **TOTAL CORRIDA (Gemini 4 Hydrogen)** | **`{t_summary.get('total_subagents_spawned', 0) + 1}`** | **`{wall_sec:.1f}s`** | **`${total_cost_usd:.2f} USD`** | `${usd_per_q:.2f} USD/preg` (`${usd_per_comp:.2f} USD/comp`) |
 
 ---
 
@@ -880,12 +912,12 @@ DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 
 ## 10. Paquete Forense Agéntico Completo (Argon QA + Clúster Flash)
 
-Todos los artefactos originales individuales generados por los auditores especializados se preservan íntegros en [`reports/audits_archive/{course_id}/`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id).as_posix()}/):
+Todos los artefactos originales individuales generados por los auditores especializados se preservan íntegros en [`{archive_label}`](file:///{eff_archive_dir.as_posix()}/):
 
-- **Auditoría Cualitativa Profunda de Calidad (Gemini 4 Argon):** [`qa_report.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'qa_report.md').as_posix()}) *(autocontenido con metadatos JSON embebidos)*
-- **Informe Maestro Agéntico del Pipeline (Gemini Flash Lead + 3 Subagentes):** [`agentic_pipeline_audit.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'agentic_pipeline_audit.md').as_posix()})
-- **Sub-Auditorías del Clúster Agéntico (`agentic_batches/`):** [`agentic_batches/`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'agentic_batches').as_posix()}/)
-- **Índice Completo del Archivo Persistente:** [`README.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'README.md').as_posix()})
+- **Auditoría Cualitativa Profunda de Calidad (Gemini 4 Argon):** [`qa_report.md`](file:///{(eff_archive_dir / 'qa_report.md').as_posix()}) *(autocontenido con metadatos JSON embebidos)*
+- **Informe Maestro Agéntico del Pipeline (Gemini Flash Lead + 3 Subagentes):** [`agentic_pipeline_audit.md`](file:///{(eff_archive_dir / 'agentic_pipeline_audit.md').as_posix()})
+- **Sub-Auditorías del Clúster Agéntico (`agentic_batches/`):** [`agentic_batches/`](file:///{(eff_archive_dir / 'agentic_batches').as_posix()}/)
+- **Índice Completo del Archivo Persistente:** [`README.md`](file:///{(eff_archive_dir / 'README.md').as_posix()})
 """
     return md
 
@@ -936,7 +968,7 @@ def run_unified_audit(
                 # Execute audit_engine
                 from audit_engine import TranscriptParser, WorkloadExtractor, ExecutionAuditor, ReportGenerator, HistoricalRegistry
                 records = TranscriptParser.parse_file(transcript_path)
-                workload = WorkloadExtractor.extract(records=records)
+                workload = WorkloadExtractor.extract(records=records, target_conv_id=conv_id)
                 auditor = ExecutionAuditor(root_records=records, root_conv_id=conv_id)
                 audit_result = auditor.audit(workload=workload)
 
@@ -977,8 +1009,14 @@ def run_unified_audit(
     telemetry_data, traceback_data = load_telemetry_and_traceback(conv_id or "", course_id)
 
     # 5. Archive all individual original source files
-    print(f"[*] Archiving all original source audit files into reports/audits_archive/{course_id}/...")
-    archived_dir = archive_original_files(course_id, conv_id or "unknown", run_dir)
+    archived_dir = archive_original_files(
+        course_id,
+        conv_id or "unknown",
+        run_dir,
+        archive_base=archive_dir,
+        c2c_base=c2c_base,
+    )
+    print(f"[*] Archived original source audit files into {archived_dir}...")
 
     # 6. Generate Merged Report
     print(f"[*] Generating Unified Merged Report with Table of Contents...")
@@ -989,6 +1027,7 @@ def run_unified_audit(
         payload_data=payload_data,
         telemetry_data=telemetry_data,
         traceback_data=traceback_data,
+        archived_dir=archived_dir,
     )
 
     # Save merged report in reports/c2c_audits/
@@ -1005,7 +1044,7 @@ def run_unified_audit(
     print(f"    - Quality Score:    {qa_report.get('final_score', 'N/A')} / 20.0 ({qa_report.get('quality_tier', 'N/A')})")
     print(f"    - Wall-Clock Time:  {telemetry_data.get('summary', {}).get('wall_clock_minutes', 'N/A')} min")
     print(f"    - Speedup Factor:   {telemetry_data.get('summary', {}).get('parallel_speedup_factor', 'N/A')}x")
-    print(f"    - Est. Cost (H2):   ${_fin_costs['total_cost_usd']:.4f} USD (Gemini 4 Hydrogen)\n")
+    print(f"    - Est. Cost (H2):   ${_fin_costs['total_cost_usd']:.2f} USD (Gemini 4 Hydrogen)\n")
 
     return merged_output_file
 

@@ -79,10 +79,29 @@ def summarize_course(course_entry: dict) -> dict:
     competencies = data.get("competencies", [])
     questions = data.get("questions", [])
 
-    # 1. Run deterministic static audit engine (< 300 ms)
+    # 1. Ingest Stage-5 Blind Judge verification report if available in courses/<id>/work/
+    cid_slug = str(course_entry.get("id") or data.get("course_id") or "")
+    judge_audit: dict = {"available": False}
+    if cid_slug:
+        j_cand = COURSES_DIR / cid_slug / "work" / "judge_report.json"
+        if j_cand.is_file():
+            try:
+                j_raw = json.loads(j_cand.read_text(encoding="utf-8"))
+                judge_audit = {
+                    "available": True,
+                    "total_items_judged": j_raw.get("total_items", 0),
+                    "agreed_items": j_raw.get("agreed_items", 0),
+                    "agreement_rate": round(float(j_raw.get("agreement_rate", 1.0)), 2),
+                    "unrepaired_disagreements_count": len(j_raw.get("disagreements", [])),
+                    "unrepaired_disagreements": j_raw.get("disagreements", [])[:10],
+                }
+            except Exception:
+                pass
+
+    # 2. Run deterministic static audit engine (< 300 ms)
     telemetry = {}
     if run_full_audit:
-        telemetry = run_full_audit(data)
+        telemetry = run_full_audit(data, judge_audit=judge_audit)
 
     comp_map = {c.get("id"): c for c in competencies}
     q_by_comp: dict[str, list[dict]] = {c.get("id"): [] for c in competencies}
@@ -140,9 +159,6 @@ def summarize_course(course_entry: dict) -> dict:
         for qid in item_ids[:5]:
             q_item = q_by_id.get(qid)
             if q_item:
-                risk_cluster_samples[cluster_name] = {  # type: ignore[assignment]
-                    "items": []
-                } if not isinstance(risk_cluster_samples[cluster_name], list) else risk_cluster_samples[cluster_name]
                 rc_item = {
                     "id": qid,
                     "competency_id": q_item.get("competency_id"),
@@ -167,25 +183,6 @@ def summarize_course(course_entry: dict) -> dict:
                     if q_item.get(m20_key) is not None:
                         rc_item[m20_key] = q_item[m20_key]
                 risk_cluster_samples[cluster_name].append(rc_item)
-
-    # 4. Ingest Stage-5 Blind Judge verification report if available in courses/<id>/work/
-    cid_slug = str(course_entry.get("id") or "")
-    judge_audit: dict = {"available": False}
-    if cid_slug:
-        j_cand = COURSES_DIR / cid_slug / "work" / "judge_report.json"
-        if j_cand.is_file():
-            try:
-                j_raw = json.loads(j_cand.read_text(encoding="utf-8"))
-                judge_audit = {
-                    "available": True,
-                    "total_items_judged": j_raw.get("total_items", 0),
-                    "agreed_items": j_raw.get("agreed_items", 0),
-                    "agreement_rate": j_raw.get("agreement_rate", 1.0),
-                    "unrepaired_disagreements_count": len(j_raw.get("disagreements", [])),
-                    "unrepaired_disagreements": j_raw.get("disagreements", [])[:10],
-                }
-            except Exception:
-                pass
 
     return {
         "course_id": data.get("course_id") or course_entry.get("id"),

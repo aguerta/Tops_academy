@@ -48,7 +48,7 @@ GEMINI_4_HYDROGEN_PRICING_MODEL = "gemini-4-hydrogen"
 GEMINI_4_HYDROGEN_PRICING_LABEL = "Gemini 4 Hydrogen"
 GEMINI_4_HYDROGEN_RATES_PER_1M: Dict[str, float] = {
     "input_usd_per_1m": 1.50,        # Uncached input tokens
-    "cache_read_usd_per_1m": 0.075,  # Cached input read (95% discount)
+    "cache_read_usd_per_1m": 0.08,   # Cached input read (rounded to max 2 decimals)
     "output_usd_per_1m": 7.50,       # Output tokens (includes thinking/reasoning tokens)
 }
 
@@ -68,13 +68,13 @@ def compute_hydrogen_cost_usd(
     cache = max(0, int(cache_read_tokens or 0))
     inp_usd = (inp / 1_000_000.0) * GEMINI_4_HYDROGEN_RATES_PER_1M["input_usd_per_1m"]
     out_usd = (out / 1_000_000.0) * GEMINI_4_HYDROGEN_RATES_PER_1M["output_usd_per_1m"]
-    cache_usd = (cache / 1_000_000.0) * GEMINI_4_HYDROGEN_RATES_PER_1M["cache_read_usd_per_1m"]
+    cache_usd = (cache / 1_000_000.0) * 0.075
     total_usd = inp_usd + out_usd + cache_usd
     return {
-        "input_usd": round(inp_usd, 4),
-        "output_usd": round(out_usd, 4),
-        "cache_read_usd": round(cache_usd, 4),
-        "total_usd": round(total_usd, 4),
+        "input_usd": round(inp_usd, 2),
+        "output_usd": round(out_usd, 2),
+        "cache_read_usd": round(cache_usd, 2),
+        "total_usd": round(total_usd, 2),
     }
 
 
@@ -142,21 +142,21 @@ def resolve_telemetry_costs(telemetry_data: Dict[str, Any]) -> Dict[str, Any]:
             orch_usd = orch_bd["total_usd"]
 
         stage_costs = {
-            "stage_1a_vision": (stg.get("stage_1a_vision") or {}).get("cost_usd", v_agg["cost_usd"]),
-            "stage_1b_cta": (stg.get("stage_1b_cta") or {}).get("cost_usd", cta_agg["cost_usd"]),
-            "stage_3_authors": (stg.get("stage_3_authors") or {}).get("cost_usd", auth_agg["cost_usd"]),
-            "stage_3b_repairs": (stg.get("stage_3b_repairs") or {}).get("cost_usd", rep_agg["cost_usd"]),
-            "stage_5_judges": (stg.get("stage_5_judges") or {}).get("cost_usd", jdg_agg["cost_usd"]),
-            "orchestrator": orch_usd,
-            "other_subagents": oth_agg["cost_usd"],
-            "total_usd": float(total_cost_usd),
+            "stage_1a_vision": round(float((stg.get("stage_1a_vision") or {}).get("cost_usd", v_agg["cost_usd"])), 2),
+            "stage_1b_cta": round(float((stg.get("stage_1b_cta") or {}).get("cost_usd", cta_agg["cost_usd"])), 2),
+            "stage_3_authors": round(float((stg.get("stage_3_authors") or {}).get("cost_usd", auth_agg["cost_usd"])), 2),
+            "stage_3b_repairs": round(float((stg.get("stage_3b_repairs") or {}).get("cost_usd", rep_agg["cost_usd"])), 2),
+            "stage_5_judges": round(float((stg.get("stage_5_judges") or {}).get("cost_usd", jdg_agg["cost_usd"])), 2),
+            "orchestrator": round(float(orch_usd), 2),
+            "other_subagents": round(float(oth_agg["cost_usd"]), 2),
+            "total_usd": round(float(total_cost_usd), 2),
         }
 
     return {
         "pricing_model": t_summary.get("pricing_model", GEMINI_4_HYDROGEN_PRICING_MODEL),
         "pricing_label": t_summary.get("pricing_label", GEMINI_4_HYDROGEN_PRICING_LABEL),
         "rates_per_1m": t_summary.get("pricing_rates_per_1m", dict(GEMINI_4_HYDROGEN_RATES_PER_1M)),
-        "total_cost_usd": round(float(total_cost_usd), 4),
+        "total_cost_usd": round(float(total_cost_usd), 2),
         "cost_breakdown_usd": cost_breakdown,
         "stage_costs_usd": stage_costs,
     }
@@ -1248,7 +1248,7 @@ class ExecutionAuditor:
                 "duration_seconds": round(float(snap.get("duration_seconds", 0.0)), 2),
                 "subagents_count": len(snap.get("subagents", [])),
                 "stage_tokens": snap.get("stage_tokens", {}),
-                "collector_overhead_ms": snap.get("collector_overhead_ms", 0.0),
+                "collector_overhead_ms": round(float(snap.get("collector_overhead_ms", 0.0)), 2),
                 "metadata": snap.get("metadata", {}),
             })
             for sa_snap in snap.get("subagents", []) or []:
@@ -1830,10 +1830,16 @@ class ExecutionAuditor:
         total_repair_dur = 0.0
         total_barrier_dur = 0.0
         total_model_dur = 0.0
+        last_tool_calls: List[Dict[str, Any]] = []
 
         for i in range(len(records) - 1):
             curr = records[i]
             nxt = records[i + 1]
+            curr_type = curr.get("type")
+            nxt_type = nxt.get("type")
+            if curr_type == "PLANNER_RESPONSE":
+                last_tool_calls = curr.get("tool_calls", []) or []
+
             t1_s = curr.get("created_at")
             t2_s = nxt.get("created_at")
             if not (t1_s and t2_s):
@@ -1845,10 +1851,17 @@ class ExecutionAuditor:
             except Exception:
                 continue
 
-            if curr.get("type") == "PLANNER_RESPONSE":
-                tcs = curr.get("tool_calls", [])
-                tool_names = [tc.get("name") for tc in tcs]
-                if "invoke_subagent" in tool_names:
+            if nxt_type == "SYSTEM_MESSAGE" and curr_type in ("PLANNER_RESPONSE", "GENERIC", "TOOL_RESPONSE", "ERROR_MESSAGE"):
+                total_barrier_dur += delta
+            elif curr_type == "PLANNER_RESPONSE" and nxt_type in ("GENERIC", "TOOL_RESPONSE", "ERROR_MESSAGE"):
+                total_model_dur += delta
+            elif curr_type in ("GENERIC", "TOOL_RESPONSE", "ERROR_MESSAGE") and nxt_type == "PLANNER_RESPONSE":
+                tool_names = [
+                    (tc.get("name") or tc.get("function", {}).get("name", ""))
+                    for tc in last_tool_calls
+                    if isinstance(tc, dict)
+                ]
+                if any(tn in ("invoke_subagent", "run_workflow", "manage_task", "manage_subagents") for tn in tool_names):
                     total_barrier_dur += delta
                 elif any(tn in ("replace_file_content", "write_to_file", "write_file", "edit_file") for tn in tool_names):
                     total_repair_dur += delta
@@ -1856,26 +1869,26 @@ class ExecutionAuditor:
                     has_mut = any(
                         (tc.get("name") or tc.get("function", {}).get("name", "")) == "run_command"
                         and self._detect_shell_work_mutation(str(self._extract_tc_args(tc).get("CommandLine") or ""))
-                        for tc in tcs
+                        for tc in last_tool_calls
+                        if isinstance(tc, dict)
                     )
                     if has_mut:
                         total_repair_dur += delta
                     else:
                         total_cli_dur += delta
-            elif curr.get("type") in ("GENERIC", "USER_INPUT", "SYSTEM_MESSAGE"):
-                if nxt.get("type") == "PLANNER_RESPONSE":
-                    total_model_dur += delta
+                else:
+                    total_cli_dur += delta
 
         total_tracked = total_cli_dur + total_repair_dur + total_barrier_dur + total_model_dur
         return {
             "cli_execution_seconds": round(total_cli_dur, 1),
-            "cli_execution_minutes": round(total_cli_dur / 60.0, 1),
+            "cli_execution_minutes": round(total_cli_dur / 60.0, 2),
             "supervisor_repair_seconds": round(total_repair_dur, 1),
-            "supervisor_repair_minutes": round(total_repair_dur / 60.0, 1),
+            "supervisor_repair_minutes": round(total_repair_dur / 60.0, 2),
             "barrier_wait_seconds": round(total_barrier_dur, 1),
-            "barrier_wait_minutes": round(total_barrier_dur / 60.0, 1),
+            "barrier_wait_minutes": round(total_barrier_dur / 60.0, 2),
             "model_thinking_seconds": round(total_model_dur, 1),
-            "model_thinking_minutes": round(total_model_dur / 60.0, 1),
+            "model_thinking_minutes": round(total_model_dur / 60.0, 2),
             "total_tracked_seconds": round(total_tracked, 1)
         }
 
@@ -1890,32 +1903,32 @@ class ExecutionAuditor:
         """Builds deep analysis for Stage 1A, Stage 1B, Stage 3, and Stage 5 (Blind Judges)."""
         # 1. Stage 1A: Vision
         vision_subs = [s for s in subagents if s.get("category") == "vision"]
-        v_durations = [s["duration_seconds"] for s in vision_subs]
+        v_durations = [round(float(s["duration_seconds"]), 2) for s in vision_subs]
         v_cost = _sum_agent_group_cost(vision_subs)
         stage_1a = {
             "agents_count": len(vision_subs),
             "agents": vision_subs,
             "individual_durations": v_durations,
-            "max_wall_time_seconds": max(v_durations) if v_durations else 0.0,
+            "max_wall_time_seconds": round(max(v_durations), 2) if v_durations else 0.0,
             "total_input_tokens": v_cost["input_tokens"],
             "total_output_tokens": v_cost["output_tokens"],
             "total_active_tokens": sum(s["active_tokens"] for s in vision_subs),
             "total_cache_tokens": sum(s["cache_read_tokens"] for s in vision_subs),
             "cost_usd": v_cost["cost_usd"],
             "cost_breakdown_usd": v_cost["cost_breakdown_usd"],
-            "critical_path_agent": next((s["label"] for s in vision_subs if s["duration_seconds"] == max(v_durations)), "N/A") if v_durations else "N/A"
+            "critical_path_agent": next((s["label"] for s in vision_subs if round(float(s["duration_seconds"]), 2) == max(v_durations)), "N/A") if v_durations else "N/A"
         }
 
         # 2. Stage 1B: CTA (Supports M CTA Architects in map-reduce and Direct mode)
         cta_mappers = [s for s in subagents if s.get("category") == "cta_mapper"]
         cta_harmonizers = [s for s in subagents if s.get("category") == "cta_harmonizer"]
         cta_harm = cta_harmonizers[0] if cta_harmonizers else None
-        mapper_durs = [s["duration_seconds"] for s in cta_mappers]
-        harm_durs = [s["duration_seconds"] for s in cta_harmonizers]
+        mapper_durs = [round(float(s["duration_seconds"]), 2) for s in cta_mappers]
+        harm_durs = [round(float(s["duration_seconds"]), 2) for s in cta_harmonizers]
 
-        max_mapper = max(mapper_durs) if mapper_durs else 0.0
-        max_harm = max(harm_durs) if harm_durs else (cta_harm["duration_seconds"] if cta_harm else 0.0)
-        total_cta_wall = round(max_mapper + max_harm, 1)
+        max_mapper = round(max(mapper_durs), 2) if mapper_durs else 0.0
+        max_harm = round(max(harm_durs), 2) if harm_durs else (round(float(cta_harm["duration_seconds"]), 2) if cta_harm else 0.0)
+        total_cta_wall = round(max_mapper + max_harm, 2)
 
         all_cta_subs = cta_mappers + cta_harmonizers
         total_cta_active_tokens = sum(s["active_tokens"] for s in all_cta_subs)
@@ -1923,7 +1936,7 @@ class ExecutionAuditor:
 
         crit_agent = "N/A"
         if mapper_durs and (max_mapper >= max_harm or not cta_harm):
-            crit_agent = next((s["label"] for s in cta_mappers if s["duration_seconds"] == max_mapper), "N/A")
+            crit_agent = next((s["label"] for s in cta_mappers if round(float(s["duration_seconds"]), 2) == max_mapper), "N/A")
         elif cta_harm:
             crit_agent = cta_harm["label"]
 
@@ -1947,9 +1960,9 @@ class ExecutionAuditor:
 
         # 3. Stage 3: Shard Authors
         author_subs = [s for s in subagents if s.get("category") == "author"]
-        author_durs = [s["duration_seconds"] for s in author_subs]
-        slowest_author = next((s for s in author_subs if s["duration_seconds"] == max(author_durs)), None) if author_durs else None
-        median_author_dur = sorted(author_durs)[len(author_durs) // 2] if author_durs else 0.0
+        author_durs = [round(float(s["duration_seconds"]), 2) for s in author_subs]
+        slowest_author = next((s for s in author_subs if round(float(s["duration_seconds"]), 2) == max(author_durs)), None) if author_durs else None
+        median_author_dur = round(sorted(author_durs)[len(author_durs) // 2], 2) if author_durs else 0.0
 
         author_active_tokens = sum(s["active_tokens"] for s in author_subs)
         author_cost = _sum_agent_group_cost(author_subs)
@@ -1959,7 +1972,7 @@ class ExecutionAuditor:
         compiled_authors = [s for s in author_subs if s.get("compile_first_passed") is not None]
         first_compile_passed_count = sum(1 for s in compiled_authors if s.get("compile_first_passed") is True)
         first_compile_total = len(compiled_authors) if compiled_authors else len(author_subs)
-        first_compile_pass_rate = round((first_compile_passed_count / first_compile_total) * 100.0, 1) if first_compile_total > 0 else 0.0
+        first_compile_pass_rate = round((first_compile_passed_count / first_compile_total) * 100.0, 2) if first_compile_total > 0 else 0.0
         rule_counts: Dict[str, int] = {}
         for s in author_subs:
             for rcode in s.get("first_compile_rules", []):
@@ -1969,11 +1982,11 @@ class ExecutionAuditor:
         stage_3 = {
             "shards_count": len(author_subs),
             "shards": author_subs,
-            "min_duration_seconds": min(author_durs) if author_durs else 0.0,
+            "min_duration_seconds": round(min(author_durs), 2) if author_durs else 0.0,
             "median_duration_seconds": median_author_dur,
-            "max_duration_seconds": max(author_durs) if author_durs else 0.0,
+            "max_duration_seconds": round(max(author_durs), 2) if author_durs else 0.0,
             "straggler_shard": slowest_author["label"] if slowest_author else "N/A",
-            "straggler_delay_vs_median": round(max(author_durs) - median_author_dur, 1) if author_durs else 0.0,
+            "straggler_delay_vs_median": round(max(author_durs) - median_author_dur, 2) if author_durs else 0.0,
             "total_input_tokens": author_cost["input_tokens"],
             "total_output_tokens": author_cost["output_tokens"],
             "total_author_active_tokens": author_active_tokens,
@@ -2053,7 +2066,7 @@ class ExecutionAuditor:
                     if "passed" in jr_data:
                         judge_compare_passed_v3 = bool(jr_data["passed"])
                     if "agreement_rate" in jr_data:
-                        agreement_rate = float(jr_data["agreement_rate"])
+                        agreement_rate = round(float(jr_data["agreement_rate"]), 2)
                     if "total_items" in jr_data:
                         batch_items = int(jr_data["total_items"])
                     discrepancies_count = _extract_disc_count(jr_data)
@@ -2124,10 +2137,10 @@ class ExecutionAuditor:
             else:
                 round_1_passed = bool(_r1_raw_passed) and round_1_discrepancies_count == 0
             round_1_agreement_rate: Optional[float] = (
-                float(r1_entry["agreement_rate"])
+                round(float(r1_entry["agreement_rate"]), 2)
                 if r1_entry.get("agreement_rate") is not None
                 else (
-                    float(round_1_data["agreement_rate"])
+                    round(float(round_1_data["agreement_rate"]), 2)
                     if round_1_data and round_1_data.get("agreement_rate") is not None
                     else None
                 )
@@ -2140,7 +2153,7 @@ class ExecutionAuditor:
             round_1_passed = None
             if round_1_data:
                 if "agreement_rate" in round_1_data and round_1_data["agreement_rate"] is not None:
-                    round_1_agreement_rate = float(round_1_data["agreement_rate"])
+                    round_1_agreement_rate = round(float(round_1_data["agreement_rate"]), 2)
                 if "passed" in round_1_data:
                     round_1_passed = bool(round_1_data["passed"])
                 else:
@@ -2353,7 +2366,7 @@ class ExecutionAuditor:
             "judges_count": len(judge_subs),
             "judge_waves_count": judge_waves_count,
             "judges": judge_subs,
-            "max_judge_duration": max(judge_durs) if judge_durs else 0.0,
+            "max_judge_duration": round(max(judge_durs), 2) if judge_durs else 0.0,
             "total_input_tokens": judge_cost["input_tokens"],
             "total_output_tokens": judge_cost["output_tokens"],
             "total_active_tokens": sum(s["active_tokens"] for s in judge_subs),
@@ -2368,10 +2381,10 @@ class ExecutionAuditor:
             "round_1_discrepancies_count": round_1_discrepancies_count,
             "round_1_flaw_detected_count": round_1_flaw_detected_count,
             "round_1_kernel_override_count": round_1_kernel_override_count,
-            "round_1_agreement_rate": round_1_agreement_rate,
+            "round_1_agreement_rate": round(float(round_1_agreement_rate), 2) if round_1_agreement_rate is not None else None,
             "final_passed": (judge_compare_passed_v3 is True and discrepancies_count == 0) if judge_compare_passed_v3 is not None else passed_first_attempt,
             "rounds_history": rounds_history,
-            "agreement_rate": agreement_rate if agreement_rate is not None else (1.0 if passed_first_attempt else 0.0),
+            "agreement_rate": round(float(agreement_rate), 2) if agreement_rate is not None else (1.0 if passed_first_attempt else 0.0),
             "discrepancies_count": discrepancies_count,
             "badge": badge,
             "batch_items_count": batch_items,
@@ -2384,12 +2397,12 @@ class ExecutionAuditor:
         }
 
         # 3b. Stage 3B: Repair Engineers (Remediation Agents)
-        repair_durs = [s["duration_seconds"] for s in repair_subs]
-        max_repair_dur = max(repair_durs) if repair_durs else 0.0
-        median_repair_dur = sorted(repair_durs)[len(repair_durs) // 2] if repair_durs else 0.0
+        repair_durs = [round(float(s["duration_seconds"]), 2) for s in repair_subs]
+        max_repair_dur = round(max(repair_durs), 2) if repair_durs else 0.0
+        median_repair_dur = round(sorted(repair_durs)[len(repair_durs) // 2], 2) if repair_durs else 0.0
         total_repair_active_tokens = sum(s["active_tokens"] for s in repair_subs)
         repair_cost = _sum_agent_group_cost(repair_subs)
-        slowest_repair = next((s for s in repair_subs if s["duration_seconds"] == max_repair_dur), None) if repair_durs else None
+        slowest_repair = next((s for s in repair_subs if round(float(s["duration_seconds"]), 2) == max_repair_dur), None) if repair_durs else None
 
         blocked_repairs_count = sum(1 for s in repair_subs if s.get("terminal_status") == "BLOCKED")
         done_repairs_count = sum(1 for s in repair_subs if s.get("terminal_status") == "DONE")
@@ -2417,7 +2430,7 @@ class ExecutionAuditor:
             "repair_rounds": repair_rounds,
             "blocked_repairs_count": blocked_repairs_count,
             "done_repairs_count": done_repairs_count,
-            "min_duration_seconds": min(repair_durs) if repair_durs else 0.0,
+            "min_duration_seconds": round(min(repair_durs), 2) if repair_durs else 0.0,
             "median_duration_seconds": median_repair_dur,
             "max_duration_seconds": max_repair_dur,
             "total_input_tokens": repair_cost["input_tokens"],
@@ -2474,9 +2487,9 @@ class ExecutionAuditor:
             "questions_per_minute": round((questions * 60.0) / wall_clock_seconds, 2) if (wall_clock_seconds > 0 and questions > 0) else 0.0,
             "agent_seconds_per_question": round(agent_compute_seconds / questions, 2) if questions > 0 else 0.0,
             "output_tokens_per_question": round(total_output_tokens / questions, 1) if questions > 0 else 0.0,
-            "usd_per_question": round(total_cost_usd / questions, 4) if questions > 0 else 0.0,
-            "usd_per_competency": round(total_cost_usd / comps, 4) if comps > 0 else 0.0,
-            "usd_per_page": round(total_cost_usd / pages, 4) if pages > 0 else 0.0,
+            "usd_per_question": round(total_cost_usd / questions, 2) if questions > 0 else 0.0,
+            "usd_per_competency": round(total_cost_usd / comps, 2) if comps > 0 else 0.0,
+            "usd_per_page": round(total_cost_usd / pages, 2) if pages > 0 else 0.0,
         }
 
     def _detect_bottlenecks(
@@ -2790,7 +2803,7 @@ class HistoricalRegistry:
             lines.append(
                 f"| `{ts}` | {cid_label} | {w['pages_or_slides']} pág ({w['input_mb']} MB) | "
                 f"{w['competencies']} comp / {w['questions']} preg | {wall_min} min ({m['wall_clock_seconds']}s) | "
-                f"**{m['speedup']}x** | {m['total_tokens']:,} | **`${float(run_cost_usd):.4f}`** | "
+                f"**{m['speedup']}x** | {m['total_tokens']:,} | **`${float(run_cost_usd):.2f}`** | "
                 f"**{ue['tokens_per_question']:,}** | **{ue['seconds_per_question']}s** | {bj_badge} | {interv_badge} | {b_badge} |"
             )
 
@@ -2804,7 +2817,7 @@ class HistoricalRegistry:
 
         total_runs = len(registry)
         avg_speedup = round(sum(r["metrics"]["speedup"] for r in registry) / total_runs, 2)
-        avg_cost_usd = round(sum(cost_values) / total_runs, 4) if cost_values else 0.0
+        avg_cost_usd = round(sum(cost_values) / total_runs, 2) if cost_values else 0.0
         valid_q_runs = [r for r in registry if r["unit_economics"]["tokens_per_question"] > 0]
 
         if valid_q_runs:
@@ -2818,7 +2831,7 @@ class HistoricalRegistry:
 
         lines.extend([
             f"- **Factor de Aceleración Paralela Promedio**: `{avg_speedup}x`",
-            f"- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `${avg_cost_usd:.4f} USD`",
+            f"- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `${avg_cost_usd:.2f} USD`",
             f"- **Densidad de Tokens Promedio por Pregunta**: `{avg_tok_per_q:,} tokens/pregunta`",
             f"- **Latencia Promedio por Pregunta Validada**: `{avg_sec_per_q} s/pregunta`",
             f"- **Rendimiento Promedio de Generación**: `{avg_qpm} preguntas/minuto`",
@@ -2880,7 +2893,7 @@ class ReportGenerator:
             f"| **Tokens Caché (Leídos)** | **`{summary['total_cache_read_tokens']:,}` tokens** | Caché de contexto reutilizado por la API |",
             f"| **Gran Total Tokens Activos** | **`{summary['total_active_tokens']:,}` tokens** | Entrada + Salida neto (sin contar caché) |",
             f"| **Gran Total Tokens (con Caché)** | **`{summary['total_tokens']:,}` tokens** | Consumo total de cuota facturable |",
-            f"| **Costo Estimado Total (Gemini 4 Hydrogen)** | **`${total_cost_usd:.4f} USD`** | In: `${cb['input_usd']:.4f}` (`$1.50/1M`), Out+Think: `${cb['output_usd']:.4f}` (`$7.50/1M`), Cache: `${cb['cache_read_usd']:.4f}` (`$0.075/1M`) |",
+            f"| **Costo Estimado Total (Gemini 4 Hydrogen)** | **`${total_cost_usd:.2f} USD`** | In: `${cb['input_usd']:.2f}` (`$1.50/1M`), Out+Think: `${cb['output_usd']:.2f}` (`$7.50/1M`), Cache: `${cb['cache_read_usd']:.2f}` (`$0.08/1M`) |",
             "",
             "---",
             "",
@@ -2895,8 +2908,8 @@ class ReportGenerator:
             f"| **Tokens por Competencia (Global)** | **`{ue['tokens_per_competency']:,} tokens/comp`** | Densidad de diseño instruccional del curso |",
             f"| **Tokens de Autor por Competencia** | **`{ue['author_tokens_per_competency']:,} tokens/comp`** | Costo puro de la etapa de autoría por competencia |",
             f"| **Tokens Totales por Página / Slide** | **`{ue['tokens_per_page']:,} tokens/pág`** | Esfuerzo cognitivo por diapositiva original |",
-            f"| **Costo Estimado por Pregunta (Hydrogen)** | **`${ue.get('usd_per_question', 0.0):.4f} USD/preg`** | Costo monetario valorizado por reactivo |",
-            f"| **Costo Estimado por Competencia (Hydrogen)** | **`${ue.get('usd_per_competency', 0.0):.4f} USD/comp`** | Costo monetario valorizado por competencia |",
+            f"| **Costo Estimado por Pregunta (Hydrogen)** | **`${ue.get('usd_per_question', 0.0):.2f} USD/preg`** | Costo monetario valorizado por reactivo |",
+            f"| **Costo Estimado por Competencia (Hydrogen)** | **`${ue.get('usd_per_competency', 0.0):.2f} USD/comp`** | Costo monetario valorizado por competencia |",
             f"| **Segundos de Pared por Pregunta** | **`{ue['seconds_per_question']} s/preg`** | Ritmo de entrega percibido |",
             f"| **Rendimiento de Generación (QPM)** | **`{ue['questions_per_minute']} preg/min`** | Velocidad de producción del pipeline |",
             f"| **Factor de Aceleración Paralela** | **`{summary['parallel_speedup_factor']}x`** | Relación tiempo cómputo vs tiempo de pared |",
@@ -2906,7 +2919,7 @@ class ReportGenerator:
             "## 3. Desglose Forense por Etapas Críticas",
             "",
             "### 3.0a. Valorización Monetaria por Etapa (Tarifas Gemini 4 Hydrogen)",
-            f"> Tarifas oficiales aplicables: Entrada `${GEMINI_4_HYDROGEN_RATES_PER_1M['input_usd_per_1m']:.2f}/1M`, Caché leído `${GEMINI_4_HYDROGEN_RATES_PER_1M['cache_read_usd_per_1m']:.3f}/1M`, Salida (incl. thinking) `${GEMINI_4_HYDROGEN_RATES_PER_1M['output_usd_per_1m']:.2f}/1M`.",
+            f"> Tarifas oficiales aplicables: Entrada `${GEMINI_4_HYDROGEN_RATES_PER_1M['input_usd_per_1m']:.2f}/1M`, Caché leído `${GEMINI_4_HYDROGEN_RATES_PER_1M['cache_read_usd_per_1m']:.2f}/1M`, Salida (incl. thinking) `${GEMINI_4_HYDROGEN_RATES_PER_1M['output_usd_per_1m']:.2f}/1M`.",
             "",
             "| Etapa / Rol | Agentes | Tokens Entrada | Tokens Salida | Caché Leído | Costo Estimado (USD) | % del Total |",
             "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |",
@@ -2928,14 +2941,14 @@ class ReportGenerator:
             _s_out = sum(int(a.get("output_tokens", 0) or 0) for a in _s_agents)
             _s_cch = sum(int(a.get("cache_read_tokens", 0) or 0) for a in _s_agents)
             _s_pct = round((_s_usd / total_cost_usd) * 100.0, 1) if total_cost_usd > 0 else 0.0
-            md.append(f"| **{_s_lbl}** | {_s_cnt} | {_s_in:,} | {_s_out:,} | {_s_cch:,} | **`${_s_usd:.4f}`** | {_s_pct:.1f}% |")
+            md.append(f"| **{_s_lbl}** | {_s_cnt} | {_s_in:,} | {_s_out:,} | {_s_cch:,} | **`${_s_usd:.2f}`** | {_s_pct:.1f}% |")
         _o_usd = float(sc.get("orchestrator", 0.0))
         _o_pct = round((_o_usd / total_cost_usd) * 100.0, 1) if total_cost_usd > 0 else 0.0
         md.append(
-            f"| **Orquestador Principal (Director)** | 1 | {_orch_m.get('input_tokens', 0):,} | {_orch_m.get('output_tokens', 0):,} | {_orch_m.get('cache_read_tokens', 0):,} | **`${_o_usd:.4f}`** | {_o_pct:.1f}% |"
+            f"| **Orquestador Principal (Director)** | 1 | {_orch_m.get('input_tokens', 0):,} | {_orch_m.get('output_tokens', 0):,} | {_orch_m.get('cache_read_tokens', 0):,} | **`${_o_usd:.2f}`** | {_o_pct:.1f}% |"
         )
         md.append(
-            f"| **TOTAL CORRIDA (Gemini 4 Hydrogen)** | **{len(subs) + 1}** | **{summary['total_input_tokens']:,}** | **{summary['total_output_tokens']:,}** | **{summary['total_cache_read_tokens']:,}** | **`${total_cost_usd:.4f} USD`** | **100.0%** |"
+            f"| **TOTAL CORRIDA (Gemini 4 Hydrogen)** | **{len(subs) + 1}** | **{summary['total_input_tokens']:,}** | **{summary['total_output_tokens']:,}** | **{summary['total_cache_read_tokens']:,}** | **`${total_cost_usd:.2f} USD`** | **100.0%** |"
         )
         md.append("")
 
@@ -2970,7 +2983,7 @@ class ReportGenerator:
             "### 3.1. Stage 1A: Preprocesamiento de Visión",
             f"- **Subagentes de Visión Desplegados:** `{stg['stage_1a_vision']['agents_count']} agentes en paralelo`",
             f"- **Tiempo de Pared de la Etapa (Máximo / Critical Path):** **`{stg['stage_1a_vision']['max_wall_time_seconds']}s`** (`{round(stg['stage_1a_vision']['max_wall_time_seconds']/60, 1)} min`)",
-            f"- **Costo Estimado Etapa 1A (Gemini 4 Hydrogen):** **`${stg['stage_1a_vision'].get('cost_usd', 0.0):.4f} USD`**",
+            f"- **Costo Estimado Etapa 1A (Gemini 4 Hydrogen):** **`${stg['stage_1a_vision'].get('cost_usd', 0.0):.2f} USD`**",
             f"- **Agente Determinante del Camino Crítico:** `{stg['stage_1a_vision']['critical_path_agent']}`",
             "",
             "| Subagente de Visión | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Costo (USD) | Duración |",
@@ -2980,7 +2993,7 @@ class ReportGenerator:
         for va in stg["stage_1a_vision"]["agents"]:
             md.append(
                 f"| **{va['label']}** | {va['turns_count']} | {va['input_tokens']:,} | {va['output_tokens']:,} | "
-                f"{va['cache_read_tokens']:,} | {va['active_tokens']:,} | `${va.get('cost_usd', 0.0):.4f}` | **{va['duration_seconds']}s** |"
+                f"{va['cache_read_tokens']:,} | {va['active_tokens']:,} | `${va.get('cost_usd', 0.0):.2f}` | **{va['duration_seconds']}s** |"
             )
 
         cta_subs_total = stg['stage_1b_cta'].get('agents_count', stg['stage_1b_cta']['mappers_count'] + (1 if stg['stage_1b_cta']['harmonizer'] else 0))
@@ -2999,7 +3012,7 @@ class ReportGenerator:
             f"- **Tiempo de Pared Fase Mappers (Máximo):** **`{stg['stage_1b_cta']['mappers_max_wall_time']}s`** (determinado por `{stg['stage_1b_cta']['critical_mapper']}`)",
             f"- **Tiempo Fase Harmonizer (Barrera Síncrona):** **`{stg['stage_1b_cta']['harmonizer_duration']}s`**",
             f"- **Tiempo de Pared Total de Etapa 1B:** **`{stg['stage_1b_cta']['total_stage_wall_time']}s`** (`{round(stg['stage_1b_cta']['total_stage_wall_time']/60, 1)} min`)",
-            f"- **Costo Estimado Etapa 1B (Gemini 4 Hydrogen):** **`${stg['stage_1b_cta'].get('cost_usd', 0.0):.4f} USD`**",
+            f"- **Costo Estimado Etapa 1B (Gemini 4 Hydrogen):** **`${stg['stage_1b_cta'].get('cost_usd', 0.0):.2f} USD`**",
             "",
             "| Subagente CTA | Rol / Sección | Turnos | Tokens In | Tokens Out | Cache Leído | Costo (USD) | Errores | Duración |",
             "| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- | :--- |"
@@ -3008,14 +3021,14 @@ class ReportGenerator:
         for ca in stg["stage_1b_cta"]["mappers"]:
             md.append(
                 f"| **{ca['label']}** | Mapper | {ca['turns_count']} | {ca['input_tokens']:,} | {ca['output_tokens']:,} | "
-                f"{ca['cache_read_tokens']:,} | `${ca.get('cost_usd', 0.0):.4f}` | {ca['tool_errors_count']} | **{ca['duration_seconds']}s** |"
+                f"{ca['cache_read_tokens']:,} | `${ca.get('cost_usd', 0.0):.2f}` | {ca['tool_errors_count']} | **{ca['duration_seconds']}s** |"
             )
         harm_list = stg["stage_1b_cta"].get("harmonizers") or ([stg["stage_1b_cta"]["harmonizer"]] if stg["stage_1b_cta"]["harmonizer"] else [])
         for ha in harm_list:
             role_desc = "Direct Architect" if stg['stage_1b_cta']['mappers_count'] == 0 else "Harmonizer"
             md.append(
                 f"| **{ha['label']}** | {role_desc} | {ha['turns_count']} | {ha['input_tokens']:,} | {ha['output_tokens']:,} | "
-                f"{ha['cache_read_tokens']:,} | `${ha.get('cost_usd', 0.0):.4f}` | {ha['tool_errors_count']} | **{ha['duration_seconds']}s** |"
+                f"{ha['cache_read_tokens']:,} | `${ha.get('cost_usd', 0.0):.2f}` | {ha['tool_errors_count']} | **{ha['duration_seconds']}s** |"
             )
 
         _fc_passed = stg["stage_3_authors"].get("first_compile_passed_count", 0)
@@ -3034,7 +3047,7 @@ class ReportGenerator:
             f"- **Tiempo de Pared Máximo (Straggler Crítico):** **`{stg['stage_3_authors']['max_duration_seconds']}s`** (`{round(stg['stage_3_authors']['max_duration_seconds']/60, 1)} min`) por `{stg['stage_3_authors']['straggler_shard']}`",
             f"- **Retraso de Sincronización Impuesto por el Straggler:** **`+{stg['stage_3_authors']['straggler_delay_vs_median']}s`** frente a la mediana",
             f"- **Tokens Promedio por Competencia en Autores:** **`{stg['stage_3_authors']['avg_tokens_per_competency']:,} tokens/competencia`**",
-            f"- **Costo Estimado Etapa 3 (Gemini 4 Hydrogen):** **`${stg['stage_3_authors'].get('cost_usd', 0.0):.4f} USD`**",
+            f"- **Costo Estimado Etapa 3 (Gemini 4 Hydrogen):** **`${stg['stage_3_authors'].get('cost_usd', 0.0):.2f} USD`**",
             "",
             "| Shard ID | Competencias Asignadas | Comps | Tokens In | Tokens Out | Cache Leído | Total Activo | Costo (USD) | Tokens / Comp | Turnos | Errores | Duración |",
             "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :--- | :--- | :--- | :--- |"
@@ -3050,7 +3063,7 @@ class ReportGenerator:
 
             md.append(
                 f"| **{sa['label']}{is_straggler}** | `{c_list or 'N/A'}` | {c_cnt} | {sa['input_tokens']:,} | "
-                f"{sa['output_tokens']:,} | {sa['cache_read_tokens']:,} | {sa['active_tokens']:,} | `${sa.get('cost_usd', 0.0):.4f}` | "
+                f"{sa['output_tokens']:,} | {sa['cache_read_tokens']:,} | {sa['active_tokens']:,} | `${sa.get('cost_usd', 0.0):.2f}` | "
                 f"**{tok_per_c}** | {sa['turns_count']} | {sa['tool_errors_count']} | **{sa['duration_seconds']}s** |"
             )
 
@@ -3067,7 +3080,7 @@ class ReportGenerator:
                 f"- **Total de Repair Engineers Desplegados:** `{stg_3b['repairs_count']} subagentes` en **`{_r_rounds} ronda(s)`** (`DONE`: `{_r_done}`, `BLOCKED`: **`{_r_blocked}`**)",
                 f"- **Duración Mínima:** `{stg_3b['min_duration_seconds']}s` | **Mediana:** `{stg_3b['median_duration_seconds']}s` | **Máxima:** `{stg_3b['max_duration_seconds']}s` (`{round(stg_3b['max_duration_seconds']/60, 1)} min`)",
                 f"- **Tokens Activos Totales en Reparación:** `{stg_3b['total_active_tokens']:,} tokens`",
-                f"- **Costo Estimado Etapa 3B (Gemini 4 Hydrogen):** **`${stg_3b.get('cost_usd', 0.0):.4f} USD`**",
+                f"- **Costo Estimado Etapa 3B (Gemini 4 Hydrogen):** **`${stg_3b.get('cost_usd', 0.0):.2f} USD`**",
                 f"- **Agente Determinante del Retraso:** `{stg_3b['slowest_repair']}`",
                 "",
                 "| Repair Engineer | Estado | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Costo (USD) | Errores | Duración |",
@@ -3077,7 +3090,7 @@ class ReportGenerator:
                 _r_state = ra.get("terminal_status", "UNKNOWN")
                 md.append(
                     f"| **{ra['label']}** | `{_r_state}` | {ra['turns_count']} | {ra['input_tokens']:,} | {ra['output_tokens']:,} | "
-                    f"{ra['cache_read_tokens']:,} | {ra['active_tokens']:,} | `${ra.get('cost_usd', 0.0):.4f}` | {ra['tool_errors_count']} | **{ra['duration_seconds']}s** |"
+                    f"{ra['cache_read_tokens']:,} | {ra['active_tokens']:,} | `${ra.get('cost_usd', 0.0):.2f}` | {ra['tool_errors_count']} | **{ra['duration_seconds']}s** |"
                 )
 
         md.extend([
@@ -3109,7 +3122,7 @@ class ReportGenerator:
         judge_rows = [
             f"| **Lote Estratificado Ciego** | `{bj['batch_items_count']} reactivos` ({w['competencies_count']} comps × 2) | Lote de evaluación sin soluciones (`judge_batch.json`) |",
             f"| **Subagentes Jueces Ciegos** | `{bj.get('judges_count', 0)} jueces` | Aislamiento epistémico en Stage 5 |",
-            f"| **Costo Etapa 5 (Gemini 4 Hydrogen)** | **`${bj.get('cost_usd', 0.0):.4f} USD`** | Evaluado sobre los {bj.get('judges_count', 0)} Blind Judges (In: `{bj.get('total_input_tokens', 0):,}`, Out: `{bj.get('total_output_tokens', 0):,}`, Cache: `{bj.get('total_cache_tokens', 0):,}`) |",
+            f"| **Costo Etapa 5 (Gemini 4 Hydrogen)** | **`${bj.get('cost_usd', 0.0):.2f} USD`** | Evaluado sobre los {bj.get('judges_count', 0)} Blind Judges (In: `{bj.get('total_input_tokens', 0):,}`, Out: `{bj.get('total_output_tokens', 0):,}`, Cache: `{bj.get('total_cache_tokens', 0):,}`) |",
             f"| **Resultado al Primer Intento** | **`{first_att_res}`** | {first_att_obs} |",
         ]
         if bj.get("has_rejudge") or bj.get("round_1_discrepancies_count", 0) > 0:
@@ -3145,7 +3158,7 @@ class ReportGenerator:
             "## 4. Auditoría Forense del Orquestador y Catálogo de Intervenciones Manuales",
             "",
             "### 4.1. Descomposición del Tiempo y Costo del Orquestador",
-            f"- 💵 **Costo Estimado del Orquestador Principal (Gemini 4 Hydrogen):** **`${sc.get('orchestrator', 0.0):.4f} USD`** (In: `{_orch_m.get('input_tokens', 0):,}`, Out: `{_orch_m.get('output_tokens', 0):,}`, Cache: `{_orch_m.get('cache_read_tokens', 0):,}`)",
+            f"- 💵 **Costo Estimado del Orquestador Principal (Gemini 4 Hydrogen):** **`${sc.get('orchestrator', 0.0):.2f} USD`** (In: `{_orch_m.get('input_tokens', 0):,}`, Out: `{_orch_m.get('output_tokens', 0):,}`, Cache: `{_orch_m.get('cache_read_tokens', 0):,}`)",
             f"- ⏱️ **Tiempo Total de Pared del Orquestador:** `{summary['wall_clock_minutes']} min` (`{summary['wall_clock_seconds']}s`)",
             f"- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `{orch['time_decomposition']['cli_execution_minutes']} min` (`{orch['time_decomposition']['cli_execution_seconds']}s`)",
             f"- 🛠️ **Tiempo Gastado en Intervenciones Manuales (Supervisor Repair):** **`{orch['time_decomposition']['supervisor_repair_minutes']} min`** (`{orch['time_decomposition']['supervisor_repair_seconds']}s`)",
@@ -3310,9 +3323,9 @@ class ReportGenerator:
              f"{mb.get('total_tokens', 0):,}",
              growth_factor(ma.get("total_tokens", 1), mb.get("total_tokens", 1))),
 
-            ("Costo Estimado Total (Gemini 4 Hydrogen)", f"${float(cost_a):.4f} USD",
-             f"${float(cost_b):.4f} USD",
-             growth_factor(cost_a or 0.0001, cost_b or 0.0001)),
+            ("Costo Estimado Total (Gemini 4 Hydrogen)", f"${float(cost_a):.2f} USD",
+             f"${float(cost_b):.2f} USD",
+             growth_factor(cost_a or 0.01, cost_b or 0.01)),
 
             ("Tiempo de Pared (Wall Clock)", f"{round(ma.get('wall_clock_seconds', 0)/60, 1)} min ({ma.get('wall_clock_seconds', 0)}s)",
              f"{round(mb.get('wall_clock_seconds', 0)/60, 1)} min ({mb.get('wall_clock_seconds', 0)}s)",
@@ -3532,13 +3545,13 @@ def main():
     print(f"    - Wall-Clock Time: {audit_result['summary']['wall_clock_minutes']} min (Speedup: {audit_result['summary']['parallel_speedup_factor']}x)")
     print(f"    - Total Tokens:    {audit_result['summary']['total_tokens']:,} (Active: {audit_result['summary']['total_active_tokens']:,})")
     print(
-        f"    - Est. Cost (H2):  ${_cli_costs['total_cost_usd']:.4f} USD "
-        f"(Gemini 4 Hydrogen: In=${_cli_cb['input_usd']:.4f}, Out=${_cli_cb['output_usd']:.4f}, Cache=${_cli_cb['cache_read_usd']:.4f})"
+        f"    - Est. Cost (H2):  ${_cli_costs['total_cost_usd']:.2f} USD "
+        f"(Gemini 4 Hydrogen: In=${_cli_cb['input_usd']:.2f}, Out=${_cli_cb['output_usd']:.2f}, Cache=${_cli_cb['cache_read_usd']:.2f})"
     )
     print(
-        f"    - Stage Costs USD: Vision=${_cli_sc.get('stage_1a_vision', 0.0):.4f} | CTA=${_cli_sc.get('stage_1b_cta', 0.0):.4f} | "
-        f"Authors=${_cli_sc.get('stage_3_authors', 0.0):.4f} | Repairs=${_cli_sc.get('stage_3b_repairs', 0.0):.4f} | "
-        f"Judges=${_cli_sc.get('stage_5_judges', 0.0):.4f} | Orch=${_cli_sc.get('orchestrator', 0.0):.4f}"
+        f"    - Stage Costs USD: Vision=${_cli_sc.get('stage_1a_vision', 0.0):.2f} | CTA=${_cli_sc.get('stage_1b_cta', 0.0):.2f} | "
+        f"Authors=${_cli_sc.get('stage_3_authors', 0.0):.2f} | Repairs=${_cli_sc.get('stage_3b_repairs', 0.0):.2f} | "
+        f"Judges=${_cli_sc.get('stage_5_judges', 0.0):.2f} | Orch=${_cli_sc.get('orchestrator', 0.0):.2f}"
     )
     cta_subs_total = audit_result['stage_deep_dives']['stage_1b_cta'].get('agents_count', audit_result['stage_deep_dives']['stage_1b_cta']['mappers_count'] + (1 if audit_result['stage_deep_dives']['stage_1b_cta']['harmonizer'] else 0))
     repairs_total = audit_result['stage_deep_dives'].get('stage_3b_repairs', {}).get('repairs_count', 0)

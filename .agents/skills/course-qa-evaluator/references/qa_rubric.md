@@ -57,7 +57,7 @@ Se aplican deducciones directas acumulativas sobre la suma de las 5 dimensiones:
 - **`answer_memorization_exploit` (-0.5 pt por competencia, máx -2.0 pts)**: Por competencias ($\ge 15$ ítems) con $\le 4$ respuestas correctas únicas que permiten alcanzar *Mastered* por memorización visual.
 
 > [!IMPORTANT]
-> `final_score = max(0.0, min(20.0, round(sum_dimensions - sum_hard_penalties, 2)))`. El evaluador **DEBE** respetar las deducciones duras precalculadas y aplicar rigor absoluto sin inflación complaciente de notas.
+> `final_score = max(0.0, min(20.0, round(sum_dimensions - sum_hard_penalties, 2)))`. Todas las métricas cuantitativas, índices (Bloom, MPRI, porcentajes y puntajes) se expresan con un **máximo de 2 decimales**. El evaluador **DEBE** respetar las deducciones duras precalculadas y aplicar rigor absoluto sin inflación complaciente de notas.
 
 ---
 
