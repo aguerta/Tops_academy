@@ -215,6 +215,7 @@ class TranscriptReader:
         """Groups raw transcript records into logical agent turns."""
         turns: List[Dict[str, Any]] = []
         current_turn: Optional[Dict[str, Any]] = None
+        bg_task_turns: Dict[str, Dict[str, Any]] = {}
 
         for s in steps:
             stype = s.get("type")
@@ -250,6 +251,7 @@ class TranscriptReader:
                 }
                 turns.append(current_turn)
             elif stype in ("GENERIC", "ERROR_MESSAGE", "TOOL_RESPONSE"):
+                content = s.get("content", "") or ""
                 if current_turn is not None:
                     current_turn["results"].append({
                         "step_index": s_idx,
@@ -257,7 +259,23 @@ class TranscriptReader:
                         "created_at": created_at,
                         "datetime": dt,
                         "status": s.get("status"),
-                        "content": s.get("content", ""),
+                        "content": content,
+                    })
+                    if "Tool is running as a background task" in content:
+                        m_bg = re.search(r"task id:\s*(?:[^\s/]+/)?(task-\d+)", content, re.IGNORECASE)
+                        if m_bg:
+                            bg_task_turns[m_bg.group(1)] = current_turn
+            elif stype == "SYSTEM_MESSAGE":
+                content = s.get("content", "") or ""
+                m_sys = re.search(r'(?:sender=(?:[^\s/]+/)?|Task id "(?:[^"/]+/)?)(task-\d+)', content, re.IGNORECASE)
+                if m_sys and m_sys.group(1) in bg_task_turns:
+                    bg_task_turns[m_sys.group(1)]["results"].append({
+                        "step_index": s_idx,
+                        "type": stype,
+                        "created_at": created_at,
+                        "datetime": dt,
+                        "status": s.get("status"),
+                        "content": content,
                     })
 
         return turns
@@ -538,7 +556,22 @@ class ForensicsEngine:
             for tc in turn.get("tools", []):
                 tname = tc.get("name")
                 args = tc.get("args", {})
-                res_content = turn["results"][0].get("content", "") if turn.get("results") else ""
+                raw_results = turn.get("results") or []
+                non_bg_results = [
+                    str(r.get("content") or "")
+                    for r in raw_results
+                    if not (
+                        "Tool is running as a background task" in str(r.get("content") or "")
+                        and "finished with result" not in str(r.get("content") or "")
+                        and "failed with result" not in str(r.get("content") or "")
+                        and "exited with code" not in str(r.get("content") or "")
+                    )
+                ]
+                res_content = (
+                    "\n".join(non_bg_results)
+                    if non_bg_results
+                    else (str(raw_results[0].get("content") or "") if raw_results else "")
+                )
 
                 if tname in ("write_to_file", "write_file"):
                     writes_count += 1
@@ -570,7 +603,7 @@ class ForensicsEngine:
                         is_fail = (
                             "FAIL:" in res_content
                             or "VALIDATION FAILED" in res_content.upper()
-                            or "exited with code 1" in res_content
+                            or bool(re.search(r"exited with code\s+-?[1-9]\d*", res_content))
                             or "Traceback (most recent call last)" in res_content
                         )
                         fail_snippets = [
@@ -651,6 +684,24 @@ class ForensicsEngine:
         return judge_results
 
     @staticmethod
+    def _extract_tool_context(tool_calls: List[Dict[str, Any]]) -> Tuple[str, List[str]]:
+        cmd_str = ""
+        tool_names: List[str] = []
+        for tc in tool_calls:
+            if isinstance(tc, dict):
+                tn = tc.get("function", {}).get("name") if "function" in tc else tc.get("name", "")
+                ta = tc.get("function", {}).get("arguments") if "function" in tc else tc.get("args", {})
+                if isinstance(ta, str):
+                    try:
+                        ta = json.loads(ta)
+                    except Exception:
+                        ta = {}
+                tool_names.append(tn)
+                if isinstance(ta, dict) and ta.get("CommandLine"):
+                    cmd_str += " " + str(ta.get("CommandLine"))
+        return cmd_str, tool_names
+
+    @staticmethod
     def classify_error_taxonomy(all_steps: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[Dict[str, Any]]]:
         """Classifies every error across all orchestrator and subagent transcripts into 16 technical categories."""
         categories: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
@@ -658,6 +709,8 @@ class ForensicsEngine:
         for agent_name, steps in all_steps.items():
             last_thinking = ""
             last_tool_calls: List[Dict[str, Any]] = []
+            last_output_tokens: Optional[int] = None
+            task_cmd_map: Dict[str, Tuple[str, List[str]]] = {}
             for s in steps:
                 stype = s.get("type")
                 status = s.get("status")
@@ -667,35 +720,73 @@ class ForensicsEngine:
                 if stype == "PLANNER_RESPONSE":
                     last_thinking = s.get("thinking", "") or ""
                     last_tool_calls = s.get("tool_calls", []) or []
+                    out_tok = s.get("output_tokens")
+                    last_output_tokens = int(out_tok) if isinstance(out_tok, (int, float)) else None
+
+                is_bg_start_notice = (
+                    "Tool is running as a background task" in content
+                    and "finished with result" not in content
+                    and "failed with result" not in content
+                    and "exited with code" not in content
+                )
+                if stype in ("GENERIC", "TOOL_RESPONSE") and is_bg_start_notice:
+                    m_bg = re.search(r"task id:\s*(?:[^\s/]+/)?(task-\d+)", content, re.IGNORECASE)
+                    if m_bg:
+                        task_cmd_map[m_bg.group(1)] = ForensicsEngine._extract_tool_context(last_tool_calls)
 
                 if stype == "ERROR_MESSAGE":
                     low_err = content.lower()
-                    cat_key = (
-                        "API Rate Limit (429 RESOURCE_EXHAUSTED)"
-                        if any(tok in low_err for tok in ("429", "resource_exhausted", "exhausted your capacity"))
-                        else "Token Limit Cutoff (Model Truncation)"
-                    )
+                    if any(tok in low_err for tok in ("429", "resource_exhausted", "exhausted your capacity")):
+                        cat_key = "API Rate Limit (429 RESOURCE_EXHAUSTED)"
+                    elif (
+                        "stream was interrupted" in low_err
+                        and last_output_tokens is not None
+                        and last_output_tokens < 4000
+                    ):
+                        cat_key = "Transient Stream Interruption (Auto-Recovered)"
+                    else:
+                        cat_key = "Token Limit Cutoff (Model Truncation)"
                     categories[cat_key].append({
                         "agent": agent_name,
                         "step_index": s_idx,
                         "snippet": content[:140].strip(),
                         "thinking": last_thinking[:180].strip(),
                     })
-                elif stype in ("GENERIC", "TOOL_RESPONSE") and (status == "ERROR" or "exited with code 1" in content or "exited with code 2" in content):
-                    cmd_str = ""
-                    tool_names = []
-                    for tc in last_tool_calls:
-                        if isinstance(tc, dict):
-                            tn = tc.get("function", {}).get("name") if "function" in tc else tc.get("name", "")
-                            ta = tc.get("function", {}).get("arguments") if "function" in tc else tc.get("args", {})
-                            if isinstance(ta, str):
-                                try:
-                                    ta = json.loads(ta)
-                                except Exception:
-                                    ta = {}
-                            tool_names.append(tn)
-                            if isinstance(ta, dict) and ta.get("CommandLine"):
-                                cmd_str += " " + str(ta.get("CommandLine"))
+                elif (
+                    stype == "SYSTEM_MESSAGE"
+                    and "failed with result" in content
+                    and any(
+                        tok in content.lower()
+                        for tok in ("resource_exhausted", "code 429", "http 429", "ratelimiterror", "exhausted your capacity")
+                    )
+                ):
+                    clean_q = " | ".join(
+                        line.strip() for line in content.splitlines()
+                        if line.strip() and "failed with result" not in line and not line.strip().startswith(("<", "[Message]", "The following"))
+                    )[:140]
+                    categories["API Rate Limit (429 RESOURCE_EXHAUSTED)"].append({
+                        "agent": agent_name,
+                        "step_index": s_idx,
+                        "snippet": clean_q or content[:140].strip(),
+                        "thinking": last_thinking[:180].strip(),
+                    })
+                elif (
+                    stype in ("GENERIC", "TOOL_RESPONSE", "SYSTEM_MESSAGE")
+                    and not is_bg_start_notice
+                    and (
+                        status == "ERROR"
+                        or bool(re.search(r"exited with code\s+-?[1-9]\d*", content))
+                    )
+                ):
+                    cmd_str, tool_names = ForensicsEngine._extract_tool_context(last_tool_calls)
+                    if stype == "SYSTEM_MESSAGE":
+                        m_sys = re.search(r'(?:sender=(?:[^\s/]+/)?|Task id "(?:[^"/]+/)?)(task-\d+)', content, re.IGNORECASE)
+                        if m_sys and m_sys.group(1) in task_cmd_map:
+                            bg_cmd, bg_tools = task_cmd_map[m_sys.group(1)]
+                            if not cmd_str:
+                                cmd_str = bg_cmd
+                            if not tool_names:
+                                tool_names = bg_tools
 
                     combined = f"{content}\n{cmd_str}"
                     c_low = combined.lower()
@@ -742,6 +833,14 @@ class ForensicsEngine:
                     elif "cross_check" in content_low or "tpl-cross" in content_low:
                         categories["Cross-check Verification False (TPL-CROSS)"].append(error_entry)
                     elif (
+                        "cta-" in content_low
+                        or "compile_cta" in c_low
+                        or "cta_data" in c_low
+                        or ("cycle" in content_low and "prerequisite" in content_low)
+                        or ("evidence" in content_low and "competenc" in content_low)
+                    ):
+                        categories["CTA Compilation & Schema Errors (CTA-SCHEMA / CTA-EV / DAG Cycle)"].append(error_entry)
+                    elif (
                         "length anti-giveaway" in content_low
                         or "leaks the correct answer" in content_low
                         or "[r-18]" in content_low
@@ -754,14 +853,6 @@ class ForensicsEngine:
                         or "distractor" in content_low
                     ):
                         categories["Anti-Giveaway & Psychometric Parity Violations (R-14..R-19)"].append(error_entry)
-                    elif (
-                        "cta-" in content_low
-                        or "compile_cta" in c_low
-                        or "cta_data" in c_low
-                        or ("cycle" in content_low and "prerequisite" in content_low)
-                        or ("evidence" in content_low and "competenc" in content_low)
-                    ):
-                        categories["CTA Compilation & Schema Errors (CTA-SCHEMA / CTA-EV / DAG Cycle)"].append(error_entry)
                     elif (
                         "could not successfully apply any edits" in content_low
                         or "target content not found" in content_low

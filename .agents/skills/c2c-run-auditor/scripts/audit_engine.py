@@ -40,6 +40,46 @@ except ImportError:
 HAS_FITZ = HAS_PYMUPDF
 
 
+_FIRST_COMPILE_WARN_ONLY_TAGS = {
+    "TPL-ORPHAN-VARS",
+    "PRECHECK",
+    "BLOOM-SUPERIOR-TARGET",
+    "CTA-OVERLAP-WARN",
+    "CTA-HINT-SHORT",
+    "EPISTEMIC-CLOSURE-WARNING",
+    "TPL-STEM-SYMBOL-PARITY",
+    "TPL-UNBOUNDED-LOOP",
+    "AUTO-FIXED",
+    "COMPILE",
+    "UMBRAL",
+}
+
+
+def _extract_first_compile_blocking_rules(content: str) -> List[str]:
+    """Extract real blocking rule tags from a failed compile output.
+
+    Ignores WARNING/INFO/[!] lines, non-blocking [PRECHECK] bullets (``- L12 [TAG] ...``)
+    and console header tags. Drops the synthetic ``GENERAL`` wrapper when the same line
+    carries a more specific rule tag.
+    """
+    rules: List[str] = []
+    for ln in str(content or "").splitlines():
+        if ln.lstrip().startswith(("WARNING:", "INFO:", "[!]")):
+            continue
+        if "WARNING:" in ln or "[EPISTEMIC-CLOSURE-WARNING]" in ln:
+            continue
+        if re.match(r"^\s*-\s*L\d+\s+\[", ln):
+            continue
+        tags = [
+            t for t in re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", ln)
+            if t not in _FIRST_COMPILE_WARN_ONLY_TAGS
+        ]
+        if "GENERAL" in tags and any(t != "GENERAL" for t in tags):
+            tags = [t for t in tags if t != "GENERAL"]
+        rules.extend(tags)
+    return list(dict.fromkeys(rules))[:8]
+
+
 # ---------------------------------------------------------------------------
 # Gemini 4 Hydrogen API Pricing & Cost Valuation (Standard Paid Tier, USD / 1M)
 # ---------------------------------------------------------------------------
@@ -1544,21 +1584,7 @@ class ExecutionAuditor:
                         if compile_attempts_count == 1:
                             compile_first_passed = not is_comp_fail
                             if is_comp_fail:
-                                _non_warn_lines = [
-                                    ln for ln in content.splitlines()
-                                    if not ln.lstrip().startswith(("WARNING:", "INFO:", "[!]"))
-                                ]
-                                _warn_only_tags = {
-                                    "TPL-ORPHAN-VARS",
-                                    "PRECHECK",
-                                    "BLOOM-SUPERIOR-TARGET",
-                                    "CTA-OVERLAP-WARN",
-                                    "CTA-HINT-SHORT",
-                                }
-                                _raw_tags = re.findall(r"\[([A-Z][A-Z0-9_-]{2,})\]", "\n".join(_non_warn_lines))
-                                first_compile_rules = list(dict.fromkeys(
-                                    t for t in _raw_tags if t not in _warn_only_tags
-                                ))[:8]
+                                first_compile_rules = _extract_first_compile_blocking_rules(content)
                 if "exited with code" in content:
                     code_match = re.search(r"exited with code\s+(-?\d+)", content)
                     if code_match and int(code_match.group(1)) != 0:
@@ -1854,7 +1880,21 @@ class ExecutionAuditor:
             if nxt_type == "SYSTEM_MESSAGE" and curr_type in ("PLANNER_RESPONSE", "GENERIC", "TOOL_RESPONSE", "ERROR_MESSAGE"):
                 total_barrier_dur += delta
             elif curr_type == "PLANNER_RESPONSE" and nxt_type in ("GENERIC", "TOOL_RESPONSE", "ERROR_MESSAGE"):
-                total_model_dur += delta
+                tool_names = [
+                    (tc.get("name") or tc.get("function", {}).get("name", ""))
+                    for tc in last_tool_calls
+                    if isinstance(tc, dict)
+                ]
+                has_mut = any(
+                    (tc.get("name") or tc.get("function", {}).get("name", "")) == "run_command"
+                    and self._detect_shell_work_mutation(str(self._extract_tc_args(tc).get("CommandLine") or ""))
+                    for tc in last_tool_calls
+                    if isinstance(tc, dict)
+                )
+                if any(tn in ("replace_file_content", "write_to_file", "write_file", "edit_file") for tn in tool_names) or has_mut:
+                    total_repair_dur += delta
+                else:
+                    total_model_dur += delta
             elif curr_type in ("GENERIC", "TOOL_RESPONSE", "ERROR_MESSAGE") and nxt_type == "PLANNER_RESPONSE":
                 tool_names = [
                     (tc.get("name") or tc.get("function", {}).get("name", ""))
