@@ -684,7 +684,8 @@ def generate_merged_markdown_report(
 | **Penalizaciones Duras Precalculadas** | **-{total_penalty_pts:.1f} puntos** | {len(hard_penalties)} reglas de deducción activadas |
 | **Risk Score Global (0.0 - 100.0)** | **{risk_score}** | {len(all_issues)} issues totales detectados por linters |
 | **Mastery Path Readiness (`MPRI`)** | **`{mpri_score} / 100.0`** | {mpri_tier} |
-| **Índice Bloom Ponderado (1–5)** | **{bloom_idx:.2f} / 5.0** | Piso adaptativo `{bloom_floor:.2f}`, `Analyze+Evaluate`: `{bloom_sup_pct:.1f}%`, incoherencias: `{bloom_coh_cnt}`, Tier: **{bloom_tier}** |
+| **Piso Bloom Expected (Adaptativo)** | **{bloom_floor:.2f} / 5.0** | Umbral esperado según mezcla curricular (`Skill=4.00`, `Concept=3.75`, `Fact=3.25`) |
+| **Índice Bloom Real Generado (1–5)** | **{bloom_idx:.2f} / 5.0** | Piso Expected `{bloom_floor:.2f}` vs Real `{bloom_idx:.2f}`, `Analyze+Evaluate`: `{bloom_sup_pct:.1f}%`, incoherencias: `{bloom_coh_cnt}`, Tier: **{bloom_tier}** |
 
 ---
 
@@ -692,7 +693,7 @@ def generate_merged_markdown_report(
 
 | Pilar de Dominio del Estudiante | Puntaje MPRI | Máximo | Diagnóstico Empírico Determinista |
 | :--- | :---: | :---: | :--- |
-| **1. Progresión Adaptativa ZPD y Bloom** | **{mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 'N/A')}** | 20.0 | Competencias con ZPD colapsado (1 sola banda): `{zpd_l.get('zpd_dead_competencies_count', 0)}/{zpd_l.get('eligible_competencies_evaluated', total_comps)}`; Habilidades en Bloom `Apply+`: `{zpd_l.get('skill_higher_bloom_pct', 0.0)}%`; Índice Bloom: `{bloom_idx:.2f}/5.0` (piso `{bloom_floor:.2f}`, Tier `{bloom_tier}`) |
+| **1. Progresión Adaptativa ZPD y Bloom (Piso Expected: `{bloom_floor:.2f}` \\| Real: `{bloom_idx:.2f}`)** | **{mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 'N/A')}** | 20.0 | Competencias con ZPD colapsado (1 sola banda): `{zpd_l.get('zpd_dead_competencies_count', 0)}/{zpd_l.get('eligible_competencies_evaluated', total_comps)}`; Habilidades en Bloom `Apply+`: `{zpd_l.get('skill_higher_bloom_pct', 0.0)}%`; **Piso Bloom Expected: `{bloom_floor:.2f}` \\| Real Generado: `{bloom_idx:.2f}/5.0`** (Tier `{bloom_tier}`) |
 | **2. Modalidad de Evocación y Anti-Gaming** | **{mpri_pillars.get('retrieval_modality_and_anti_gaming', {}).get('score', 'N/A')}** | 20.0 | `MC7={mod_l.get('mc7_share_pct', 0.0)}%`, `FIB={mod_l.get('fib_share_pct', 0.0)}%`, `MS={mod_l.get('ms_share_pct', 0.0)}%`; Comps memorizables: `{ag_l.get('memorizable_competencies_count', 0)}`; Cuantif. vacuos: `{ag_l.get('vacuous_quantifier_items_count', 0)}`; Relleno `[R-15]`: `{ag_l.get('length_padded_items_count', 0)}` |
 | **3. Integridad del Salvavidas Socrático (3-Strikes)** | **{mpri_pillars.get('socratic_scaffolding_lifeline', {}).get('score', 'N/A')}** | 25.0 | Pistas genuinas: `{soc_l.get('genuine_socratic_hints_pct', 0.0)}%`; Boilerplate Mad-Libs: `{soc_l.get('boilerplate_hints_pct', 0.0)}%`; Pistas envenenadas: `{soc_l.get('poisoned_hints_items_count', 0)}` (`{soc_l.get('poisoned_hints_pct', 0.0)}%`) |
 | **4. Alineación Diagnóstica en `FeedbackToast`** | **{mpri_pillars.get('diagnostic_remediation_alignment', {}).get('score', 'N/A')}** | 15.0 | Unicidad global de `error_rationale`: `{diag_l.get('rationale_uniqueness_pct', 0.0)}%` (`{diag_l.get('unique_rationales', 0)}/{diag_l.get('total_rationales', 0)}`); Distractores `1.333x` arbitrarios: `{diag_l.get('magic_multiplier_distractor_items_count', 0)}` |
@@ -717,7 +718,7 @@ def generate_merged_markdown_report(
 | **Dimensión 1: Arquitectura y Granularidad** | **{d1.get('score', 0.0)}** | {d1.get('max', 4.0)} | {d1.get('feedback', '—')} |
 | **Dimensión 2: Calidad de Evaluación y Reactivos** | **{d2.get('score', 0.0)}** | {d2.get('max', 5.0)} | {d2.get('feedback', '—')} |
 | **Dimensión 3: Andamiaje y Feedback Progresivo** | **{d3.get('score', 0.0)}** | {d3.get('max', 5.0)} | {d3.get('feedback', '—')} |
-| **Dimensión 4: Alineación Instruccional** | **{d4.get('score', 0.0)}** | {d4.get('max', 4.0)} | {d4.get('feedback', '—')} |
+| **Dimensión 4: Alineación Instruccional (Piso Bloom Expected: `{bloom_floor:.2f}` \\| Real Generado: `{bloom_idx:.2f}`)** | **{d4.get('score', 0.0)}** | {d4.get('max', 4.0)} | {d4.get('feedback', '—')} |
 | **Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX** | **{d5.get('score', 0.0)}** | {d5.get('max', 2.0)} | {d5.get('feedback', '—')} |
 | **Total Consolidado** | **{qa_report.get('final_score', 'N/A')}** | **20.0** | **{qa_report.get('quality_tier', 'N/A')}** |
 """
@@ -730,6 +731,7 @@ def generate_merged_markdown_report(
 | Linter Determinista | Dimensión | Conteos Registrados |
 | :--- | :--- | :--- |
 | **`architecture_dag_linter`** | `D1_architecture` / `D4_alignment` | `total_competencies={dag_l.get('total_competencies', total_comps)}`, `underpopulated={dag_l.get('underpopulated_competencies_count', 0)}`, `orphans={dag_l.get('orphan_questions_count', 0)}` |
+| **`zpd_progression_linter`** | `D1_architecture` / `D4_alignment` | `bloom_expected_floor={bloom_floor:.2f}`, `bloom_real_generated={bloom_idx:.2f}`, `bloom_tier={bloom_tier}`, `analyze_evaluate_pct={bloom_sup_pct:.1f}%` |
 | **`distractor_integrity_linter`** | `D2_assessment` | `evaluated={dist_l.get('total_distractors_evaluated', 0)}`, `rationale_pct={dist_l.get('rationale_coverage_pct', 0.0)}%`, `telltale={dist_l.get('telltale_distractor_items_count', 0)}` |
 | **`scaffolding_hints_linter`** | `D3_scaffolding` | `zero_hints={scaf_l.get('zero_hints_count', 0)}`, `lt_3_hints={scaf_l.get('insufficient_hints_count', 0)}`, `fstring_residues={scaf_l.get('fstring_placeholders_count', 0)}` |
 | **`katex_syntax_linter`** | `D5_katex` | `unclosed_braces={katex_l.get('unclosed_braces_count', 0)}`, `unbalanced_dollars={katex_l.get('unbalanced_dollars_count', 0)}`, `triple_dollars={katex_l.get('triple_dollars_count', 0)}` |

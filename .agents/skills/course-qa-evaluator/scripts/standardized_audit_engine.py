@@ -3315,8 +3315,8 @@ def compute_deterministic_rubric_scores(
 
     d4_fb = (
         f"Alineación cognitiva de Bloom: {bloom_skill_pct}% de habilidades prácticas en Apply+; "
-        f"Índice Bloom ponderado: {bloom_idx:.2f}/5.0 (piso adaptativo {bloom_floor:.2f}, "
-        f"{bloom_sup_pct:.1f}% Analyze+Evaluate, tier: {bloom_tier}, incoherencias={bloom_coh_cnt})."
+        f"Índice Bloom Real Generado: {bloom_idx:.2f}/5.0 vs Piso Bloom Expected (Adaptativo): {bloom_floor:.2f}/5.0 "
+        f"({bloom_sup_pct:.1f}% Analyze+Evaluate, tier: {bloom_tier}, incoherencias={bloom_coh_cnt})."
     )
 
     # Dimensión 5: Accesibilidad, Ergonomía Cognitiva en UI y Sintaxis KaTeX (0 a 2.0 pts)
@@ -3537,7 +3537,7 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
         f"| **D1: Arquitectura Curricular y Granularidad** | **{d1.get('score', 4.0):.1f}** | 4.0 | {(d1.get('score', 4.0)/4.0)*100:.0f}% | {_status_icon(d1.get('score', 4.0), 4.0)} |",
         f"| **D2: Calidad Psicométrica y Reactivos** | **{d2.get('score', 5.0):.1f}** | 5.0 | {(d2.get('score', 5.0)/5.0)*100:.0f}% | {_status_icon(d2.get('score', 5.0), 5.0)} |",
         f"| **D3: Andamiaje y Pistas Socráticas** | **{d3.get('score', 5.0):.1f}** | 5.0 | {(d3.get('score', 5.0)/5.0)*100:.0f}% | {_status_icon(d3.get('score', 5.0), 5.0)} |",
-        f"| **D4: Alineación Instruccional y ZPD** | **{d4.get('score', 4.0):.1f}** | 4.0 | {(d4.get('score', 4.0)/4.0)*100:.0f}% | {_status_icon(d4.get('score', 4.0), 4.0)} |",
+        f"| **D4: Alineación Instruccional y ZPD (Piso Bloom Expected: `{bloom_index_meta['adaptive_floor']:.2f}` \\| Real Generado: `{bloom_index_meta['weighted_index']:.2f}` / 5.0)** | **{d4.get('score', 4.0):.1f}** | 4.0 | {(d4.get('score', 4.0)/4.0)*100:.0f}% | {_status_icon(d4.get('score', 4.0), 4.0)} |",
         f"| **D5: Ergonomía Técnica y KaTeX** | **{d5.get('score', 2.0):.1f}** | 2.0 | {(d5.get('score', 2.0)/2.0)*100:.0f}% | {_status_icon(d5.get('score', 2.0), 2.0)} |",
         f"| **Penalizaciones Duras** | **-{det_rubric.get('hard_penalties_total', 0.0):.1f}** | - | - | {'✅ Sin penalizaciones' if not hard_penalties else '⚠️ Penalizaciones aplicadas'} |",
         f"| **TOTAL** | **{final_score:.1f}** | **20.0** | **{(final_score/20.0)*100:.1f}%** | 🏆 **{quality_tier.split('—')[-1].strip()}** |",
@@ -3567,13 +3567,14 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
         "",
         "| Pilar Cognitivo | Puntaje | Máximo | Calificación |",
         "| :--- | :---: | :---: | :---: |",
-        f"| **1. Progresión Adaptativa ZPD y Bloom** | **{mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 20.0):.2f}** | 20.0 | {(mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 20.0)/20.0)*100:.1f}% |",
+        f"| **1. Progresión Adaptativa ZPD y Bloom (Piso Expected: `{bloom_index_meta['adaptive_floor']:.2f}` \\| Real Generado: `{bloom_index_meta['weighted_index']:.2f}` / 5.0 — {bloom_index_meta['tier']})** | **{mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 20.0):.2f}** | 20.0 | {(mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 20.0)/20.0)*100:.1f}% |",
         f"| **2. Modalidad de Evocación y Anti-Gaming** | **{mpri_pillars.get('retrieval_modality_and_anti_gaming', {}).get('score', 20.0):.2f}** | 20.0 | {(mpri_pillars.get('retrieval_modality_and_anti_gaming', {}).get('score', 20.0)/20.0)*100:.1f}% |",
         f"| **3. Integridad Salvavidas Socrático (3-Strikes)** | **{mpri_pillars.get('socratic_scaffolding_lifeline', {}).get('score', 25.0):.2f}** | 25.0 | {(mpri_pillars.get('socratic_scaffolding_lifeline', {}).get('score', 25.0)/25.0)*100:.1f}% |",
         f"| **4. Alineación Diagnóstica en FeedbackToast** | **{mpri_pillars.get('diagnostic_remediation_alignment', {}).get('score', 15.0):.2f}** | 15.0 | {(mpri_pillars.get('diagnostic_remediation_alignment', {}).get('score', 15.0)/15.0)*100:.1f}% |",
         f"| **5. Topología DAG e Interleaving** | **{mpri_pillars.get('dag_and_interleaving_topology', {}).get('score', 10.0):.2f}** | 10.0 | {(mpri_pillars.get('dag_and_interleaving_topology', {}).get('score', 10.0)/10.0)*100:.1f}% |",
         f"| **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **{mpri_pillars.get('cognitive_ergonomics_and_framing', {}).get('score', 10.0):.2f}** | 10.0 | {(mpri_pillars.get('cognitive_ergonomics_and_framing', {}).get('score', 10.0)/10.0)*100:.1f}% |",
         f"| **TOTAL MPRI** | **{mpri_score:.2f}** | **100.0** | **{mpri_score:.1f}% ({mpri_tier})** |",
+        f"| **📊 Piso Bloom Expected vs. Real Generado (1–5)** | **Real: `{bloom_index_meta['weighted_index']:.2f}`** | **Piso Expected: `{bloom_index_meta['adaptive_floor']:.2f}`** | **Tier: `{bloom_index_meta['tier']}` (`Analyze+Evaluate`: `{bloom_index_meta['superior_pct']:.1f}%`)** |",
         "",
         "---",
         "",

@@ -108,12 +108,12 @@ Invocar a un único subagente mediante `invoke_subagent`:
 - **TypeName**: `course_qa_auditor`
 - **Model**: `inherit` (Gemini 3.8 Flash High)
 - **Prompt**:
-  > *"Audita la calidad técnica y pedagógica del curso '<course_id>'. Lee el payload transitorio en '<ruta_payload_temporal>'. Toda la telemetría métrica determinista ha sido calculada en 'audit_telemetry'; NO escribas scripts de Python para escanear el curso. Aplica el Loop de Verificación Semántica sobre los 'risk_clusters', evalúa el rigor conceptual y pedagógico según la rúbrica normativa de 20 puntos en '.agents/skills/course-qa-evaluator/references/qa_rubric.md' y genera ÚNICAMENTE el reporte autocontenido en Markdown 'reports/qa_audits/<course_id>_qa_report.md' (con el bloque colapsado `<details>` de metadatos JSON al final). NO generes archivos .json ni .html separados. Si detectas nuevos patrones de error no cubiertos por los linters, inclúyelos en 'discovered_lint_rules' dentro del bloque estructurado."*
+  > *"Audita la calidad técnica y pedagógica del curso '<course_id>'. Lee el payload transitorio en '<ruta_payload_temporal>'. Toda la telemetría métrica determinista ha sido calculada en 'audit_telemetry'; NO escribas scripts de Python para escanear el curso. Aplica el Loop de Verificación Semántica sobre los 'risk_clusters', evalúa el rigor conceptual y pedagógico según la rúbrica normativa de 20 puntos en '.agents/skills/course-qa-evaluator/references/qa_rubric.md' y genera ÚNICAMENTE el reporte autocontenido en Markdown 'reports/qa_audits/<course_id>_qa_report.md' (con el bloque colapsado `<details>` de metadatos JSON al final). En las tablas deterministas de la Rúbrica QM-OSCQR (D4: Alineación Instruccional y ZPD) y de Pilares MPRI (Pilar 1: Progresión Adaptativa ZPD y Bloom), incluye explícitamente tanto el **Piso Bloom Expected (`adaptive_bloom_floor`)** como el **Índice Bloom Real Generado (`bloom_weighted_index`)**. NO generes archivos .json ni .html separados. Si detectas nuevos patrones de error no cubiertos por los linters, inclúyelos en 'discovered_lint_rules' dentro del bloque estructurado."*
 
 ### Paso 4: Presentación del Veredicto
 Presentar al usuario (todas las métricas con un **máximo de 2 decimales**):
 - Calificación final sobre 20.0 y Tier de Calidad.
-- Desglose por las 5 dimensiones, Índice Bloom Ponderado y MPRI.
+- Desglose en tablas deterministas por las 5 dimensiones y 6 pilares MPRI, mostrando explícitamente en las tablas el **Piso Bloom Expected (`adaptive_bloom_floor`)** y el **Índice Bloom Real Generado (`bloom_weighted_index`)** en D4 y en el Pilar 1.
 - Penalizaciones aplicadas.
 - Acciones de remediación prioritarias y nuevas reglas aprendidas si las hubiera.
 

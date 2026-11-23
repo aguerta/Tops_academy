@@ -404,6 +404,8 @@ def test_qa_and_unified_engines_report_weighted_bloom_index():
     qa_json, qa_md = generate_deterministic_qa_report(telemetry, course)
     assert qa_json["course_metadata"]["bloom_index"]["tier"] == "ÉLITE"
     assert "Índice Bloom Ponderado (1–5)" in qa_md
+    assert "Piso Bloom Expected: `4.00` \\| Real Generado: `4.50` / 5.0" in qa_md
+    assert "Piso Expected: `4.00` \\| Real Generado: `4.50` / 5.0" in qa_md
 
     merged_md = generate_merged_markdown_report(
         "test_bloom_qa",
@@ -414,6 +416,9 @@ def test_qa_and_unified_engines_report_weighted_bloom_index():
         {},
     )
     assert "Índice Bloom Ponderado (1–5)" in merged_md
+    assert "Piso Bloom Expected (Adaptativo)" in merged_md
+    assert "Índice Bloom Real Generado (1–5)" in merged_md
+    assert "Piso Bloom Expected: `4.00` \\| Real Generado: `4.50`" in merged_md
     assert "4.50 / 5.0" in merged_md
 
 

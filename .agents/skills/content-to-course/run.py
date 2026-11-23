@@ -1716,11 +1716,25 @@ class PipelineRunner:
 
         total_comps = getattr(pub_result, "total_competencies", audit_rep.get("total_competencies", 0))
 
+        dim_sum = audit_rep.get("dimension_summaries", {})
+        katex_l = dim_sum.get("katex_syntax_linter", {})
+        dist_l = dim_sum.get("distractor_integrity_linter", {})
+        soc_l = dim_sum.get("socratic_scaffolding_integrity_linter", {})
+        mod_l = dim_sum.get("retrieval_modality_linter", {})
+        zpd_l = dim_sum.get("zpd_progression_linter", {})
+        diag_l = dim_sum.get("diagnostic_rationale_alignment_linter", {})
+
+        bloom_floor = zpd_l.get("adaptive_bloom_floor", 3.85)
+        bloom_real = zpd_l.get("bloom_weighted_index", 0.0)
+        bloom_tier = zpd_l.get("bloom_tier", "N/A")
+        bloom_sup_pct = zpd_l.get("bloom_superior_pct", 0.0)
+
         lines = [
             "-" * 70,
             " [QA EVALUATOR - RÚBRICA DETERMINISTA DE CALIDAD EDUCATIVA]",
             f"  Calificación QM-OSCQR:        {final_score:.1f} / 20.0 pts  -->  {quality_tier}",
             f"  Mastery Path Readiness (MPRI): {mpri_score:.2f} / 100.0 pts  -->  {mpri_tier}",
+            f"  Piso Bloom Expected vs Real:  Piso Expected={bloom_floor:.2f} | Real Generado={bloom_real:.2f} / 5.0  -->  [{bloom_tier}]",
             f"  Risk Score Global:            {risk_score:.2f} / 100.0 (Bajo riesgo / Limpio)",
             f"  Penalizaciones Duras:         -{pen_total:.1f} pts ({len(hard_pen)} deducciones activas)",
             "",
@@ -1731,7 +1745,7 @@ class PipelineRunner:
             ("architecture_granularity", "D1 Arquitectura Curricular y DAG", 4.0),
             ("assessment_quality", "D2 Calidad Psicométrica y Reactivos", 5.0),
             ("scaffolding_hints", "D3 Andamiaje y Pistas Socráticas", 5.0),
-            ("instructional_alignment", "D4 Alineación Instruccional y ZPD", 4.0),
+            ("instructional_alignment", f"D4 Alineación y ZPD (Piso Expected {bloom_floor:.2f} | Real {bloom_real:.2f})", 4.0),
             ("technical_ergonomics", "D5 Ergonomía Técnica y KaTeX", 2.0),
         ]
         for dk, dname, dmax in d_keys:
@@ -1747,7 +1761,7 @@ class PipelineRunner:
         lines.append("  🎯 Pilares de Preparación para el Dominio (MPRI 100.0 pts):")
 
         p_keys = [
-            ("zpd_adaptive_progression", "1. Progresión Adaptativa ZPD y Bloom", 20.0),
+            ("zpd_adaptive_progression", f"1. Progresión Adaptativa ZPD y Bloom (Piso Expected: {bloom_floor:.2f} | Real: {bloom_real:.2f})", 20.0),
             ("retrieval_modality_and_anti_gaming", "2. Modalidad de Evocación y Anti-Gaming", 20.0),
             ("socratic_scaffolding_lifeline", "3. Integridad Salvavidas Socrático (3-Strikes)", 25.0),
             ("diagnostic_remediation_alignment", "4. Alineación Diagnóstica en FeedbackToast", 15.0),
@@ -1758,14 +1772,7 @@ class PipelineRunner:
             pinfo = mpri_pillars.get(pk, {})
             psc = pinfo.get("score", pmax)
             lines.append(f"    • {pname:<45}: {psc:.2f} / {pmax:.1f} pts")
-
-        dim_sum = audit_rep.get("dimension_summaries", {})
-        katex_l = dim_sum.get("katex_syntax_linter", {})
-        dist_l = dim_sum.get("distractor_integrity_linter", {})
-        soc_l = dim_sum.get("socratic_scaffolding_integrity_linter", {})
-        mod_l = dim_sum.get("retrieval_modality_linter", {})
-        zpd_l = dim_sum.get("zpd_progression_linter", {})
-        diag_l = dim_sum.get("diagnostic_rationale_alignment_linter", {})
+        lines.append(f"    • {'Piso Bloom Expected vs Real Generado':<45}: Piso Expected={bloom_floor:.2f} | Real Generado={bloom_real:.2f}/5.0 [{bloom_tier}]")
 
         katex_errs = (
             katex_l.get("unclosed_braces_count", 0)

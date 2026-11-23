@@ -147,7 +147,7 @@ En el modo conversacional estándar, el orquestador lanza **ambos subagentes en 
       "Role": "Course QA Evaluator",
       "TypeName": "course_qa_auditor",
       "Model": "inherit",
-      "Prompt": "Audita la calidad técnica y pedagógica del curso '<course_id>'. Prepara/ingiere el payload transitorio en '%TEMP%/tops_academy_qa/<course_id>_payload.json' (vía prepare_course_payload.py), aplica el Loop de Verificación Semántica sobre los risk clusters y califica las 5 dimensiones normativas de la rúbrica QM-OSCQR emitiendo ÚNICAMENTE el reporte autocontenido 'reports/qa_audits/<course_id>_qa_report.md' (con el bloque <details> de metadatos JSON al final, sin emitir .json ni .html separados)."
+      "Prompt": "Audita la calidad técnica y pedagógica del curso '<course_id>'. Prepara/ingiere el payload transitorio en '%TEMP%/tops_academy_qa/<course_id>_payload.json' (vía prepare_course_payload.py), aplica el Loop de Verificación Semántica sobre los risk clusters y califica las 5 dimensiones normativas de la rúbrica QM-OSCQR emitiendo ÚNICAMENTE el reporte autocontenido 'reports/qa_audits/<course_id>_qa_report.md' (mostrando en las tablas deterministas de D4 y del Pilar 1 del MPRI el Piso Bloom Expected adaptive_bloom_floor vs el Índice Bloom Real Generado bloom_weighted_index, y con el bloque <details> de metadatos JSON al final, sin emitir .json ni .html separados)."
     }
   ]
 }
@@ -164,7 +164,7 @@ python .agents/skills/c2c-unified-auditor/scripts/unified_audit_engine.py --cour
 
 ### Paso 4: Presentación al Usuario
 El orquestador presenta un resumen ejecutivo que incluye:
-- **Calificación Final Certificada** sobre 20.0 pts, Quality Tier e **Índice Bloom Ponderado (1–5)** frente a su piso adaptativo.
+- **Calificación Final Certificada** sobre 20.0 pts, Quality Tier y en las tablas deterministas (Rúbrica QM-OSCQR D4, Pilares MPRI Pilar 1 y Resumen de Linters) el **Piso Bloom Expected (`adaptive_bloom_floor`)** y el **Índice Bloom Real Generado (`bloom_weighted_index`, 1–5)**.
 - **Métricas Forenses Clave**: Tiempo de pared, factor de aceleración (*speedup*), tokens totales, densidad (tokens/pregunta, seg/pregunta) y **costo estimado en USD por etapa y total (tarifas Gemini 4 Hydrogen)**.
 - **Diagnóstico Principal de Rendimiento**: Cuello de botella detectado (CTA, straggler de autores o llamadas web de jueces).
 - **Enlaces Clicables**:

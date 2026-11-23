@@ -361,7 +361,7 @@ Este comando ejecuta en `< 1s`:
    > | **D1: Arquitectura Curricular y Topología DAG** | **{d1}** | 4.0 | {d1_pct}% | ✅ Impecable |
    > | **D2: Calidad Psicométrica y Reactivos** | **{d2}** | 5.0 | {d2_pct}% | ✅ Impecable |
    > | **D3: Andamiaje y Pistas Socráticas** | **{d3}** | 5.0 | {d3_pct}% | ✅ Impecable |
-   > | **D4: Alineación Instruccional y ZPD** | **{d4}** | 4.0 | {d4_pct}% | ✅ Impecable |
+   > | **D4: Alineación Instruccional y ZPD (Piso Bloom Expected: `{bloom_floor}` \| Real Generado: `{bloom_idx}` / 5.0)** | **{d4}** | 4.0 | {d4_pct}% | ✅ Impecable |
    > | **D5: Ergonomía Técnica y KaTeX** | **{d5}** | 2.0 | {d5_pct}% | ✅ Impecable |
    > | **Penalizaciones Duras** | **0.0** | - | - | ✅ Sin penalizaciones |
    > | **TOTAL CERTIFICADO** | **{final_score}** | **20.0** | **{total_pct}%** | 🏆 **{quality_tier}** |
@@ -370,13 +370,14 @@ Este comando ejecuta en `< 1s`:
    >
    > | Pilar de Dominio del Estudiante | Puntaje MPRI | Máximo | Calificación |
    > | :--- | :---: | :---: | :---: |
-   > | **1. Progresión Adaptativa ZPD y Bloom** | **{p1}** | 20.0 | {p1_pct}% |
+   > | **1. Progresión Adaptativa ZPD y Bloom (Piso Expected: `{bloom_floor}` \| Real Generado: `{bloom_idx}` / 5.0 — {bloom_tier})** | **{p1}** | 20.0 | {p1_pct}% |
    > | **2. Modalidad de Evocación y Anti-Gaming** | **{p2}** | 20.0 | {p2_pct}% |
    > | **3. Integridad del Salvavidas Socrático (3-Strikes)** | **{p3}** | 25.0 | {p3_pct}% |
    > | **4. Alineación Diagnóstica en FeedbackToast** | **{p4}** | 15.0 | {p4_pct}% |
    > | **5. Topología DAG e Interleaving (Quiz/Test)** | **{p5}** | 10.0 | {p5_pct}% |
    > | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **{p6}** | 10.0 | {p6_pct}% |
    > | **TOTAL MPRI** | **{mpri_score}** | **100.0** | **{mpri_score}% ({mpri_tier})** |
+   > | **📊 Piso Bloom Expected vs. Real Generado (1–5)** | **Real: `{bloom_idx}`** | **Piso Expected: `{bloom_floor}`** | **Tier: `{bloom_tier}` (`Analyze+Evaluate`: `{bloom_sup_pct}%`)** |
    >
    > #### 🔬 3. Telemetría Psicométrica y Resumen de Linters
    > - **Sintaxis KaTeX:** 0 errores críticos (delimitadores balanceados, llaves cerradas, renderizado 100% limpio).
