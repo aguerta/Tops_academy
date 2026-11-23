@@ -1,36 +1,59 @@
-# Top's Academy Platform & Content-to-Course AI Pipeline
+# Top's Academy Platform & Content-to-Course Neuro-Symbolic AI Pipeline (v4.0)
 
-[![Tests](https://img.shields.io/badge/Tests-363%20Passed-brightgreen.svg)]()
-[![Validator](https://img.shields.io/badge/Format%20Validator-21%20Rules%20%2B%203%20Strict-blue.svg)]()
-[![Platform](https://img.shields.io/badge/Platform-React%2018%20%2B%20Vite%20%2B%20KaTeX-61dafb.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-1%2C526%2B%20Passed%20(4%20Domains)-brightgreen.svg)]()
+[![Pipeline](https://img.shields.io/badge/C2C%20Pipeline-v4.0%20Form--C%20%2B%20Lean%204%20%2B%20Z3-purple.svg)]()
+[![Validator](https://img.shields.io/badge/Format%20Validator-23%20Rules%20%2B%203%20Strict%20%2B%20MPRI-blue.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-React%2018%20%2B%20Vite%20%2B%20PWA%20%2B%20FSRS--6-61dafb.svg)]()
 [![Math Equivalence](https://img.shields.io/badge/Math%20Equivalence-81%20Adversarial%20Cases%20100%25-success.svg)]()
-[![Skills Suite](https://img.shields.io/badge/Antigravity%20Skills-5%20Specialized-orange.svg)]()
+[![Skills Suite](https://img.shields.io/badge/Antigravity%20Skills-7%20Specialized-orange.svg)]()
 
 > [!NOTE]
-> **Pedagogical & UX Inspiration:**
-> This project has been heavily inspired by Khan Academy for its mastery learning framework, progressive hint scaffolding, multi-tiered competency progression, and student practice workflows.
+> **Language & Localization Note:**
+> While this repository's technical specification and open-source documentation are written in **English**, the **Top's Academy web platform UI, generated university courses, mathematical scaffolding, Socratic hints, and internal engineering roadmaps run natively in Spanish** (designed for university-level STEM, economics, statistics, and mathematical optimization courses, including native support for Spanish decimal comma notation `0,8333 == 0.8333`).
+>
+> **Pedagogical & Cognitive Foundation:**
+> Built upon **Mastery Learning** (inspired by Khan Academy), **Cognitive Task Analysis (CTA)**, **Spaced Repetition (`FSRS-5/6`)**, and deliberate practice principles (*The Expert Myth*), emphasizing **Active Free Recall** and **Higher-Order Bloom Modalities** over passive multiple-choice elimination.
 
-An end-to-end educational system that ingests academic university course materials (syllabi, lecture slide decks, handwritten notes, and textbook chapters) in PDF format, performs **Cognitive Task Analysis (CTA)** via a parallelized Map-Reduce architecture to extract competencies and prerequisite graphs, generates calibrated **mastery learning exercise banks** with sandboxed Python parametric templates, enforces mathematical anti-giveaway and KaTeX syntax guarantees, independently arbitrates answer keys via **Stratified Blind Judges** under epistemic closure, auto-repairs validation errors, and serves an interactive web practice platform with real-time mastery tracking, an AST-based mathematical equivalence engine, and educational safeguards.
+An end-to-end neuro-symbolic educational platform and multi-agent pipeline that ingests academic university materials (syllabi, Beamer slide decks, handwritten notes, and textbook chapters in PDF), performs **Cognitive Task Analysis (CTA)** via a parallelized Map-Reduce architecture to extract prerequisite DAGs, explicit assumptions (`assumptions` + `violation_consequence`), and foundation units (`PRE-XX`), compiles **4-Axis parametric exercise templates** (`Form-C` DSL with PrairieLearn `@var@` interpolation, `KaTeXAST` grammar verification, and `c2c_ver` symbolic/numeric verification), arbitrates answer keys under **Epistemic Closure** ($\alpha_{\text{Kernel}} = 0$), and serves an offline-ready **React 18 + PWA Study Harness** featuring **6 Higher-Order Bloom Modalities**, **FSRS-5/6 spaced repetition**, **Bidirectional Mastery 2.0 (80/20 hybrid bar)**, **Smart Blank-First free recall**, and an **Iron Mode (SAT Bluebook 2-Module Adaptive Exam Simulator)** with mandatory metacognitive calibration.
 
 ---
 
 ## Table of Contents
 
-1. [System Architecture](#system-architecture)
-2. [Single Command Launcher](#single-command-launcher)
-3. [Practice Platform Features & Safeguards](#practice-platform-features--safeguards)
-4. [Course Bank Format & Validator CLI (21 Rules + 3 Strict)](#course-bank-format--validator-cli-21-rules--3-strict)
-5. [Content-to-Course Antigravity Skill Ecosystem](#content-to-course-antigravity-skill-ecosystem)
-6. [Automated Test Suite Execution](#automated-test-suite-execution)
-7. [Active Production Courses & Audit Registry](#active-production-courses--audit-registry)
-8. [Milestone Verification & Certification Metrics](#milestone-verification--certification-metrics)
-9. [Repository Structure](#repository-structure)
+1. [Documentation Ecosystem (`docs/`)](#documentation-ecosystem-docs)
+2. [System Architecture (v4.0 Neuro-Symbolic & Study Harness)](#system-architecture-v40-neuro-symbolic--study-harness)
+3. [Single Command Launcher](#single-command-launcher)
+4. [Practice Platform & Antigravity Study Harness Features](#practice-platform--antigravity-study-harness-features)
+5. [4-Axis Authoring Architecture & 6 Higher-Order Bloom Modalities (M20)](#4-axis-authoring-architecture--6-higher-order-bloom-modalities-m20)
+6. [Course Bank Format, KaTeXAST & Validator CLI (23 Rules + 3 Strict + MPRI)](#course-bank-format-katexast--validator-cli-23-rules--3-strict--mpri)
+7. [Content-to-Course Antigravity Skill Ecosystem (7 Skills)](#content-to-course-antigravity-skill-ecosystem-7-skills)
+8. [Automated Test Matrix (4 Isolated Domains + E2E)](#automated-test-matrix-4-isolated-domains--e2e)
+9. [Active Production Courses & Benchmark Telemetry](#active-production-courses--benchmark-telemetry)
+10. [Certified Milestones Registry (M1 – M20-B)](#certified-milestones-registry-m1--m20-b)
+11. [Active Engineering Roadmap (`FUTURE_MILESTONES.md`)](#active-engineering-roadmap-future_milestonesmd)
+12. [Repository Structure](#repository-structure)
+13. [License](#license)
 
 ---
 
-## System Architecture
+## Documentation Ecosystem (`docs/`)
 
-The project consists of interconnected, independently testable subsystems coordinated by specialized multi-agent skills:
+All architectural specifications, historical certifications, and active roadmaps live inside [`docs/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/):
+
+| Document | Purpose & Scope |
+| :--- | :--- |
+| 🗺️ [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md) | **Active Strategic Roadmap:** High-level priorities, cognitive rationale, acceptance criteria (AC), and unit economics for active milestones (**M19** $k=4$ First-Pass scaling, **M16 F2** `z3-solver`, **M9+M21** ContentCore hierarchy, **M18** Prompt-Compiler CI, **M15 F2** Lean 4). |
+| 📗 [`docs/future_milestones/MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/MILESTONES_COMPLETED.md) | **Certified Historical Ledger:** Forensic delivery record of all completed milestones (**M1, M1-T, M2, M2a, M3, M4, M6, M7, M8, M9 [Quick Wins + Phase A], M10, M11, M12, M13, M14, M14-B, M15 [F1 + DRT], M16 [F1], M17, M20 Core & M20-B Iron Mode**). |
+| 📘 [`docs/future_milestones/CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/CONOCIMIENTO_TRIBAL.md) | **Tribal Knowledge & Inference Physics:** Causal architecture, LLM streaming physics, 2D Governance FSM matrix, hardware viewport ergonomics (14" 150% zoom & Split 50%), KaTeX lessons, and 4-Archetype invariants. |
+| 🏁 [`docs/future_milestones/HANDOFF_M20_CLOSURE.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/HANDOFF_M20_CLOSURE.md) | **Milestone 20 Closure Report:** Certification handoff for the 6 Higher-Order Bloom Modalities, Iron Mode, and $k=2$ production standard. |
+| 📋 [`docs/PROJECT.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/PROJECT.md) | **Core Project Specification:** Foundation contracts, schema interfaces, and baseline subsystem definitions. |
+| 🧪 [`docs/TEST_INFRA.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/TEST_INFRA.md) & [`docs/TEST_READY.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/TEST_READY.md) | **Test Infrastructure & Readiness Specs:** E2E Playwright harness design and verification checklists. |
+| 📐 [`docs/specs/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/) | **Deep Technical Specifications:** Detailed specs for Study Harness ([`m06_study_harness.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md)), FSRS-5/6 SRS ([`m08_srs_fsrs_fluency.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m08_srs_fsrs_fluency.md)), Hierarchical ContentCore ([`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md)), Mastery 2.0 ([`m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md)), Formal Kernel ([`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md)), and 4-Axis Archetypes ([`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md)). |
+
+---
+
+## System Architecture (v4.0 Neuro-Symbolic & Study Harness)
 
 ```
                             +-----------------------------------------------+
@@ -40,53 +63,57 @@ The project consists of interconnected, independently testable subsystems coordi
                                                     |
                                                     v
 +---------------------------------------------------------------------------------------------------+
-| Subsystem 3: Content-to-Course Pipeline v3 (.agents/skills/content-to-course/)                     |
+| Subsystem 1: Content-to-Course Pipeline v4.0 (.agents/skills/content-to-course/)                  |
 |                                                                                                   |
-|  Stage 0: Ingestion & Slicing  -->  Stage 1: CTA Map-Reduce      -->  Stage 2: Shard Planning     |
-|  (PyMuPDF corpus extraction,         (Sectional Analyzers +           (Self-contained payloads,   |
-|   direct PDF reading, session slices) Harmonizer & DAG Integrator)     embedded DSL, K <= 8)      |
+|  Stage 0: Multimodal Ingest    -->  Stage 1: CTA Map-Reduce      -->  Stage 2: Weighted Sharding  |
+|  (PyMuPDF session slicing,          (Sectional Analyzers +            (1:1 heavy / 2:1 light,     |
+|   direct PDF reading, evidence)      DAG Harmonizer, PRE-XX,           Typed Contract Skeletons,  |
+|                                      explicit assumptions)             k=2 stable default)        |
 |                                                                                |                  |
-|  Stage 6: Publishing & Append  <--  Stage 5: Stratified Judges   <--  Stage 3 & 4: Authors & Sandbox|
-|  (Strict validation, metadata,       (Stratified 2 items/comp,         (Shift-Left TPL-VAR >=0.50,|
-|   atomic sync to courses/)            epistemic closure, key norm.)     in-process assembly <6.5s)|
+|  Stage 6: Quality Gate Publish <--  Stage 5: Bicameral Judges    <--  Stage 3 & 4: Form-C & Build |
+|  (MPRI /100 pts, 7 Path-to-         (Alpha_Kernel = 0 dominance,      (4 Orthogonal Archetypes,   |
+|   Mastery linters, atomic sync)      LQAS fast-path, .rejudge ckpt)    KaTeXAST, c2c_ver, SymPy/Z3|
+|                                                                        SHA-256 certs, Pool <8.5s) |
 +---------------------------------------------------+-----------------------------------------------+
-                                                    | Outputs validated course JSON
+                                                    | Outputs certified course JSON
                                                     v
 +---------------------------------------------------------------------------------------------------+
-| Subsystem 1: Format & Psychometric Validator (src/validator/)                                     |
+| Subsystem 2: Format, Psychometric & Epistemic Validator (src/validator/ & engine/)                |
 |                                                                                                   |
-|  Pass 1: Lexical Scanner   -->  Pass 2: JSON Schema & Semantics  -->  Pass 3: Quality & KaTeX Mode|
-|  - RFC 8259 raw syntax          - Draft-07 Schema conformity          - 21 Formal Rules (R-01..22)|
-|  - Silent LaTeX escapes         - Referential integrity (R-05..R-07)  - 3 Strict Rules (S-01..S-03)|
-|    (\tau, \rho, \frac, \nu)     - Volume quotas: >=30 Skill,          - Anti-giveaway bounds      |
-|  - Raw newline detection          >=20 Fact/Concept (R-08..R-09)        [0.8 min, 1.2 max], <=25% |
-|                                                                       - KaTeX macro arity, nested |
-|                                                                         macros, environment lint  |
+|  Pass 1: Lexical & Overescape  -->  Pass 2: Schema & Epistemic   -->  Pass 3: Psychometric & MPRI |
+|  - RFC 8259 raw syntax              - Draft-07 Schema & Pydantic      - 23 Rules + 3 Strict Rules |
+|  - Silent LaTeX escapes             - Epistemic Closure gate          - Anti-giveaway [0.8, 1.2]  |
+|  - Anti-Overescape Guard (R-23)       [TPL-EPISTEMIC-CLOSURE]         - Active Recall Quota >=80% |
+|    auto-repair in run_platform      - 0 MC7 in Skill, <=1 in Concept  - KaTeXAST & PyKaTeX column |
 +---------------------------------------------------+-----------------------------------------------+
-                                                    | Verified courses saved to courses/
+                                                    | Verified courses served from courses/
                                                     v
 +---------------------------------------------------------------------------------------------------+
-| Subsystem 2: Top's Academy Practice Platform (platform/ & run_platform.py)                          |
+| Subsystem 3: Top's Academy Study Harness & PWA Platform (platform/ & run_platform.py)             |
 |                                                                                                   |
-|  - Backend Discovery Server: Auto-scans courses/, exposes REST API, isolates invalid files        |
-|  - Modern Web Frontend: React 18 + Vite + TypeScript + Tailwind CSS + Lucide Icons               |
-|  - Mathematical Equivalence Engine: Client-side AST normalizer + Monte Carlo sampler supporting   |
-|    Spanish decimal commas (0,8333 == 0.8333), fractions (5/6 == 0,8333), Greek symbols, tolerances |
-|  - Educational Safeguard (3-Strikes Reveal): Locks inputs after 3 failed attempts, expands         |
-|    step-by-step solution and misconception warning, awards 0 credit, and guides user to next item |
-|  - Fast Redo on Mistakes: Immediate re-attempt across Practice, Quizzes, Unit Tests, Challenge    |
-|  - Vector Coordinate Plane: SVG widget for curves, asymptotes, open/closed points                |
-|  - Static Bundle Pipeline: Compiles to platform/dist/ with static courses bundle for GitHub Pages|
-+---------------------------------------------------------------------------------------------------+
+|  - Slim Manifest & ETag Server: 2.52 KB manifest, mtime+size cache, ETag/304/gzip, /healthz       |
+|  - Offline-First PWA & Resilience: Workbox Service Worker, IndexedDB course cache, sessionStore   |
+|    auto-rehydration on laptop sleep/wake, and native mobile popstate navigation                   |
+|  - Ergonomic Viewport Engine: 12-viewport E2E matrix (14" 150% zoom, Split-View 50%, mobile)      |
+|  - Antigravity Study Harness 2.0: Smart Blank-First curtain (free recall), 100% mouseless hotkeys,|
+|    4-Strikes adaptive Socratic gate, and 1-click $0 API Socratic prompt transfer                  |
+|  - 6 Higher-Order Bloom Modalities: open_symbolic (mathjs AST), proof_dag, adversarial_break,     |
+|    unstructured_model, invariant_canvas (Cartesian & Tree SVG), and concept_matching              |
+|  - Mastery 2.0 & FSRS-5/6 Engine: Bidirectional calibration, 80/20 hybrid bar, ts-fsrs scheduler, |
+|    12h Mastery Challenge cooldown, Misconception Ledger ("Practicar mis Trampas"), ProgressLogView|
+|  - Iron Mode (20-B) & SAT Bluebook Simulator (14-B): Closed-book timed exam, 2-module adaptive    |
+|    routing (Module 1 diagnostic -> Module 2 Standard/Advanced), mandatory MetacognitiveModal      |
+|    (confidence + Brier Score / Log-Loss calibration), and 0-20 university grade projection        |
++---------------------------------------------------+-----------------------------------------------+
                                                     | Telemetry & QA Evaluation
                                                     v
 +---------------------------------------------------------------------------------------------------+
-| Subsystem 4: Forensic Telemetry & Quality Evaluation Skills Suite (.agents/skills/)               |
+| Subsystem 4: Multi-Agent Governance, Telemetry & QA Skills (.agents/skills/)                      |
 |                                                                                                   |
-|  - course-qa-evaluator: QM & OSCQR audit across 5 dimensions (Architecture, Items, Hints, Align, KaTeX)|
-|  - c2c-run-auditor: Token decomposition (input, output, cache, thinking), throughput & benchmarks |
-|  - c2c-unified-auditor: Concurrent orchestration merging pedagogical QA with execution telemetry |
-|  - delete-course: Fast safe course deletion (<300ms) with historical audit report preservation    |
+|  - c2c_hook_guard.py (2D FSM): Blocks global rewrites on <6 errors, enforces surgical edits       |
+|  - course-qa-evaluator: QM, OSCQR & Mastery Learning audit + 7 Path-to-Mastery v2.0 linters       |
+|  - c2c-run-auditor & c2c-unified-auditor: Per-turn token telemetry, cache multiplier & QA fusion  |
+|  - flash-duet-orchestrator, prompt-architect & delete-course (<300ms safe lifecycle management)   |
 +---------------------------------------------------------------------------------------------------+
 ```
 
@@ -94,7 +121,7 @@ The project consists of interconnected, independently testable subsystems coordi
 
 ## Single Command Launcher
 
-Launch the complete application (both the backend course discovery server and the web interface) with a single command:
+Launch the complete application (both the backend course discovery server with anti-overescape KaTeX guards and the web interface) with a single command:
 
 ```bash
 python run_platform.py
@@ -106,310 +133,265 @@ python run_platform.py
 # Start server on custom port or host
 python run_platform.py --port 5173 --host 127.0.0.1
 
-# Course Discovery & Inspection Mode (non-server scan)
+# Course Discovery & Inspection Mode (non-server scan with validation summary)
 python run_platform.py --scan
 
 # Help & Usage
 python run_platform.py --help
 ```
 
-### Discovery & Output
-
-When starting, the platform scans `courses/`, validates all course banks with the format validator, and reports discovered courses:
-
-```text
-========================================================================
-Scanning courses in 'D:\Augusto\personal_portfolio\Tops_academy\courses'...
-Found 1 course file(s):
-------------------------------------------------------------------------
-File:         estadistica3_regresion_v3.json
-ID:           estadistica3_regresion_v3
-Title:        Estadística III: Econometría y Modelo de Regresión Lineal
-Status:       VALID
-Competencies: 16
-Questions:    390
-------------------------------------------------------------------------
-Scan complete.
-========================================================================
-```
-
 Open your web browser to: **[http://localhost:5173](http://localhost:5173)**
 
 ---
 
-## Practice Platform Features & Safeguards
+## Practice Platform & Antigravity Study Harness Features
 
-The platform delivers a comprehensive mastery-learning student experience across six pixel-accurate reference workflows:
+### 1. Ergonomics Across 12 Viewports, Split-View 50% & Installable Offline PWA (M1, M1-T, M2, M2a, M11, M12)
+- **Container-Query 2-Column Grid (`@container qc (min-width: 480px)`)**: Eliminates vertical overflow on compact 14" laptops at 150% OS scaling and **50% Split-View** windows alongside PDF readers or notes.
+- **Prose-Outside-KaTeX Splitting (`splitMathAndProse`)**: Keeps mathematical formulas crisp (`white-space: nowrap`) while wrapping surrounding Spanish prose cleanly.
+- **Installable Offline PWA**: Workbox Service Worker precaching the App Shell and KaTeX `.woff2` fonts (~1.5 MB), storing large course banks in IndexedDB (`tops_academy_cache`), with native mobile back-gesture support (`navigationHistory.ts`) and an `✓ Offline` status badge.
+- **Laptop Sleep/Wake Resilience (`sessionStore.ts`)**: Persists active practice state in `sessionStorage` (`tops_active_session_v1`) and silently reconciles server `ETag` headers on `visibilitychange` without losing student progress.
+- **Slim Manifest Architecture**: Compresses initial catalog discovery from `59.8 MB` down to a `2.52 KB` slim manifest (`0.76 KB` gzip) backed by `.cache/course_index.json`.
 
-### 1. Six Reference Views
-1. **Course Overview**: Left sidebar navigation displaying course units and competencies, mastery status summary, mastery legend (*Sin empezar*, *Practicado*, *Familiar*, *Dominado*), and Unit Test / Quiz launcher cards.
-2. **Pre-Exercise Screen**: Hero practice banner ("Ready to practice?"), question count indicator, estimated time, and "Let's go" activation button.
-3. **Question Layout**: Standardized layout with lettered options (`A`, `B`, `C`, ...), embedded SVG coordinate planes, bottom progress bar with status dots, Skip button, and Check button.
-4. **Feedback Card & Toast**: Immediate feedback card with downward pointer, contextual success/error messages, and expandable step-by-step mathematical explanation.
-5. **Exercise Complete Summary**: Session score display, animated confetti particle celebration, review breakdown, and "Try again" / "Up next" action buttons.
-6. **Course Challenge Start**: Comprehensive summative assessment launcher displaying question count (30 questions) and time estimate (30-45 minutes).
+### 2. Antigravity Study Harness 2.0 & $0 API Socratic Transfer (M6)
+- **Smart Blank-First Curtain**: Hides options on question load to enforce pure **Free Recall** before recognition (`Enter` to reveal options; automatically bypassed for direct active-input items).
+- **100% Mouseless Navigation**: Full keyboard control via `A`–`G` / `1`–`7` option toggles, auto-focused inputs, and `Enter` submission.
+- **4-Strikes Adaptive Socratic Gate**: Allows up to 4 attempts (`4/4`), triggering a Socratic intervention gate on repeated failures and providing a **1-click anti-giveaway prompt generator** (`$0 API cost`) to paste into any external LLM tutor without leaking the answer key.
 
-### 2. Educational Safeguard: 3-Strikes Solution Reveal
-In `PracticeSession.tsx` and `FeedbackToast.tsx`, the platform tracks consecutive incorrect attempts per item:
-- **Attempts 1 & 2**: Displays diagnostic feedback, highlights misconception warnings, and offers immediate re-attempt via the **"Re-intentar" / "Quick Redo"** action.
-- **Attempt 3 (Final Strike)**: Locks the question inputs, displays `"Máximo de intentos alcanzado (3/3)"`, automatically reveals the correct answer, expands the full step-by-step mathematical solution and misconception warning, awards **0 mastery points**, and transforms the action into "Siguiente pregunta".
+### 3. Khan-Style Mastery 2.0, FSRS-5/6 Spaced Repetition & Misconception Ledger (M8, M9, M14)
+- **Bidirectional Mastery Calibration**: Dynamic transitions across *Sin empezar* $\leftrightarrow$ *Practicado* $\leftrightarrow$ *Familiar* $\leftrightarrow$ *Dominado* (`100 pts`), with **80/20 Hybrid Course Progress** (80% mastery points + 20% competency coverage), *Hint-Cap* penalties, and a 5-tier **"Up Next for You"** recommendation engine.
+- **Client-Side `FSRS-5/6` (`ts-fsrs`) Scheduler**: Maps objective telemetry (`wrong_attempts`, `hints_used`, partial credit, `lucky_guess`) to FSRS ratings without penalizing deep-thinking latency. Includes a **12-hour per-competency cooldown** in *Mastery Challenge* (6 items) and separates `review_reason: 'error' | 'decay'`.
+- **Misconception Ledger (`D-XX-YY`)**: Tracks specific structural distractors and error families across all modalities, enabling targeted **"Practicar mis Trampas"** remediation sessions and an SVG **ProgressLogView** tracking Brier Score and Log-Loss calibration.
+- **Hierarchical `ContentCoreDrawer` & Unit 0 (`PRE-XX`)**: Organizes competencies by source lecture decks/modules in pedagogical order, displaying 5-block Khanmigo study guides, explicit mathematical assumptions (`assumptions` + `violation_consequence`), and prerequisite foundation units (`PRE-XX`).
 
-### 3. Mathematical Engine & Coordinate Plane
-- **KaTeX Typesetting**: High-performance LaTeX formula rendering across stems, options, hints, and detailed solutions.
-- **Client-Side Math Equivalence Engine**: AST normalizer and Monte Carlo sampler accepting mathematically equivalent expressions:
-  - Spanish decimal comma notation: `0,8333` $\equiv$ `0.8333`
-  - Decimal-to-fraction equivalence: `5/6` $\equiv$ `0,8333`
-  - Factored vs. expanded algebra: $-(x - 3) \equiv 3 - x$, $(x+2)(x-2) \equiv x^2 - 4$
-  - Commutativity of Greek terms and products: $1 - (\alpha + n)\sigma \equiv 1 - \alpha\sigma - n\sigma$
-  - Negative powers and LaTeX fractions: $\frac{1}{x} \equiv x^{-1}$, $\frac{a+b}{c} \equiv (a+b)/c$
-  - Strict rejection of false positives (sign differences, power mismatches, alien variables). Verified by **81 adversarial test cases (100% pass rate)**.
-- **SVG Coordinate Plane Component**: Interactive graphing widget supporting Cartesian coordinate grids, polynomial/trigonometric curves, vertical/horizontal asymptotes, and open/closed coordinate points.
+### 4. Iron Mode (M20-B) & SAT Bluebook 2-Module Adaptive Exam Simulator (M14-B)
+- **Closed-Book Timed Examination (`IronExamSession.tsx`)**: Simulates high-stakes university exams with countdown timers (visual alerts at $\le 5\text{ min}$ and $\le 1\text{ min}$), zero hint access, and deferred feedback until final submission.
+- **SAT Bluebook 2-Module Adaptive Routing**: Module 1 serves a 12-question diagnostic baseline; achieving $\ge 70\%$ routes the student to **Module 2 Advanced**, while $< 70\%$ routes to **Module 2 Standard** without item repetition.
+- **Mandatory Metacognitive Calibration (`MetacognitiveModal.tsx`)**: Before revealing grades, students rate their confidence ($0$–$100\%$) to compute real-time **Brier Scores** and **0–20 Peruvian University Grade Projections** broken down by unit.
 
 ---
 
-## Course Bank Format & Validator CLI (21 Rules + 3 Strict)
+## 4-Axis Authoring Architecture & 6 Higher-Order Bloom Modalities (M20)
 
-Course banks are stored in structured JSON conforming to JSON Schema Draft-07 with strict psychometric and LaTeX formatting rules.
+To eradicate syntactic overfitting and passive option elimination, Milestone 20 enforces a **4-Axis Competency Contract** across every shard:
+1. **Axis 1 — 4 Orthogonal Archetypes**: `direct` (frontal calculation), `inverse` (parameter recovery/diagnosis), `perturbation` (comparative statics/shock analysis), and `boundary_or_edge_case` (asymptotics/degenerate limits).
+2. **Axis 2 — Anti-Elimination Quota (`[M20-MC7-CAP]` & `[M20-ACTIVE-QUOTA]`)**: **`0 MC7` (7-option multiple choice) is strictly forbidden in `Skill` (`Hab-*`) competencies** and capped at $\le 1$ in `Concept`/`Fact`, enforcing **$\ge 80\%$ active production/discrimination modalities**.
+3. **Axis 3 — ZPD Difficulty Tri-Band**: Balanced distribution across `easy`, `medium`, and `hard` templates with mandatory diagnostic rationales (`ds` / `D-XX-YY`) even on free-input items (`TPL-D3`).
+4. **Axis 4 — Higher-Order Bloom Taxonomy ($\ge \text{L3–L6}$)**: Powered by 6 specialized interactive modalities evaluated client-side with zero `eval()`:
+
+| Modality | Cognitive Task (Bloom Level) | Engine & Verification Mechanism |
+| :--- | :--- | :--- |
+| **`open_symbolic`** | **L3–L5 Symbolic Derivation:** Free-form algebraic/calculus formula entry | Client-side `mathjs` AST equivalence + 81-case adversarial normalizer + server `[TPL-EPISTEMIC-CLOSURE]` hard gate |
+| **`proof_dag`** | **L4–L5 Deductive Proof Assembly:** Reconstruct multi-step mathematical proofs (`steps >= 3`) | Compiled via `engine/proof_compiler.py` with topological dependency validation and trap step rationales |
+| **`adversarial_break`** | **L5–L6 Counterexample & Assumption Auditing:** Identify the violated theorem hypothesis or breaking witness | Compiled via `engine/adversarial_generator.py` with `[ADV-WITNESS-LEAK]` Shift-Left guard |
+| **`unstructured_model`** | **L4–L6 Stage-0 Formalization:** Translate a raw word problem into formal variables, objective functions, and constraints | Multi-part structured schema validated via `c2c_ver.m20_guard` |
+| **`invariant_canvas`** | **L4–L5 Visual/Topological Reasoning:** Interactive Cartesian curves/equilibria or decision/game trees | Dual `cartesian` & `tree` SVG renderer with `[CANVAS-OUT-OF-BOUNDS]` viewport clipping linter |
+| **`concept_matching`** | **L3–L4 Structural Isomorphism:** Map formal properties/theorems to their mathematical consequences | Bijective/surjective pairing matrix with specific misconception rationales (`D-XX-YY`) |
+
+*Note: Standard `fill_in_the_blank` (`FIB` with diagnostic `ds` rationales) and `multiple_select` (`MS` 4–6 options) complement the 6 higher-order modalities.*
+
+---
+
+## Course Bank Format, KaTeXAST & Validator CLI (23 Rules + 3 Strict + MPRI)
+
+Course banks are validated through a 3-pass deterministic validator (`src/validator/`) and a 7-linter **Mastery Pedagogical Rigor Index (MPRI / 100 pts)** pre-publish quality gate:
 
 ### Validator Rules Matrix
 
 | Rule ID | Code | Category | Specification / Invariant Enforced |
 | :--- | :--- | :--- | :--- |
-| **R-01** | `ERR_RAW_NEWLINE` | Lexical | RFC 8259 conformity; zero raw unescaped newlines/tabs inside string literals |
-| **R-02** | `ERR_INVALID_ESCAPE` | Lexical | Double-escaped LaTeX sequences (`\\frac`, `\\alpha`, `\\sigma`) |
-| **R-03** | `ERR_SILENT_ESCAPE` | Lexical | Zero silent control characters from single backslash escapes (`\tau`, `\frac`, `\beta`, `\nu`, `\text`) |
-| **R-04** | `ERR_SCHEMA_VALIDATION` | Schema | Draft-07 JSON Schema validation and fill-in-the-blank answer key presence |
-| **R-05** | `ERR_DUP_COMPETENCY` | Integrity | Globally unique competency IDs across the course |
-| **R-06** | `ERR_DUP_QUESTION` | Integrity | Globally unique question IDs across the course |
-| **R-07** | `ERR_MISSING_COMPETENCY` | Referential | Valid competency foreign key references |
-| **R-08** | `ERR_COUNT_SKILL` | Quota | Volume quota: $\ge 30$ questions per Skill (`Hab`) competency |
-| **R-09** | `ERR_COUNT_CONCEPT` | Quota | Volume quota: $\ge 20$ questions per Fact (`H`) or Concept (`C`) competency |
-| **R-10** | `ERR_MC_COUNT` | Cardinality | Multiple-choice 7 options cardinality (exactly 7 options) |
-| **R-11** | `ERR_MC_CORRECT` | Cardinality | Multiple-choice correct answer cardinality (exactly 1 correct option) |
-| **R-12** | `ERR_MS_COUNT` | Cardinality | Multiple-select option count between 4 and 6 options |
-| **R-13** | `ERR_MS_CORRECT` | Cardinality | Multiple-select correct answers between 1 and $n-1$ |
-| **R-14** | `ERR_HINT_COUNT` | Scaffolding | Graduated hints count between 3 and 5 |
-| **R-15** | `ERR_ITEM_LENGTH_RATIO` | Psychometrics | Distractor length anti-giveaway: $0.80 \cdot \min(D) \le L_{\text{correct}} \le 1.20 \cdot \max(D)$ |
-| **R-16** | `ERR_COURSE_LENGTH_DIST`| Psychometrics | Course anti-giveaway: correct option is longest in $\le 25\%$ and shortest in $\le 25\%$ of items |
-| **R-17** | `ERR_PLACEHOLDER_RATIONALE`| Quality | Formative error rationales without placeholders ("placeholder", "n/a", "none", "error") |
-| **R-18** | `ERR_META_GIVEAWAY` | Psychometrics | Confinement of meta-information: forbids giveaway terms (*"erróneamente"*, *"omitiendo"*) in visible option content |
-| **R-19** | `ERR_ANSWER_LEAK` | Quality | Answer leak prevention: forbids embedding exact `correct_answer` value in fill-in-the-blank stems |
-| **R-20** | `ERR_LATEX_SYNTAX` | KaTeX Mode | Strict KaTeX mode: delimiter parity (`$`, `$$`), no triple dollars (`$$$`), no residual `{{...}}`, no `{var}`, macro arity checks (`\frac{}{}`), nested macro validations, environment closures |
-| **R-22** | `ERR_MS_MISSING_RATIONALE`| Quality | Mandatory diagnostic error rationale in all multiple-select distractors (`is_correct: false`) |
-| **S-01** | `ERR_STRICT_MISSING_SOLUTION` | Strict Mode | Mandatory step-by-step mathematical explanation |
-| **S-02** | `ERR_STRICT_MISSING_MISCONCEPTION` | Strict Mode | Mandatory misconception warning |
-| **S-03** | `ERR_STRICT_MISSING_DIFFICULTY` | Strict Mode | Explicit difficulty rating (`easy`, `medium`, `hard`) |
+| **R-01..R-03** | `ERR_RAW_NEWLINE` / `ESCAPE` | Lexical | RFC 8259 conformity; zero raw newlines or silent control characters (`\tau`, `\frac`, `\beta`, `\nu`, `\text`) |
+| **R-04..R-07** | `ERR_SCHEMA` / `INTEGRITY` | Schema & DAG | Draft-07 JSON Schema, Pydantic `ShardCompetenceContract`, unique IDs, valid foreign keys, acyclic `PRE-XX` / `C-XX` DAG |
+| **R-08..R-09** | `ERR_COUNT_SKILL` / `CONCEPT`| Volume Quota | Volume quotas per competency scaled by `k` (`DEFAULT_TEMPLATES_PER_MODALITY = 2` stable standard) |
+| **R-10..R-13** | `ERR_MC` / `ERR_MS_COUNT` | Cardinality | Cardinality invariants + `[M20-MC7-CAP]` (`0 MC7` in `Skill`, $\le 1$ in `Concept`/`Fact`) & `[M20-ACTIVE-QUOTA]` ($\ge 80\%$) |
+| **R-14** | `ERR_HINT_COUNT` | Scaffolding | Graduated Socratic hints count between 3 and 5 |
+| **R-15..R-16** | `ERR_LENGTH_RATIO` / `DIST` | Psychometrics | Anti-giveaway bounds: $0.80 \cdot \min(D) \le L_{\text{correct}} \le 1.20 \cdot \max(D)$; longest/shortest $\le 25\%$ |
+| **R-17..R-19** | `ERR_RATIONALE` / `LEAK` | Quality | Zero placeholder rationales, zero meta-giveaway words in options, zero answer leaks in stems |
+| **R-20** | `ERR_LATEX_SYNTAX` | `KaTeXAST` | Recursive `KaTeXAST` parser + `pykatex_validate_with_column`, PrairieLearn `@var@` raw strings, `[SYMPY-LATEX-MATRIX]` |
+| **R-22** | `ERR_MS_MISSING_RATIONALE` | Diagnostics | Mandatory diagnostic error rationale (`D-XX-YY`) in all distractors and `TPL-D3` free-input `ds` maps |
+| **R-23** | `ERR_KATEX_OVERESCAPE` | Admission Guard| Platform anti-overescape guard (`\\frac`, `\\alpha` in JSON) with idempotent auto-repair in `run_platform.py` |
+| **S-01..S-03** | `ERR_STRICT_*` | Strict Mode | Mandatory step-by-step `detailed_solution`, `misconception_warning`, and explicit `difficulty` (`easy`, `medium`, `hard`) |
 
 ### Validator CLI Usage
 
 ```bash
-# Validate single course file in standard mode
-python -m src.validator.cli courses/estadistica3_regresion_v3.json
-
-# Validate in strict pedagogical mode (enforces detailed solutions, misconceptions, difficulties)
-python -m src.validator.cli courses/estadistica3_regresion_v3.json --strict
+# Validate a single course file in strict pedagogical mode
+python -m src.validator.cli courses/estadistica_3_pre_pc2_m20.json --strict
 
 # Machine-readable JSON output for CI/CD pipelines
-python -m src.validator.cli courses/estadistica3_regresion_v3.json --json
+python -m src.validator.cli courses/mateco_4_optimizacion_v20_k_3.json --strict --json
 
 # Validate entire directory of course files
 python -m src.validator.cli courses/
 ```
 
-Exit codes: `0` = Valid, `1` = Validation failure, `2` = File not found or I/O error.
+---
+
+## Content-to-Course Antigravity Skill Ecosystem (7 Skills)
+
+Located under `.agents/skills/`, seven specialized skills power the autonomous authoring, formal verification, and auditing lifecycle:
+
+1. **`content-to-course` (v4.0 "More with Less" Neuro-Symbolic Pipeline)**:
+   - **Stage 0 & 1 (`ingest.py`, `cta_merge.py`)**: Multimodal PDF slicing + CTA Map-Reduce extracting acyclic prerequisite DAGs, `PRE-XX` foundation units, explicit `assumptions`, and ordered `evidence` blocks.
+   - **Stage 2 (`plan_shards.py`)**: Weighted competency sharding (`is_heavy_competency` `1:1` for heavy `Skill` shards, `2:1` for `Concept`/`Fact`, `max_concurrency=12`) with zero prompt duplication (`-2.0M` tokens saved).
+   - **Stage 3 (`compile_shard.py`, `check_templates.py`, `engine/c2c_ver.py`)**: Shift-Left compilation in `<50 ms` precheck using the `Form-C` DSL (55–70 lines), **6 First-Time Pass (FTP) Levers** (pre-wired Typed Contract Skeletons in `author_XX_data.md`, `c2c_ver.numeric/equiv/m20_guard` proxy, `[AUTO-FIXED] [TPL-ORPHAN-VARS]`, `normalize_prose_outside_math`, `[Z3-RULE-WARNING]` shadow solver, and `[TPL-EPISTEMIC-CLOSURE]` gate), emitting SHA-256 cryptographic receipts (`shard_XX.cert.json`).
+   - **Stage 4 (`engine/instantiate.py`, `build_worker.py`)**: Parallel `ProcessPoolExecutor` + `orjson` instantiation with stratified **Rejection Sampling** ($\le 20\%$ key concentration), assembling full courses in **$< 8.5\text{ seconds}$**.
+   - **Stage 5 (`judge.py`)**: Bicameral Blind Judges with absolute formal kernel dominance ($\alpha_{\text{Kernel}} = 0$), **LQAS statistical fast-path** (skipping LLM re-judging on clean deterministic passes), and `.rejudge_pending.json` crash-recovery checkpoints.
+   - **Stage 6 (`course_publisher.py`)**: Enforces the blocking `PublishQualityGateError` (MPRI + 7 Path-to-Mastery v2.0 linters) before atomic publication to `courses/`.
+   - **2D FSM Hook Guard (`c2c_hook_guard.py`)**: Intercepts subagent tool calls (`read_file`/`write_file`/`edit_file`), blocking full-file rewrites when errors $< 6$ to enforce surgical edits and cap subagents at 40 turns / 5M tokens.
+2. **`course-qa-evaluator`**: Hybrid deterministic (`<300 ms`) + adaptive semantic QA auditor scoring courses `/20.0 pts` (QM/OSCQR) and `/100 pts` (MPRI across 6 pillars).
+3. **`c2c-run-auditor`**: Forensic multi-agent telemetry extractor measuring input, output, cache-read multipliers (`1.0x` vs `7.6x` on retries), thinking tokens, critical path stragglers, and USD unit economics.
+4. **`c2c-unified-auditor`**: Dispatches `c2c-run-auditor` and `course-qa-evaluator` concurrently to produce unified benchmark reports in `docs/unified_reports/` and `reports/`.
+5. **`delete-course`**: Safely purges courses and working artifacts in `<300 ms` while stamping historical QA audit reports as `ELIMINADO` and preserving `content/` immutability.
+6. **`flash-duet-orchestrator`**: Sequential gate orchestrator (`Implementer -> Auditor` in Duet mode, or `Implementer -> Editor -> Auditor` in Triad mode) with strictly disjoint write boundaries and pre-flight verification.
+7. **`prompt-architect`**: Frontier prompt engineering and blind auditing skill built on modular XML contracts and official DeepMind / AI Studio guidelines.
 
 ---
 
-## Content-to-Course Antigravity Skill Ecosystem
+## Automated Test Matrix (4 Isolated Domains + E2E)
 
-Located under `.agents/skills/`, five specialized skills automate authoring, quality evaluation, telemetry, and lifecycle management:
-
-### 1. `content-to-course` (v3 High-Throughput Pipeline)
-- **Multiformat Ingestion (`ingest.py`)**: PyMuPDF extraction, session slicing (`generate_session_slices`), and direct PDF reading (`work/pre_cta_manifest.json`).
-- **CTA Map-Reduce (`run.py --stage cta-map` & `--stage cta-reduce`)**:
-  - *Phase Map*: Concurrent *Sectional CTA Analyzers* processing individual session slices.
-  - *Phase Reduce*: *CTA Harmonizer & DAG Integrator* (`cta_merge.py`) assembling `work/cta.json` with canonical IDs and inter-session prerequisite DAGs.
-- **Shard Planning (`plan_shards.py`)**: Decomposes competencies into self-contained shard payloads (`work/shards/shard_XX.json`) with embedded DSL references and dynamic shard caps ($K \le 8$).
-- **Shift-Left Shard Authoring (`check_templates.py`)**: Subagents author parametric templates with mandatory `stem_variants >= 3` and simulated diversity $\ge 0.50$ (Rule `TPL-VAR`). Defective templates fail locally before orchestrator handoff.
-- **Sandboxed Assembly & Instantiation (`engine/assemble.py`, `engine/instantiate.py`)**: In-process execution generating 500+ items in $<6.5$ seconds with invariant checking (`engine/invariants.py`).
-- **Stratified Blind Judges (`judge.py`)**: Stratified sampling of 2 items per competency evaluated under epistemic closure with normalized keys.
-- **Course Publisher (`course_publisher.py`)**: Validates strictly and publishes atomically to `courses/<course_id>.json`.
-
-### 2. `course-qa-evaluator`
-Evaluates courses against Quality Matters (QM), OSCQR Higher Ed, and Mastery Learning standards across 5 dimensions: Architecture (4 pts), Items & Distractors (5 pts), Scaffolding (5 pts), Cognitive Alignment (4 pts), and KaTeX/Ergonomics (2 pts).
-
-### 3. `c2c-run-auditor`
-Audits execution runs extracting token telemetry (input, output, cache read, thinking), latencies, stage bottlenecks, unit economics (tokens/question, sec/question), and maintains `reports/c2c_audits/historical_benchmark.md` and `audit_registry.json`.
-
-### 4. `c2c-unified-auditor`
-Unified orchestration skill that dispatches the Run Auditor and Course QA Evaluator concurrently, generating consolidated reports with interactive navigation.
-
-### 5. `delete-course`
-Safely deletes courses in $<300$ms, removing course JSON and competence markdown files while preserving historical audit reports with `ELIMINADO` status and strictly enforcing the immutability of `content/`.
-
----
-
-## Automated Test Suite Execution
-
-The repository maintains an automated test matrix with 100% pass rates across unit, integration, adversarial, and browser suites:
-
-### 1. Python Consolidated Test Suites (367 items / 363 passed, 4 skipped in 18.05s)
+Consolidated under Milestone 13 into **4 isolated domain directories** (`tests/{quality,engine,platform,pipeline}/` + `tests/e2e/`) running via `pytest-xdist` (`-n auto --dist worksteal`):
 
 ```powershell
-# Run consolidated pytest suite (367 items / 363 passed, 4 skipped in ~18s)
-.venv\Scripts\python.exe -m pytest -v
+# Run the full parallelized Python test suite (1,526+ tests across 4 domains)
+pytest tests/ -q
+
+# Run specific domain suites
+pytest tests/engine/ tests/quality/ -q
+pytest tests/platform/ tests/pipeline/ -q
+
+# Run Node.js 81-case Math Equivalence & M20 Validators suites
+node tests/platform/test_math_adversarial_suite.mjs
+node tests/test_m20_validators.mjs
+
+# Run 12-Viewport Ergonomics Matrix & Playwright E2E Browser Suites
+node tests/e2e_m1_viewport_matrix.mjs
+pytest tests/e2e/ -v
 ```
 
-Breakdown of test suites:
-- **`tests/test_validator.py`** (144 tests): Lexical scanner, schema, core rules R-01..R-16, extended rules R-17..R-20, R-22, strict rules S-01..S-03, KaTeX macro arity, nested macros, and environments.
-- **`tests/test_engine_invariants_adversarial.py`** (51 tests): Invariant validation, sandboxed assembly, length bounding, option deduplication.
-- **`tests/test_sandbox_adversarial.py`** (49 tests): AST sandbox isolation, blocked syscalls, forbidden imports, memory safety.
-- **`tests/test_skill.py`** (33 tests): Document ingestion, CTA taxonomy, batch generation, SymPy Tier 1 verifier, blind solver, publisher.
-- **`tests/test_platform.py`** (19 tests): HTTP server endpoints, static routing, course discovery, launcher CLI flags.
-- **`tests/test_cta_mapreduce.py`** (16 tests): Sectional corpus slicing, `cta_merge.py`, DAG prerequisite validation, distractor deduplication.
-- **`tests/test_c2c_validator_prescriptive.py`** (12 tests): Prescriptive repair suggestions and schema conformity.
-- **`tests/test_dispatch_scope.py`** (10 tests): Role isolation and subagent prompt contracts.
-- **`tests/test_delete_course.py`** (8 tests): Safe deletion lifecycle, report stamping, content immutability.
-- **`tests/test_handouts.py`** (8 tests): Vision handout fallback processing.
-- **`tests/test_pipeline_optimizations.py`** (6 tests): Performance optimizations and multi-core `ProcessPoolExecutor` validation.
-- **`tests/test_skill_v3.py`** (6 tests): v3 high-throughput pipeline runner integration.
-- **`tests/test_template_variability.py`** (5 tests): Rule `TPL-VAR`, `stem_variants >= 3`, and diversity ratio $\ge 0.50$.
-
-### 2. Node.js Client-Side & Standalone Verification Suites
-
-```powershell
-# Math Equivalence Engine 81-case adversarial suite (100% pass)
-node tests/test_math_adversarial_suite.mjs
-
-# Question evaluation & normalization test suite (1048 MC & MS items verified across courses, 100% pass)
-node tests/test_question_grading.mjs
-
-# Keyboard navigation & auto-advance logic suite
-node tests/test_keyboard_navigation.mjs
-
-# Unit isolation and shuffle boundaries suite
-node tests/test_unit_isolation.mjs
-
-# Empirical adversarial blind-guess distractor test harness (4% guess rate, <= 30% target)
-.venv\Scripts\python.exe tests/test_blind_guess_empirical.py
-```
-
-### 3. Playwright End-to-End Browser Tests
-
-```powershell
-python -m pytest tests/e2e/ -v
-```
-
-Verifies the 10 acceptance criteria (AC-01 through AC-10), the 3-strikes safeguard (AC-11), Spanish comma notation (AC-12), and captures the 6 visual fidelity screenshots (VF-01).
+- **`tests/engine/`**: `KaTeXAST` parser, `Form-C` compiler, `c2c_ver` symbolic/numeric verification, `[TPL-EPISTEMIC-CLOSURE]` gate, AST sandbox security, and `z3-solver` shadow checks.
+- **`tests/quality/`**: 23 format rules + 3 strict rules, 7 Path-to-Mastery v2.0 linters, MPRI scoring, 4-Archetype semantic gates, and anti-giveaway psychometrics.
+- **`tests/platform/`**: Slim manifest & ETag server, KaTeX anti-overescape admission guard (`R-23`), FSRS-5/6 scheduler & 12h cooldown, Misconception Ledger, Bidirectional Mastery 80/20, SAT Bluebook 2-Module adaptive exam (`M14-B`), laptop sleep resilience (`M12`), and PWA offline caching.
+- **`tests/pipeline/`**: 2D FSM `c2c_hook_guard.py` + Hypothesis DRT property tests (`M15`), Prompt-Compiler CI gate (`test_system_prompts_compile_clean.py`), CTA Map-Reduce & `PRE-XX` hierarchy (`M9`), weighted sharding, and safe course deletion.
+- **`tests/e2e/`**: Headless Playwright browser verification for the 6 Higher-Order Bloom Modalities (`test_m20_bloom_modalities.py`), Iron Mode & Metacognitive Modal (`test_platform_assessments.py`), and 12-viewport container-query ergonomics.
 
 ---
 
-## Active Production Courses & Audit Registry
+## Active Production Courses & Benchmark Telemetry
 
-| Course Identifier | Title | Questions | Competencies | Validation Status | Quality Score | Status |
-| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **`estadistica3_regresion_v3`** | Estadística III: Econometría y Modelo de Regresión Lineal | 390 | 16 | **VALID (Strict)** | **19.4 / 20.0** | **Activo / Producción** |
+Currently discovered and validated in `courses/` (`python run_platform.py --scan`):
 
-- **Archived Courses**: Previous generation courses (`pde_course`, `sistemas_edos`, `solow_model_old`) are preserved in `archive_rejected_courses/` for regression testing and forensic audit comparisons.
-- **Historical Telemetry Registry**: Tracked in `reports/c2c_audits/historical_benchmark.md` and `reports/c2c_audits/audit_registry.json`, recording up to **6.69x parallel speedup** and **1.96 s/question** throughput.
+| Course Identifier | Title | Questions | Competencies | Milestone Standard | Status |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **`estadistica_3_pre_pc2_m20`** | Estadística III: Pre-PC2 (Inferencia, Asintótica y Regresión) | **1,396** | **58** | **M20 Bloom Superior (`k=2`)** | **VALID / Active** |
+| **`mateco_4_optimizacion_v20_k_3`** | Matemática para Economistas IV: Optimización Dinámica y Estática | **963** | **27** | **M20 Platinum Pilot (`k=3`, 19.92/20, MPRI 99.65)** | **VALID / Active** |
+| **`solow_m20_v11`** | Modelo de Crecimiento de Solow-Swan (Serie Experimental FTP) | **621** | **20** | **M19/M20 FTP Benchmark (`k=3`)** | **VALID / Active** |
+| **`solow_m20_v5` .. `solow_m20_v10`** | Serie Experimental Solow M20 (Calibración de Palancas FTP `v5`–`v10`) | **402 – 597** | **17 – 20** | **M19/M20 Telemetry Series (`k=2..3`)** | **VALID / Active** |
+
+- **Benchmark Highlights (`docs/future_milestones/FUTURE_MILESTONES.md`)**:
+  - **Quality Peak (`mateco_4_optimizacion_v20_k_3`)**: **19.92 / 20.0 QM/OSCQR (`PLATINUM MASTERY`)**, **MPRI 99.65 / 100**, `risk_score = 0.05`, average Bloom level **3.931 (`Tier ÉLITE`)** across 963 items.
+  - **Throughput & First-Time Pass Record (`solow_m20_v13` / `v12` with M19 6 FTP Levers)**: Stage 3 First-Time Pass elevated from `0–9.5%` to **`30.0–38.5%`**, generating **621 higher-order items in `12.85 min` (`1.24 s/question`, `5.46x` parallel speedup)** using **`8.61M` gross tokens (`USD 8.13`, `-48.1%` token reduction)**.
 
 ---
 
-## Milestone Verification & Certification Metrics
+## Certified Milestones Registry (M1 – M20-B)
 
-| Milestone / Requirement | Target Metric | Certified Value | Verification Status |
-| :--- | :--- | :--- | :--- |
-| **M1: Validator Engine** | 21 Rules + 3 Strict Rules | 100% Pass across 28 Fixtures | **VERIFIED** |
-| **M1: Benchmark Scale** | 450 items in $< 3.0$s | $0.28$s elapsed ($>10\times$ faster) | **VERIFIED** |
-| **M2: Reference Views** | 6 Pixel-Accurate Views | 6/6 Captured & Verified | **VERIFIED** |
-| **M2: Math Equivalence** | $\ge 98\%$ Pass Rate | 100% (81/81 Cases Passed) | **VERIFIED** |
-| **M2: Fast Redo Action** | Immediate re-attempt | Interactive on all 4 modes | **VERIFIED** |
-| **M2: 3-Strikes Safeguard**| Reveal after 3 attempts | Locked inputs, auto-solution | **VERIFIED** |
-| **M3: Skill Pipeline v3** | High-Throughput & Map-Reduce | 16/16 CTA Map-Reduce Tests | **VERIFIED** |
-| **M3: Stem Diversity Gate** | Diversity ratio $\ge 0.50$ | 5/5 Template Variability Tests | **VERIFIED** |
-| **M4: Automated Test Matrix**| Unified Test Architecture | 363 Pytest + 81 Node Math + 1048 Item Grading Passed | **VERIFIED** |
-| **M4: Single Launcher** | `python run_platform.py` | Discovers `estadistica3_regresion_v3` | **VERIFIED** |
-| **M5: Forensic Telemetry** | Granular multi-agent audit | `c2c-run-auditor` & Registry | **VERIFIED** |
-| **M6: QA Audit Standards** | QM & OSCQR Accreditation | `course-qa-evaluator` & Reports | **VERIFIED** |
-| **M7: KaTeX Saneamiento** | Macro arity & environment lint | Rule R-20 & Clean Kurs | **VERIFIED** |
+Full forensic logs and commit hashes are documented in [`docs/future_milestones/MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/MILESTONES_COMPLETED.md):
+
+| Milestone | Delivered Scope | Certification & Verification Evidence |
+| :--- | :--- | :--- |
+| **M1 & M1-T** | **Web Ergonomics (14" 150% Zoom, Split-View 50%, 12-Viewport Matrix)** | Container queries, off-canvas drawer, `splitMathAndProse`, `tests/e2e_m1_viewport_matrix.mjs` (12/12 PASS) & 97 static contracts |
+| **M2 & M2a** | **Installable Offline PWA & Mobile Usability** | Workbox SW, IndexedDB course cache, adaptive icons, native mobile `popstate` (`navigationHistory.ts`), `test_pwa_offline.py` (12/12 PASS) |
+| **M3** | **Anti-Overfitting & Tri-Band Archetype Variety (v3.8)** | `--min-archetypes 3`, 3 ZPD bands, $\ge 2$ Bloom levels, `[STEM-DIVERSITY-GATE]`, `ArchetypeEntropyLinter` |
+| **M4** | **Form-C DSL, KaTeXAST Grammar & Pydantic Contracts (100%)** | `KaTeXAST` recursive compiler, `sympy_to_katex`, 55–70 line `Form-C` DSL with AST auto-export, PrairieLearn `@var@`, `test_milestone4_formc_katex_ast.py` (23/23 PASS) |
+| **M6** | **Antigravity Study Harness 2.0 (Blank-First & $0 API Socratic)** | Smart Blank-First free-recall curtain, 100% mouseless hotkeys (`A`–`G`/`1`–`7`), 4-strikes adaptive Socratic gate & 1-click prompt generator |
+| **M7** | **Pipeline v4.0 "More with Less" (`< 15 min` & `-65%` Tokens)** | `-2.0M` token deduplication in `dispatch.py`, SHA-256 `shard_XX.cert.json` receipts, `--lean` subagents, `<50 ms` AST precheck |
+| **M8** | **FSRS-5/6 Spaced Repetition, 12h Cooldown & Misconception Ledger** | `ts-fsrs` (`^6.0.0`) client scheduler, 12h per-skill cooldown, `D-XX-YY` Misconception Ledger ("Practicar mis Trampas"), SVG `ProgressLogView` (Brier Score) |
+| **M9 (Quick Wins + Phase A)** | **PPT Hierarchy, Unit 0 `PRE-XX`, `ContentCoreDrawer` & Ordered Modules** | `PRE-XX` prerequisite extraction, 5-block Khanmigo `ContentCoreDrawer.tsx`, contiguous source-order `hierarchyAdapter.ts` (`modulesPreserveOrder`) |
+| **M10** | **QA Rubric v2.0 Deep Mastery (MPRI & 7 Linters)** | 7 Path-to-Mastery v2.0 linters, MPRI (/100 pts), blocking pre-publish `PublishQualityGateError` with AST line mapping |
+| **M11** | **Fast Course Loading Core (Slim Manifest, ETag & Prefetch)** | `59.8 MB` $\to$ `2.52 KB` slim manifest (`0.76 KB` gzip), `.cache/course_index.json`, `ETag` / `304 Not Modified` |
+| **M12** | **Laptop Sleep/Wake Session Resilience (`sessionStore.ts`)** | `sessionStorage` active hydration, silent `ETag` reconciliation on `visibilitychange`, `GET /healthz`, `test_m12_session_resilience.py` (14/14 PASS) |
+| **M13** | **Repository Consolidation & 4 Isolated Test Domains** | `tests/{quality,engine,platform,pipeline}/`, clean artifact policies, hardened `.gitignore`, 1,526+ tests passing |
+| **M14 & M14-B** | **Khan Mastery 2.0 (80/20 Hybrid) & SAT Bluebook 2-Module Simulator** | Bidirectional calibration, 80/20 bar, Hint-Cap, 5-tier "Up Next", and 2-module adaptive exam (M1 diagnostic $\to$ M2 Advanced/Standard + 0–20 grade projection) |
+| **M15 (F1 + DRT)** | **Formal Multi-Agent Governance FSM & Hypothesis DRT** | 2D `decidirEstrategiaEdicion` in `c2c_hook_guard.py` (blocks global rewrites on $<6$ errors), 40-turn/5M-token hard cap, Hypothesis DRT property suite |
+| **M16 (F1)** | **Shift-Left Mathematical Certification & 4 Orthogonal Archetypes** | `Stage Contract v4.0`, 4 mandatory archetypes (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`), explicit `assumptions`, `[DIAG-MAGIC-MULT]` |
+| **M17** | **Curricular DAG, Epistemic Closure & Bicameral Arbitration ($\alpha_{\text{Kernel}}=0$)** | Acyclic connected DAG & epistemic monotonicity ($K_t \subseteq K_{t+1}$), $\alpha_{\text{Kernel}}=0$ judge dominance, `[TPL-EPISTEMIC-CLOSURE]` hard gate on `open_symbolic` (`0/497` false positives) |
+| **M20 (Core + 20-B Iron Mode)** | **6 Higher-Order Bloom Modalities, `TPL-D3`, `0 MC7` in Skill & Iron Mode** | `open_symbolic`, `proof_dag`, `adversarial_break`, `unstructured_model`, `invariant_canvas`, `concept_matching`; `[M20-MC7-CAP]`, `[M20-ACTIVE-QUOTA]` ($\ge 80\%$); `IronExamSession.tsx` + `MetacognitiveModal.tsx`; `k=2` stable production standard |
+
+---
+
+## Active Engineering Roadmap (`FUTURE_MILESTONES.md`)
+
+Current engineering priorities tracked in [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md):
+
+| Priority | Milestone | Target Objective & Current Status | Spec Reference |
+| :---: | :--- | :--- | :--- |
+| 🧬 **P0** | **Milestone 19: Sustainable Scaling to $k=4$ (`1,284+` Items), *First-Pass* Architecture ($\ge 75\%$ FTP) & Google AI Pro Quota Protection** | **6 FTP Levers ✅ Implemented in code (2026-11-22)** (`c2c_ver`, Typed Contract Skeletons, Rejection Sampling, `[TPL-ORPHAN-VARS]`/`[PROSE-NORM]` auto-healing, `1:1`/`2:1` weighted sharding, `.rejudge_pending.json`), raising Stage 3 FTP to `30.0–38.5%`. Remaining: converge `Skill` FTP to $\ge 75\%$ and certify full $k=4$ run (`<= 11.55M` gross tokens, `< 10 min`). | [`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
+| 📐 **P1** | **Milestone 16 (Phase 2): Automated Algebraic Deduction with `z3-solver` (Python)** | **Phase 1 ✅ active in shadow mode (`[Z3-RULE-WARNING]` in `shard_ast_transforms.py`, `150 ms` timeout, `0` false positives across `805` templates)**. Remaining (~1 d): Phase 2 bounded AST verification in `check_templates.py` for `TPL-D4`. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
+| 🏛️ **P1** | **Milestone 9 (Merged with M21): Native LLM Ordered `modules[]`, Subtopic Quizzes & PPT Challenge** | Quick Wins + Phase A (`modulesPreserveOrder`) ✅ closed. Remaining (~0.5–1 d): Phase B native LLM emission of ordered `modules[]` validated at publish, slide/note deduplication, Subtopic Quizzes (3–5 items), and PPT Challenge (8–12 items). | [`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
+| 🔒 **P1** | **Milestone 18: Continuous Certification Harness (Prompt-Compiler CI + SLA)** | CI gate `test_system_prompts_compile_clean.py` ✅ active (verifying M20 micro-examples + `ast.parse` on `lean/` prompts). Remaining (~0.5 d): automated SLA regression benchmark gate. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
+| 🛡️ **P3** | **Milestone 15 (Phase 2): Native Perceus C Lean 4 FFI Kernel** | Python Hypothesis DRT (`test_c2c_hook_guard_drt.py`) ✅ closed. Native Lean 4 FFI binary (`<0.5 ms`) deferred to P3 research. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 
 ---
 
 ## Repository Structure
 
-```
+```text
 Tops_academy/
-├── README.md                                # Authoritative documentation (this file)
-├── PROJECT.md                               # Project specification, inventory, and interfaces
-├── FUTURE_MILESTONES.md                     # Roadmap for Mobile PWA and Local Daemon
-├── TEST_INFRA.md                            # Comprehensive test infrastructure specification
-├── TEST_READY.md                            # Test suite verification checklist
-├── pyproject.toml                           # Python project configuration & dependencies
-├── run_platform.py                          # Unified single-command platform launcher
-├── courses/                                 # Active published course banks and CTA analyses
-│   ├── estadistica3_regresion_v3.json       # Active certified course bank (390 questions, 16 comps)
-│   ├── competence_analysis_estadistica3_regresion_v3.md # 16-competency CTA document
-│   └── fixtures/                            # 28 canonical test course fixtures
-├── archive_rejected_courses/                # Historical archived course banks
-├── content/                                 # Academic source documents (zero-bloat gitignored)
-│   ├── README.md                            # Ingestion guidelines & catalog
-│   └── Solow_model/                         # Source academic PDFs
-├── docs/                                    # Architectural research and proposals
-│   └── proposals_cta_mapreduce_and_shard_autocheck.md # CTA Map-Reduce & Shard Auto-Check
-├── reports/                                 # Forensic telemetry and QA audit reports
-│   ├── qa_audits/                           # Quality Matters / OSCQR audit reports
-│   │   ├── SUITE_QA_AUDIT_REPORT.md         # Master suite QA audit report
-│   │   ├── COURSE_CREATION_IMPROVEMENTS.md  # Architectural recommendations
-│   │   └── estadistica3_regresion_v3_qa_report.md # Course QA report
-│   └── c2c_audits/                          # Execution telemetry & unit economics
-│       ├── historical_benchmark.md          # Multi-run benchmark evolution
-│       └── audit_registry.json              # Machine-readable telemetry registry
-├── platform/                                # Top's Academy Practice Platform Frontend
-│   ├── index.html                           # Single-page application entry point
-│   ├── package.json                         # Node dependencies (React 18, KaTeX, Vite, mathjs)
-│   ├── vite.config.ts                       # Vite bundler configuration
-│   ├── src/                                 # Frontend source code
-│   │   ├── components/                      # UI Views: PracticeSession, FeedbackToast, etc.
-│   │   ├── utils/                           # mathEquivalence.ts, sessionShuffler.ts, etc.
-│   │   └── App.tsx                          # Platform router and mastery manager
-│   └── dist/                                # Compiled production web bundle & static courses
-├── src/validator/                           # Subsystem 1: Format & Psychometric Validator
-│   ├── cli.py                               # CLI entrypoint
-│   ├── lexical_scanner.py                   # Pass 1: raw syntax & control character scanner
-│   ├── schema_validator.py                  # Pass 2: Draft-07 schema validator
-│   ├── rules.py                             # Pass 2 & 3: Structural, pedagogical, and KaTeX rules
-│   └── psychometric_checker.py              # Pass 3: Anti-giveaway ratio checkers
-├── .agents/skills/                          # Specialized Multi-Agent Skills Suite
-│   ├── content-to-course/                   # Universal v3 course creation pipeline
-│   ├── course-qa-evaluator/                 # Quality Matters & OSCQR QA evaluator
-│   ├── c2c-run-auditor/                     # Multi-agent telemetry & performance auditor
-│   ├── c2c-unified-auditor/                 # Unified orchestration auditor
-│   └── delete-course/                       # Fast safe course deletion tool (<300ms)
-├── system_prompts/                          # Formal prompts for specialized subagents
-└── tests/                                   # Consolidated Automated Test Suites
-    ├── test_validator.py                    # Consolidated validator test suite (144 tests)
-    ├── test_engine_invariants_adversarial.py# Invariants & sandboxed assembly (51 tests)
-    ├── test_sandbox_adversarial.py          # AST sandbox security (49 tests)
-    ├── test_skill.py                        # Pipeline ingestion & publishing (33 tests)
-    ├── test_platform.py                     # Platform server & API (19 tests)
-    ├── test_cta_mapreduce.py                # CTA Map-Reduce & DAG merging (16 tests)
-    ├── test_c2c_validator_prescriptive.py   # Prescriptive validator rules (12 tests)
-    ├── test_dispatch_scope.py               # Subagent role isolation (10 tests)
-    ├── test_delete_course.py                # Safe course deletion (8 tests)
-    ├── test_handouts.py                     # Vision handout fallback (8 tests)
-    ├── test_pipeline_optimizations.py       # Pipeline optimizations (6 tests)
-    ├── test_skill_v3.py                     # v3 pipeline execution (6 tests)
-    ├── test_template_variability.py         # Stem variants & diversity (5 tests)
-    ├── test_math_adversarial_suite.mjs      # Math equivalence 81-case suite (100% pass)
-    ├── test_question_grading.mjs            # Question evaluation & normalization suite (1048 items, 100% pass)
-    ├── test_keyboard_navigation.mjs         # Keyboard accessibility suite
-    ├── test_unit_isolation.mjs              # Unit isolation & shuffle suite
-    ├── test_blind_guess_empirical.py        # Adversarial blind-guess distractor test harness
-    └── e2e/                                 # Playwright headless browser E2E test suite
+├── README.md                                # Authoritative project documentation (this file)
+├── LICENSE                                  # MIT License (Copyright (c) 2026 Augusto Huerta)
+├── pyproject.toml                           # Python packaging, dependencies & pytest-xdist config
+├── run_platform.py                          # Single-command launcher & R-23 KaTeX admission guard
+├── docs/                                    # Centralized documentation ecosystem
+│   ├── PROJECT.md                           # Foundational project & interface specification
+│   ├── TEST_INFRA.md                        # E2E & validator test infrastructure architecture
+│   ├── TEST_READY.md                        # Verification readiness checklist
+│   ├── future_milestones/                   # Active roadmap, historical ledger & tribal knowledge
+│   │   ├── FUTURE_MILESTONES.md             # Master strategic roadmap (M19, M16 F2, M9+M21, M18)
+│   │   ├── MILESTONES_COMPLETED.md          # Forensic ledger of certified milestones (M1..M20-B)
+│   │   ├── CONOCIMIENTO_TRIBAL.md           # Inference physics, causal architecture & governance
+│   │   └── HANDOFF_M20_CLOSURE.md           # Milestone 20 & Iron Mode certification handoff
+│   ├── specs/                               # Deep technical specifications (M6, M8, M9, M14, M15-20)
+│   ├── investigaciones/                     # Foundational studies (KaTeX decoupling, cognitive limits)
+│   ├── qa_reports/ & run_reports/           # Standardized QA and execution telemetry summaries
+│   └── unified_reports/                     # Consolidated pedagogical + telemetry audit reports
+├── courses/                                 # Active published course banks (.json) & CTA analyses (.md)
+│   ├── estadistica_3_pre_pc2_m20.json       # 1,396 questions, 58 competencies (M20 Bloom Superior)
+│   ├── mateco_4_optimizacion_v20_k_3.json   # 963 questions, 27 competencies (19.92/20 Platinum)
+│   ├── solow_m20_v5.json .. v11.json        # Solow-Swan M19/M20 FTP experimental benchmark series
+│   └── fixtures/                            # Canonical test course fixtures
+├── content/                                 # Immutable academic source PDFs (gitignored zero-bloat)
+├── platform/                                # Subsystem 3: React 18 + Vite + TypeScript + PWA Platform
+│   ├── server/                              # Slim manifest indexer (courseIndex.cjs) & REST server
+│   ├── src/
+│   │   ├── components/                      # QuestionCard, PracticeSession, IronExamSession,
+│   │   │                                    # MetacognitiveModal, ContentCoreDrawer, ProgressLogView
+│   │   ├── utils/                           # mathEquivalence.ts, masteryStorage.ts (FSRS-5/6),
+│   │   │                                    # hierarchyAdapter.ts, ironExamGrading.ts, sessionStore.ts
+│   │   └── App.tsx                          # Platform router, Blank-First & Mastery 2.0 controller
+│   └── dist/                                # Compiled production PWA bundle
+├── src/validator/                           # Subsystem 2: Format, Lexical, KaTeXAST & Psychometric CLI
+├── .agents/skills/                          # Subsystem 1 & 4: 7 Specialized Antigravity Skills
+│   ├── content-to-course/                   # v4.0 C2C pipeline (engine/, compile_shard.py, judge.py,
+│   │                                        # c2c_hook_guard.py, proof_compiler.py, c2c_ver.py)
+│   ├── course-qa-evaluator/                 # QM, OSCQR & MPRI (7 Path-to-Mastery v2.0 linters)
+│   ├── c2c-run-auditor/                     # Forensic token, cache & latency telemetry auditor
+│   ├── c2c-unified-auditor/                 # Concurrent QA + Run telemetry orchestrator
+│   ├── delete-course/                       # Fast (<300ms) safe course lifecycle deletion
+│   ├── flash-duet-orchestrator/             # Multi-agent gated Duet/Triad implementation orchestrator
+│   └── prompt-architect/                    # Frontier XML prompt architect & blind semantic auditor
+├── reports/                                 # Historical telemetry ledger (audit_registry.json) & audits
+└── tests/                                   # 4 Isolated Test Domains + E2E Playwright Suite
+    ├── engine/                              # KaTeXAST, Form-C, c2c_ver, epistemic closure, sandbox
+    ├── quality/                             # 23+3 validator rules, MPRI linters, 4-archetype gates
+    ├── platform/                            # Server, R-23 guard, FSRS-5/6, Mastery 2.0, M14-B, PWA
+    ├── pipeline/                            # 2D FSM hook guard + DRT, Prompt-Compiler CI, CTA, delete
+    └── e2e/                                 # Playwright browser tests (6 Bloom modalities & Iron Mode)
 ```
 
 ---
 
-## License & Credits
+## License
 
-Built as an open-source educational framework adhering to psychometric assessment standards and Cognitive Task Analysis methodologies. Heavily inspired by the pedagogical design and mastery learning framework of Khan Academy.
+This project is licensed under the **MIT License** — see the [LICENSE](file:///d:/Augusto/personal_portfolio/Tops_academy/LICENSE) file for details.  
+Copyright (c) 2026 **Augusto Huerta**.

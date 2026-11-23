@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "competence-analyser"
 version = "1.0.0"
 description = "Top's Academy Course and Validator System"
-authors = [{ name = "Top's Academy Team" }]
+authors = [{ name = "Augusto Huerta" }]
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
