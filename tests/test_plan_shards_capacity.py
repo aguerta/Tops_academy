@@ -64,13 +64,13 @@ def _seed_workspace(tmp_path: Path, competencies, course_id: str = "cap_course")
 
 
 def test_capacity_constants():
-    assert DEFAULT_COMPS_PER_SHARD == 3
-    assert MAX_SKILLS_PER_SHARD == 2
+    assert DEFAULT_COMPS_PER_SHARD == 2
+    assert MAX_SKILLS_PER_SHARD == 1
     assert DEFAULT_MAX_WAVE_SIZE == 100
 
 
 def test_35_skills_35_non_skills_vlean43_capacity(tmp_path):
-    """35 skills + 35 non-skills -> ceil(35/2) + ceil(35/3) = 18 + 12 = 30 shards, skills first."""
+    """35 skills + 35 non-skills -> 35/1 + ceil(35/2) = 35 + 18 = 53 shards, skills first."""
     comps = _make_competencies(35, 35)
     cta_path, shards_dir = _seed_workspace(tmp_path, comps, course_id="vlean43_sim")
 
@@ -78,14 +78,14 @@ def test_35_skills_35_non_skills_vlean43_capacity(tmp_path):
     shards = manifest["shards"]
 
     assert manifest["total_competencies"] == 70
-    assert manifest["total_shards"] == 30
-    assert len(shards) == 30
+    assert manifest["total_shards"] == 53
+    assert len(shards) == 53
 
-    # First 18 shards must be pure skill shards (up to 2 skills each)
-    skill_shards = shards[:18]
-    non_skill_shards = shards[18:]
-    assert len(skill_shards) == 18
-    assert len(non_skill_shards) == 12
+    # First 35 shards must be pure 1:1 skill shards
+    skill_shards = shards[:35]
+    non_skill_shards = shards[35:]
+    assert len(skill_shards) == 35
+    assert len(non_skill_shards) == 18
 
     for s in skill_shards:
         assert 1 <= s["competency_count"] <= MAX_SKILLS_PER_SHARD
@@ -97,18 +97,18 @@ def test_35_skills_35_non_skills_vlean43_capacity(tmp_path):
 
 
 def test_15_skills_25_non_skills_capacity():
-    """15 skills + 25 non-skills -> ceil(15/2) + ceil(25/3) = 8 + 9 = 17 shards."""
+    """15 skills + 25 non-skills -> 15/1 + ceil(25/2) = 15 + 13 = 28 shards."""
     comps = _make_competencies(15, 25)
     raw_shards = partition_competencies_weighted(comps)
 
     skill_shards = [s for s in raw_shards if s["is_skill"]]
     non_skill_shards = [s for s in raw_shards if not s["is_skill"]]
 
-    assert len(skill_shards) == 8
-    assert len(non_skill_shards) == 9
-    assert len(raw_shards) == 17
-    assert all(1 <= len(s["competency_ids"]) <= 2 for s in skill_shards)
-    assert all(1 <= len(s["competency_ids"]) <= 3 for s in non_skill_shards)
+    assert len(skill_shards) == 15
+    assert len(non_skill_shards) == 13
+    assert len(raw_shards) == 28
+    assert all(len(s["competency_ids"]) == 1 for s in skill_shards)
+    assert all(1 <= len(s["competency_ids"]) <= 2 for s in non_skill_shards)
 
 
 def test_explicit_type_overrides_id_prefix():

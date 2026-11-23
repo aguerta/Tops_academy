@@ -437,7 +437,8 @@ def test_post_cta_pipeline_clears_stale_repair_matrix_after_round_1(tmp_path: Pa
 
 
 def test_plan_shards_default_three_and_explicit_two_caps_skills(tmp_path: Path) -> None:
-    assert plan_shards.DEFAULT_COMPS_PER_SHARD == 3
+    assert plan_shards.DEFAULT_COMPS_PER_SHARD == 2
+    assert plan_shards.MAX_SKILLS_PER_SHARD == 1
     comps = [
         {"id": f"C-{i:02d}", "type": "concept", "name": f"Concepto Teorico Alpha {i}", "bloom": "Understand", "prerequisites": []}
         for i in range(1, 4)
@@ -454,7 +455,7 @@ def test_plan_shards_default_three_and_explicit_two_caps_skills(tmp_path: Path) 
         encoding="utf-8",
     )
 
-    # Default K=2 keeps DEFAULT_COMPS_PER_SHARD = 3 for non-skill and 2 for skills
+    # Default K=2 keeps DEFAULT_COMPS_PER_SHARD = 2 for non-skill and 1 for skills
     out_def = work_dir / "shards_default"
     manifest_def = plan_shards.plan_shards(cta_file, out_def, templates_per_modality=2)
     def _comp_id(entry: Any) -> str:
@@ -465,7 +466,7 @@ def test_plan_shards_default_three_and_explicit_two_caps_skills(tmp_path: Path) 
         for s in manifest_def["shards"]
         if any(_comp_id(c).startswith("C-") for c in s["competencies"])
     ]
-    assert max(non_skill_counts) == 3
+    assert max(non_skill_counts) == 2
 
     # Explicit max_comps=2 caps both non-skill and skill shards at <= 2
     out_two = work_dir / "shards_two"

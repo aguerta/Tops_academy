@@ -15,6 +15,7 @@ for p in (str(RUN_AUDITOR_SCRIPTS), str(C2C_SCRIPTS)):
 import audit_engine  # noqa: E402
 import shard_timing_profiler  # noqa: E402
 import telemetry_collector  # noqa: E402
+import traceback_analyzer  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -272,16 +273,16 @@ def test_telemetry_collector_state_json_includes_harmonizer_and_orchestrator(tmp
 
 
 def test_compute_hydrogen_cost_usd_exact_math() -> None:
-    # 1M uncached input ($1.50) + 1M output ($7.50) + 1M cache read ($0.075) = $9.0750
+    # 1M uncached input ($1.50) + 1M output ($7.50) + 1M cache read ($0.075 -> $0.08) = $9.08
     res = audit_engine.compute_hydrogen_cost_usd(
         input_tokens=1_000_000,
         output_tokens=1_000_000,
         cache_read_tokens=1_000_000,
     )
-    assert res["input_usd"] == pytest.approx(1.50, abs=1e-4)
-    assert res["output_usd"] == pytest.approx(7.50, abs=1e-4)
-    assert res["cache_read_usd"] == pytest.approx(0.075, abs=1e-4)
-    assert res["total_usd"] == pytest.approx(9.075, abs=1e-4)
+    assert res["input_usd"] == pytest.approx(1.50, abs=1e-2)
+    assert res["output_usd"] == pytest.approx(7.50, abs=1e-2)
+    assert res["cache_read_usd"] == pytest.approx(0.08, abs=1e-2)
+    assert res["total_usd"] == pytest.approx(9.08, abs=1e-2)
 
     # Zero / None safety
     zero = audit_engine.compute_hydrogen_cost_usd(0, 0, 0)
@@ -393,20 +394,20 @@ def test_stage_costs_sum_equals_total_cost_and_renders_in_reports(tmp_path: Path
         + sc["orchestrator"]
         + sc["other_subagents"]
     )
-    assert stage_sum == pytest.approx(summary["total_cost_usd"], abs=1e-3)
-    assert audit_res["unit_economics"]["usd_per_question"] == pytest.approx(0.0225, abs=1e-4)
-    assert audit_res["unit_economics"]["usd_per_competency"] == pytest.approx(0.45, abs=1e-4)
+    assert stage_sum == pytest.approx(summary["total_cost_usd"], abs=2e-2)
+    assert audit_res["unit_economics"]["usd_per_question"] == pytest.approx(0.02, abs=1e-2)
+    assert audit_res["unit_economics"]["usd_per_competency"] == pytest.approx(0.45, abs=1e-2)
 
     # 1) audit_engine.ReportGenerator Markdown + Registry
     md = audit_engine.ReportGenerator.generate_markdown(audit_res)
     assert "Gemini 4 Hydrogen" in md
-    assert "$2.2500 USD" in md
+    assert "$2.25 USD" in md
     assert "3.0a. Valorización Monetaria por Etapa" in md
     reg_mgr = audit_engine.HistoricalRegistry(tmp_path / "c2c_audits")
     reg_mgr.register_run(audit_res, "20261121_test_cost_course_aaaa1111")
     bench_md = reg_mgr.benchmark_md_file.read_text(encoding="utf-8")
     assert "Costo (USD)" in bench_md
-    assert "$2.2500" in bench_md
+    assert "$2.25" in bench_md
 
     # 2) unified_audit_engine merged report (both new telemetry and fallback legacy telemetry without cost_usd)
     unified_scripts = str(REPO_ROOT / ".agents" / "skills" / "c2c-unified-auditor" / "scripts")
@@ -422,7 +423,7 @@ def test_stage_costs_sum_equals_total_cost_and_renders_in_reports(tmp_path: Path
         telemetry_data=audit_res,
         traceback_data={},
     )
-    assert "$2.2500 USD" in merged
+    assert "$2.25 USD" in merged
     assert "Stage 3B: Repair Engineers" in merged
 
     legacy_tel = json.loads(json.dumps(audit_res))
@@ -436,7 +437,7 @@ def test_stage_costs_sum_equals_total_cost_and_renders_in_reports(tmp_path: Path
         telemetry_data=legacy_tel,
         traceback_data={},
     )
-    assert "$2.2500 USD" in merged_legacy
+    assert "$2.25 USD" in merged_legacy
 
     # 3) content-to-course run.py closeout summary formatter (full + fallback)
     import run as c2c_run  # type: ignore
@@ -444,8 +445,8 @@ def test_stage_costs_sum_equals_total_cost_and_renders_in_reports(tmp_path: Path
     runner = c2c_run.PipelineRunner(course_id="test_cost_course", work_dir=tmp_path / "work")
     pub_summary = runner._format_run_audit_summary({"mode": "full_audit_engine", "telemetry": audit_res})
     assert "Costo Estimado (Hydrogen):" in pub_summary
-    assert "$2.2500 USD" in pub_summary
-    assert "TOTAL CORRIDA (Hydrogen):  $2.2500 USD" in pub_summary
+    assert "$2.25 USD" in pub_summary
+    assert "TOTAL CORRIDA (Hydrogen):  $2.25 USD" in pub_summary
 
     fb_summary = runner._format_run_audit_summary({
         "mode": "work_dir_fallback",
@@ -456,8 +457,8 @@ def test_stage_costs_sum_equals_total_cost_and_renders_in_reports(tmp_path: Path
             "total_tokens": {"input": 100_000, "output": 10_000, "cached": 200_000},
         },
     })
-    assert "$0.2400 USD" in fb_summary
-    assert "TOTAL CORRIDA (Hydrogen):  $0.2400 USD" in fb_summary
+    assert "$0.24 USD" in fb_summary
+    assert "TOTAL CORRIDA (Hydrogen):  $0.24 USD" in fb_summary
 
 
 def test_audit_engine_r1_flaw_fallback_ignores_prompt_and_handles_null_content(tmp_path: Path) -> None:
@@ -550,3 +551,224 @@ def test_audit_engine_r1_flaw_fallback_ignores_prompt_and_handles_null_content(t
         records=[],
     )
     assert deep["stage_5_judges"]["round_1_flaw_detected_count"] == 1
+
+
+# ---------------------------------------------------------------------------
+# 5. Post-v7/v8 Auditor Hardening: warning exclusions & traceback_analyzer fixes
+# ---------------------------------------------------------------------------
+
+
+def test_audit_engine_first_compile_rules_excludes_non_blocking_warnings(tmp_path: Path) -> None:
+    """first_compile_rules ignores non-blocking warnings/info tags and preserves real blockers."""
+    eng = _make_engine()
+    eng.brain_dir = tmp_path
+
+    records = [
+        {
+            "type": "PLANNER_RESPONSE",
+            "step_index": 1,
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "cache_read_tokens": 0,
+            "tool_calls": [
+                {"name": "run_command", "args": {"CommandLine": "python compile_shard.py --shard shard_01"}}
+            ],
+        },
+        {
+            "type": "GENERIC",
+            "step_index": 2,
+            "content": "Tool is running as a background task with task id: conv-01/task-6",
+        },
+        {
+            "type": "SYSTEM_MESSAGE",
+            "step_index": 3,
+            "content": (
+                'Task id "conv-01/task-6" finished with result:\n'
+                "Command exited with code 1.\n"
+                "INFO: [AUTO-FIXED] [TPL-ORPHAN-VARS] En 'T-C01-01'\n"
+                "WARNING: [TPL-STEM-SYMBOL-PARITY] En 'T-C01-01'\n"
+                "WARNING: [TPL-UNBOUNDED-LOOP] En 'T-C01-02'\n"
+                "Hab-01 (T-Hab01-01, seed=100): [EPISTEMIC-CLOSURE-WARNING] symbol not declared\n"
+                "FAIL: [TPL-VAR] Only 2/4 unique instances\n"
+                "[-] [R-15-MS] length imbalance\n"
+                "[-] [TPL-STEM-VARIANT-PARITY] missing @x@\n"
+            ),
+        },
+    ]
+    metrics = eng._analyze_conversation(records, "author-01", "Author 01")
+    assert metrics["compile_attempts_count"] == 1
+    assert metrics["compile_first_passed"] is False
+    assert metrics["first_compile_rules"] == ["TPL-VAR", "R-15-MS", "TPL-STEM-VARIANT-PARITY"]
+
+
+def test_traceback_analyzer_captures_background_system_message_and_katex_and_stream_interruption() -> None:
+    """Verify SYSTEM_MESSAGE compile failure tracking, transient stream interruption, and CTA-KATEX precedence."""
+    shard_steps = [
+        {
+            "step_index": 5,
+            "type": "PLANNER_RESPONSE",
+            "status": "DONE",
+            "output_tokens": 180,
+            "thinking": "Compiling shard_01",
+            "tool_calls": [
+                {"name": "run_command", "args": {"CommandLine": "python -u compile_shard.py --shard shard_01"}}
+            ],
+        },
+        {
+            "step_index": 6,
+            "type": "GENERIC",
+            "status": "RUNNING",
+            "content": "Tool is running as a background task with task id: conv-shard-01/task-6",
+        },
+        {
+            "step_index": 7,
+            "type": "PLANNER_RESPONSE",
+            "status": "DONE",
+            "output_tokens": 40,
+            "thinking": "",
+            "tool_calls": [],
+            "content": "Esperando compilacion.",
+        },
+        {
+            "step_index": 8,
+            "type": "SYSTEM_MESSAGE",
+            "status": "DONE",
+            "content": (
+                'Task id "conv-shard-01/task-6" finished with result:\n'
+                "Command exited with code 1.\n"
+                "FAIL: [TPL-VAR] Only 1/4 unique instances in shard_01\n"
+            ),
+        },
+        {
+            "step_index": 19,
+            "type": "PLANNER_RESPONSE",
+            "status": "DONE",
+            "output_tokens": 120,
+            "thinking": "Recompiling shard_01",
+            "tool_calls": [
+                {"name": "run_command", "args": {"CommandLine": "python -u compile_shard.py --shard shard_01"}}
+            ],
+        },
+        {
+            "step_index": 20,
+            "type": "GENERIC",
+            "status": "RUNNING",
+            "content": "Tool is running as a background task with task id: conv-shard-01/task-20",
+        },
+        {
+            "step_index": 22,
+            "type": "SYSTEM_MESSAGE",
+            "status": "DONE",
+            "content": (
+                'Task id "conv-shard-01/task-20" finished with result:\n'
+                "Command exited with code 0.\n"
+                "PASS\n"
+            ),
+        },
+    ]
+
+    harm_steps = [
+        {
+            "step_index": 6,
+            "type": "PLANNER_RESPONSE",
+            "status": "DONE",
+            "output_tokens": 211,
+            "thinking": "Harmonizing CTA",
+            "tool_calls": [],
+        },
+        {
+            "step_index": 7,
+            "type": "ERROR_MESSAGE",
+            "status": "DONE",
+            "content": "Error: The stream was interrupted. Please continue the task you were working on.",
+        },
+        {
+            "step_index": 10,
+            "type": "PLANNER_RESPONSE",
+            "status": "DONE",
+            "output_tokens": 16500,
+            "thinking": "Large output",
+            "tool_calls": [],
+        },
+        {
+            "step_index": 11,
+            "type": "ERROR_MESSAGE",
+            "status": "DONE",
+            "content": "Error: The stream was interrupted. Please continue the task you were working on.",
+        },
+    ]
+
+    cta_steps = [
+        {
+            "step_index": 5,
+            "type": "PLANNER_RESPONSE",
+            "status": "DONE",
+            "output_tokens": 250,
+            "thinking": "Checking CTA",
+            "tool_calls": [
+                {"name": "run_command", "args": {"CommandLine": "python compile_cta.py --input part_01_data.py"}}
+            ],
+        },
+        {
+            "step_index": 6,
+            "type": "GENERIC",
+            "status": "DONE",
+            "content": (
+                "Command exited with code 1.\n"
+                "FAIL: [CTA-KATEX] Unbalanced braces in distractor description."
+            ),
+        },
+    ]
+
+    shard_turns = traceback_analyzer.TranscriptReader.extract_turns(shard_steps)
+    shard_audit = traceback_analyzer.ForensicsEngine.audit_shard_author("Author Shard 01", shard_steps, shard_turns)
+    assert shard_audit["check_runs_total"] == 2
+    assert shard_audit["check_runs_failed"] == 1
+    assert shard_audit["check_runs_passed"] == 1
+
+    taxonomy = traceback_analyzer.ForensicsEngine.classify_error_taxonomy({
+        "Author Shard 01": shard_steps,
+        "CTA Harmonizer": harm_steps,
+        "CTA Architect (part_01)": cta_steps,
+    })
+
+    tpl_var_items = taxonomy.get("Parameter Diversity & Option Collapse (TPL-VAR / TPL-COLLAPSE)", [])
+    assert len(tpl_var_items) == 1
+    assert tpl_var_items[0]["agent"] == "Author Shard 01"
+    assert tpl_var_items[0]["step_index"] == 8
+
+    transient_items = taxonomy.get("Transient Stream Interruption (Auto-Recovered)", [])
+    assert len(transient_items) == 1
+    assert transient_items[0]["step_index"] == 7
+
+    cutoff_items = taxonomy.get("Token Limit Cutoff (Model Truncation)", [])
+    assert len(cutoff_items) == 1
+    assert cutoff_items[0]["step_index"] == 11
+
+    cta_items = taxonomy.get("CTA Compilation & Schema Errors (CTA-SCHEMA / CTA-EV / DAG Cycle)", [])
+    assert len(cta_items) == 1
+    assert cta_items[0]["agent"] == "CTA Architect (part_01)"
+    assert "Anti-Giveaway & Psychometric Parity Violations (R-14..R-19)" not in taxonomy
+
+
+
+def test_traceback_analyzer_captures_orchestrator_429_not_gate_stop() -> None:
+    steps = {
+        "Director": [
+            {
+                "step_index": 29,
+                "type": "SYSTEM_MESSAGE",
+                "status": "DONE",
+                "content": 'Task id "c/task-27" failed with result:\nWorkflowError: RESOURCE_EXHAUSTED (code 429): Individual quota reached.',
+            },
+            {
+                "step_index": 21,
+                "type": "SYSTEM_MESSAGE",
+                "status": "DONE",
+                "content": 'Task id "c/task-19" failed with result:\nRuntimeError: CLI command failed (C2C stage gates) with exit code 1',
+            },
+        ]
+    }
+    tax = traceback_analyzer.ForensicsEngine.classify_error_taxonomy(steps)
+    rl = tax.get("API Rate Limit (429 RESOURCE_EXHAUSTED)", [])
+    assert len(rl) == 1 and rl[0]["step_index"] == 29

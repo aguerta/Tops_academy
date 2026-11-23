@@ -726,13 +726,13 @@ def test_shard_max_two():
 
 
 def test_shard_default_amortized_v32():
-    """Verify that determine_shard_count uses v3.22 adaptive formula clamp(ceil(N/8), 2, 6)."""
+    """Verify that determine_shard_count uses DEFAULT_COMPS_PER_SHARD = 2 (ceil(16/2) = 8 shards)."""
     comps16 = [{"id": f"C-{i:02d}", "name": f"Comp {i}", "type": "concept"} for i in range(1, 17)]
     k16 = determine_shard_count(comps16)
-    assert k16 == 6, f"Expected 6 shards for 16 competencies (3 non-skill comps/shard), got {k16}"
+    assert k16 == 8, f"Expected 8 shards for 16 competencies (2 non-skill comps/shard), got {k16}"
     shards16 = partition_competencies_into_shards(comps16, k16)
-    assert len(shards16) == 6
-    assert all(len(s["competency_ids"]) <= 3 for s in shards16)
+    assert len(shards16) == 8
+    assert all(len(s["competency_ids"]) <= 2 for s in shards16)
 
 
 def test_examples_templates_strict_validation():

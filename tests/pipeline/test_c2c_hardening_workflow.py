@@ -417,3 +417,59 @@ def test_run_wave_from_manifest_unlimited_parallel_fanout(tmp_path: Path) -> Non
 
     assert len(results) == 12
     assert fanout_sizes == [12]
+
+
+
+# ==============================================================================
+# 5. Quota backoff and rejudge checkpoint
+# ==============================================================================
+
+
+def test_quota_error_gets_extended_retries(tmp_path: Path) -> None:
+    manifest = tmp_path / "authors.json"
+    _write_manifest(manifest, 1, "Author")
+    mod, _, _ = _load_workflow_module(
+        {"quota_retry_backoff_s": [0.0], "retry_backoff_s": [0.0], "startup_stagger_s": 0.0}
+    )
+    calls = {"n": 0}
+
+    async def _flaky_agent(**kwargs: Any) -> str:
+        calls["n"] += 1
+        if calls["n"] <= 4:
+            raise RuntimeError("RESOURCE_EXHAUSTED (code 429)")
+        return "DONE: ok"
+
+    mod.agent = _flaky_agent
+    results = asyncio.run(mod.run_wave_from_manifest(str(manifest), "Quota"))
+    assert results == ["DONE: ok"]
+    assert calls["n"] == 5
+    assert mod._is_quota_error("HTTP 429")
+    assert not mod._is_quota_error("syntax error")
+
+
+def test_rejudge_checkpoint_resumes_without_repair_wave(tmp_path: Path) -> None:
+    work_dir = tmp_path / "work"
+    dispatch_dir = work_dir / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    _write_fresh_json(work_dir / ".rejudge_pending.json", {"ids": ["C-05"], "built_at": time.time() + 5})
+
+    mod, _, _ = _load_workflow_module(
+        {"work_dir": str(work_dir), "mode": "repair_and_rejudge", "ids": ["C-05"], "director_id": "d1"}
+    )
+    summaries: List[str] = []
+
+    async def _fake_run_cli(cmd: str, summary: str, env_extra: Optional[Dict[str, str]] = None) -> str:
+        summaries.append(summary)
+        if summary == "C2C stage surgical rejudge":
+            _write_manifest(dispatch_dir / "judges.json", 1, "Rejudge")
+        return "Command exited with code 0."
+
+    mod.run_cli = _fake_run_cli
+    asyncio.run(mod.run_c2c_workflow())
+    assert "C2C dispatch repair" not in summaries
+    assert summaries == [
+        "C2C stage surgical rejudge",
+        "C2C stage rejudge-compare",
+        "C2C post-repair stage gates",
+    ]
+    assert not (work_dir / ".rejudge_pending.json").exists()

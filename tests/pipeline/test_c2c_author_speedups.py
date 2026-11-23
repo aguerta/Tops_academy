@@ -7,6 +7,7 @@ SKILL = Path(__file__).resolve().parents[2] / ".agents" / "skills" / "content-to
 sys.path.insert(0, str(SKILL))
 
 import shard_precheck  # noqa: E402
+from engine.c2c_ver import c2c_ver  # noqa: E402
 from engine.sandbox import validate_code_ast  # noqa: E402
 
 
@@ -16,14 +17,16 @@ def test_canonical_pv_in_prompts_is_sandbox_safe_and_handles_inequalities():
     assert m, "Missing python block in lean prompt"
     code = m.group(1)
     assert "import re" not in code
+    assert "c2c_ver.numeric" in code
+    assert "c2c_ver.equiv" in code
+    assert "c2c_ver.m20_guard" in code
     # Validate AST passes Stage 4 sandbox security validator
     validate_code_ast(code)
-    ns: dict = {}
+    ns: dict = {"c2c_ver": c2c_ver}
     exec(compile(code, "lean_example", "exec"), ns)
-    pv = ns["_pv"]
-    assert pv(r"P \le 0.0118") == 0.0118
-    assert pv("$x = -1.5$") == -1.5
-    assert pv("1e-3") == 0.001
+    assert c2c_ver.numeric(r"P \le 0.0118", 0.0118, tol=1e-4) is True
+    assert c2c_ver.numeric("$x = -1.5$", -1.5, tol=1e-4) is True
+    assert c2c_ver.numeric("1e-3", 0.001, tol=1e-4) is True
 
 
 def test_precheck_reports_all_known_problems_at_once():

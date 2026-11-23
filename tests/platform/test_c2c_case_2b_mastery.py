@@ -49,8 +49,8 @@ class TestCase2BShardPartitioning:
     """Verifies that Case 2B enforces max 2 competencies per shard across diverse curriculum sizes."""
 
     def test_default_comps_per_shard_is_two(self):
-        """Default comps per shard constant must be 3 (non-skill)."""
-        assert DEFAULT_COMPS_PER_SHARD == 3
+        """Default comps per shard constant must be 2 (non-skill)."""
+        assert DEFAULT_COMPS_PER_SHARD == 2
 
     def test_partitioning_case_2b_various_sizes(self):
         """Under Case 2B (max_comps=2), no shard ever contains more than 2 competencies."""

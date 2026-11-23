@@ -341,11 +341,11 @@ class TestPlanShardsAndDispatchScaling:
         cta_path = work / "cta.json"
         cta_path.write_text(json.dumps(cta, indent=2, ensure_ascii=False), encoding="utf-8")
 
-        # K = 2 default
+        # K = 2 default (Complexity-Weighted Sharding: DEFAULT_COMPS_PER_SHARD=2, MAX_SKILLS_PER_SHARD=1)
         res_k2 = plan_shards.plan_shards(cta_path, work / "shards_k2", templates_per_modality=2)
         assert res_k2["templates_per_modality"] == 2
-        assert res_k2["max_skills_per_shard"] == 2
-        assert res_k2["comps_per_shard"] == 3
+        assert res_k2["max_skills_per_shard"] == 1
+        assert res_k2["comps_per_shard"] == 2
         s4_k2 = {cid: c for s in res_k2["shards"] for cid, c in s["stage4_contract"].items()}
         assert s4_k2["Hab-01"]["min_templates_required"] == 6
         assert s4_k2["Hab-01"]["quota"] == 30

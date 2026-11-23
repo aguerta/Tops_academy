@@ -152,22 +152,22 @@ class TestWeightedShardingAb30cf91:
             else:
                 concept_fact_shards.append(s)
 
-        # 1. Skill Grouping Rule: 10 Hab-* skills packed into ceil(10/2) = 5 skill shards (<= 2 per shard)
-        assert len(hab_shards) == 5, f"Expected 5 Hab shards (max 2/shard), got {len(hab_shards)}"
+        # 1. Skill Isolation Rule: 10 Hab-* skills isolated 1:1 into 10 skill shards (MAX_SKILLS_PER_SHARD = 1)
+        assert len(hab_shards) == 10, f"Expected 10 Hab shards (max 1/shard), got {len(hab_shards)}"
         for s in hab_shards:
-            assert 1 <= s["competency_count"] <= 2, f"Skill shard {s['shard_id']} had {s['competency_count']} comps"
+            assert s["competency_count"] == 1, f"Skill shard {s['shard_id']} had {s['competency_count']} comps"
             assert all(cid.startswith("Hab-") for cid in s["competency_ids"])
 
-        # 2. Heaviest-First Wave 1 Rule: All 5 Hab-* shards sit at the front of Wave 1
+        # 2. Heaviest-First Wave 1 Rule: All 10 Hab-* shards sit at the front of Wave 1
         wave_1_shards = [s for s in shards if s["wave_index"] == 1]
         assert len(wave_1_shards) == 10, f"Expected 10 shards in Wave 1, got {len(wave_1_shards)}"
-        for s in wave_1_shards[:5]:
+        for s in wave_1_shards:
             assert all(cid.startswith("Hab-") for cid in s["competency_ids"])
 
-        # 3. Concept/Fact shards have <= 3 competencies (DEFAULT_COMPS_PER_SHARD = 3)
+        # 3. Concept/Fact shards have <= 2 competencies (DEFAULT_COMPS_PER_SHARD = 2)
         for s in concept_fact_shards:
-            assert s["competency_count"] <= 3, f"Concept/Fact shard {s['shard_id']} had {s['competency_count']} comps"
-            assert len(s["competencies"]) <= 3
+            assert s["competency_count"] <= 2, f"Concept/Fact shard {s['shard_id']} had {s['competency_count']} comps"
+            assert len(s["competencies"]) <= 2
 
         # 4. 100% of 32 competencies accounted for without duplicates or drops
         assert len(all_sharded_ids) == 32
@@ -230,7 +230,7 @@ class TestWeightedShardingEdgeCases:
         assert s0["wave_index"] == 1
 
     def test_all_skill_course(self, tmp_path):
-        """A course with 8 skills produces ceil(8/2) = 4 skill shards (<= 2 per shard)."""
+        """A course with 8 skills produces 8 skill shards (1:1 isolation, MAX_SKILLS_PER_SHARD=1)."""
         comps = [
             {"id": f"Hab-{i:02d}", "name": f"Skill {i}", "type": "skill", "distractors": []}
             for i in range(1, 9)
@@ -239,9 +239,9 @@ class TestWeightedShardingEdgeCases:
 
         manifest = plan_shards(cta_path, shards_dir, max_wave_size=10)
         assert manifest["total_competencies"] == 8
-        assert manifest["total_shards"] == 4
+        assert manifest["total_shards"] == 8
         assert manifest["total_waves"] == 1
-        assert [s["competency_count"] for s in manifest["shards"]] == [2, 2, 2, 2]
+        assert [s["competency_count"] for s in manifest["shards"]] == [1] * 8
         assert all(s["wave_index"] == 1 for s in manifest["shards"])
 
     def test_large_45_competency_course_multi_wave(self, tmp_path):
@@ -262,24 +262,24 @@ class TestWeightedShardingEdgeCases:
         manifest = plan_shards(cta_path, shards_dir, max_wave_size=10)
 
         assert manifest["total_competencies"] == 45
-        assert manifest["total_waves"] >= 2
+        assert manifest["total_waves"] == 3
         assert manifest["max_wave_size"] == 10
 
-        # 15 skills -> 8 skill shards (2 each, last has 1) sit at the front of Wave 1 (heaviest-first)
+        # 15 skills -> 15 1:1 skill shards sit at the front of Wave 1 and Wave 2 (heaviest-first)
         wave_1_shards = [s for s in manifest["shards"] if s["wave_index"] == 1]
         assert len(wave_1_shards) == 10
-        for s in wave_1_shards[:7]:
-            assert s["competency_count"] == 2
+        for s in wave_1_shards:
+            assert s["competency_count"] == 1
             assert all(cid.startswith("Hab-") for cid in s["competency_ids"])
 
-        # Wave 2 contains the remaining non-skill shards
+        # Wave 2 contains the remaining 5 skill shards + 5 concept/fact shards
         wave_2_shards = [s for s in manifest["shards"] if s["wave_index"] == 2]
-        assert len(wave_2_shards) == 8
+        assert len(wave_2_shards) == 10
 
-        # All 15 skills across the curriculum are packed into 8 shards of up to 2
+        # All 15 skills across the curriculum are isolated 1:1 into 15 shards
         all_skills = [s for s in manifest["shards"] if any(cid.startswith("Hab-") for cid in s["competency_ids"])]
-        assert len(all_skills) == 8
-        assert all(1 <= s["competency_count"] <= 2 for s in all_skills)
+        assert len(all_skills) == 15
+        assert all(s["competency_count"] == 1 for s in all_skills)
 
         # 100% accountability
         all_ids = []
@@ -323,22 +323,22 @@ class TestWeightedShardingEdgeCases:
 # =============================================================================
 
 class TestThreeFactGroupingRule:
-    """Verifies that up to 3 competencies per shard is allowed ONLY when all 3 are fact and N >= 30."""
+    """Verifies that max_comps=2 strictly caps light shards at 2 competencies regardless of N."""
 
     def test_three_facts_grouped_when_n_ge_30(self):
-        """When total competencies N >= 30, a run of 3 facts is grouped into a 3-fact shard."""
+        """Even when total competencies N >= 30, max_comps=2 packs light competencies in pairs (<= 2 per shard)."""
         # 3 facts + 27 concepts = 30 competencies
         comps = [{"id": f"H-{i:02d}", "name": f"Fact {i}", "type": "fact"} for i in range(1, 4)]
         comps += [{"id": f"C-{i:02d}", "name": f"Concept {i}", "type": "concept"} for i in range(1, 28)]
         assert len(comps) == 30
 
         raw_shards = partition_competencies_weighted(comps, max_comps=2)
-        # Look for the shard containing H-01
         h_shards = [s for s in raw_shards if "H-01" in s["competency_ids"]]
         assert len(h_shards) == 1
         h_shard = h_shards[0]
-        assert h_shard["competency_ids"] == ["H-01", "H-02", "H-03"]
-        assert len(h_shard["competencies"]) == 3
+        assert h_shard["competency_ids"] == ["H-01", "H-02"]
+        assert len(h_shard["competencies"]) == 2
+        assert all(len(s["competency_ids"]) <= 2 for s in raw_shards)
 
     def test_three_facts_not_grouped_when_n_lt_30(self):
         """When total competencies N < 30 and max_comps=2, max 2 competencies per shard is strictly enforced."""
@@ -493,12 +493,12 @@ class TestTypeAndIdDisambiguation:
         manifest = plan_shards(cta_path, shards_dir, max_wave_size=10)
         assert manifest["total_competencies"] == 6
 
-        # The 4 skills must be grouped into ceil(4/3) = 2 pure skill shards (sizes <= 3)
+        # The 4 skills must be isolated 1:1 into 4 pure skill shards
         skill_cids = {"SKILL-01", "c-99", "hab_03", "HAB04"}
         skill_shards = [s for s in manifest["shards"] if any(cid in skill_cids for cid in s["competency_ids"])]
-        assert len(skill_shards) == 2
+        assert len(skill_shards) == 4
         for s in skill_shards:
-            assert 1 <= s["competency_count"] <= 3
+            assert s["competency_count"] == 1
             assert all(cid in skill_cids for cid in s["competency_ids"])
             assert s["wave_index"] == 1
 
@@ -553,9 +553,9 @@ class TestWaveSizingAndLimits:
 
         manifest = plan_shards(cta_path, shards_dir, max_wave_size=1)
         total_shards = manifest["total_shards"]
-        assert total_shards == 2 + 2  # 3 skills (ceil(3/2)=2) + 4 concepts (ceil(4/3)=2) = 4 shards
-        assert manifest["total_waves"] == 4
-        assert len(manifest["waves"]) == 4
+        assert total_shards == 3 + 2  # 3 skills (1:1 = 3) + 4 concepts (ceil(4/2)=2) = 5 shards
+        assert manifest["total_waves"] == 5
+        assert len(manifest["waves"]) == 5
 
         for idx, s in enumerate(manifest["shards"], start=1):
             assert s["wave_index"] == idx
@@ -583,7 +583,7 @@ class TestConsecutiveSkillsAndTieBreaking:
     """Verifies consecutive skills isolation (e.g. Hab-03, Hab-04) and deterministic ordering."""
 
     def test_consecutive_skills_remain_isolated(self, tmp_path):
-        """Consecutive skills Hab-01, Hab-02, Hab-03 group into 2 pure skill shards (<= 2 each) without mixing concepts."""
+        """Consecutive skills Hab-01, Hab-02, Hab-03 isolate 1:1 into 3 pure skill shards without mixing concepts."""
         comps = [
             {"id": "Hab-01", "type": "skill"},
             {"id": "Hab-02", "type": "skill"},
@@ -595,8 +595,8 @@ class TestConsecutiveSkillsAndTieBreaking:
 
         manifest = plan_shards(cta_path, shards_dir)
         skill_shards = [s for s in manifest["shards"] if s["competency_ids"][0].startswith("Hab-")]
-        assert len(skill_shards) == 2
-        assert [s["competency_ids"] for s in skill_shards] == [["Hab-01", "Hab-02"], ["Hab-03"]]
+        assert len(skill_shards) == 3
+        assert [s["competency_ids"] for s in skill_shards] == [["Hab-01"], ["Hab-02"], ["Hab-03"]]
         assert skill_shards[0]["wave_index"] == 1
 
     def test_deterministic_tie_breaking(self):
@@ -605,12 +605,12 @@ class TestConsecutiveSkillsAndTieBreaking:
             {"id": f"C-{i:02d}", "type": "concept", "distractors": [{"id": "D1"}, {"id": "D2"}]}
             for i in range(1, 9)
         ]
-        # All 8 have identical weights. Grouping (C-01..C-03) and (C-04..C-06) have equal weight.
+        # All 8 have identical weights. Grouping (C-01, C-02) and (C-03, C-04) have equal weight.
         raw_shards = partition_competencies_weighted(comps)
         raw_shards.sort(key=lambda s: (0 if s.get("is_skill") else 1, -s["weight"], s.get("min_curriculum_idx", 0)))
 
-        assert raw_shards[0]["competency_ids"] == ["C-01", "C-02", "C-03"]
-        assert raw_shards[1]["competency_ids"] == ["C-04", "C-05", "C-06"]
+        assert raw_shards[0]["competency_ids"] == ["C-01", "C-02"]
+        assert raw_shards[1]["competency_ids"] == ["C-03", "C-04"]
 
 
 # =============================================================================
@@ -665,7 +665,7 @@ class TestCliMainInvocation:
 
         captured = capsys.readouterr()
         assert "Successfully partitioned 32 competencies" in captured.out
-        assert "total waves: 2" in captured.out
+        assert "total waves: 3" in captured.out
         assert "(wave 1)" in captured.out
 
 

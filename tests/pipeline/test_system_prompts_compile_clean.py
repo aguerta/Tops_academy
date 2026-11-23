@@ -273,11 +273,13 @@ def test_m20_micro_examples_in_prompt_shard_author_compile_clean():
     m20_block = next((b for b in blocks if "def gen_pd(" in b and "def gen_cm(" in b), None)
     assert m20_block is not None, "Missing M20 micro-examples Python block in prompt_shard_author.md"
 
+    from engine import c2c_ver
+
     rats = {
         f"D-C01-0{i}": f"Diagnóstico de error conceptual D-C01-0{i} sobre derivación polinomial en x."
         for i in range(1, 7)
     }
-    ns = {"RATS": rats}
+    ns = {"RATS": rats, "c2c_ver": c2c_ver}
     exec(compile(m20_block, "prompt_shard_author_m20_examples", "exec"), ns)
 
     cta_distractors_map = {

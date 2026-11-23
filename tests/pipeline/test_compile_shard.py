@@ -344,22 +344,22 @@ class TestAdaptiveShardSizing:
         assert determine_shard_count(1) == 1
 
         # N = 8: ceil(8/8) = 1 -> clamped to 2 -> ceil(8/2) = 4 shards
-        assert determine_shard_count(8) == 3
+        assert determine_shard_count(8) == 4
 
         # N = 16: ceil(16/8) = 2 -> 2/shard -> ceil(16/2) = 8 shards
-        assert determine_shard_count(16) == 6
+        assert determine_shard_count(16) == 8
 
         # N = 24: under Case 2B (max 2/shard) -> ceil(24/2) = 12 shards
-        assert determine_shard_count(24) == 8
+        assert determine_shard_count(24) == 12
 
         # N = 32: under Case 2B (max 2/shard) -> ceil(32/2) = 16 shards
-        assert determine_shard_count(32) == 11
+        assert determine_shard_count(32) == 16
 
         # N = 43: under Case 2B (max 2/shard) -> ceil(43/2) = 22 shards
-        assert determine_shard_count(43) == 15
+        assert determine_shard_count(43) == 22
 
         # N = 60: under Case 2B (max 2/shard) -> ceil(60/2) = 30 shards
-        assert determine_shard_count(60) == 20
+        assert determine_shard_count(60) == 30
 
         # Parametric override: Case 2A (max_comps_per_shard=3)
         assert determine_shard_count(24, max_comps_per_shard=3) == 8
