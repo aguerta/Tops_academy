@@ -1227,6 +1227,44 @@ def _verify_wave_outputs_before_kill(active_lock: Dict[str, Any], args: Dict[str
     )
 
 
+_CALLER_ROLE_CACHE: Dict[str, str] = {}
+
+
+def _resolve_caller_role(caller_id: str, active_lock: Dict[str, Any]) -> str:
+    """Infer the calling subagent role (repair / shard / cta_architect).
+
+    The lock is global to the run, so the role is inferred from the caller's own first
+    user message (dispatch prompts name the subagent type). Falls back to lock role.
+    """
+    lock_role = str(active_lock.get("role") or active_lock.get("subagent_role") or "").strip().lower()
+    if caller_id in _CALLER_ROLE_CACHE:
+        return _CALLER_ROLE_CACHE[caller_id] or lock_role
+    role = ""
+    tp = USER_HOME / ".gemini" / "antigravity" / "brain" / caller_id / ".system_generated" / "logs" / "transcript.jsonl"
+    try:
+        if tp.is_file():
+            with tp.open("r", encoding="utf-8", errors="ignore") as fh:
+                for line in fh:
+                    try:
+                        obj = json.loads(line)
+                    except Exception:
+                        continue
+                    if obj.get("type") != "USER_INPUT":
+                        continue
+                    txt = str(obj.get("content") or "")[:30000].lower()
+                    if "c2c_repair" in txt or "repair engineer" in txt:
+                        role = "repair"
+                    elif "c2c_shard_author" in txt or "shard author" in txt:
+                        role = "shard"
+                    elif "c2c_cta_architect" in txt or "cta architect" in txt:
+                        role = "cta_architect"
+                    break
+            _CALLER_ROLE_CACHE[caller_id] = role
+    except OSError:
+        pass
+    return role or lock_role
+
+
 def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None) -> Dict[str, Any]:
     """Processes a PreToolUse hook payload and returns decision dict conforming to docs/hooks.md."""
     tool_call = payload.get("toolCall") or payload.get("tool_call") or {}
@@ -1404,8 +1442,17 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
         }
 
     # REPAIR Worker Barrier: Block full cta.json and manifest inspection [REPAIR-NO-FULL-CTA]
-    lock_role = str(active_lock.get("role") or active_lock.get("subagent_role") or "").strip().lower()
-    if lock_role == "repair" and tool_name in ("read_file", "view_file", "read_resource"):
+    lock_role = _resolve_caller_role(caller_id, active_lock)
+    _blocked_names = ("pre_shard_manifest.json", "pre_cta_manifest.json")
+    if lock_role in ("repair", "shard", "shard_author", "cta_architect") and tool_name in cmd_tools and cmd:
+        _cl = str(cmd).lower().replace("\\", "/")
+        _is_tool_cmd = bool(re.search(r"(compile_cta|compile_shard|check_cta|check_templates)\.py", _cl))
+        if (not _is_tool_cmd and any(n in _cl for n in _blocked_names)) or (lock_role != "cta_architect" and re.search(r"(?<![\w])cta\.json", _cl) and re.search(r"\b(cat|type|get-content|gc|more|head|tail|sed|awk|select-string|rg|grep|python|read_text|open)\b", _cl) and "compile_" not in _cl and "check_" not in _cl):
+            return {
+                "decision": "deny",
+                "reason": f"BLOCKER:: [{lock_role.upper()}-NO-FULL-CTA] Shell access to manifests/cta.json is forbidden for this role.",
+            }
+    if lock_role in ("repair", "shard", "shard_author", "cta_architect") and tool_name in ("read_file", "view_file", "read_resource"):
         for p in paths:
             norm_p = p.lower()
             if norm_p.endswith("pre_shard_manifest.json") or norm_p.endswith("pre_cta_manifest.json"):
@@ -1429,7 +1476,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                             break
                         except Exception:
                             pass
-                if sz > 20_000:
+                if lock_role != "cta_architect":
                     return {
                         "decision": "deny",
                         "reason": (

@@ -11,7 +11,7 @@ Arquitecto C2C: extrae el grafo curricular en `<work_dir>/cta_data.py` (`cta_par
 
 <scope_lock>
 - `[SCOPE-LOCK]` inicial fija `READ`, `Doc`, `Rango`, `WRITE`, `COMPILE` y `DONE`.
-- Modo slice (`READ: <pdf_slice>` y `COMPILE:` en el mensaje inicial): lee `<pdf_slice>` en T1; prohibido leer `cta_0X.json` (el aislamiento por slice evita contaminación de contexto entre particiones). Lee exclusivamente el campo `files[*].doc` de `<work_dir>/pre_cta_manifest.json` solo si `[SCOPE-LOCK]` omite `Doc:` y el slice usa nombre genérico `*_part_XX.pdf` (para satisfacer `[CTA-DOCS]`). En modo directo sin slice: lee la fuente y `cta_XX.json`.
+- Modo slice (`READ: <pdf_slice>` y `COMPILE:` en el mensaje inicial): lee `<pdf_slice>` en T1; prohibido leer `cta_0X.json` (el aislamiento por slice evita contaminación de contexto entre particiones). Prohibido leer `pre_cta_manifest.json`: usa el `Doc:` del `[SCOPE-LOCK]` tal cual como `doc` de la evidencia (aunque el slice se llame `*_part_XX.pdf`); si falta `Doc:` -> `BLOCKED: Doc faltante en SCOPE-LOCK`. En modo directo sin slice: lee la fuente y `cta_XX.json`.
 - `WRITE`: `<work_dir>/cta_data.py` (`cta_parts/<part_id>_data.py`), `<work_dir>/cta_fixes/<cid>.py` o `<work_dir>/cta_parts/cta_fixes/<cid>.py` (según dispatch; sin `ArtifactMetadata`, pues `compile_cta.py` procesa código Python y JSON puros).
 - `TOOLS`: `read_file`, `write_file(Overwrite=True)`, `edit_file`, `run_command`. Prohibido leer `compile_cta.py`, `check_cta.py`, `engine/*`, `SKILL.md` o `tests/**` (operan como caja negra para evitar sobreajuste al validador).
 </scope_lock>
@@ -108,7 +108,7 @@ DONE: work_out/cta_parts/part_02.json
 </examples>
 
 <instructions>
-1. T1: si recibes `READ: <pdf_slice>` y `COMPILE:`, haz `read_file` sobre `<pdf_slice>` (y en paralelo `files[*].doc` de `pre_cta_manifest.json` solo si `Doc:` falta y el slice es `*_part_XX.pdf`; sin leer `cta_0X.json`); en modo directo, lee la fuente y `cta_XX.json`. Si falta insumo -> `BLOCKED: <motivo>`.
+1. T1: si recibes `READ: <pdf_slice>` y `COMPILE:`, haz `read_file` sobre `<pdf_slice>` (sin leer `cta_0X.json` ni `pre_cta_manifest.json`; usa el `Doc:` del `[SCOPE-LOCK]`); en modo directo, lee la fuente y `cta_XX.json`. Si falta insumo -> `BLOCKED: <motivo>`.
 2. T2: `<work_dir>/cta_data.py` (`cta_parts/<part_id>_data.py`) vía `write_file(Overwrite=True)` (sin `ArtifactMetadata`).
 3. T3: ejecuta `COMPILE` inicial (o `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`).
 4. `<6` errores en `<=5` líneas: `edit_file`; `>=6` errores o `>5` líneas en `1..2` competencias: `cta_fixes/<cid>.py` (`cta_parts/cta_fixes/<cid>.py`), definiendo `COMPETENCY = (...)` (o `COMPETENCIES = [(...)]`); `>=3` competencias afectadas, `SyntaxError` o `<40` líneas: `write_file(Overwrite=True)` (`c2c_hook_guard.py`); máximo `2` reintentos o `BLOCKED: <motivo>`. Tras `PASS` y verificar cobertura + archivo JSON en disco: emite `<output_contract>`.
