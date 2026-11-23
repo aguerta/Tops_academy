@@ -5253,5 +5253,90 @@
       "usd_per_page": 0.37
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261122_231203_solow_m20_v12_hydrogen_low_0f376f7c",
+    "timestamp": "2026-11-23T04:12:03.776883+00:00",
+    "course_id": "solow_m20_v12_hydrogen_low",
+    "course_title": "Solow M20 V12 Hydrogen Low",
+    "conversation_id": "0f376f7c-7e93-43f9-b291-092031cf18c5",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 17,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 554.0,
+      "agent_compute_seconds": 2719.0,
+      "speedup": 4.91,
+      "total_tokens": 6603341,
+      "total_active_tokens": 1444024,
+      "input_tokens": 927294,
+      "output_tokens": 371572,
+      "total_input_tokens": 1044579,
+      "total_output_tokens": 399445,
+      "cache_read_tokens": 5159317,
+      "pricing_model": "gemini-4-hydrogen",
+      "total_cost_usd": 4.95,
+      "cost_breakdown_usd": {
+        "input_usd": 1.57,
+        "output_usd": 3.0,
+        "cache_read_usd": 0.39,
+        "total_usd": 4.95
+      },
+      "stage_costs_usd": {
+        "stage_1a_vision": 0.0,
+        "stage_1b_cta": 0.39,
+        "stage_3_authors": 4.03,
+        "stage_3b_repairs": 0.08,
+        "stage_5_judges": 0.0,
+        "orchestrator": 0.46,
+        "other_subagents": 0.0,
+        "total_usd": 4.95
+      },
+      "total_turns": 155,
+      "subagents_count": 17,
+      "tool_errors": 34,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 84.0,
+      "stage_3_max_wall": 251.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 34,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 34 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 183426.1,
+      "active_tokens_per_page": 40111.8,
+      "tokens_per_input_kb": 4336.1,
+      "tokens_per_competency": 388431.8,
+      "active_tokens_per_competency": 84942.6,
+      "author_tokens_per_competency": 65173.2,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 15.39,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0,
+      "usd_per_question": 0.0,
+      "usd_per_competency": 0.29,
+      "usd_per_page": 0.14
+    },
+    "bottlenecks_count": 1
   }
 ]

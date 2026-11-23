@@ -1,12 +1,13 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-22 22:45:30`. Total de ejecuciones auditadas: **78**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-22 23:12:03`. Total de ejecuciones auditadas: **79**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Costo (USD) | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-23 04:12` | **solow_m20_v12_hydrogen_low** (`0f376f7c`) | 36 pág (1.49 MB) | 17 comp / 0 preg | 9.2 min (554.0s) | **4.91x** | 6,603,341 | **`$4.95`** | **0.0** | **0.0s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-23 03:45` | **solow_m20_v12_gemini_3_8_medium_complete** (`416315e2`) | 36 pág (1.49 MB) | 20 comp / 480 preg | 35.2 min (2113.0s) | **5.34x** | 12,833,506 | **`$13.30`** | **26,736.5** | **4.4s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
 | `2026-11-23 02:59` | **solow_m20_v12_gemini_3_8_medium** (`54548735`) | 36 pág (1.49 MB) | 15 comp / 0 preg | 4.8 min (286.0s) | **3.4x** | 1,018,849 | **`$1.41`** | **0.0** | **0.0s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
 | `2026-11-23 02:59` | **solow_model** (`9f55c5f5`) | 36 pág (1.49 MB) | 18 comp / 0 preg | 6.5 min (392.0s) | **1.84x** | 1,285,257 | **`$0.98`** | **0.0** | **0.0s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
@@ -91,7 +92,7 @@
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
 - **Factor de Aceleración Paralela Promedio**: `5.03x`
-- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.89 USD`
+- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.75 USD`
 - **Densidad de Tokens Promedio por Pregunta**: `48,628.6 tokens/pregunta`
 - **Latencia Promedio por Pregunta Validada**: `5.3 s/pregunta`
 - **Rendimiento Promedio de Generación**: `25.58 preguntas/minuto`
