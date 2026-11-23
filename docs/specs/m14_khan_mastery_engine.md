@@ -2,9 +2,9 @@
 ## Motor de Maestría Integral 2.0 Estilo Khan Academy (Calibración Bidireccional en Challenge/Test/Quiz, Híbrido 80/20, Hint-Cap y Simulador Adaptativo)
 
 > **Documento de Especificación Técnica y Psicométrica**  
-> **Hito Vinculado:** Milestone 14 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
+> **Hito Vinculado:** Milestone 14 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md)  
 > **Estado:** ✅ **COMPLETADO / VERIFICADO (Nov 2026) — Componentes Core, Fluidez y Recomendantes.**  
-> **Regla de Sincronización:** Cualquier ajuste en la lógica de transiciones de maestría, penalización por fallo, cálculo global o componentes de `platform/src/utils/masteryStorage.ts` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
+> **Regla de Sincronización:** Cualquier ajuste en la lógica de transiciones de maestría, penalización por fallo, cálculo global o componentes de `platform/src/utils/masteryStorage.ts` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md).
 
 ---
 
@@ -137,7 +137,7 @@ export function updateCourseChallengeWithSkillCalibration(
    - Evaluación estricta en `CompletionScreen.tsx`: `⬆️ Leveled Up`, `🔻 Leveled Down` o `⏸️ No change` basados en `TIER_POINTS`.
    - Consolidación por unidad de las áreas a reforzar evitando filas duplicadas.
 7. **[COMPLETADO EN M14-B] Simulador Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):**
-   - Implementado e integrado en Modo Hierro (`IronExamSession.tsx`, `CourseChallenge.tsx`, `sessionShuffler.ts`, `CompletionScreen.tsx`, `App.tsx`) con Módulo 1 diagnóstico (12 preg.), corte `>= 70%` hacia Módulo 2 Avanzado vs. Estándar, advertencias visuales de reloj a `<= 5 min` y `<= 1 min`, y proyección de nota universitaria 0–20 con desglose por unidad (ver [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)).
+   - Implementado e integrado en Modo Hierro (`IronExamSession.tsx`, `CourseChallenge.tsx`, `sessionShuffler.ts`, `CompletionScreen.tsx`, `App.tsx`) con Módulo 1 diagnóstico (12 preg.), corte `>= 70%` hacia Módulo 2 Avanzado vs. Estándar, advertencias visuales de reloj a `<= 5 min` y `<= 1 min`, y proyección de nota universitaria 0–20 con desglose por unidad (ver [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/MILESTONES_COMPLETED.md#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)).
 
 ---
 

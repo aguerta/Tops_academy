@@ -2,12 +2,12 @@
 ## Manual Canónico de Física de Inferencia, Arquitectura de Sistemas End-to-End, Gobernanza Agéntica y Ergonomía
 
 > **Documento Canónico de Conocimiento Tribal ("Tribal Knowledge")**  
-> **Fecha de Actualización:** 2026-11-08 (Branch: `main` / `optimizaciones_test`)  
+> **Fecha de Actualización:** 2026-11-22 (Branch: `optimizaciones_test` / `main` — incluye las 6 Palancas FTP [*First-Time Pass*], verificadores canónicos `c2c_ver`, Sharding Ponderado `1:1`/`2:1`, protocolo LQAS y checkpoint `.rejudge_pending.json`)  
 > **Áreas:** Pipeline Multi-Agente C2C (`.agents/skills/content-to-course/`), Motor Determinista y Simbólico (`engine/` + `SymPy`/`Z3`/`Lean 4`), Evaluador de Calidad (`course-qa-evaluator`), Plataforma Web (`React 18 + Vite + TypeScript + PWA`) y Ergonomía de Hardware Real.  
 > **Propósito:** Condensar el **por qué** el ecosistema funciona como funciona, fundamentado en leyes físicas de inferencia, mediciones empíricas en hardware de referencia, causas raíz de patologías superadas y convenciones inviolables de calidad pedagógica y psicométrica.  
 > **Archivos Relacionados:**
-> - Hoja de Ruta Activa: [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)
-> - Registro de Certificación Histórica: [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)
+> - Hoja de Ruta Activa: [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md)
+> - Registro de Certificación Histórica: [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/MILESTONES_COMPLETED.md)
 > - Especificaciones Técnicas Detalladas: [`docs/specs/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/)
 
 ---
@@ -182,6 +182,72 @@ Evaluar únicamente `erroresConsolidados < 6` sin acotar `lineasInfractoras <= 5
 | **Nivel 1: `1 <= errores < 6` Y `lineasInfractoras <= 5` (sin `SyntaxError`)** | **`edit_file` (`replace_file_content`) OBLIGATORIO** | Reemplazo quirúrgico en 1 turno paralelo sobre `StartLine..EndLine`. `write_file` monolítico bloqueado por hook. | **`10 – 25 s`** |
 | **Nivel 2: (`errores >= 6` O `lineasInfractoras > 5`) acotados a 1–2 competencias** | **`ModularSplicing` OBLIGATORIO (`cta_fixes/<CID>.py` o `shard_fixes/<shard>/<CID>.py`)** | Sobrescritura atómica aislada del módulo `<CID>.py` (~60 líneas), ensamblada en memoria por el compilador. Bloquea edición in-place sobre el monolito. | **`20 – 40 s`** |
 | **Nivel 3: `SyntaxError` global o Creación Inicial en Turno 0** | **`write_file(Overwrite=True)` Atómico Completo** | Creación inicial en Turno 0 o reescritura atómica completa únicamente si el AST global del archivo colapsó. | **`60 – 120 s`** |
+
+### 4.3. Física de Captura de Salida, Límites de Stdout y Truncación en Antigravity Runtime (`run_command`)
+La captura de salida estándar (`stdout`) de comandos en el runtime de Google Antigravity opera bajo restricciones binarias duras implementadas a nivel del servidor de lenguaje y ejecución (`language_server.exe` en Go). Comprender esta física evita pérdidas de información forense durante auditorías o compilaciones de cursos masivos:
+
+1. **Límite Absoluto del Runtime ($10\text{ KiB}$):**
+   - **Umbral de corte:** **$10,240\text{ bytes}$** ($10\text{ KiB} = 10 \times 1024\text{ bytes}$).
+   - **Sobrecarga del Wrapper en Windows:** El ejecutor del sistema añade un prefijo/sufijo determinista con el código de salida: `Command exited with code 0.\r\n\r\nCommand output:\r\n` ($47\text{ bytes}$ en Windows con terminaciones CRLF).
+   - **Capacidad Neta de Emisión:** El comando puede emitir a `stdout` un máximo de **$10,193\text{ caracteres}$** (en texto ASCII / UTF-8 de 1 byte).
+     * $\le 10,193\text{ chars} + 47\text{ bytes} \le 10,240\text{ bytes} \implies$ **Salida completa garantizada**.
+     * $\ge 10,194\text{ chars} + 47\text{ bytes} \ge 10,241\text{ bytes} \implies$ **Activación automática de truncación**.
+
+2. **Mecánica de Truncación Central Simétrica:**
+   - Cuando se excede el umbral, el sistema **no** trunca únicamente al final; realiza una poda simétrica del núcleo del texto para preservar el contexto de arranque y las líneas finales:
+     * **Inicio retenido:** $\approx 4,947\text{ a }4,948\text{ bytes}$.
+     * **Marcador central inyectado:** `<truncated X of Y bytes from the middle of the output>`.
+     * **Final retenido:** $\approx 4,947\text{ a }4,948\text{ bytes}$.
+     * **Buffer visible en contexto:** $\approx 9,892\text{ a }9,896\text{ bytes}$ en total.
+   - **Persistencia Forense Cero-Pérdida:** El volcado íntegro ($100\%$ sin truncar) se preserva automáticamente en disco en:  
+     `<appDataDir>/brain/<conversation_id>/.system_generated/steps/<step_id>/output.txt`.
+
+3. **Matriz Comparativa de Límites de Buffer en el Ecosistema:**
+
+| Componente / Herramienta | Límite Máximo de Retención | Comportamiento al Exceder |
+| :--- | :---: | :--- |
+| **`run_command` (stdout)** | **$10,240\text{ bytes}$ ($10\text{ KiB}$)** | Truncación central simétrica (~4.9 KB inicio + ~4.9 KB fin); volcado completo en `.system_generated/steps/<id>/output.txt`. |
+| **`read_file`** | **$46,080\text{ bytes}$ ($45\text{ KiB}$) u $800$ líneas** | Retorna hasta el límite y exige paginación manual mediante `ByteOffset`, `StartLine` y `EndLine`. |
+| **Reglas de Agente (`rules.md` / `.agents/rules`)** | **$24,000\text{ bytes}$** | Truncación dura tras expandir inclusiones `@[label](path)`. |
+| **Buffers de Flujo en Orquestación SDK / CLI** | **$200,000\text{ caracteres}$** | Límite superior de seguridad en variables de salida de workflows y subagentes. |
+
+4. **Gobernanza Agéntica para Pipelines y Subagentes:**
+   - **Peligro de la Truncación Central:** La poda del centro es crítica en diagnósticos de compilación o auditoría: si un script de linting (`pytest`, `validate_shard.py`, `judge.py`) emite un log masivo, la truncación oculta precisamente las fallas intermedias (`the middle of the output`), obligando al agente a hacer inferencias a ciegas.
+   - **Regla Inviolable para Comandos Extensos:** Todo comando de análisis o reporte con potencial de emitir $>10\text{ KiB}$ debe redirigir su salida a un archivo en `work/` (ej. `python run.py --stage audit > work/audit_full.log 2>&1`) y luego inspeccionar secciones quirúrgicas mediante `read_file` con `StartLine` y `EndLine`.
+
+### 4.4. Física Empírica de Hooks `PreToolUse` y Barrera N/N en Antigravity Runtime
+Verificado empíricamente con sonda viva en [.agents/hooks.json](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/hooks.json) sobre invocaciones activas y subagentes recién instanciados (`hook_probe.py`):
+
+1. **Cobertura Real de Herramientas (`toolName` y `argKeys`):**
+   - El runtime de Antigravity **sí dispara `PreToolUse`** desde `.agents/hooks.json` (con `cwd = .agents/`) tanto para herramientas de archivo/shell (`run_command`, `read_file`, `send_message`) como para orquestación de subagentes (`manage_subagents` con `argKeys` `["Action", "ConversationIds"]` y `["Action"]`).
+   - **Condición Crítica de `matcher`:** Si `manage_subagents` no está incluido explícitamente en `PreToolUse[0].matcher` en [.agents/hooks.template.json](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/hooks.template.json) y `.agents/hooks.json`, Antigravity **nunca invoca** el guardián antes de `kill`/`kill_all`, sin importar cuánta lógica defensiva exista dentro de [c2c_hook_guard.py](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/c2c_hook_guard.py).
+2. **Frontera de Carga en Memoria (*Invocation Boundary*):**
+   - Editar `.agents/hooks.json` **no toma efecto a mitad de turno** (*mid-turn*) sobre una llamada inmediatamente posterior en la misma invocación; el runtime recarga los hooks al iniciar **nuevas invocaciones / despertares reactivos** y al instanciar **subagentes nuevos** (`invoke_subagent`).
+   - El comando declarado debe mantenerse relativo a `.agents/` (`"python skills/content-to-course/c2c_hook_guard.py"`), con código de salida `0` y JSON ASCII estricto por `stdout`.
+3. **Reglas de Blindaje de la Barrera N/N contra Alucinaciones del Orquestador:**
+   - **No confiar en `.is_file()` de `.json`:** [`compile_shard.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/compile_shard.py) escribe `work/templates/<CID>.json` antes de validar y escribe `work/shards/<shard_id>.json` incluso cuando falla (`"compiled_status": "FAIL"`). Solo `work/shards/<shard_id>.cert.json` (`"passed_50_seeds": true`) junto con `"compiled_status": "PASS"` garantizan compilación exitosa (y en `repair.json`, sus timestamps deben ser $\ge$ `dispatched_at`). En MapReduce CTA (`cta_parts/`), la certificación real es `work/cta_parts/.check_attempts/pass_cta_<part_id>.json` (`"status": "PASS"`).
+   - **Manifiestos reales de despacho:** `dispatch.py dispatch-authors` escribe `dispatch/authors.json` (y `author.json`), no `shards.json`; cualquier guardián de barrera debe inspeccionar `authors.json`, `shards.json`, `shards_wave_*.json`, `repair.json`, `judges.json`, `cta.json` y `cta_reduce.json`.
+   - **Verificación Dual (Artefactos + Transcript):** El guardián debe cruzar el `transcript.jsonl` del Director para confirmar que ningún subagente activo de la ola siga pendiente de `DONE:` / `BLOCKED:` / `CIRCUIT BREAKER` antes de autorizar `manage_subagents(kill/kill_all)` o transiciones prematuras `run.py --stage ...` (`templates`, `build`, `verify`, `publish`, `cta-apply`, `cta-merge`, `repair-matrix`). En paralelo, [`SKILL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/SKILL.md) exige reportar únicamente etiquetas cortas (`part_01`, `shard_01`, `C-01`, `batch_01`) en `Completados` / `Pendientes` (sin exponer UUIDs en el chat) durante cada despertar parcial (`k < N`) con `tools=[]`.
+
+### 4.5. Física del Multiplicador de Caché por Fallo de Compilación, las 6 Palancas FTP (*First-Time Pass*) y Resiliencia ante `HTTP 429` (2026-11-22)
+Las auditorías forenses de `mateco_4_optimizacion_v20_k_3` y de la serie `solow_m20_v6..v13` demostraron que el consumo de tokens en Stage 3 **no escala linealmente con $k$ (`templates_per_modality`), sino exponencialmente con el número de compilaciones fallidas (`compile_runs`)**: un shard *Clean-Room* (`1` compilación, `4–5` turnos, `76–106s`) lee `~90k–140k` tokens de caché, mientras que un shard con `2–3` fallos (`8–15` turnos) multiplica el caché leído entre **`2.9x` y `7.6x`** (`336k–890k` tokens). Para elevar el *First-Time Pass* (FTP) y proteger la cuota de Google AI Pro se establecieron 6 palancas y 2 mecanismos de resiliencia:
+
+1. **Palanca FTP 1 — Verificadores Canónicos `c2c_ver` en Sandbox ([`engine/c2c_ver.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/c2c_ver.py)):**
+   - En lugar de que cada autor improvise `ver_fn` frágiles con `sympy.simplify` (que fallan ante exponenciales/radicales con flotantes o aceptan mutaciones por tautología), `engine/sandbox.py` inyecta el proxy inmutable `c2c_ver` con 3 primitivas:
+     * `c2c_ver.numeric(candidate, exact, tol=0.005)`: parsea respuestas numéricas o cadenas KaTeX vía `parse_katex_number` y rechaza `bool`/`NaN`/`Inf`.
+     * `c2c_ver.equiv(candidate, expected, variables, tol=1e-4)`: combina simplificación simbólica `SymPy` con evaluación numérica multi-punto en la grilla irracional `(0.3713, 1.1927, 2.4183)` para identidades trascendentes (`exp`, `log`, `sqrt`).
+     * `c2c_ver.m20_guard(r, rats, qtype)`: valida la integridad estructural de `MS`, `proof_dag`, `adversarial_break`, `unstructured_model`, `concept_matching` e `invariant_canvas`, y rechaza determinísticamente las 5 mutaciones adversariales del compilador (`__MUTATED__`, `$0 = 1$`, `__INVALID_DID__`, swap `is_correct` y rationales vacíos o `< 20` chars).
+2. **Palanca FTP 2 — Esqueleto Contractual Tipado en `author_XX_data.md` ([`dispatch.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/dispatch.py)):**
+   - `dispatch.py dispatch-authors` (con soporte CLI `--templates-per-modality k`) genera en `author_XX_data.md` (`## 3. ESQUELETO CONTRACTUAL DE REFERENCIA (SOLO LECTURA)`) un esqueleto Python AST-válido con todos los `D-XX-YY`, firmas `gen_i`/`ver_i` invocando `c2c_ver.*` y tuplas `TEMPLATES` pre-cableadas, sin duplicar ese bloque en `author_XX.json`.
+3. **Palanca FTP 3 — Rejection Sampling Estratificado en Stage 4 ([`engine/instantiate.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/instantiate.py)):**
+   - Evita la concentración de una misma respuesta correcta (`<= 20%` por clave) preservando IDs únicos durante la instanciación de semillas, mientras `check_templates.py` aplica `[TPL-STATIC-OPT]` con umbral diferenciado entre `Fact`/`Concept` y `Skill`.
+4. **Palancas FTP 4 y 5 — Auto-Poda, Normalización Fuera de Math e Invariantes Shift-Left ([`engine/template_healing.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/template_healing.py), [`engine/shard_compiler_steps.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/shard_compiler_steps.py), [`engine/invariants.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/invariants.py)):**
+   - Auto-poda silenciosa `INFO: [AUTO-FIXED] [TPL-ORPHAN-VARS]` cuando todos los `@placeholder@` del reactivo están resueltos; `normalize_prose_outside_math` (`INFO: [AUTO-FIXED] [PROSE-NORM]`) para limpiar dobles puntos `..` y espacios fuera de `$...$` / `$$...$$` respetando elipsis `...` y abreviaturas académicas (`i.e.`, `e.g.`, `fig.`, `ec.`, `eq.`, `aprox.`); exención `_is_conceptual_statement` frente a `[TPL-CONST-DISTRACTOR]` en `MS`; downgrade de `[TPL-STEM-SYMBOL-PARITY]` cosmético a `WARNING`; y detección temprana en Stage 3 de `[CANVAS-OUT-OF-BOUNDS]` (coordenadas/sliders fuera de `x_range`/`y_range`/`min..max`) y `[ADV-WITNESS-LEAK]` (fuga de valores de `sample_witness` en el enunciado).
+5. **Palanca FTP 6 — Sharding Ponderado por Complejidad (`1:1` vs. `2:1`) y Pool `max_concurrency = 12` ([`plan_shards.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/plan_shards.py), [`c2c_wave_workflow.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/workflows/c2c_wave_workflow.py)):**
+   - `is_heavy_competency` aísla `1:1` toda competencia `Skill` (`MAX_SKILLS_PER_SHARD = 1`) y cualquier competencia que incluya widgets M20 pesados (`invariant_canvas`, `proof_dag`, `adversarial_break`, `unstructured_model`), mientras empareja `2:1` (`DEFAULT_COMPS_PER_SHARD = 2`) competencias `Concept`/`Fact` ligeras (reduciendo el costo activo a `34.6k–42.6k tok/comp` en shards `2:1` Clean-Room de `solow_m20_v12`).
+6. **Protocolo Adaptive Two-Stage LQAS (`Stage 5B`) y Checkpoint `.rejudge_pending.json` (`Stage 6B`):**
+   - Cuando una plantilla recibe `kernel_override` en `k=1` semilla durante Stage 5, `c2c_wave_workflow.py` ejecuta automáticamente `--stage lqas-rejudge` con 2 semillas nuevas por plantilla para distinguir un desliz aritmético aislado del Juez LLM frente a una fórmula matemáticamente defectuosa del autor (como el error Hicks-neutral detectado y rechazado en `Hab-08` de `solow_m20_v12` y `v13`).
+   - En `mode="repair_and_rejudge"`, una vez completados `c2c_repair` + `templates` + `build`, el workflow escribe `work/.rejudge_pending.json`; si la ola de *Surgical Rejudge* sufre un corte de cuota (`HTTP 429`), relanzar `mode="repair_and_rejudge"` salta la fase de reparación y reanuda directamente en `--stage rejudge`.
 
 ---
 

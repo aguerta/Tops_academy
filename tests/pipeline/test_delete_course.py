@@ -467,7 +467,7 @@ class TestPurgeLegacyCorpusAndSections:
 
     def test_docs_have_no_legacy_corpus_references(self):
         readme_path = REPO_ROOT / "README.md"
-        project_path = REPO_ROOT / "PROJECT.md"
+        project_path = REPO_ROOT / "docs" / "PROJECT.md"
 
         if readme_path.is_file():
             content = readme_path.read_text(encoding="utf-8")
@@ -475,4 +475,4 @@ class TestPurgeLegacyCorpusAndSections:
 
         if project_path.is_file():
             content = project_path.read_text(encoding="utf-8")
-            assert "Corpus Slicing" not in content, "Found legacy 'Corpus Slicing' in PROJECT.md"
+            assert "Corpus Slicing" not in content, "Found legacy 'Corpus Slicing' in docs/PROJECT.md"

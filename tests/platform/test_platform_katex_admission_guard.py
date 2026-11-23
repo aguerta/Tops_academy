@@ -660,23 +660,3 @@ class TestRealCoursesAdmission:
         assert fixes == 0, f"Course '{course_name}' had {fixes} fixes instead of 0"
         assert repaired == content, f"Course '{course_name}' was modified by repair_platform_course_katex"
 
-
-# =============================================================================
-# 6. FUTURE_MILESTONES Parity Tests
-# =============================================================================
-
-class TestFutureMilestonesParity:
-    """Verifies byte-for-byte exact parity between FUTURE_MILESTONES.md and docs mirror."""
-
-    def test_future_milestones_byte_parity(self):
-        root_milestones = Path(__file__).resolve().parents[2] / "FUTURE_MILESTONES.md"
-        docs_milestones = Path(__file__).resolve().parents[2] / "docs" / "future_milestones" / "FUTURE_MILESTONES.md"
-
-        assert root_milestones.exists(), f"Missing root FUTURE_MILESTONES.md at {root_milestones}"
-        assert docs_milestones.exists(), f"Missing mirror FUTURE_MILESTONES.md at {docs_milestones}"
-
-        root_bytes = root_milestones.read_bytes()
-        docs_bytes = docs_milestones.read_bytes()
-
-        assert root_bytes == docs_bytes, "FUTURE_MILESTONES.md and docs/future_milestones/FUTURE_MILESTONES.md are not identical byte-by-byte"
-        assert len(root_bytes) > 1000

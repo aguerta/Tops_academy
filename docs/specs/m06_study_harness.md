@@ -2,9 +2,9 @@
 ## Antigravity Study Harness 2.0 (Multi-Panel Split-View, Modo Blank-First y Transferencia Khanmigo $0 API)
 
 > **Documento de Especificación Técnica y Diseño de UI/UX**  
-> **Hito Vinculado:** Milestone 6 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
+> **Hito Vinculado:** Milestone 6 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md)  
 > **Estado:** Fase 1 (layout adaptativo y container queries) ✅ CERRADA; Fase 2 (Micro-Harness cognitivo: Cortina Blank-First y Transferencia Socrática $0 API) ✅ CERRADA Y CERTIFICADA.  
-> **Regla de Sincronización:** Toda modificación sobre la interacción de usuario, la máquina de estados de la cortina *Blank-First*, la suite de prompts o los componentes de `platform/` debe reflejarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
+> **Regla de Sincronización:** Toda modificación sobre la interacción de usuario, la máquina de estados de la cortina *Blank-First*, la suite de prompts o los componentes de `platform/` debe reflejarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md).
 
 ---
 

@@ -2,9 +2,9 @@
 ## Arquitectura Jerárquica de Contenido (PPT $\to$ Glosario, ContentCore Khanmigo en 5 Bloques, Supuestos Explícitos y Unidad 0 PRE-XX)
 
 > **Documento de Especificación Técnica y Contratos de Datos**  
-> **Hito Vinculado:** Milestone 9 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
+> **Hito Vinculado:** Milestone 9 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md)  
 > **Estado:** 🏛️ **P1 — Quick Wins Completados y Certificados (2026-11-14)** *(Anclaje PPT, Unidad 0 `PRE-XX`, `ContentCoreDrawer` vía rápida, Backfill 8 cursos / 237 competencias y fix ETag en `courseLoader.ts`)*. **Remanente:** Paso 4 (Quizzes de Subtema 3–5 reactivos, Challenges integradores 8–12 reactivos y emisión nativa LLM de `ContentCore` en `compile_cta.py`).  
-> **Regla de Sincronización:** Cualquier cambio en la estructura de los módulos, bloques de `ContentCore`, tipados de `platform/src/types.ts` o esquemas JSON (`cta.schema.json`, `course.schema.json`) debe registrarse en este archivo y sincronizarse con [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
+> **Regla de Sincronización:** Cualquier cambio en la estructura de los módulos, bloques de `ContentCore`, tipados de `platform/src/types.ts` o esquemas JSON (`cta.schema.json`, `course.schema.json`) debe registrarse en este archivo y sincronizarse con [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md).
 
 ---
 

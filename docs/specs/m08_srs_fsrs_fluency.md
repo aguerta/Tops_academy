@@ -2,9 +2,9 @@
 ## Motor de Retención Espaciada FSRS-5/6 (`ts-fsrs`), *Mastery Challenge* (6 preg. + Cooldown 12h por Competencia), *Misconception Ledger* y Bitácora de Fluidez
 
 > **Documento de Especificación Técnica, Psicométrica y de Evaluación**  
-> **Hito Vinculado:** Milestone 8 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
+> **Hito Vinculado:** Milestone 8 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md)  
 > **Estado:** ✅ **COMPLETADO / VERIFICADO (2026-11-21) — Implementado y Certificado en `milestone_20` / `main`.**  
-> **Regla de Sincronización:** Cualquier cambio en el scheduler FSRS, tabla de mapeo automático, umbrales de decaimiento, cooldown por competencia o contratos de `masteryStorage.ts` / `cloudSync.ts` / `types.ts` debe registrarse simultáneamente en este archivo, en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) y en su espejo [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md).
+> **Regla de Sincronización:** Cualquier cambio en el scheduler FSRS, tabla de mapeo automático, umbrales de decaimiento, cooldown por competencia o contratos de `masteryStorage.ts` / `cloudSync.ts` / `types.ts` debe registrarse simultáneamente en este archivo y en [`docs/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md).
 
 ---
 

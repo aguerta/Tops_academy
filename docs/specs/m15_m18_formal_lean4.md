@@ -2,9 +2,9 @@
 ## Certificación Formal Neuro-Simbólica, Gobernanza FSM en Lean 4, Deducción SMT Z3 y Arnés de Verificación Continua
 
 > **Documento de Especificación Técnica, Verificación Formal y Kernel Matemático**  
-> **Hitos Vinculados:** Milestones 15, 16, 17 y 18 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
+> **Hitos Vinculados:** Milestones 15, 16, 17 y 18 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md)  
 > **Estado:** Fases 1 (isomórficas en Python) ✅ CERRADAS; M17 (**✅ Cerrado: DAG `cta_merge.py` ✅, $\alpha_{\text{Kernel}}=0$ `judge.py` ✅ y Clausura Epistémica `engine/epistemic_closure.py` ✅** con **hard gate quirúrgico `[TPL-EPISTEMIC-CLOSURE]` en `open_symbolic` `expected_answer`** [`0/497` falsos positivos] y modo `WARN` en `detailed_solution`); M16 F2 (**Fase 1 `[Z3-RULE-WARNING]` en `engine/shard_ast_transforms.py` ✅** en modo sombra, `0` falsos positivos en `805` plantillas; Fase 2 AST acotado en `check_templates.py` **P1**); M18 (**Compuerta Prompt-Compiler CI ✅** + Benchmark SLA **P1**); M15 F2 (**DRT `Hypothesis` `tests/pipeline/test_c2c_hook_guard_drt.py` ✅**, binario Lean 4 FFI diferido a **P3 Investigación**).  
-> **Regla de Sincronización:** Cualquier ajuste en los teoremas formales, contratos de `formal/TopsAcademyC2C.lean`, esquemas en `engine/interstage_schemas.py` o hooks de `c2c_hook_guard.py` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
+> **Regla de Sincronización:** Cualquier ajuste en los teoremas formales, contratos de `formal/TopsAcademyC2C.lean`, esquemas en `engine/interstage_schemas.py` o hooks de `c2c_hook_guard.py` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md).
 
 ---
 
