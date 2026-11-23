@@ -650,9 +650,86 @@ def _locate_competency_line_range(shard_py: Path, cid: str) -> Tuple[Optional[in
     return None, None
 
 
-def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True) -> Dict[str, Any]:
-    """Writes individual subagent type spec files in work/dispatch/types/<type_name>.json
-    and the consolidated index in work/dispatch/subagent_types.json.
+def _format_agent_md(spec: Dict[str, Any]) -> str:
+    """Formats a C2C subagent type specification as an Antigravity plugin agent markdown file."""
+    name = str(spec["name"]).strip()
+    desc = str(spec.get("description") or "").replace('"', '\\"').strip()
+    sys_prompt = str(spec.get("system_prompt") or "").strip()
+    if spec.get("enable_write_tools", True):
+        tools_str = "[read_file, edit_file, write_file, run_command]"
+    else:
+        tools_str = "[read_file]"
+    return (
+        "---\n"
+        f"name: {name}\n"
+        f'description: "{desc}"\n'
+        "subagent: true\n"
+        "mainAgent: false\n"
+        f"tools: {tools_str}\n"
+        "---\n\n"
+        f"{sys_prompt}\n"
+    )
+
+
+def sync_c2c_agents_plugin(
+    specs: List[Dict[str, Any]],
+    plugin_dir: Optional[Union[str, Path]] = None,
+) -> Dict[str, Any]:
+    """Synchronizes the 5 C2C subagents into the global Antigravity plugin `~/.gemini/config/plugins/c2c-agents/`.
+
+    Only writes files whose content has changed so disk I/O is near-zero when already synced.
+    """
+    if plugin_dir is not None:
+        target_dir = Path(plugin_dir).resolve()
+    else:
+        env_dir = os.environ.get("C2C_AGENTS_PLUGIN_DIR", "").strip()
+        if env_dir:
+            target_dir = Path(env_dir).resolve()
+        else:
+            target_dir = (Path.home() / ".gemini" / "config" / "plugins" / "c2c-agents").resolve()
+
+    agents_dir = target_dir / "agents"
+    agents_dir.mkdir(parents=True, exist_ok=True)
+
+    plugin_manifest = {
+        "name": "c2c-agents",
+        "displayName": "Content-to-Course Agents",
+        "version": "4.1.0",
+        "description": "Pre-loaded subagents for the Top's Academy Content-to-Course (C2C) pipeline (c2c_cta_architect, c2c_cta_harmonizer, c2c_shard_author, c2c_judge, c2c_repair).",
+    }
+    manifest_file = target_dir / "plugin.json"
+    manifest_text = json.dumps(plugin_manifest, indent=2, ensure_ascii=False) + "\n"
+    if not manifest_file.is_file() or manifest_file.read_text(encoding="utf-8", errors="replace") != manifest_text:
+        _atomic_write_text(manifest_file, manifest_text)
+
+    agent_files: List[str] = []
+    updated_count = 0
+    for spec in specs:
+        clean_name = str(spec["name"]).replace("-", "_").strip()
+        md_file = agents_dir / f"{clean_name}.md"
+        md_text = _format_agent_md(spec)
+        existing = md_file.read_text(encoding="utf-8", errors="replace") if md_file.is_file() else None
+        if existing != md_text:
+            _atomic_write_text(md_file, md_text)
+            updated_count += 1
+        agent_files.append(md_file.resolve().as_posix())
+
+    return {
+        "plugin_dir": target_dir.as_posix(),
+        "agent_files": agent_files,
+        "updated_count": updated_count,
+        "preloaded": len(agent_files) >= 5,
+    }
+
+
+def generate_define_subagent_specs(
+    work_dir: Union[str, Path],
+    lean: bool = True,
+    sync_plugin: bool = True,
+) -> Dict[str, Any]:
+    """Writes individual subagent type spec files in work/dispatch/types/<type_name>.json,
+    the consolidated index in work/dispatch/subagent_types.json, and auto-syncs the global
+    `~/.gemini/config/plugins/c2c-agents/agents/*.md` plugin so subagents are pre-loaded.
     
     When lean=True (default), persists lean static system prompts strictly <= 5 KB.
     """
@@ -662,6 +739,7 @@ def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True
 
     types_list = list(get_type_definitions(lean=lean))
     type_files: List[str] = []
+    all_specs_for_plugin: List[Dict[str, Any]] = []
 
     granularity = "standard"
     for m_name in ("pre_cta_manifest.json", "ingestion_manifest.json"):
@@ -691,6 +769,7 @@ def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True
         t_file = types_dir / f"{clean_name}.json"
         _atomic_write_text(t_file, json.dumps(t_spec, indent=2, ensure_ascii=False))
         type_files.append(t_file.resolve().as_posix())
+        all_specs_for_plugin.append(t_spec)
 
     # Auxiliary type definition: c2c_cta_harmonizer for cta-reduce
     try:
@@ -706,13 +785,23 @@ def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True
         h_file = types_dir / "c2c_cta_harmonizer.json"
         _atomic_write_text(h_file, json.dumps(harmonizer_spec, indent=2, ensure_ascii=False))
         type_files.append(h_file.resolve().as_posix())
+        all_specs_for_plugin.append(harmonizer_spec)
     except Exception as e:
         logger.warning("Could not write c2c_cta_harmonizer.json: %s", e)
 
-    summary_payload = {
+    plugin_sync_info: Dict[str, Any] = {}
+    if sync_plugin and os.environ.get("C2C_SKIP_PLUGIN_SYNC", "").lower() not in ("1", "true", "yes"):
+        try:
+            plugin_sync_info = sync_c2c_agents_plugin(all_specs_for_plugin)
+        except Exception as e:
+            logger.warning("Could not sync c2c-agents plugin: %s", e)
+
+    summary_payload: Dict[str, Any] = {
         "types": types_list,
         "type_files": type_files,
     }
+    if plugin_sync_info:
+        summary_payload["plugin_sync"] = plugin_sync_info
 
     subagent_types_file = work / "dispatch" / "subagent_types.json"
     _atomic_write_text(subagent_types_file, json.dumps(summary_payload, indent=2, ensure_ascii=False))

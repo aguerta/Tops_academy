@@ -88,7 +88,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 ---
 
 > [!CAUTION]
-> ## ⚡ REGLA CERO: ARRANQUE ATÓMICO EN 3 TURNOS (PROHIBIDO EXPLORAR SCRIPTS O CONTAR PÁGINAS)
+> ## ⚡ REGLA CERO: ARRANQUE ATÓMICO EN 2 TURNOS CON AGENTES PRE-CARGADOS (PROHIBIDO EXPLORAR SCRIPTS O CONTAR PÁGINAS)
 >
 > En cuanto leas este `SKILL.md`, tu **Turno 1** debe ser **EXCLUSIVAMENTE** ejecutar el comando `--stage bootstrap`.
 > - 🚫 **PROHIBIDO** ejecutar `Get-ChildItem`, `dir`, `ls` sobre `.agents/skills/content-to-course/` o sobre `content/`.
@@ -101,18 +101,18 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > 1. **Normaliza `--course-id`** automáticamente (convierte mayúsculas/espacios a `snake_case` seguro, ej. `"Asyntotic_Estatistics_v3"` -> `asyntotic_estatistics_v3`).
 > 2. **Descubre todos los PDFs/archivos** dentro del directorio o rutas pasadas en `--sources` y **cuenta sus páginas instantáneamente (`< 0.2s`) sin rasterizar**.
 > 3. **Acepta directamente `--cta-mode <direct|mapreduce>` y `--granularity <standard|fine|coarse>`**, persistiendo ambos en `pre_cta_manifest.json` e `ingestion_manifest.json`.
-> 4. **Genera los 4 archivos de tipos** en `<work_dir>/dispatch/types/{c2c_cta_architect,c2c_shard_author,c2c_judge,c2c_repair}.json`.
-> 5. **Ejecuta internamente `dispatch_cta(pointer=True)`**, devolviendo en su JSON de salida (`stdout`) la lista `type_spec_files` y el arreglo `Subagents` listo para invocar (`c2c_cta_architect`), **sin necesidad de llamar a `dispatch.py dispatch-cta` por separado**.
+> 4. **Sincroniza el plugin global `c2c-agents`** (`~/.gemini/config/plugins/c2c-agents/agents/*.md`) y genera los 5 archivos de tipos en `<work_dir>/dispatch/types/{c2c_cta_architect,c2c_cta_harmonizer,c2c_shard_author,c2c_judge,c2c_repair}.json`.
+> 5. **Ejecuta internamente `dispatch_cta(pointer=True)`**, devolviendo en su JSON de salida (`stdout`) `subagents_preloaded: true`, `workflow_script_path`, `type_spec_files` y el arreglo `Subagents` listo para invocar.
 >
-> ### Secuencia Exacta de Arranque (arranque en 3 turnos cortos + registro diferido de tipos):
+> ### Secuencia Exacta de Arranque (Fast-Path en 2 Turnos `< 3s` con Plugin `c2c-agents` pre-cargado):
 > - **Turno 1 (inmediatamente tras leer `SKILL.md`)**: Ejecuta **únicamente** este comando (ajustando `--course-id`, `--sources`, `--cta-mode` y `--granularity` según el pedido del usuario):
 >   ```powershell
 >   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage bootstrap --course-id <id> --sources <ruta_o_directorio_fuente> --cta-mode <direct|mapreduce> --granularity <standard|fine|coarse> --director-id <CONVERSATION_ID>
 >   ```
 >   *(Si el usuario no especifica modo o granularidad, usa `--cta-mode mapreduce --granularity standard` (default). Si el usuario pide explícitamente `cta_direct`/`direct`, pasa `--cta-mode direct`: la instrucción del usuario SIEMPRE prevalece y NUNCA se promueve a mapreduce por número de páginas o archivos. Si es extensión incremental de un curso existente, añade `--append --base-course courses/<id>.json`).*
-> - **Turno 2**: Lee en paralelo (en 1 solo turno, solo lecturas = costo de generación casi nulo) todos los archivos devueltos en `type_spec_files` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json` y, si existe, `c2c_cta_harmonizer.json`).
-> - **Turno 3 (arranque mínimo o registro completo si usas `full_pipeline`)**: Registra `c2c_cta_architect` (y `c2c_cta_harmonizer` si existe) vía `define_subagent` — si vas a lanzar `mode="full_pipeline"` directo en Turno 4, registra los 5 tipos (`c2c_cta_architect`, `c2c_cta_harmonizer`, `c2c_shard_author`, `c2c_judge`, `c2c_repair`) en Turno 3 para que `run_workflow` ejecute todo de frente incluyendo reparaciones.
-> - **Turno 4 (lanzamiento vía `run_workflow`, `< 2s`)**: Llama **ÚNICAMENTE** a `run_workflow` (sin combinarlo con `define_subagent` en el mismo turno). Opciones principales:
+> - **Turno 2 (Fast-Path Cero-Define — cuando `c2c_cta_architect`, `c2c_cta_harmonizer`, `c2c_shard_author`, `c2c_judge` y `c2c_repair` YA aparecen en tu bloque `<subagents>`)**:
+>   - 🚫 **PROHIBIDO leer `type_spec_files` ni llamar a `define_subagent`** cuando los 5 subagentes C2C ya están pre-cargados en `<subagents>` por el plugin `c2c-agents`.
+>   - Llama **DIRECTAMENTE** a `run_workflow` en el Turno 2 (`< 2s`):
 >   - **Modo 1-paso completo (`mode="full_pipeline"`):** corre de frente CTA -> Harmonizer -> Sharding -> Autores -> Templates -> Build -> Jueces -> Gates -> hasta 2 rondas de Repair+Rejudge automáticas.
 >   - **Modo en 2 fases (`mode="cta_pipeline"` y luego `mode="post_cta_pipeline"`):** útil cuando quieres inspeccionar `cta.json` antes de lanzar Stage 2–6B.
 >   ```python
@@ -123,7 +123,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >   )
 >   ```
 >   *(Gobernanza unificada: **100% `run_workflow`**, nunca mezcles `invoke_subagent` ni `manage_subagents` manuales en el flujo estándar).*
-> - **Turno 5 (solo si lanzaste `cta_pipeline` o `cta`)**: Con la ola CTA ya corriendo en segundo plano, registra en paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, y `c2c_cta_harmonizer` si faltaba) y espera el cierre.
+> - **Fallback (solo si los 5 agentes C2C NO aparecen en `<subagents>` en esta sesión)**: Lee en paralelo `type_spec_files` en Turno 2, regístralos vía `define_subagent` en Turno 3, y lanza `run_workflow` en Turno 4.
 
 ---
 
@@ -285,18 +285,18 @@ Este comando ejecuta en `< 1s`:
 - Inicialización de `.c2c_subagent_lock.json` con metadatos de gobernanza formal.
 - Generación inmediata de las órdenes de trabajo de CTA (`Subagents` en el JSON de salida de `bootstrap`).
 
-### Paso 1: Lanzamiento de CTA y Registro Diferido de Subagentes (Turnos 2, 3, 4 y 5)
-1. **Turno 2**: Lee en paralelo los archivos de `<work_dir>/dispatch/types/*.json` listados en `type_spec_files` (solo lecturas).
-2. **Turno 3**: Registra **solo** `c2c_cta_architect` (y `c2c_cta_harmonizer` si existe) vía `define_subagent`.
-3. **Turno 4**: Ejecuta la ola CTA completa (Mappers + Harmonizer) exclusivamente vía `run_workflow`:
+### Paso 1: Lanzamiento Directo con `run_workflow` (Turno 2 — `< 2s` con Agentes Pre-Cargados)
+1. **Turno 2 (Fast-Path con `c2c-agents` pre-cargados en `<subagents>`)**:
+   Como `c2c_cta_architect`, `c2c_cta_harmonizer`, `c2c_shard_author`, `c2c_judge` y `c2c_repair` ya vienen pre-cargados en la sesión desde `~/.gemini/config/plugins/c2c-agents/agents/*.md`, **NO leas `type_spec_files` ni llames a `define_subagent`**. Lanza directamente `run_workflow` (`mode="full_pipeline"` o `mode="cta_pipeline"`):
    ```python
    run_workflow(
        ScriptPath="<workflow_script_path absoluto devuelto por --stage bootstrap>",
-       Description="Ejecutar Stage 1B CTA (Mappers + Harmonizer)",
-       Args={"work_dir": "<work_dir>", "mode": "cta_pipeline"},
+       Description="Ejecutar pipeline C2C completo (CTA -> Autores -> Jueces -> Repairs)",
+       Args={"work_dir": "<work_dir>", "mode": "full_pipeline"},  # o "cta_pipeline"
    )
    ```
-4. **Turno 5**: Mientras `run_workflow` corre en segundo plano, registra en un único turno paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, y `c2c_cta_harmonizer` si faltaba) con `define_subagent`, y espera la notificación de término de `run_workflow`.
+2. **Fallback (solo si los tipos `c2c_*` no aparecen en `<subagents>`)**:
+   Lee en paralelo `<work_dir>/dispatch/types/*.json`, regístralos vía `define_subagent` y lanza `run_workflow`.
 
 ### Paso 2: Validación Curricular Simétrica (CTA) y Sharding Opcional
 1. Si usaste `mode="cta"` en lugar de `cta_pipeline`, ejecuta `run.py --stage cta` y, si `dispatch/cta_reduce.json` se genera, corre `run_workflow(..., Args={"work_dir": "<work_dir>", "mode": "cta_harmonize"})` seguido de `run.py --stage cta`. (`mode="cta_pipeline"` ya automatiza todo este flujo).

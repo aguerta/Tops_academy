@@ -341,6 +341,8 @@ def format_compact_json_stdout(
     }
     if "workflow_script_path" in summary_dict:
         minimal["workflow_script_path"] = summary_dict["workflow_script_path"]
+    if "subagents_preloaded" in summary_dict:
+        minimal["subagents_preloaded"] = summary_dict["subagents_preloaded"]
     return json.dumps(minimal, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -3137,6 +3139,8 @@ class PipelineRunner:
         # 2. generate_define_subagent_specs (lean=True)
         type_res = generate_define_subagent_specs(self.work_dir, lean=True)
         type_files = type_res.get("type_files", [])
+        plugin_sync = type_res.get("plugin_sync") or {}
+        subagents_preloaded = bool(plugin_sync.get("preloaded"))
 
         # 3. dispatch_cta (pointer=True unless --no-pointer)
         cta_dispatch = dispatch_cta(self.work_dir, pointer=not self.no_pointer)
@@ -3176,6 +3180,7 @@ class PipelineRunner:
             "work_dir": self.work_dir.resolve().as_posix(),
             "lock_file": lock_file.resolve().as_posix(),
             "workflow_script_path": str((Path(__file__).resolve().parent / "workflows" / "c2c_wave_workflow.py").resolve()),
+            "subagents_preloaded": subagents_preloaded,
             "type_spec_files": [Path(p).resolve().as_posix() for p in type_files],
             "cta_unit_count": len(cta_subagents),
             "Subagents": cta_subagents,
