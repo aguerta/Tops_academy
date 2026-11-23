@@ -93,12 +93,14 @@ BANNED_NAMES = {
 def is_module_allowed(mod_name: Optional[str]) -> bool:
     """Check if a module path is permitted under sandbox whitelist policy.
     
-    Permits allowed root modules (e.g. math, numpy, scipy.stats) and engine.render only.
+    Permits allowed root modules (e.g. math, numpy, scipy.stats), engine.render, and engine.c2c_ver.
     Bare 'engine' or 'engine.sandbox' are strictly prohibited.
     """
     if not mod_name:
         return False
     if mod_name == "engine.render" or mod_name.startswith("engine.render."):
+        return True
+    if mod_name == "engine.c2c_ver":
         return True
     root = mod_name.split(".")[0]
     return root in ALLOWED_ROOT_MODULES
@@ -361,6 +363,7 @@ def build_sandbox_globals() -> Dict[str, Any]:
     import fractions
     import statistics
     import random
+    from engine.c2c_ver import c2c_ver
     from engine.render import bmatrix, table_array, fmt, latex_frac
 
     # Purge re-exported internal leaks from whitelisted modules
@@ -395,6 +398,7 @@ def build_sandbox_globals() -> Dict[str, Any]:
         "table_array": table_array,
         "fmt": fmt,
         "latex_frac": latex_frac,
+        "c2c_ver": c2c_ver,
     }
     return env
 

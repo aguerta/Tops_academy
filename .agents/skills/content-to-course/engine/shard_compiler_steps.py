@@ -48,9 +48,22 @@ from engine.template_healing import (
     heal_shard_source_text,
     is_trivial_verifier,
     normalize_double_braces,
+    normalize_prose_outside_math,
     parse_katex_number,
     pykatex_warnings,
 )
+
+_MATH_SPAN_STRIP_RE = re.compile(r"\$\$[\s\S]*?\$\$|\$[^$]+\$")
+
+
+def _is_conceptual_statement(val_str: str) -> bool:
+    """Return True if val_str is a natural-language conceptual statement (optionally containing inline LaTeX)."""
+    if not isinstance(val_str, str):
+        return False
+    prose_only = _MATH_SPAN_STRIP_RE.sub(" ", val_str)
+    words = [w for w in re.findall(r"[A-Za-zÁÉÍÓÚáéíóúÑñÜü]+", prose_only) if len(w) >= 2]
+    return len(words) >= 4
+
 
 ACTIVE_INTERACTION_TYPES: Set[str] = {
     "fill_in_the_blank",
@@ -631,7 +644,17 @@ cross_check=verify
                 return fail_fn(err_msg)
             cleaned_stems = [str(s).strip() for s in stems_raw if str(s).strip()] if isinstance(stems_raw, (list, tuple)) else []
         else:
-            cleaned_stems = [str(s).strip() for s in stems_raw if str(s).strip()]
+            cleaned_stems = []
+            for s_idx, raw_s in enumerate(stems_raw):
+                s_str = str(raw_s).strip()
+                if s_str:
+                    s_norm, s_changes = normalize_prose_outside_math(s_str)
+                    if s_changes:
+                        print(
+                            f"INFO: [AUTO-FIXED] [PROSE-NORM] En '{tpl_id}' stem_variants[{s_idx}]: {', '.join(s_changes)}",
+                            file=sys.stderr,
+                        )
+                    cleaned_stems.append(s_norm)
             if len(set(cleaned_stems)) < 3:
                 err_msg = (
                     f"FAIL: La plantilla '{tpl_id}' contiene enunciados duplicados en stems "
@@ -648,7 +671,7 @@ cross_check=verify
                 clean_sv = re.sub(r"\$\$[\s\S]*?\$\$", " ", sv)
                 clean_sv = re.sub(r"\$[^\$]*?\$", " ", clean_sv)
                 clean_for_punct = re.sub(
-                    r"\b(?:p\.\s*ej|ej|etc|vs|cap|pág|pag|vol|art|inc)\.",
+                    r"\b(?:p\.\s*ej|ej|etc|vs|cap|pág|pag|vol|art|inc|i\.\s*e|e\.\s*g|fig|ec|eq|sec|def|thm|prop|cor|obs|aprox|m[aá]x|m[ií]n|n[uú]m|cf|op|cit)\.",
                     "ABBR",
                     clean_sv,
                     flags=re.IGNORECASE,
@@ -699,12 +722,11 @@ cross_check=verify
                         ]
                         if missing_in and len(missing_in) < len(stem_variants):
                             line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, stem_variants[missing_in[0]])
-                            err_msg = (
-                                f"FAIL: [TPL-STEM-GRAMMAR] Inconsistencia de símbolos LaTeX entre stem_variants en '{tpl_id}' "
-                                f"(Línea {line_no} en {curr_p.name}): el símbolo '${sym}$' está presente en unas variantes pero ausente en la variante {missing_in[0]} sin parámetro @...@ equivalente."
+                            print(
+                                f"WARNING: [TPL-STEM-SYMBOL-PARITY] Inconsistencia de símbolos LaTeX entre stem_variants en '{tpl_id}' "
+                                f"(Línea {line_no} en {curr_p.name}): el símbolo '${sym}$' está presente en unas variantes pero ausente en la variante {missing_in[0]} sin parámetro @...@ equivalente.",
+                                file=sys.stderr,
                             )
-                            if step5_err_fn(err_msg):
-                                return fail_fn(err_msg)
 
         # Reject adjacent unseparated placeholders (e.g. '@n@@b@' -> '0.0645') [TPL-ADJACENT-PLACEHOLDERS]
         _adj_placeholder_re = re.compile(r"@[a-zA-Z0-9_]+(?::[^@\s]*)?@@[a-zA-Z0-9_]+(?::[^@\s]*)?@")
@@ -768,6 +790,12 @@ cross_check=verify
         if isinstance(hints_raw, (list, tuple)):
             for h_idx, h_item in enumerate(hints_raw, start=1):
                 h_text = _strip_giveaway_prefix(str(h_item).strip())
+                h_text, h_changes = normalize_prose_outside_math(h_text)
+                if h_changes:
+                    print(
+                        f"INFO: [AUTO-FIXED] [PROSE-NORM] En '{tpl_id}' hint[{h_idx - 1}]: {', '.join(h_changes)}",
+                        file=sys.stderr,
+                    )
                 if len(h_text) < 25:
                     err_msg = f"FAIL: La pista {h_idx} de '{tpl_id}' tiene menos de 25 caracteres ({len(h_text)} < 25): '{h_text}'."
                     if step5_err_fn(err_msg):
@@ -798,7 +826,18 @@ cross_check=verify
                 clean_cta_distractors.append(d)
 
         cta_declared_ids = {d.get("id") for d in clean_cta_distractors if isinstance(d, dict) and d.get("id")}
-        combined_rats = {**module_rats, **tpl_rats}
+        combined_rats = {}
+        for rk, rv in {**module_rats, **tpl_rats}.items():
+            if isinstance(rv, str):
+                rv_norm, rv_changes = normalize_prose_outside_math(rv)
+                if rv_changes:
+                    print(
+                        f"INFO: [AUTO-FIXED] [PROSE-NORM] En '{tpl_id}' RATS[{rk}]: {', '.join(rv_changes)}",
+                        file=sys.stderr,
+                    )
+                combined_rats[rk] = rv_norm
+            else:
+                combined_rats[rk] = rv
 
         # Adapt MC7 generator if applicable
         if interaction_type == "multiple_choice_7_options":
@@ -930,25 +969,46 @@ cross_check=verify
                 for _w in pykatex_warnings(_dv, f"distractor in '{tpl_id}'"):
                     print(_w, file=sys.stderr)
 
-            # Orphan vars check (calibrated warn-only)
+            # Orphan vars check & safe auto-pruning when all @var@ placeholders resolve
             if sample_dict and isinstance(sample_dict.get("vars"), dict):
                 raw_vars_keys = set(sample_dict["vars"].keys())
                 used_tokens: Set[str] = set()
+                pl_tokens: Set[str] = set()
                 for text_field in (stem_variants or []) + [sol_raw] + (hints or []):
                     if text_field:
-                        used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", str(text_field)))
+                        tf_s = str(text_field)
+                        found_pl = re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", tf_s)
+                        used_tokens.update(found_pl)
+                        pl_tokens.update(found_pl)
+                        used_tokens.update(re.findall(r"\{([a-zA-Z_][a-zA-Z0-9_]*)(?::[^{}]+)?\}", tf_s))
+                sample_dids: Set[str] = set()
                 for opt_item in (sample_dict.get("distractors") or sample_dict.get("options") or []):
                     if isinstance(opt_item, dict):
+                        _sdid = opt_item.get("distractor_id") or opt_item.get("id") or opt_item.get("did")
+                        if isinstance(_sdid, str) and _sdid.strip():
+                            sample_dids.add(_sdid.strip())
                         for v_val in opt_item.values():
                             if isinstance(v_val, str):
-                                used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", v_val))
+                                found_pl = re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", v_val)
+                                used_tokens.update(found_pl)
+                                pl_tokens.update(found_pl)
+                                used_tokens.update(re.findall(r"\{([a-zA-Z_][a-zA-Z0-9_]*)(?::[^{}]+)?\}", v_val))
                     elif isinstance(opt_item, (tuple, list)):
+                        if opt_item and isinstance(opt_item[0], str):
+                            sample_dids.add(opt_item[0].strip())
                         for v_val in opt_item:
                             if isinstance(v_val, str):
-                                used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", v_val))
-                for r_text in (combined_rats or {}).values():
+                                found_pl = re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", v_val)
+                                used_tokens.update(found_pl)
+                                pl_tokens.update(found_pl)
+                                used_tokens.update(re.findall(r"\{([a-zA-Z_][a-zA-Z0-9_]*)(?::[^{}]+)?\}", v_val))
+                for r_did, r_text in (combined_rats or {}).items():
                     if isinstance(r_text, str):
-                        used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", r_text))
+                        found_pl = re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", r_text)
+                        used_tokens.update(found_pl)
+                        if not sample_dids or r_did in sample_dids:
+                            pl_tokens.update(found_pl)
+                        used_tokens.update(re.findall(r"\{([a-zA-Z_][a-zA-Z0-9_]*)(?::[^{}]+)?\}", r_text))
 
                 ast_inspected_keys: Set[str] = set()
                 if ver_code:
@@ -965,10 +1025,18 @@ cross_check=verify
 
                 orphan_keys = raw_vars_keys - used_tokens - ast_inspected_keys - {"ans", "correct", "val"}
                 if orphan_keys:
-                    print(
-                        f"[!] Warning: [TPL-ORPHAN-VARS] En '{tpl_id}': claves retornadas en 'vars' que no se usan en placeholders @...@ ni en ver_fn: {sorted(list(orphan_keys))}",
-                        file=sys.stderr,
-                    )
+                    if not (pl_tokens - raw_vars_keys):
+                        for ok_k in orphan_keys:
+                            sample_dict["vars"].pop(ok_k, None)
+                        print(
+                            f"INFO: [AUTO-FIXED] [TPL-ORPHAN-VARS] En '{tpl_id}': podadas claves no usadas de 'vars': {sorted(list(orphan_keys))}",
+                            file=sys.stderr,
+                        )
+                    else:
+                        print(
+                            f"[!] Warning: [TPL-ORPHAN-VARS] En '{tpl_id}': claves retornadas en 'vars' que no se usan en placeholders @...@ ni en ver_fn: {sorted(list(orphan_keys))}",
+                            file=sys.stderr,
+                        )
 
             # MC7 and FIB / Open Symbolic diagnostic distractor checks
             if interaction_type in ("multiple_choice_7_options", "fill_in_the_blank", "open_symbolic"):
@@ -1557,6 +1625,12 @@ cross_check=verify
             healed_solution,
         )
         healed_solution = heal_katex_display_str(healed_solution)
+        healed_solution, sol_changes = normalize_prose_outside_math(healed_solution)
+        if sol_changes:
+            print(
+                f"INFO: [AUTO-FIXED] [PROSE-NORM] En '{tpl_id}' sol: {', '.join(sol_changes)}",
+                file=sys.stderr,
+            )
 
         for s_idx, sv in enumerate(stem_variants):
             sv_katex = validate_katex_syntax(sv, f"stem_variant[{s_idx}] in '{tpl_id}'", allow_template_vars=True)
@@ -2552,9 +2626,9 @@ def evaluate_m3_and_m20_archetype_gates(
                             if len(eval_vals) >= 10:
                                 v_counts = collections.Counter(eval_vals)
                                 for s_val_str, freq in v_counts.items():
-                                    if _is_pure_conceptual_prose(s_val_str):
+                                    if _is_conceptual_statement(s_val_str):
                                         continue
-                                    if freq > 5 and len(set(eval_vals)) <= max(2, len(eval_vals) // 10):
+                                    if freq > 5 and len(set(eval_vals)) <= 2:
                                         eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                                         loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                                         t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None

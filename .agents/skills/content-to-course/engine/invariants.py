@@ -13,6 +13,7 @@ Evaluates 100% of instances against strict psychometric and correctness rules:
 """
 
 import functools
+import math
 import re
 import threading
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -1558,13 +1559,37 @@ def check_instance_invariants(
                     errors.append("adversarial_break counterexample requires non-empty 'inputs'.")
                 if not isinstance(adv.get("predicates"), list) or not adv["predicates"]:
                     errors.append("adversarial_break counterexample requires non-empty 'predicates'.")
-                if not isinstance(adv.get("sample_witness"), dict) or not adv["sample_witness"]:
+                sample_witness = adv.get("sample_witness")
+                if not isinstance(sample_witness, dict) or not sample_witness:
                     errors.append("adversarial_break counterexample requires 'sample_witness'.")
                 for p_idx, pr in enumerate(adv.get("predicates") or []):
                     if isinstance(pr, dict):
                         fr = pr.get("failure_rationale")
                         if isinstance(fr, str) and fr:
                             errors.extend(validate_katex_syntax(fr, f"adversarial_break.predicates[{p_idx}].failure_rationale", variables=effective_vars))
+                if isinstance(sample_witness, dict) and sample_witness and isinstance(stem, str) and stem:
+                    witness_matches: List[bool] = []
+                    for inp_id, w_val in sample_witness.items():
+                        id_str = str(inp_id).strip()
+                        if not id_str or w_val is None or isinstance(w_val, bool):
+                            continue
+                        w_norm = _norm_coord_scalar(w_val)
+                        if isinstance(w_norm, float) and w_norm.is_integer():
+                            w_tok = _coord_regex_token(int(w_norm))
+                        else:
+                            w_tok = _coord_regex_token(w_val)
+                        pat = re.compile(
+                            rf"(?<![A-Za-z0-9_\\]){re.escape(id_str)}\s*(?<![<>!:])=(?!=)\s*{w_tok}(?![0-9.])"
+                        )
+                        witness_matches.append(bool(pat.search(stem)))
+                    if witness_matches and all(witness_matches):
+                        if len(witness_matches) >= 2 or re.search(
+                            r"\b(?:testigo|contraejemplo|witness|ejemplo)\b", stem, re.IGNORECASE
+                        ):
+                            errors.append(
+                                f"[ADV-WITNESS-LEAK] adversarial_break counterexample sample_witness "
+                                f"{sample_witness} leaked verbatim in stem text."
+                            )
             else:
                 errors.append(f"adversarial_break has invalid mode '{mode}'.")
 
@@ -1759,6 +1784,86 @@ def check_instance_invariants(
                         rat = inv.get("error_rationale")
                         if isinstance(rat, str) and rat:
                             errors.extend(validate_katex_syntax(rat, f"invariant_canvas.invariants[{i_idx}].error_rationale", variables=effective_vars))
+
+                    def _as_bound_num(val: Any) -> Optional[float]:
+                        if isinstance(val, bool) or val is None:
+                            return None
+                        if isinstance(val, (int, float)):
+                            fv = float(val)
+                            return fv if math.isfinite(fv) else None
+                        if isinstance(val, str):
+                            sv = val.strip()
+                            if re.fullmatch(r"[-+]?\d+(?:\.\d+)?", sv):
+                                fv = float(sv)
+                                return fv if math.isfinite(fv) else None
+                        return None
+
+                    x_range = ic.get("x_range")
+                    y_range = ic.get("y_range")
+                    xr_bounds: Optional[Tuple[float, float]] = None
+                    yr_bounds: Optional[Tuple[float, float]] = None
+                    if isinstance(x_range, (list, tuple)) and len(x_range) == 2:
+                        xmin, xmax = _as_bound_num(x_range[0]), _as_bound_num(x_range[1])
+                        if xmin is not None and xmax is not None and xmin <= xmax:
+                            xr_bounds = (xmin, xmax)
+                    if isinstance(y_range, (list, tuple)) and len(y_range) == 2:
+                        ymin, ymax = _as_bound_num(y_range[0]), _as_bound_num(y_range[1])
+                        if ymin is not None and ymax is not None and ymin <= ymax:
+                            yr_bounds = (ymin, ymax)
+
+                    slider_bounds: Dict[str, Tuple[float, float]] = {}
+                    for sl in ic.get("sliders") or []:
+                        if isinstance(sl, dict) and sl.get("id") is not None:
+                            smin, smax = _as_bound_num(sl.get("min")), _as_bound_num(sl.get("max"))
+                            if smin is not None and smax is not None and smin <= smax:
+                                slider_bounds[str(sl["id"]).strip()] = (smin, smax)
+
+                    def _check_point_bounds(px_raw: Any, py_raw: Any, label: str) -> None:
+                        px, py = _as_bound_num(px_raw), _as_bound_num(py_raw)
+                        if px is not None and xr_bounds is not None:
+                            if px < xr_bounds[0] - 1e-6 or px > xr_bounds[1] + 1e-6:
+                                errors.append(
+                                    f"[CANVAS-OUT-OF-BOUNDS] {label} x={px_raw} exceeds x_range={list(xr_bounds)}."
+                                )
+                        if py is not None and yr_bounds is not None:
+                            if py < yr_bounds[0] - 1e-6 or py > yr_bounds[1] + 1e-6:
+                                errors.append(
+                                    f"[CANVAS-OUT-OF-BOUNDS] {label} y={py_raw} exceeds y_range={list(yr_bounds)}."
+                                )
+
+                    for i_idx, inv in enumerate(invs):
+                        if not isinstance(inv, dict):
+                            continue
+                        inv_kind = str(inv.get("kind") or "").strip()
+                        if inv_kind in ("point_coords", "kink_at"):
+                            tx = inv.get("target_x") if inv.get("target_x") is not None else (inv.get("x") if inv_kind == "kink_at" else None)
+                            ty = inv.get("target_y")
+                            _check_point_bounds(tx, ty, f"invariant_canvas.invariants[{i_idx}]")
+                        elif inv_kind == "slider_eq":
+                            sid = str(inv.get("slider_id") or "").strip()
+                            t_raw = inv.get("target") if inv.get("target") is not None else inv.get("target_value")
+                            t_num = _as_bound_num(t_raw)
+                            if sid in slider_bounds and t_num is not None:
+                                smin, smax = slider_bounds[sid]
+                                if t_num < smin - 1e-6 or t_num > smax + 1e-6:
+                                    errors.append(
+                                        f"[CANVAS-OUT-OF-BOUNDS] invariant_canvas.invariants[{i_idx}] slider '{sid}' target={t_raw} exceeds [{smin}, {smax}]."
+                                    )
+
+                    t_state = ic.get("target_state")
+                    if isinstance(t_state, dict):
+                        for pid, pcoords in (t_state.get("points") or {}).items():
+                            if isinstance(pcoords, dict):
+                                _check_point_bounds(pcoords.get("x"), pcoords.get("y"), f"invariant_canvas.target_state.points['{pid}']")
+                        for sid, s_raw in (t_state.get("sliders") or {}).items():
+                            sid_s = str(sid).strip()
+                            s_num = _as_bound_num(s_raw)
+                            if sid_s in slider_bounds and s_num is not None:
+                                smin, smax = slider_bounds[sid_s]
+                                if s_num < smin - 1e-6 or s_num > smax + 1e-6:
+                                    errors.append(
+                                        f"[CANVAS-OUT-OF-BOUNDS] invariant_canvas.target_state.sliders['{sid_s}']={s_raw} exceeds [{smin}, {smax}]."
+                                    )
 
                     fixed_coords = {
                         (_norm_coord_scalar(fp.get("x")), _norm_coord_scalar(fp.get("y")))

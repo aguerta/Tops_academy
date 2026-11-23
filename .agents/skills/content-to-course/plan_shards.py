@@ -40,14 +40,15 @@ from engine.stage_contract import (  # noqa: E402
 
 # =============================================================================
 # SHARD & TEMPLATE SCALING CONFIGURATION
-# Capacidad por shard:
-#   DEFAULT_COMPS_PER_SHARD = 3 (máximo 3 competencias no-skill por shard)
-#   MAX_SKILLS_PER_SHARD = 2 (máximo 2 competencias skill por shard)
+# Capacidad por shard (Complexity-Weighted Sharding):
+#   DEFAULT_COMPS_PER_SHARD = 2 (máximo 2 competencias ligeras no-heavy por shard)
+#   MAX_SKILLS_PER_SHARD = 1 (aislamiento 1:1 para competencias Skill y conceptos M20 pesados)
 #   T >= 4 (mínimo 4 plantillas disjuntas por competencia: Directa, Inversa, Perturbación, Frontera; +MC7 adicionales si TPL-D3 excede capacidad base)
 # =============================================================================
-DEFAULT_COMPS_PER_SHARD: int = 3
-MAX_SKILLS_PER_SHARD: int = 2
+DEFAULT_COMPS_PER_SHARD: int = 2
+MAX_SKILLS_PER_SHARD: int = 1
 DEFAULT_MAX_WAVE_SIZE: int = 100
+HEAVY_M20_MODALITIES: frozenset = frozenset({"invariant_canvas", "unstructured_model", "open_symbolic"})
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
@@ -468,6 +469,22 @@ def is_concept_competency(comp: Dict[str, Any]) -> bool:
     return False
 
 
+def is_heavy_competency(comp: Dict[str, Any]) -> bool:
+    """Return True if competency is a Skill or declares >= 2 distinct heavy M20 modalities."""
+    if is_skill_competency(comp):
+        return True
+    rec_mods = comp.get("recommended_modalities")
+    if isinstance(rec_mods, list):
+        heavy_mods = {
+            str(m).strip().lower()
+            for m in rec_mods
+            if str(m).strip().lower() in HEAVY_M20_MODALITIES
+        }
+        if len(heavy_mods) >= 2:
+            return True
+    return False
+
+
 def calculate_competency_weight(comp: Dict[str, Any]) -> float:
     """Compute cognitive authoring weight for a single competency.
     
@@ -615,6 +632,7 @@ def _build_raw_shard(
     chunk: List[Dict[str, Any]],
     curriculum_indices: Dict[str, int],
     is_skill: bool,
+    is_heavy: bool = False,
 ) -> Dict[str, Any]:
     """Build a raw weighted shard dict from a chunk of competencies."""
     w = round(sum(calculate_competency_weight(x) for x in chunk), 2)
@@ -626,6 +644,7 @@ def _build_raw_shard(
         "competencies": chunk,
         "min_curriculum_idx": min(curriculum_indices.get(x_id, 0) for x_id in c_ids),
         "is_skill": is_skill,
+        "is_heavy": bool(is_skill or is_heavy),
     }
 
 
@@ -634,15 +653,16 @@ def partition_competencies_weighted(
     max_comps: Optional[int] = DEFAULT_COMPS_PER_SHARD,
     max_skills: Optional[int] = MAX_SKILLS_PER_SHARD,
 ) -> List[Dict[str, Any]]:
-    """Partition competencies using Milestone 7.4 Weighted Cognitive Sharding:
+    """Partition competencies using Complexity-Weighted Sharding:
 
-    1. Skill Grouping Rule:
-       Skill competencies ('Hab-*' or type == 'skill') are grouped in curriculum order
-       in blocks of up to max_skills (default: MAX_SKILLS_PER_SHARD = 2) per shard.
+    1. Heavy Isolation Rule:
+       Skill competencies ('Hab-*' or type == 'skill') and Concept/Fact competencies with
+       >= 2 heavy M20 modalities (invariant_canvas, unstructured_model, open_symbolic)
+       are isolated in blocks of up to max_skills (default: MAX_SKILLS_PER_SHARD = 1) per shard.
 
-    2. Contiguous Concept/Fact Grouping:
-       Adjacent concept ('C-*') and fact ('H-*') competencies in curriculum order are packed
-       in blocks of up to max_comps (default: DEFAULT_COMPS_PER_SHARD = 3) per shard.
+    2. Contiguous Light Grouping:
+       Remaining adjacent light Fact/Concept competencies in curriculum order are packed
+       in blocks of up to max_comps (default: DEFAULT_COMPS_PER_SHARD = 2) per shard.
     """
     if not competencies:
         return []
@@ -659,29 +679,31 @@ def partition_competencies_weighted(
             "competencies": [c],
             "min_curriculum_idx": 0,
             "is_skill": is_skill_competency(c),
+            "is_heavy": is_heavy_competency(c),
         }]
 
     curriculum_indices = {c.get("id", f"idx_{i}"): i for i, c in enumerate(competencies)}
 
     raw_shards: List[Dict[str, Any]] = []
 
-    # 1. Skill Grouping: Pack skills in curriculum order in blocks of up to eff_max_skills
+    # 1. Heavy Isolation: Isolate skills & heavy M20 competencies (default 1 per shard)
     eff_max_skills = max(1, int(max_skills) if max_skills is not None else MAX_SKILLS_PER_SHARD)
-    skills = [c for c in competencies if is_skill_competency(c)]
-    for s_idx in range(0, len(skills), eff_max_skills):
-        chunk = skills[s_idx:s_idx + eff_max_skills]
-        raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=True))
+    heavy = [c for c in competencies if is_heavy_competency(c)]
+    for s_idx in range(0, len(heavy), eff_max_skills):
+        chunk = heavy[s_idx:s_idx + eff_max_skills]
+        chunk_has_skill = any(is_skill_competency(x) for x in chunk)
+        raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=chunk_has_skill, is_heavy=True))
 
-    # 2. Contiguous Concept/Fact Grouping: Group non-skills in curriculum order
+    # 2. Contiguous Light Grouping: Pack light Fact/Concept units in curriculum order
     target_max = max_comps if (max_comps is not None and max_comps > 0) else DEFAULT_COMPS_PER_SHARD
-    non_skills = [c for c in competencies if not is_skill_competency(c)]
+    light = [c for c in competencies if not is_heavy_competency(c)]
     idx = 0
-    m = len(non_skills)
+    m = len(light)
     while idx < m:
         remaining = m - idx
         take = min(target_max, remaining)
-        chunk = non_skills[idx:idx + take]
-        raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=False))
+        chunk = light[idx:idx + take]
+        raw_shards.append(_build_raw_shard(chunk, curriculum_indices, is_skill=False, is_heavy=False))
         idx += take
 
     return raw_shards
@@ -809,9 +831,9 @@ def plan_shards(
         )
         # Heaviest-First Ordering:
         # Sort descending by weight (breaking ties deterministically by curriculum index).
-        # Skills sit at the front of Wave 1 (t = 0).
+        # Skills and heavy M20 shards sit at the front of Wave 1 (t = 0).
         raw_shards.sort(
-            key=lambda s: (0 if s.get("is_skill") else 1, -s["weight"], s.get("min_curriculum_idx", 0))
+            key=lambda s: (0 if (s.get("is_skill") or s.get("is_heavy")) else 1, -s["weight"], s.get("min_curriculum_idx", 0))
         )
         total_shards = len(raw_shards)
         total_waves = math.ceil(total_shards / max_wave_size) if total_shards > 0 else 1

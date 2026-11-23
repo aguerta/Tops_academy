@@ -779,6 +779,7 @@ def check_single_template(
     strict: bool = True,
     comp_templates: Optional[List[Dict[str, Any]]] = None,
     warnings_out: Optional[List[str]] = None,
+    zero_valid_out: Optional[List[str]] = None,
 ) -> List[str]:
     """Validate a single template including AST, dry-run, invariants, and TPL rules."""
     errors = []
@@ -947,6 +948,8 @@ def check_single_template(
         ))
         if len(failed_seeds) == len(batch_results):
             # Full failure of all seeds: no instances can be evaluated further
+            if zero_valid_out is not None and len(batch_results) >= 10:
+                zero_valid_out.append(tpl_id)
             return errors
 
     check_mc7_and_ms_verifier_refutation(
@@ -969,10 +972,13 @@ def check_single_template(
     epistemic_checked = False
     checked_symbolic_stems: Set[str] = set()
     epistemic_hard_reported = False
+    executed_seed_count = 0
+    valid_invariant_count = 0
 
     for idx, item in enumerate(batch_results):
         if not item.get("success"):
             continue
+        executed_seed_count += 1
         gen_res = item.get("result", {})
         seed_val = item.get("seed", idx)
 
@@ -988,6 +994,8 @@ def check_single_template(
         except Exception as e:
             raw_asm_failures.setdefault(str(e), []).append(f"seed={seed_val}")
             continue
+
+        seed_has_error = False
 
         # Collect rendered correct answer and distractors for TPL-STATIC-OPT and TPL-DYNAMIC-RATIONALE
         rendered_correct_answers.append(_canonical_answer_signature(assembled_q, interaction_type))
@@ -1015,6 +1023,7 @@ def check_single_template(
                     re.IGNORECASE,
                 )
                 if m_tt:
+                    seed_has_error = True
                     tt_msg = f"[PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter] Metainformación delatora parentética en opción visible: '{m_tt.group(0)}'"
                     canon_key = get_canonical_invariant_key(tt_msg)
                     seed_tag = f"seed={seed_val}"
@@ -1033,6 +1042,8 @@ def check_single_template(
         # Validate unrendered placeholders
         pl_errs = check_unrendered_placeholders_in_instance(assembled_q, gen_res.get("vars", {}))
         pl_errs = list(pl_errs) + check_render_hygiene_in_instance(assembled_q)
+        if pl_errs:
+            seed_has_error = True
         for ple in pl_errs:
             canon_key = get_canonical_invariant_key(ple)
             seed_tag = f"seed={seed_val}"
@@ -1076,6 +1087,7 @@ def check_single_template(
                         ],
                     ))
         if not is_valid:
+            seed_has_error = True
             has_collision = any("Distractor identical to correct answer" in e for e in inv_errors)
             for inv_err in inv_errors:
                 if has_collision and "Duplicate option content detected" in inv_err:
@@ -1087,6 +1099,11 @@ def check_single_template(
                 else:
                     if seed_tag not in raw_inv_failures[canon_key][1]:
                         raw_inv_failures[canon_key][1].append(seed_tag)
+        if not seed_has_error:
+            valid_invariant_count += 1
+
+    if zero_valid_out is not None and executed_seed_count >= 10 and valid_invariant_count == 0:
+        zero_valid_out.append(tpl_id)
 
     # Consolidate assembly failures
     for asm_err, seed_list in raw_asm_failures.items():
@@ -1201,7 +1218,7 @@ def check_single_template(
             ]
         ))
 
-    # 6. Rule TPL-ORPHAN-VARS: Reject unreferenced leftover keys in 'vars' (warn-only to accommodate auxiliary vars like d1..d6)
+    # 6. Rule TPL-ORPHAN-VARS: Prune unreferenced leftover keys in 'vars' safely when all @var@ resolve
     orphan_keys = _check_orphan_vars(
         template,
         batch_results,
@@ -1210,10 +1227,32 @@ def check_single_template(
         cta_distractors_map=cta_distractors_map,
     )
     if orphan_keys:
-        print(
-            f"WARNING: [TPL-ORPHAN-VARS] En '{tpl_id}': claves retornadas en 'vars' que no se usan en placeholders (@var@, {{var}}), ni en stems, hints, solution/explanation_es, distractores, ni en cross_check_py: {sorted(list(orphan_keys))}",
-            file=sys.stderr,
+        all_tpl_texts = [
+            str(template.get("stem", "")),
+            *[str(sv) for sv in (template.get("stem_variants") or [])],
+            *[str(h) for h in (template.get("hints") or [])],
+            str(template.get("solution") or template.get("sol") or template.get("explanation_es") or ""),
+        ]
+        all_pl_tokens = set(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", " ".join(all_tpl_texts)))
+        can_prune = all(
+            all_pl_tokens <= set((r.get("result") or {}).get("vars", {}).keys())
+            for r in batch_results
+            if r.get("success") and isinstance(r.get("result"), dict) and isinstance((r.get("result") or {}).get("vars"), dict)
         )
+        if can_prune:
+            for r in batch_results:
+                if r.get("success") and isinstance(r.get("result"), dict) and isinstance(r["result"].get("vars"), dict):
+                    for ok_k in orphan_keys:
+                        r["result"]["vars"].pop(ok_k, None)
+            print(
+                f"INFO: [AUTO-FIXED] [TPL-ORPHAN-VARS] En '{tpl_id}': podadas claves auxiliares no referenciadas de 'vars': {sorted(list(orphan_keys))}",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"WARNING: [TPL-ORPHAN-VARS] En '{tpl_id}': claves retornadas en 'vars' que no se usan en placeholders (@var@, {{var}}), ni en stems, hints, solution/explanation_es, distractores, ni en cross_check_py: {sorted(list(orphan_keys))}",
+                file=sys.stderr,
+            )
 
     return errors
 
@@ -1509,6 +1548,7 @@ def _validate_single_template_file(
     shard_py: Optional[Union[str, Path]] = None,
     strict: bool = True,
     warnings_out: Optional[List[str]] = None,
+    zero_valid_tpls_out: Optional[List[str]] = None,
 ) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]]]:
     """Validate a single template file and return (errors, comp_id, referenced_distractor_ids, templates_list)."""
     file_errors = []
@@ -1575,6 +1615,7 @@ def _validate_single_template_file(
             strict=strict,
             comp_templates=templates_list,
             warnings_out=warnings_out,
+            zero_valid_out=zero_valid_tpls_out,
         )
         file_errors.extend(single_errs)
 
@@ -1615,9 +1656,10 @@ def _validate_single_template_file_worker(
     num_dry_run_seeds: int,
     shard_py: Optional[Union[str, Path]] = None,
     strict: bool = True,
-) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]], List[str]]:
-    """Pool worker wrapper that captures warnings_out alongside validation results."""
+) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]], List[str], bool]:
+    """Pool worker wrapper that captures warnings_out and zero-valid template flags alongside validation results."""
     local_warnings: List[str] = []
+    local_zero_valid: List[str] = []
     file_errs, comp_id, ref_dids, tpls = _validate_single_template_file(
         tf,
         cta_distractors_by_comp,
@@ -1626,8 +1668,9 @@ def _validate_single_template_file_worker(
         shard_py,
         strict,
         warnings_out=local_warnings,
+        zero_valid_tpls_out=local_zero_valid,
     )
-    return file_errs, comp_id, ref_dids, tpls, local_warnings
+    return file_errs, comp_id, ref_dids, tpls, local_warnings, bool(local_zero_valid)
 
 
 def _eval_comp_diversity_and_parity_worker(
@@ -1812,6 +1855,7 @@ def check_templates_file_or_dir(
     templates_by_comp: Dict[str, List[Dict[str, Any]]] = {}
     processed_comp_ids: Set[str] = set()
     errors_by_comp: Dict[str, List[str]] = {}
+    comps_with_zero_valid_tpl: Set[str] = set()
 
     if len(template_files) > 1:
         max_workers = _bounded_worker_count(len(template_files))
@@ -1916,16 +1960,22 @@ def check_templates_file_or_dir(
             print(f"  [i] Template validation cache: {len(cached_results)} reused, {len(pending)} re-validated.")
 
         for res in results:
-            if len(res) == 5:
+            if len(res) == 6:
+                file_errs, comp_id, ref_dids, tpls, file_warns, has_zero_valid = res
+            elif len(res) == 5:
                 file_errs, comp_id, ref_dids, tpls, file_warns = res
+                has_zero_valid = False
             else:
                 file_errs, comp_id, ref_dids, tpls = res
                 file_warns = []
+                has_zero_valid = False
             errors.extend(file_errs)
             if warnings_out is not None and file_warns:
                 warnings_out.extend(file_warns)
             if comp_id:
                 processed_comp_ids.add(comp_id)
+                if has_zero_valid:
+                    comps_with_zero_valid_tpl.add(comp_id)
                 if file_errs:
                     errors_by_comp.setdefault(comp_id, []).extend(file_errs)
                 templates_by_comp.setdefault(comp_id, []).extend(tpls)
@@ -1933,6 +1983,7 @@ def check_templates_file_or_dir(
                     referenced_distractors_by_comp[comp_id].update(ref_dids)
     else:
         for tf in template_files:
+            local_zero_valid: List[str] = []
             file_errs, comp_id, ref_dids, tpls = _validate_single_template_file(
                 tf,
                 cta_distractors_by_comp,
@@ -1941,10 +1992,13 @@ def check_templates_file_or_dir(
                 shard_py,
                 strict,
                 warnings_out=warnings_out,
+                zero_valid_tpls_out=local_zero_valid,
             )
             errors.extend(file_errs)
             if comp_id:
                 processed_comp_ids.add(comp_id)
+                if local_zero_valid:
+                    comps_with_zero_valid_tpl.add(comp_id)
                 if file_errs:
                     errors_by_comp.setdefault(comp_id, []).extend(file_errs)
                 templates_by_comp.setdefault(comp_id, []).extend(tpls)
@@ -1995,6 +2049,11 @@ def check_templates_file_or_dir(
         comp_results: Dict[str, List[str]] = {}
         to_run: List[str] = []
         for cid in sorted_comps:
+            if cid in comps_with_zero_valid_tpl:
+                # Phase A already captured root-cause invariant/dry failures across >=10 seeds (0 valid instances);
+                # skip redundant 300-seed Phase B sweep to avoid false TPL-VAR cascades and wasted CPU.
+                comp_results[cid] = []
+                continue
             dp = _div_cache_path(cid)
             if dp is not None and dp.is_file():
                 comp_results[cid] = []

@@ -1364,6 +1364,114 @@ def dispatch_cta_reduce(
     return {"dispatched_at": dispatched_at, "Subagents": subagents, "item_files": item_files}
 
 
+def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: int) -> str:
+    """Build a read-only Form-C contractual reference skeleton for author_XX_data.md."""
+    mc7_aliases = {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"}
+    canon_map = {
+        "fib": "FIB",
+        "fill_in_the_blank": "FIB",
+        "ms": "MS",
+        "multiple_select": "MS",
+        **{a: "MC7" for a in mc7_aliases},
+    }
+
+    rats_lines: List[str] = []
+    seen_dids: Set[str] = set()
+    fn_lines: List[str] = []
+    tpl_lines: List[str] = []
+    g_idx = 0
+
+    for entry in comp_entries:
+        cid = str(entry["cid"])
+        is_skill = bool(entry.get("is_skill"))
+        comp_k = max(1, int(entry.get("comp_k") or eff_tpl_per_mod))
+        min_tpls = max(4, int(entry.get("min_tpls") or 4))
+        dids = [str(d) for d in (entry.get("distractor_ids") or []) if str(d).strip()]
+        aids = [str(a) for a in (entry.get("assumption_ids") or []) if str(a).strip()]
+        target_bloom = str(entry.get("target_bloom") or ("Analyze" if is_skill else "Understand"))
+
+        for did in dids:
+            if did not in seen_dids:
+                seen_dids.add(did)
+                rats_lines.append(f"    {json.dumps(did)}: r'TODO: rationale >= 20c con @var@.',")
+
+        raw_mods = entry.get("norm_rec_mods") or []
+        norm_mods: List[str] = []
+        for m in raw_mods:
+            canon_m = canon_map.get(str(m).strip().lower(), str(m).strip())
+            if is_skill and canon_m == "MC7":
+                continue
+            if canon_m and canon_m not in norm_mods:
+                norm_mods.append(canon_m)
+
+        slot_qtypes: List[str] = []
+        if norm_mods:
+            if "MC7" in norm_mods and not is_skill and comp_k >= 2:
+                slot_qtypes.append("MC7")
+                active_mods = [m for m in norm_mods if m != "MC7"]
+                for m in active_mods:
+                    slot_qtypes.extend([m] * comp_k)
+            else:
+                for m in norm_mods:
+                    slot_qtypes.extend([m] * comp_k)
+        else:
+            fallback_pool = ["FIB", "open_symbolic", "MS"] if is_skill else ["MC7", "FIB", "MS"]
+            for i in range(min_tpls):
+                qt = fallback_pool[i % len(fallback_pool)]
+                if qt == "MC7" and (is_skill or "MC7" in slot_qtypes):
+                    qt = "FIB"
+                slot_qtypes.append(qt)
+
+        active_fill = [m for m in norm_mods if m != "MC7"] or ["FIB", "MS"]
+        while len(slot_qtypes) < min_tpls:
+            slot_qtypes.append(active_fill[len(slot_qtypes) % len(active_fill)])
+
+        clean_cid = re.sub(r"[^A-Za-z0-9]", "", cid) or "COMP"
+        for slot_pos, qt in enumerate(slot_qtypes, start=1):
+            g_idx += 1
+            tpl_id = f"T-{clean_cid}-{slot_pos:02d}"
+            fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')")
+            if qt == "FIB":
+                ver_hint = "# return c2c_ver.numeric(c, exact_val, tol=0.005)"
+                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+            elif qt == "MC7":
+                ver_hint = "# return c2c_ver.numeric(c, v['ans'], tol=1e-4)"
+                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+            elif qt == "open_symbolic":
+                ver_hint = "# return c2c_ver.equiv(c, expected_expr, variables=['x'])"
+                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+            else:
+                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, {json.dumps(qt)})"
+                fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
+
+            extra_comment = (
+                f"  # target_bloom={target_bloom}"
+                + (f", if boundary_or_edge_case add 'assumption_id': {json.dumps(aids[0])}" if (aids and slot_pos == len(slot_qtypes)) else "")
+            )
+            tpl_lines.append("    {")
+            tpl_lines.append(f"        'id': {json.dumps(tpl_id)}, 'cid': {json.dumps(cid)}, 'qtype': {json.dumps(qt)},")
+            tpl_lines.append("        'archetype': 'direct',  # choose across: direct | inverse | perturbation | boundary_or_edge_case")
+            tpl_lines.append(f"        'band': ('medium', 'Apply'),  # cover easy/medium/hard & >=2 Bloom levels{extra_comment}")
+            tpl_lines.append(f"        'gen': gen_{g_idx}, 'ver': ver_{g_idx},")
+            tpl_lines.append("        'stem_variants': ['', '', ''], 'hints': ['', '', ''], 'sol': '', 'rats': RATS,")
+            tpl_lines.append("    },")
+
+    lines = [
+        "```python",
+        "RATS = {",
+        *(rats_lines or ["    # Declarar entradas si aplica"]),
+        "}",
+        "",
+        *fn_lines,
+        "",
+        "TEMPLATES = [",
+        *tpl_lines,
+        "]",
+        "```",
+    ]
+    return "\n".join(lines)
+
+
 def dispatch_authors(
     work_dir: Union[str, Path],
     pointer: bool = True,
@@ -1585,6 +1693,7 @@ def dispatch_authors(
 
         # Structured Turn-0 specification for each assigned competency
         comp_blocks = []
+        skeleton_entries: List[Dict[str, Any]] = []
         source_doc_set: Set[str] = set()
         missing_assumptions_cids: List[str] = []
 
@@ -1740,6 +1849,24 @@ def dispatch_authors(
                 f"{distractors_block}"
             )
             comp_blocks.append(block)
+            skeleton_entries.append({
+                "cid": cid,
+                "is_skill": bool(is_skill_type(raw_type) or str(cid).startswith("Hab-")),
+                "norm_rec_mods": norm_rec_mods,
+                "comp_k": comp_k,
+                "min_tpls": min_tpls,
+                "distractor_ids": [
+                    _clean_str(d.get("id"))
+                    for d in (raw_distractors if isinstance(raw_distractors, list) else [])
+                    if isinstance(d, dict) and _clean_str(d.get("id"))
+                ],
+                "assumption_ids": [
+                    _clean_str(a.get("id"))
+                    for a in (raw_assumptions if isinstance(raw_assumptions, list) else [])
+                    if isinstance(a, dict) and _clean_str(a.get("id"))
+                ],
+                "target_bloom": target_bloom,
+            })
 
         source_doc_list = sorted(source_doc_set) if source_doc_set else ["content/**"]
         disk_done_signal = f"Cierre al aprobar: {target_json} (señal terminal DONE)"
@@ -1840,6 +1967,7 @@ def dispatch_authors(
         # Pure-data payload file for live Shard Author (zero wrapper bloat)
         data_filename = f"{item_file.stem}_data.md"
         data_file = items_dir / data_filename
+        skeleton_block = _build_author_skeleton(skeleton_entries, eff_tpl_per_mod)
         author_data_md = (
             f"# Shard `{s_id}`\n\n"
             f"## 1. METADATOS DEL SHARD\n"
@@ -1851,6 +1979,9 @@ def dispatch_authors(
             f"- **compile_command:** `{compile_cmd}`\n\n"
             f"## 2. ESPECIFICACIÓN TURN-0 COMPLETA DE COMPETENCIAS Y DISTRACTORES\n"
             + "\n\n".join(comp_blocks)
+            + "\n\n## 3. ESQUELETO CONTRACTUAL DE REFERENCIA (SOLO LECTURA)\n"
+            + f"Copia los IDs exactos de `RATS` y `TEMPLATES` en `{out_py}`, selecciona `archetype`/`band` cubriendo los 4 arquetipos y 3 bandas, y reemplaza cada `raise NotImplementedError('TODO')` y cadena vacía antes de compilar.\n\n"
+            + skeleton_block
             + "\n"
         )
         data_file.write_text(author_data_md, encoding="utf-8")

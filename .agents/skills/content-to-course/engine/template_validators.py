@@ -431,17 +431,22 @@ def evaluate_static_opt_and_dynamic_rationale(
                     ))
             else:
                 cid_upper = str(competency_id or template.get("competency_id") or "").upper().strip()
-                is_concept_or_misc = (
-                    cid_upper.startswith("C-")
-                    or cid_upper.startswith("M-")
+                comp_type = str(template.get("competency_type") or "").strip()
+                is_fact_concept_or_misc = (
+                    cid_upper.startswith(("C-", "M-", "H-", "F-", "PRE-"))
                     or "CONCEPT" in cid_upper
                     or "MISCONCEPTION" in cid_upper
+                    or "FACT" in cid_upper
+                    or "HECHO" in cid_upper
                 )
-                if is_concept_or_misc:
+                if comp_type and is_skill_type(comp_type):
+                    is_skill_or_hab = True
+                elif comp_type and not is_skill_type(comp_type):
+                    is_skill_or_hab = False
+                elif is_fact_concept_or_misc:
                     is_skill_or_hab = False
                 elif (
                     cid_upper.startswith("HAB-")
-                    or cid_upper.startswith("H-")
                     or is_skill_type(competency_id)
                     or any(s in cid_upper.lower() for s in ["skill", "hab"])
                 ):

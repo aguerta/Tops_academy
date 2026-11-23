@@ -46,6 +46,7 @@ _skill_root = Path(__file__).parent.resolve()
 if str(_skill_root) not in sys.path:
     sys.path.insert(0, str(_skill_root))
 
+from engine.c2c_ver import c2c_ver
 from engine.invariants import validate_katex_syntax
 from engine.stage_contract import (
     DEFAULT_TEMPLATES_PER_MODALITY as _S4_DEFAULT_TPL_PER_MOD,
@@ -829,6 +830,7 @@ def _compile_shard_body(
     mod.__file__ = str(shard_data_path)
     mod.__dict__["parse_katex_number"] = parse_katex_number
     mod.__dict__["_pv"] = parse_katex_number
+    mod.__dict__["c2c_ver"] = c2c_ver
     if healed_source and not skip_base_module:
         try:
             code_obj = compile(healed_source, str(shard_data_path), "exec")
@@ -887,6 +889,7 @@ def _compile_shard_body(
             fix_mod.__file__ = str(fix_path)
             fix_mod.__dict__["parse_katex_number"] = parse_katex_number
             fix_mod.__dict__["_pv"] = parse_katex_number
+            fix_mod.__dict__["c2c_ver"] = c2c_ver
             fix_code_obj = compile(healed_fix_text, str(fix_path), "exec")
             sys.modules[fix_mod_name] = fix_mod
             exec(fix_code_obj, fix_mod.__dict__)

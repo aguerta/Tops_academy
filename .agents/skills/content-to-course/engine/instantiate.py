@@ -9,6 +9,7 @@ Features:
 - Diversity calculation per competency
 """
 
+import json
 import re
 import zlib
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -145,6 +146,80 @@ def instantiate_verified_seed(
         raise InvariantViolationError(err_msg)
 
 
+def _answer_key_signature(q: Dict[str, Any]) -> str:
+    """Return a canonical signature of the assembled answer key for rejection sampling."""
+    q_type = str(q.get("interaction_type") or q.get("type") or "").strip().lower()
+    if q_type in ("multiple_choice_7_options", "multiple_choice"):
+        correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
+        return re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
+    if q_type in ("fill_in_the_blank", "open_symbolic"):
+        ans = q.get("correct_answer")
+        if isinstance(ans, dict):
+            val = ans.get("expression") or ans.get("value") or ans.get("canonical_algebraic") or q.get("correct", "")
+        else:
+            val = ans if ans is not None else q.get("correct", "")
+        return re.sub(r"\s+", " ", str(val)).strip()
+    if q_type == "multiple_select":
+        pairs = sorted(
+            (re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct")))
+            for opt in q.get("options", [])
+        )
+        return json.dumps(pairs, default=str)
+    if q_type in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+        sig_obj: Dict[str, Any] = {"correct_answer": q.get("correct_answer")}
+        payload = q.get(q_type)
+        if isinstance(payload, dict):
+            if q_type == "proof_dag":
+                sig_obj["steps"] = sorted(
+                    ((s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                     for s in (payload.get("steps") or []) if isinstance(s, dict)),
+                    key=lambda t: str(t),
+                )
+            elif q_type == "adversarial_break":
+                sig_obj["prompt"] = payload.get("prompt")
+                sig_obj["sample_witness"] = payload.get("sample_witness")
+                sig_obj["steps"] = [
+                    (s.get("id"), s.get("content"), bool(s.get("is_fallacy")))
+                    for s in (payload.get("steps") or []) if isinstance(s, dict)
+                ]
+                sig_obj["predicates"] = [
+                    p.get("expr") for p in (payload.get("predicates") or []) if isinstance(p, dict)
+                ]
+            elif q_type == "unstructured_model":
+                sig_obj["p1"] = sorted(
+                    ((it.get("id"), it.get("label"))
+                     for it in ((payload.get("phase1_variables") or {}).get("items") or []) if isinstance(it, dict)),
+                    key=lambda t: str(t),
+                )
+                sig_obj["p2"] = sorted(
+                    str((o.get("id"), o.get("content")))
+                    for o in ((payload.get("phase2_assumptions") or {}).get("options") or []) if isinstance(o, dict)
+                )
+                _p3 = payload.get("phase3_formulation") or {}
+                sig_obj["p3"] = _p3.get("correct_expression")
+                sig_obj["p3_opts"] = sorted(
+                    str((o.get("id"), o.get("content")))
+                    for o in (_p3.get("options") or []) if isinstance(o, dict)
+                )
+            elif q_type == "invariant_canvas":
+                sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
+                sig_obj["invariants"] = payload.get("invariants")
+                sig_obj["inequality"] = payload.get("inequality")
+                sig_obj["target_state"] = payload.get("target_state")
+                sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
+            elif q_type == "concept_matching":
+                sig_obj["premises"] = sorted(
+                    ((p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)),
+                    key=lambda t: str(t),
+                )
+                sig_obj["targets"] = sorted(
+                    ((t.get("id"), t.get("content")) for t in (payload.get("targets") or []) if isinstance(t, dict)),
+                    key=lambda t: str(t),
+                )
+        return json.dumps(sig_obj, sort_keys=True, default=str)
+    return re.sub(r"\s+", " ", str(q.get("correct", ""))).strip()
+
+
 def instantiate_template(
     template: Dict[str, Any],
     competency_id: str,
@@ -153,6 +228,8 @@ def instantiate_template(
     seed_offset: int = 1000,
     cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
     max_attempts: int = 300,
+    shared_key_counts: Optional[Dict[str, int]] = None,
+    max_key_count: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """Deterministically sweep seeds and instantiate unique, invariant-valid questions."""
     generate_py = template["generate_py"]
@@ -162,6 +239,8 @@ def instantiate_template(
     seen_param_tuples: Set[Tuple[Tuple[str, str], ...]] = set()
     seen_stems: Set[str] = set()
     instantiated_questions: List[Dict[str, Any]] = []
+    deferred_clumped: List[Tuple[Dict[str, Any], Tuple[Tuple[str, str], ...], str, str]] = []
+    clean_comp = re.sub(r"[^A-Za-z0-9]", "", competency_id)
 
     attempt = 0
 
@@ -293,13 +372,38 @@ def instantiate_template(
                         f"Distractors are structurally identical or systematically colliding."
                     )
 
+            # Stratified rejection sampling against answer-key clumping
+            k_sig = ""
+            if shared_key_counts is not None and max_key_count is not None:
+                k_sig = _answer_key_signature(candidate_q)
+                if k_sig and shared_key_counts.get(k_sig, 0) >= max_key_count:
+                    if len(deferred_clumped) < target_count:
+                        deferred_clumped.append((candidate_q, param_tuple, norm_stem, k_sig))
+                    continue
+
             # Passed all checks!
             seen_param_tuples.add(param_tuple)
             seen_stems.add(norm_stem)
+            if shared_key_counts is not None and k_sig:
+                shared_key_counts[k_sig] = shared_key_counts.get(k_sig, 0) + 1
             instantiated_questions.append(candidate_q)
 
             if len(instantiated_questions) >= target_count:
                 break
+
+    if len(instantiated_questions) < target_count and deferred_clumped:
+        for cand_q, p_tup, n_stem, k_sig in deferred_clumped:
+            if len(instantiated_questions) >= target_count:
+                break
+            if p_tup in seen_param_tuples or n_stem in seen_stems:
+                continue
+            q_idx = start_index + len(instantiated_questions)
+            cand_q["id"] = f"Q-{clean_comp}-{q_idx:03d}"
+            seen_param_tuples.add(p_tup)
+            seen_stems.add(n_stem)
+            if shared_key_counts is not None and k_sig:
+                shared_key_counts[k_sig] = shared_key_counts.get(k_sig, 0) + 1
+            instantiated_questions.append(cand_q)
 
     if len(instantiated_questions) < target_count:
         raise ValueError(
@@ -356,6 +460,8 @@ def instantiate_competency(
 
     all_questions: List[Dict[str, Any]] = []
     q_counter = 1
+    shared_key_counts: Optional[Dict[str, int]] = {} if target_quota >= 20 else None
+    max_key_count: Optional[int] = max(2, int(target_quota * 0.20)) if target_quota >= 20 else None
 
     for t_idx, tpl in enumerate(templates):
         t_id = tpl.get("id") or tpl.get("template_id") or f"tpl_{t_idx}"
@@ -371,6 +477,8 @@ def instantiate_competency(
             start_index=q_counter,
             seed_offset=tpl_seed_offset,
             cta_distractors_map=cta_distractors_map,
+            shared_key_counts=shared_key_counts,
+            max_key_count=max_key_count,
         )
         all_questions.extend(tpl_questions)
         q_counter += len(tpl_questions)

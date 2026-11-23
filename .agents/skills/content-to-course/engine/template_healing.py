@@ -133,6 +133,43 @@ def heal_katex_display_str(text: str) -> str:
     return _MATH_SEGMENT_RE.sub(_heal_math_segment, healed)
 
 
+def normalize_prose_outside_math(text: str) -> Tuple[str, List[str]]:
+    """Apply safe, idempotent prose polish strictly outside $...$ / $$...$$ math blocks.
+
+    - Collapses accidental double periods ('..') to '.' (preserving '...' ellipses).
+    - Collapses multiple consecutive spaces ('  ') to a single space.
+    Never modifies math segments, numbers, equations, or newline characters.
+    """
+    if not isinstance(text, str) or not text:
+        return text, []
+
+    parts = _MATH_SEGMENT_RE.split(text)
+    changes: List[str] = []
+    out_parts: List[str] = []
+    double_period_collapsed = False
+    multi_space_collapsed = False
+
+    for idx, seg in enumerate(parts):
+        if idx % 2 == 1:
+            # Inside $...$ or $$...$$ math block: leave verbatim
+            out_parts.append(seg)
+            continue
+        new_seg = re.sub(r"(?<!\.)\.\.(?!\.)", ".", seg)
+        if new_seg != seg:
+            double_period_collapsed = True
+        new_seg2 = re.sub(r"[ ]{2,}", " ", new_seg)
+        if new_seg2 != new_seg:
+            multi_space_collapsed = True
+        out_parts.append(new_seg2)
+
+    if double_period_collapsed:
+        changes.append("collapsed '..' to '.'")
+    if multi_space_collapsed:
+        changes.append("collapsed consecutive spaces")
+
+    return "".join(out_parts), changes
+
+
 def _heal_code_control_chars(code_str: str) -> str:
     """Restores corrupted ASCII control characters in Python code strings.
     Distinguishes raw string literals (r'...') where single backslash is needed
@@ -472,15 +509,17 @@ def auto_heal_template_data(
             continue
         tid = tpl.get("id", "T-XX")
 
-        # 1. Heal control characters and safe KaTeX display leaks in stem, stem_es, solution, explanation_es, detailed_solution
+        # 1. Heal control characters, safe KaTeX display leaks, and outside-math prose polish
         for s_field in ("stem", "stem_es", "solution", "explanation_es", "detailed_solution"):
             val = tpl.get(s_field)
             if isinstance(val, str):
                 new_val = heal_katex_display_str(val)
+                new_val, prose_changes = normalize_prose_outside_math(new_val)
                 if new_val != val:
                     tpl[s_field] = new_val
                     modified = True
-                    fixes.append(f"{tid}.{s_field}: healed KaTeX display / control chars")
+                    note = ", ".join(prose_changes) if prose_changes else "healed KaTeX display / control chars"
+                    fixes.append(f"{tid}.{s_field}: {note}")
 
         # Heal control characters in Python code fields
         for c_field in ("generate_py", "cross_check_py", "generator_code", "verifier_code"):
@@ -492,17 +531,19 @@ def auto_heal_template_data(
                     modified = True
                     fixes.append(f"{tid}.{c_field}: restored ASCII control char to LaTeX backslash in Python code")
 
-        # Heal control characters and safe KaTeX display leaks in list fields: stem_variants, hints
+        # Heal control characters, safe KaTeX display leaks, and outside-math prose polish in list fields
         for list_field in ("stem_variants", "hints"):
             items = tpl.get(list_field)
             if isinstance(items, list):
                 for i, item in enumerate(items):
                     if isinstance(item, str):
                         new_item = heal_katex_display_str(item)
+                        new_item, prose_changes = normalize_prose_outside_math(new_item)
                         if new_item != item:
                             items[i] = new_item
                             modified = True
-                            fixes.append(f"{tid}.{list_field}[{i}]: healed KaTeX display / control chars")
+                            note = ", ".join(prose_changes) if prose_changes else "healed KaTeX display / control chars"
+                            fixes.append(f"{tid}.{list_field}[{i}]: {note}")
 
         # 2. Auto-export local variables in generate_py referenced as {var} in text fields
         gen_py = tpl.get("generate_py", "")

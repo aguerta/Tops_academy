@@ -571,8 +571,8 @@ def summarize_cohorts(subagents: List[Dict[str, Any]]) -> Dict[str, Dict[str, An
             final_pass_count = sum(1 for sa in comp_items if sa.get("final_pass") is True)
             summary["first_pass_count"] = first_pass_count
             summary["final_pass_count"] = final_pass_count
-            summary["first_pass_rate"] = round(first_pass_count / n_comp, 4)
-            summary["final_pass_rate"] = round(final_pass_count / n_comp, 4)
+            summary["first_pass_rate"] = round(first_pass_count / n_comp, 2)
+            summary["final_pass_rate"] = round(final_pass_count / n_comp, 2)
             summary["fpy_ratio"] = f"{first_pass_count}/{n_comp}"
             summary["pass_ratio"] = f"{final_pass_count}/{n_comp}"
         else:
@@ -854,7 +854,7 @@ def update_master_state(
         "stage_name": stage_snapshot["stage_name"],
         "status": stage_snapshot["status"],
         "recorded_at": stage_snapshot["recorded_at"],
-        "duration_seconds": stage_snapshot.get("duration_seconds", 0.0),
+        "duration_seconds": round(float(stage_snapshot.get("duration_seconds", 0.0)), 2),
         "subagents_count": len(stage_snapshot.get("subagents", [])),
         "tokens": stage_snapshot.get("stage_tokens", {}),
     }
@@ -995,7 +995,7 @@ def record_stage_telemetry(
         "stage_name": stage_name,
         "status": status,
         "recorded_at": recorded_at,
-        "duration_seconds": meta.get("duration_seconds", stage_duration),
+        "duration_seconds": round(float(meta.get("duration_seconds", stage_duration)), 2),
         "conversation_id": resolved_conv,
         "stage_tokens": stage_tokens,
         "subagents": subagents,

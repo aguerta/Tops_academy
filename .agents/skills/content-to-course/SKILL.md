@@ -254,7 +254,7 @@ Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores d
 Para evitar saturar el contexto del chat y consumir tokens en inspecciones redundantes:
 1. **Bloqueo Pre-Tool (`c2c_hook_guard.py`)**: Mientras exista `.c2c_subagent_lock.json`, el hook previene activamente que el Director lea o modifique archivos de código de shards (`*_data.py`, `shard_fixes/*.py`), respuestas masivas de jueces (`judge_responses_*.json`) o scripts internos del skill (`run.py`, `prepare.py`, `ingest.py`, `dispatch.py`).
 2. **Delegación de Reparaciones (`c2c_repair` vía `run_workflow`)**:
-   - Si `gates`, `certify`, `publish` o un Circuit Breaker requieren reparaciones adicionales fuera del pase automático de `post_cta_pipeline`, genera el manifiesto consolidado por shard y ejecútalo en paralelo con `run_workflow` (`mode="repair"`):
+   - Si `gates`, `certify`, `publish` o un Circuit Breaker requieren reparaciones adicionales fuera del pase automático de `post_cta_pipeline`, **invoca directamente `run_workflow` con `mode="repair_and_rejudge"`** (sin ejecutar `dispatch.py dispatch-repair` manualmente antes, ya que `c2c_wave_workflow.py` lo invoca internamente de forma consolidada). Reserva el uso manual de `dispatch.py dispatch-repair` **únicamente** cuando ejecutes la ola aislada `mode="repair"`:
      ```powershell
      & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID1> <CID2>
      ```
@@ -265,7 +265,8 @@ Para evitar saturar el contexto del chat y consumir tokens en inspecciones redun
          Args={"work_dir": "<work_dir>", "mode": "repair"},
      )
      ```
-   - `dispatch-repair` detecta automáticamente fallos de compilación, plantillas faltantes (`work/templates/<CID>.json`) o *circuit breakers* activos, **limpia automáticamente los archivos de bloqueo en `.check_attempts/`** del shard afectado y **consolida las reparaciones por `shard_id`** (1 subagente `c2c_repair` por shard afectado leyendo `repair_*_data.md`). El Director NUNCA edita código a mano. Si la reparación modifica plantillas, ejecuta `--stage rejudge --ids ...` seguido de `run_workflow(..., Args={"work_dir": "<work_dir>", "mode": "judges"})` y `--stage rejudge-compare`.
+   - `dispatch-repair` detecta automáticamente fallos de compilación, plantillas faltantes (`work/templates/<CID>.json`) o *circuit breakers* activos, **limpia automáticamente los archivos de bloqueo en `.check_attempts/`** del shard afectado y **consolida las reparaciones por `shard_id`** (1 subagente `c2c_repair` por shard afectado leyendo `repair_*_data.md`). El Director NUNCA edita código a mano. Si usaste `mode="repair"` aislado y la reparación modifica plantillas, ejecuta `--stage rejudge --ids ...` seguido de `run_workflow(..., Args={"work_dir": "<work_dir>", "mode": "judges"})` y `--stage rejudge-compare`.
+   - **Checkpoint de reanudación automática (`work/.rejudge_pending.json`):** En `repair_and_rejudge`, si la fase `Repair + build` concluye pero el *Surgical Rejudge* aborta por cuota (`HTTP 429`), al relanzar `mode="repair_and_rejudge"` el workflow reanuda directamente en `--stage rejudge` sin volver a ejecutar los Repair Engineers (usa `force_repair=True` en `Args` solo si necesitas forzar nueva edición).
 3. **Liberación de Bloqueo**: Al concluir la publicación exitosa con `run.py --stage publish`, el archivo `.c2c_subagent_lock.json` se elimina automáticamente. En caso de aborto anticipado, ejecutar `python .agents/skills/content-to-course/run.py --stage unlock --work-dir <work_dir>`.
 
 ---
@@ -317,7 +318,7 @@ Este comando ejecuta en `< 1s`:
        },
    )
    ```
-   *(También admite olas individuales con `mode="cta"`, `"cta_harmonize"`, `"authors"`, `"judges"` o `"repair"`. Si `gates` posteriores o `certify` detectan fallos adicionales, ejecuta `run_workflow` con `mode="repair_and_rejudge"` — nunca mezcles `invoke_subagent` manual ni ejecutes `rejudge-compare` mientras `run_workflow` siga activo en segundo plano).*
+   *(También admite olas individuales con `mode="cta"`, `"cta_harmonize"`, `"authors"`, `"judges"` o `"repair"`. Si `gates` posteriores o `certify` detectan fallos adicionales, ejecuta directamente `run_workflow` con `mode="repair_and_rejudge"` — sin ejecutar `dispatch.py dispatch-repair` manualmente antes, nunca mezcles `invoke_subagent` manual ni ejecutes `rejudge-compare` mientras `run_workflow` siga activo en segundo plano).*
 2. Al concluir `run_workflow`, ejecuta la certificación y publicación final (Paso 5):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
@@ -392,20 +393,20 @@ Este comando ejecuta en `< 1s`:
    > - **Tiempo Total de Pared:** **{wall_min} min** ({wall_sec}s) | **Cómputo Acumulado:** {comp_min} min | **Speedup Paralelo:** **{speedup}x**
    > - **Subagentes Desplegados:** **{sub_total}** | **Intervenciones Manuales:** {interventions}
    > - **Consumo de Tokens:** **{tot_tok} totales** (**{act_tok} activos**: In={in_tok}, Out={out_tok}, Think={think_tok} | Cache={cache_tok})
-   > - **Costo Estimado Total (Gemini 4 Hydrogen):** **\${total_cost_usd} USD** (\${usd_per_q} USD/preg | \${usd_per_comp} USD/comp | In=\${in_usd} @ \$1.50/1M, Out+Think=\${out_usd} @ \$7.50/1M, Cache=\${cache_usd} @ \$0.075/1M)
+   > - **Costo Estimado Total (Gemini 4 Hydrogen):** **\${total_cost_usd} USD** (\${usd_per_q} USD/preg | \${usd_per_comp} USD/comp | In=\${in_usd} @ \$1.50/1M, Out+Think=\${out_usd} @ \$7.50/1M, Cache=\${cache_usd} @ \$0.08/1M)
    > - **Unit Economics:** {tok_per_q} tok/preg ({act_tok_per_q} activos/preg) | {sec_per_q} s/preg ({qpm} preg/min)
    >
    > | Etapa / Sección | Duración / Pared | Costo (USD) | Recursos y Resultado |
    > | :--- | :---: | :---: | :--- |
-   > | **Stage 0 (Bootstrap/Prep)** | {prep_dur}s | \$0.0000 | CLI |
+   > | **Stage 0 (Bootstrap/Prep)** | {prep_dur}s | \$0.00 | CLI |
    > | **Stage 1A (Visión)** | {s1a_wall}s | \${s1a_usd} | {s1a_agents} agentes / {s1a_tok} tok activos |
    > | **Stage 1B (CTA)** | {s1b_wall}s | \${s1b_usd} | {s1b_agents} agentes / {s1b_tok} tok activos ({total_comps} comps) |
-   > | **Stage 2 (Sharding)** | {shard_dur}s | \$0.0000 | {shards_count} shards |
+   > | **Stage 2 (Sharding)** | {shard_dur}s | \$0.00 | {shards_count} shards |
    > | **Stage 3 (Autores)** | min={s3_min}s / med={s3_med}s / max={s3_max}s | \${s3_usd} | Straggler: {straggler} / {s3_tok} tok activos |
    > | **Stage 3B (Reparaciones)** | {s3b_max}s | \${s3b_usd} | {s3b_count} reparaciones / {s3b_tok} tok activos |
-   > | **Stage 4 (Templates/Build)** | {s4_dur}s | \$0.0000 | {total_questions} reactivos |
+   > | **Stage 4 (Templates/Build)** | {s4_dur}s | \$0.00 | {total_questions} reactivos |
    > | **Stage 5 (Blind Judges)** | {s5_wall}s | \${s5_usd} | {s5_judges} jueces / {s5_items} ítems ({s5_agree}% acuerdo) |
-   > | **Stage 6 (Publish)** | {pub_dur}s | \$0.0000 | CLI + QA + Run Auditor |
+   > | **Stage 6 (Publish)** | {pub_dur}s | \$0.00 | CLI + QA + Run Auditor |
    > | **Orquestador (Director)** | {wall_sec}s | \${orch_usd} | Subagente raíz + workflows |
    > | **TOTAL CORRIDA** | **{wall_sec}s** | **\${total_cost_usd} USD** | **Gemini 4 Hydrogen** |
    >

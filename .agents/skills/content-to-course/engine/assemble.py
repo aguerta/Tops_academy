@@ -29,6 +29,11 @@ except ImportError:
     except ImportError:
         canonicalize_algebraic_katex = None
 
+try:
+    from engine.template_healing import normalize_prose_outside_math
+except ImportError:
+    from .template_healing import normalize_prose_outside_math
+
 _PL_TOKEN_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)(?::([^@\s{}]+))?@")
 
 
@@ -1411,6 +1416,7 @@ def assemble_question(
             var_idx = (seed % len(stem_variants)) if seed is not None else 0
         stem_raw = stem_variants[var_idx]
     stem = sanitize_katex_syntax(format_template_string(stem_raw, variables))
+    stem, _ = normalize_prose_outside_math(stem)
     if not isinstance(stem, str) or not stem.strip():
         raise ValueError(f"Question stem cannot be empty for {competency_id} #{question_index}")
     raw_hints = template.get("hints", [])
@@ -1420,9 +1426,12 @@ def assemble_question(
             h_text = h.get("text") or h.get("content") or str(h)
         else:
             h_text = str(h)
-        hints.append(sanitize_katex_syntax(format_template_string(h_text, variables)))
+        h_norm, _ = normalize_prose_outside_math(sanitize_katex_syntax(format_template_string(h_text, variables)))
+        hints.append(h_norm)
     raw_solution = template.get("detailed_solution") or template.get("solution", "")
-    detailed_solution = sanitize_katex_syntax(format_template_string(raw_solution, variables))
+    detailed_solution, _ = normalize_prose_outside_math(
+        sanitize_katex_syntax(format_template_string(raw_solution, variables))
+    )
 
     # Determine misconception warning from distractor remediation hint
     common_misconception_warning = ""
@@ -1539,6 +1548,7 @@ def assemble_question(
                 d, d_id, cta_distractors_map, default_fb, variables=variables
             )
             if isinstance(rationale, str):
+                rationale, _ = normalize_prose_outside_math(rationale)
                 errs = validate_katex_syntax(rationale, "distractor_rationale", allow_template_vars=False)
                 if errs:
                     rationale = sanitize_katex_syntax(default_fb)
@@ -1839,6 +1849,7 @@ def assemble_question(
                     opt, d_id, cta_distractors_map, default_fb, variables=variables
                 )
                 if isinstance(rationale, str):
+                    rationale, _ = normalize_prose_outside_math(rationale)
                     errs = validate_katex_syntax(rationale, "distractor_rationale", allow_template_vars=False)
                     if errs:
                         rationale = sanitize_katex_syntax(default_fb)
@@ -1848,6 +1859,7 @@ def assemble_question(
                     raw_rat = opt.get("rationale")
                 if raw_rat:
                     cand_correct = _format_and_sanitize_candidate(str(raw_rat), variables=variables, is_cta=False)
+                    cand_correct, _ = normalize_prose_outside_math(cand_correct)
                     errs = validate_katex_syntax(cand_correct, "correct_rationale", allow_template_vars=False)
                     rationale = cand_correct if not errs else None
                 else:

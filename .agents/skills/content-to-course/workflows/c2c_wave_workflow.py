@@ -31,6 +31,14 @@ _WF_ARGS: Dict[str, Any] = globals().get("args", {}) or {}
 DEFAULT_MAX_CONCURRENCY: int = 12
 DEFAULT_WORKER_RETRIES: int = 2
 DEFAULT_RETRY_BACKOFF_S: Tuple[float, ...] = (3.0, 8.0)
+DEFAULT_QUOTA_RETRIES: int = 4
+DEFAULT_QUOTA_BACKOFF_S: Tuple[float, ...] = (12.0, 25.0, 45.0, 60.0)
+
+
+def _is_quota_error(reason: str) -> bool:
+    """Return True when a worker collapse reason indicates an HTTP 429 / API quota error."""
+    low = str(reason or "").lower()
+    return any(tok in low for tok in ("429", "resource_exhausted", "ratelimiterror", "exhausted your capacity"))
 
 MANIFEST_BY_MODE: Dict[str, str] = {
     "cta": "cta.json",
@@ -238,6 +246,14 @@ async def run_wave_from_manifest(
         0,
         int(max_retries if max_retries is not None else (_WF_ARGS.get("worker_max_retries") if _WF_ARGS.get("worker_max_retries") is not None else DEFAULT_WORKER_RETRIES)),
     )
+    eff_quota_retries = max(
+        eff_retries,
+        int(
+            _WF_ARGS.get("quota_max_retries")
+            if _WF_ARGS.get("quota_max_retries") is not None
+            else (max_retries if max_retries is not None else DEFAULT_QUOTA_RETRIES)
+        ),
+    )
     stagger_step = float(
         _WF_ARGS.get("startup_stagger_s")
         if _WF_ARGS.get("startup_stagger_s") is not None
@@ -251,7 +267,15 @@ async def run_wave_from_manifest(
     else:
         backoffs = DEFAULT_RETRY_BACKOFF_S
 
-    log(f"Launching {total} workers for {phase_name} (max_concurrency={eff_conc}, max_retries={eff_retries})")
+    raw_quota_backoff = _WF_ARGS.get("quota_retry_backoff_s")
+    if isinstance(raw_quota_backoff, (list, tuple)) and raw_quota_backoff:
+        quota_backoffs = tuple(float(x) for x in raw_quota_backoff)
+    elif raw_quota_backoff is not None:
+        quota_backoffs = (float(raw_quota_backoff),)
+    else:
+        quota_backoffs = DEFAULT_QUOTA_BACKOFF_S
+
+    log(f"Launching {total} workers for {phase_name} (max_concurrency={eff_conc}, max_retries={eff_retries}, quota_max_retries={eff_quota_retries})")
     sem = asyncio.Semaphore(eff_conc)
     slot_counter = {"next": 0}
 
@@ -269,7 +293,8 @@ async def run_wave_from_manifest(
         async with sem:
             last_err: Optional[Exception] = None
             last_res: Any = ""
-            for attempt in range(eff_retries + 1):
+            attempt = 0
+            while True:
                 t0 = time.monotonic()
                 err_caught: Optional[Exception] = None
                 res: Any = ""
@@ -290,18 +315,26 @@ async def run_wave_from_manifest(
                     return str(res)
                 last_err = err_caught
                 last_res = res
-                if attempt < eff_retries:
-                    wait_s = backoffs[min(attempt, len(backoffs) - 1)] if backoffs else 0.0
+                is_quota = _is_quota_error(reason)
+                allowed_retries = eff_quota_retries if is_quota else eff_retries
+                if attempt < allowed_retries:
+                    if is_quota:
+                        base_wait = quota_backoffs[min(attempt, len(quota_backoffs) - 1)] if quota_backoffs else 0.0
+                        wait_s = base_wait * random.uniform(0.85, 1.15) if base_wait > 0.0 else 0.0
+                    else:
+                        wait_s = backoffs[min(attempt, len(backoffs) - 1)] if backoffs else 0.0
                     log(
-                        f"[AUTO-RETRY] {role_label} collapsed on attempt {attempt + 1}/{eff_retries + 1} "
+                        f"[AUTO-RETRY] {role_label} collapsed on attempt {attempt + 1}/{allowed_retries + 1} "
                         f"({reason}); retrying in {wait_s:.1f}s"
                     )
                     if wait_s > 0.0:
                         await asyncio.sleep(wait_s)
+                    attempt += 1
                 else:
                     log(
-                        f"[WORKER-EXHAUSTED] {role_label} failed after {eff_retries + 1} attempts ({reason})"
+                        f"[WORKER-EXHAUSTED] {role_label} failed after {attempt + 1} attempts ({reason})"
                     )
+                    break
             if last_err is not None:
                 raise last_err
             return str(last_res or "")
@@ -321,13 +354,13 @@ def _unlink_if_exists(path: Path) -> None:
 
 
 def _is_fresh_file(path: Path, min_mtime: float) -> bool:
-    """Check whether `path` exists and its mtime is >= `min_mtime`."""
+    """Check whether `path` exists and its mtime is >= `min_mtime` (with 50ms NTFS clock tolerance)."""
     if not path.is_file():
         return False
     if min_mtime <= 0.0:
         return True
     try:
-        return path.stat().st_mtime >= min_mtime
+        return path.stat().st_mtime >= (min_mtime - 0.05)
     except OSError:
         return False
 
@@ -461,64 +494,104 @@ async def _execute_repair_and_rejudge_cycle(
 ) -> Tuple[List[str], List[str]]:
     """Execute one atomic repair -> templates -> build -> surgical rejudge -> rejudge-compare -> gates cycle."""
     dispatch_dir = work_path / "dispatch"
-    repair_manifest = dispatch_dir / "repair.json"
-    _unlink_if_exists(repair_manifest)
-    repair_args = ["dispatch-repair", "--work-dir", work_dir_arg]
-    if target_ids:
-        repair_args.extend(["--ids", *target_ids])
-    repair_dispatch_start = time.time()
-    await run_cli(
-        _build_python_cmd(python_exe, dispatch_py, *repair_args),
-        "C2C dispatch repair",
-        env_extra=cli_env,
-    )
+    rejudge_ckpt = work_path / ".rejudge_pending.json"
+    force_repair = bool(_WF_ARGS.get("force_repair"))
+
+    resume_rejudge = False
+    if target_ids and not force_repair and rejudge_ckpt.is_file():
+        try:
+            ckpt_data = json.loads(rejudge_ckpt.read_text(encoding="utf-8"))
+            ckpt_ids = ckpt_data.get("ids") or []
+            built_at = float(ckpt_data.get("built_at") or 0.0)
+            shards_dir = work_path / "shards"
+            shards_modified_after = False
+            if shards_dir.is_dir() and built_at > 0.0:
+                shards_modified_after = any(
+                    sf.stat().st_mtime > built_at
+                    for sf in shards_dir.glob("*.py")
+                )
+            if (
+                isinstance(ckpt_ids, list)
+                and sorted(str(x) for x in ckpt_ids) == sorted(str(x) for x in target_ids)
+                and not shards_modified_after
+            ):
+                resume_rejudge = True
+                log(f"[REJUDGE-RESUME] Skipping already-built Repair Wave and resuming Surgical Rejudge for {target_ids}")
+        except Exception:
+            resume_rejudge = False
 
     repair_results: List[str] = []
     rejudge_results: List[str] = []
-    if _is_fresh_file(repair_manifest, repair_dispatch_start):
-        repair_results = await run_wave_from_manifest(
-            str(repair_manifest),
-            repair_wave_label,
+    ran_build = resume_rejudge
+
+    if not resume_rejudge:
+        repair_manifest = dispatch_dir / "repair.json"
+        _unlink_if_exists(repair_manifest)
+        repair_args = ["dispatch-repair", "--work-dir", work_dir_arg]
+        if target_ids:
+            repair_args.extend(["--ids", *target_ids])
+        repair_dispatch_start = time.time()
+        await run_cli(
+            _build_python_cmd(python_exe, dispatch_py, *repair_args),
+            "C2C dispatch repair",
+            env_extra=cli_env,
         )
-        unfinished_cids = _collect_unfinished_repair_ids(
-            work_path,
-            repair_manifest,
-            repair_results,
-            repair_dispatch_start,
-        )
-        if unfinished_cids:
-            log(f"[REPAIR-CLOSE-GUARD] Re-dispatching unfinished repairs once for: {unfinished_cids}")
-            _unlink_if_exists(repair_manifest)
-            retry_start = time.time()
+
+        if _is_fresh_file(repair_manifest, repair_dispatch_start):
+            repair_results = await run_wave_from_manifest(
+                str(repair_manifest),
+                repair_wave_label,
+            )
+            unfinished_cids = _collect_unfinished_repair_ids(
+                work_path,
+                repair_manifest,
+                repair_results,
+                repair_dispatch_start,
+            )
+            if unfinished_cids:
+                log(f"[REPAIR-CLOSE-GUARD] Re-dispatching unfinished repairs once for: {unfinished_cids}")
+                _unlink_if_exists(repair_manifest)
+                retry_start = time.time()
+                await run_cli(
+                    _build_python_cmd(
+                        python_exe,
+                        dispatch_py,
+                        "dispatch-repair",
+                        "--work-dir",
+                        work_dir_arg,
+                        "--ids",
+                        *unfinished_cids,
+                    ),
+                    "C2C dispatch repair (close-guard retry)",
+                    env_extra=cli_env,
+                )
+                if _is_fresh_file(repair_manifest, retry_start):
+                    retry_results = await run_wave_from_manifest(
+                        str(repair_manifest),
+                        f"{repair_wave_label} (Close-Guard Retry)",
+                    )
+                    repair_results.extend(retry_results)
             await run_cli(
-                _build_python_cmd(
-                    python_exe,
-                    dispatch_py,
-                    "dispatch-repair",
-                    "--work-dir",
-                    work_dir_arg,
-                    "--ids",
-                    *unfinished_cids,
-                ),
-                "C2C dispatch repair (close-guard retry)",
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "templates", "--work-dir", work_dir_arg),
+                "C2C post-repair stage templates",
                 env_extra=cli_env,
             )
-            if _is_fresh_file(repair_manifest, retry_start):
-                retry_results = await run_wave_from_manifest(
-                    str(repair_manifest),
-                    f"{repair_wave_label} (Close-Guard Retry)",
-                )
-                repair_results.extend(retry_results)
-        await run_cli(
-            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "templates", "--work-dir", work_dir_arg),
-            "C2C post-repair stage templates",
-            env_extra=cli_env,
-        )
-        await run_cli(
-            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "build", "--work-dir", work_dir_arg),
-            "C2C post-repair stage build",
-            env_extra=cli_env,
-        )
+            await run_cli(
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "build", "--work-dir", work_dir_arg),
+                "C2C post-repair stage build",
+                env_extra=cli_env,
+            )
+            ran_build = True
+            if target_ids:
+                try:
+                    rejudge_ckpt.write_text(
+                        json.dumps({"ids": list(target_ids), "built_at": time.time()}, ensure_ascii=False),
+                        encoding="utf-8",
+                    )
+                except OSError:
+                    pass
+
+    if ran_build:
         if target_ids:
             rejudge_manifest = dispatch_dir / "judges.json"
             _unlink_if_exists(rejudge_manifest)
@@ -548,6 +621,7 @@ async def _execute_repair_and_rejudge_cycle(
                 "C2C stage rejudge-compare",
                 env_extra=cli_env,
             )
+            _unlink_if_exists(rejudge_ckpt)
         await run_cli(
             _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
             "C2C post-repair stage gates",

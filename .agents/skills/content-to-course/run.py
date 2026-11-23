@@ -1976,11 +1976,11 @@ class PipelineRunner:
                     _raw_in = (in_tok / 1_000_000.0) * 1.50
                     _raw_out = (out_tok / 1_000_000.0) * 7.50
                     _raw_c = (cache_tok / 1_000_000.0) * 0.075
-                    total_cost_usd = round(_raw_in + _raw_out + _raw_c, 4)
+                    total_cost_usd = round(_raw_in + _raw_out + _raw_c, 2)
                     cb = {
-                        "input_usd": round(_raw_in, 4),
-                        "output_usd": round(_raw_out, 4),
-                        "cache_read_usd": round(_raw_c, 4),
+                        "input_usd": round(_raw_in, 2),
+                        "output_usd": round(_raw_out, 2),
+                        "cache_read_usd": round(_raw_c, 2),
                         "total_usd": total_cost_usd,
                     }
                     stage_costs = {}
@@ -1988,26 +1988,26 @@ class PipelineRunner:
             q_cnt = workload.get("questions_count", 0) or 0
             c_cnt = workload.get("competencies_count", 0) or 0
             _raw_uq = unit.get("usd_per_question")
-            usd_per_q = float(_raw_uq) if _raw_uq is not None else (round(float(total_cost_usd) / q_cnt, 4) if q_cnt else 0.0)
+            usd_per_q = round(float(_raw_uq), 2) if _raw_uq is not None else (round(float(total_cost_usd) / q_cnt, 2) if q_cnt else 0.0)
             _raw_uc = unit.get("usd_per_competency")
-            usd_per_comp = float(_raw_uc) if _raw_uc is not None else (round(float(total_cost_usd) / c_cnt, 4) if c_cnt else 0.0)
+            usd_per_comp = round(float(_raw_uc), 2) if _raw_uc is not None else (round(float(total_cost_usd) / c_cnt, 2) if c_cnt else 0.0)
 
             lines.extend([
                 f"  Tiempo Total de Pared:        {wall_min:.2f} min ({wall_sec:.0f}s) | Cómputo: {comp_min:.2f} min | Speedup: {speedup:.2f}x",
                 f"  Subagentes Desplegados:       {sub_total} | Intervenciones Manuales: {interventions}",
                 f"  Consumo Total de Tokens:      {tot_tok:,} ({act_tok:,} activos: In={in_tok:,}, Out={out_tok:,}, Think={think_tok:,} | Cache={cache_tok:,})",
-                f"  Costo Estimado (Hydrogen):    ${float(total_cost_usd):.4f} USD (In=${cb.get('input_usd', 0.0):.4f} @ $1.50/1M | Out+Think=${cb.get('output_usd', 0.0):.4f} @ $7.50/1M | Cache=${cb.get('cache_read_usd', 0.0):.4f} @ $0.075/1M)",
+                f"  Costo Estimado (Hydrogen):    ${float(total_cost_usd):.2f} USD (In=${cb.get('input_usd', 0.0):.2f} @ $1.50/1M | Out+Think=${cb.get('output_usd', 0.0):.2f} @ $7.50/1M | Cache=${cb.get('cache_read_usd', 0.0):.2f} @ $0.08/1M)",
                 f"  Llamadas a Herramientas:      {tool_calls:,} llamadas ({tool_errs} errores)",
                 "",
                 "  📈 Unit Economics Normalizados:",
                 f"    • Tokens / Pregunta:        {unit.get('tokens_per_question', 0.0):,.1f} tot ({unit.get('active_tokens_per_question', 0.0):,.1f} activos)",
-                f"    • Costo Unitario (USD):     ${usd_per_q:.4f} USD/preg  |  ${usd_per_comp:.4f} USD/comp",
+                f"    • Costo Unitario (USD):     ${usd_per_q:.2f} USD/preg  |  ${usd_per_comp:.2f} USD/comp",
                 f"    • Velocidad de Entrega:     {unit.get('seconds_per_question', 0.0):.2f} s/preg  |  Throughput: {unit.get('questions_per_minute', 0.0):.2f} preg/min",
                 f"    • Tokens / Competencia:     {unit.get('tokens_per_competency', 0.0):,.1f} tot ({unit.get('author_tokens_per_competency', 0.0):,.1f} autoría)",
             ])
             if workload.get("total_pages_or_slides", 0) > 0:
                 lines.append(
-                    f"    • Carga Fuente:             {workload.get('total_pages_or_slides', 0)} págs ({workload.get('total_input_mb', 0.0)} MB) -> {unit.get('tokens_per_page', 0.0):,.1f} tok/pág"
+                    f"    • Carga Fuente:             {workload.get('total_pages_or_slides', 0)} págs ({workload.get('total_input_mb', 0.0):.2f} MB) -> {unit.get('tokens_per_page', 0.0):,.1f} tok/pág"
                 )
 
             s1a = deep.get("stage_1a_vision", {})
@@ -2037,22 +2037,22 @@ class PipelineRunner:
             lines.extend([
                 "",
                 "  ⏱️  Desglose por Etapas / Secciones (con Costos Gemini 4 Hydrogen):",
-                f"    • Stage 0  (Bootstrap/Prep): {prep_dur:.2f}s CLI | $0.0000 USD",
-                f"    • Stage 1A (Visión):         {s1a.get('agents_count', 0)} agentes | {s1a.get('max_wall_time_seconds', 0.0):.1f}s pared | {s1a.get('total_active_tokens', 0):,} tok activos | ${s1a_usd:.4f} USD",
-                f"    • Stage 1B (CTA):            {cta_agents} agentes | {cta_wall:.1f}s pared | {cta_tok:,} tok activos | {workload.get('competencies_count', 0)} comps | ${s1b_usd:.4f} USD",
-                f"    • Stage 2  (Sharding):       {shard_dur:.2f}s CLI | {workload.get('shards_count', 0)} shards | $0.0000 USD",
-                f"    • Stage 3  (Autores):        {s3.get('shards_count', 0)} shards | min={s3.get('min_duration_seconds', 0.0):.1f}s / med={s3.get('median_duration_seconds', 0.0):.1f}s / max={s3.get('max_duration_seconds', 0.0):.1f}s | {s3.get('total_author_active_tokens', 0):,} tok activos | ${s3_usd:.4f} USD",
+                f"    • Stage 0  (Bootstrap/Prep): {prep_dur:.2f}s CLI | $0.00 USD",
+                f"    • Stage 1A (Visión):         {s1a.get('agents_count', 0)} agentes | {s1a.get('max_wall_time_seconds', 0.0):.1f}s pared | {s1a.get('total_active_tokens', 0):,} tok activos | ${s1a_usd:.2f} USD",
+                f"    • Stage 1B (CTA):            {cta_agents} agentes | {cta_wall:.1f}s pared | {cta_tok:,} tok activos | {workload.get('competencies_count', 0)} comps | ${s1b_usd:.2f} USD",
+                f"    • Stage 2  (Sharding):       {shard_dur:.2f}s CLI | {workload.get('shards_count', 0)} shards | $0.00 USD",
+                f"    • Stage 3  (Autores):        {s3.get('shards_count', 0)} shards | min={s3.get('min_duration_seconds', 0.0):.1f}s / med={s3.get('median_duration_seconds', 0.0):.1f}s / max={s3.get('max_duration_seconds', 0.0):.1f}s | {s3.get('total_author_active_tokens', 0):,} tok activos | ${s3_usd:.2f} USD",
                 f"       └─ Straggler Crítico:     {s3.get('straggler_shard', 'N/A')} ({s3.get('max_duration_seconds', 0.0):.1f}s, +{s3.get('straggler_delay_vs_median', 0.0):.1f}s vs mediana)",
-                f"    • Stage 3B (Reparaciones):   {s3b.get('repairs_count', 0)} reparaciones | max={s3b.get('max_duration_seconds', 0.0):.1f}s | {s3b.get('total_active_tokens', 0):,} tok activos | ${s3b_usd:.4f} USD",
-                f"    • Stage 4  (Templates/Build):{tpl_dur + bld_dur:.2f}s CLI (templates={tpl_dur:.2f}s, build={bld_dur:.2f}s) | {workload.get('questions_count', 0)} reactivos | $0.0000 USD",
-                f"    • Stage 5  (Blind Judges):   {s5.get('judges_count', 0)} jueces | {s5.get('max_judge_duration', 0.0):.1f}s pared | {s5.get('batch_items_count', 0)} ítems | {s5.get('agreement_rate', 1.0) * 100:.1f}% acuerdo ({s5.get('discrepancies_count', 0)} discrepancias) | ${s5_usd:.4f} USD",
-                f"    • Stage 6  (Publish):        {pub_dur:.2f}s CLI | $0.0000 USD",
-                f"    • Orquestador (Director):    {wall_sec:.0f}s pared | ${orch_usd:.4f} USD",
+                f"    • Stage 3B (Reparaciones):   {s3b.get('repairs_count', 0)} reparaciones | max={s3b.get('max_duration_seconds', 0.0):.1f}s | {s3b.get('total_active_tokens', 0):,} tok activos | ${s3b_usd:.2f} USD",
+                f"    • Stage 4  (Templates/Build):{tpl_dur + bld_dur:.2f}s CLI (templates={tpl_dur:.2f}s, build={bld_dur:.2f}s) | {workload.get('questions_count', 0)} reactivos | $0.00 USD",
+                f"    • Stage 5  (Blind Judges):   {s5.get('judges_count', 0)} jueces | {s5.get('max_judge_duration', 0.0):.1f}s pared | {s5.get('batch_items_count', 0)} ítems | {s5.get('agreement_rate', 1.0) * 100:.1f}% acuerdo ({s5.get('discrepancies_count', 0)} discrepancias) | ${s5_usd:.2f} USD",
+                f"    • Stage 6  (Publish):        {pub_dur:.2f}s CLI | $0.00 USD",
+                f"    • Orquestador (Director):    {wall_sec:.0f}s pared | ${orch_usd:.2f} USD",
             ])
             if oth_usd > 0:
-                lines.append(f"    • Otros Subagentes:          ${oth_usd:.4f} USD")
+                lines.append(f"    • Otros Subagentes:          ${oth_usd:.2f} USD")
             lines.extend([
-                f"    • TOTAL CORRIDA (Hydrogen):  ${float(total_cost_usd):.4f} USD",
+                f"    • TOTAL CORRIDA (Hydrogen):  ${float(total_cost_usd):.2f} USD",
                 "",
                 "  📁 Reportes del Pipeline Auditor Guardados:",
                 f"    • Informe Auditor (MD):      {audit_info.get('report_md', '')}",
@@ -2075,10 +2075,10 @@ class PipelineRunner:
                     _raw_o = (max(0, int(output_tokens or 0)) / 1_000_000.0) * 7.50
                     _raw_c = (max(0, int(cache_read_tokens or 0)) / 1_000_000.0) * 0.075
                     return {
-                        "input_usd": round(_raw_i, 4),
-                        "output_usd": round(_raw_o, 4),
-                        "cache_read_usd": round(_raw_c, 4),
-                        "total_usd": round(_raw_i + _raw_o + _raw_c, 4),
+                        "input_usd": round(_raw_i, 2),
+                        "output_usd": round(_raw_o, 2),
+                        "cache_read_usd": round(_raw_c, 2),
+                        "total_usd": round(_raw_i + _raw_o + _raw_c, 2),
                     }
 
             if stages_dict:
@@ -2095,14 +2095,14 @@ class PipelineRunner:
                         st_usd = _h2_cost(st_in, st_out, st_cch)["total_usd"]
                         lines.append(
                             f"    • {st_key:<20}: {st_val.get('duration_seconds', 0.0):.2f}s "
-                            f"({st_val.get('status', 'unknown')}) | ${st_usd:.4f} USD"
+                            f"({st_val.get('status', 'unknown')}) | ${st_usd:.2f} USD"
                         )
                 tot_st_tok = state.get("total_tokens") if isinstance(state.get("total_tokens"), dict) else {}
                 t_in = int(tot_st_tok.get("input", fb_tot_in) or fb_tot_in)
                 t_out = int(tot_st_tok.get("output", fb_tot_out) or fb_tot_out)
                 t_cch = int(tot_st_tok.get("cached", fb_tot_cache) or fb_tot_cache)
                 tot_fb_usd = _h2_cost(t_in, t_out, t_cch)["total_usd"]
-                lines.append(f"    • TOTAL CORRIDA (Hydrogen):  ${tot_fb_usd:.4f} USD")
+                lines.append(f"    • TOTAL CORRIDA (Hydrogen):  ${tot_fb_usd:.2f} USD")
             elif timings:
                 for t_key, t_val in timings.items():
                     if isinstance(t_val, (int, float)):
@@ -2915,7 +2915,7 @@ class PipelineRunner:
         merged = dict(base)
         merged.update({
             "total": total_items, "total_items": total_items, "agreed_items": agreed,
-            "agreement_rate": round(agreed / total_items, 4) if total_items else 0.0,
+            "agreement_rate": round(agreed / total_items, 2) if total_items else 0.0,
             "passed": passed, "status": "passed" if passed else ("incomplete" if not complete else "disagreements"),
             "all_complete": complete, "failed_templates": failed_t, "failed_competencies": failed_c,
             "affected_template_ids": failed_t, "disagreements": discord, "discordances": discord,
@@ -3031,7 +3031,7 @@ class PipelineRunner:
             "total": total_items,
             "total_items": total_items,
             "agreed_items": agreed,
-            "agreement_rate": round(agreed / total_items, 4) if total_items else 0.0,
+            "agreement_rate": round(agreed / total_items, 2) if total_items else 0.0,
             "passed": passed,
             "status": "passed" if passed else ("incomplete" if not complete else "disagreements"),
             "all_complete": complete,
@@ -3304,7 +3304,7 @@ class PipelineRunner:
             "pending": total_pending,
             "circuit_broken": total_cb,
             "waves": wave_stats,
-            "duration_seconds": round(elapsed, 3),
+            "duration_seconds": round(elapsed, 2),
         }
 
     def run_stage_dispatch_cta(self) -> Dict[str, Any]:
