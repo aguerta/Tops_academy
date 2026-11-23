@@ -1,0 +1,1499 @@
+{
+  "meta": {
+    "audit_timestamp": "2026-11-23T02:59:51.139312+00:00",
+    "orchestrator_conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+    "course_id": "solow_m20_v12_gemini_3_8_medium",
+    "course_title": "Solow M20 V12 Gemini 3 8 Medium",
+    "work_dir_resolved": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_m20_v12_gemini_3_8_medium\\work",
+    "telemetry_v3_snapshots_used": 3
+  },
+  "summary": {
+    "wall_clock_seconds": 286.0,
+    "wall_clock_minutes": 4.77,
+    "agent_compute_seconds": 973.0,
+    "agent_compute_minutes": 16.22,
+    "parallel_speedup_factor": 3.4,
+    "total_tokens": 1018849,
+    "total_active_tokens": 411029,
+    "total_input_tokens": 287101,
+    "total_output_tokens": 123928,
+    "total_cache_read_tokens": 607820,
+    "total_thinking_tokens": 14716,
+    "total_thinking_turns": 18,
+    "total_thinking_chars": 58887,
+    "total_turns": 24,
+    "total_subagents_spawned": 4,
+    "tool_calls_total": 36,
+    "tool_errors_total": 1,
+    "pricing_model": "gemini-4-hydrogen",
+    "pricing_label": "Gemini 4 Hydrogen",
+    "pricing_rates_per_1m": {
+      "input_usd_per_1m": 1.5,
+      "cache_read_usd_per_1m": 0.08,
+      "output_usd_per_1m": 7.5
+    },
+    "total_cost_usd": 1.41,
+    "cost_breakdown_usd": {
+      "input_usd": 0.43,
+      "output_usd": 0.93,
+      "cache_read_usd": 0.05,
+      "total_usd": 1.41
+    },
+    "stage_costs_usd": {
+      "stage_1a_vision": 0.0,
+      "stage_1b_cta": 0.87,
+      "stage_3_authors": 0.0,
+      "stage_3b_repairs": 0.0,
+      "stage_5_judges": 0.0,
+      "orchestrator": 0.53,
+      "other_subagents": 0.0,
+      "total_usd": 1.41
+    }
+  },
+  "workload": {
+    "source_files": [
+      {
+        "name": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+        "size_bytes": 981980,
+        "pages": 5,
+        "ext": ".pdf"
+      },
+      {
+        "name": "solow1956.pdf",
+        "size_bytes": 577436,
+        "pages": 31,
+        "ext": ".pdf"
+      }
+    ],
+    "total_input_bytes": 1559416,
+    "total_input_mb": 1.49,
+    "total_pages_or_slides": 36,
+    "pages_needing_vision": 0,
+    "total_handouts": 0,
+    "corpus_chars": 0,
+    "corpus_words": 0,
+    "competencies_count": 15,
+    "shards_count": 0,
+    "shards_competencies_map": {},
+    "questions_count": 0,
+    "templates_compiled_count": 0,
+    "cta_mode": "mapreduce",
+    "course_id": "solow_m20_v12_gemini_3_8_medium",
+    "course_title": "Solow M20 V12 Gemini 3 8 Medium",
+    "run_status": "ABORTED_INCOMPLETE",
+    "work_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_m20_v12_gemini_3_8_medium\\work",
+    "work_dir_resolved": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_m20_v12_gemini_3_8_medium\\work",
+    "work_dir_conversation_match": true,
+    "pipeline_status": "completed"
+  },
+  "unit_economics": {
+    "tokens_per_page": 28301.4,
+    "active_tokens_per_page": 11417.5,
+    "tokens_per_input_kb": 669.0,
+    "tokens_per_competency": 67923.3,
+    "active_tokens_per_competency": 27401.9,
+    "author_tokens_per_competency": 0.0,
+    "tokens_per_question": 0.0,
+    "active_tokens_per_question": 0.0,
+    "seconds_per_page": 7.94,
+    "seconds_per_question": 0.0,
+    "questions_per_minute": 0.0,
+    "agent_seconds_per_question": 0.0,
+    "output_tokens_per_question": 0.0,
+    "usd_per_question": 0.0,
+    "usd_per_competency": 0.09,
+    "usd_per_page": 0.04
+  },
+  "stage_telemetry_v3": [
+    {
+      "stage_idx": "00",
+      "stage_name": "prepare",
+      "status": "completed",
+      "recorded_at": "2026-11-23T02:45:19.910090+00:00",
+      "duration_seconds": 0.05,
+      "subagents_count": 0,
+      "stage_tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "thinking": 0,
+        "total": 0
+      },
+      "collector_overhead_ms": 7.18,
+      "metadata": {
+        "duration_seconds": 0.04681563377380371
+      }
+    },
+    {
+      "stage_idx": "00b",
+      "stage_name": "bootstrap",
+      "status": "completed",
+      "recorded_at": "2026-11-23T02:45:19.960497+00:00",
+      "duration_seconds": 0.1,
+      "subagents_count": 0,
+      "stage_tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "thinking": 0,
+        "total": 0
+      },
+      "collector_overhead_ms": 5.55,
+      "metadata": {
+        "duration_seconds": 0.09723377227783203,
+        "lock_file": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_m20_v12_gemini_3_8_medium\\work\\.c2c_subagent_lock.json"
+      }
+    },
+    {
+      "stage_idx": "01",
+      "stage_name": "cta",
+      "status": "completed",
+      "recorded_at": "2026-11-23T02:55:18.663771+00:00",
+      "duration_seconds": 0.74,
+      "subagents_count": 0,
+      "stage_tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "thinking": 0,
+        "total": 0
+      },
+      "collector_overhead_ms": 6.81,
+      "metadata": {
+        "duration_seconds": 0.7394542694091797,
+        "competencies": 15
+      }
+    }
+  ],
+  "stage_deep_dives": {
+    "stage_1a_vision": {
+      "agents_count": 0,
+      "agents": [],
+      "individual_durations": [],
+      "max_wall_time_seconds": 0.0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "total_active_tokens": 0,
+      "total_cache_tokens": 0,
+      "cost_usd": 0.0,
+      "cost_breakdown_usd": {
+        "input_usd": 0.0,
+        "output_usd": 0.0,
+        "cache_read_usd": 0.0,
+        "total_usd": 0.0
+      },
+      "critical_path_agent": "N/A"
+    },
+    "stage_1b_cta": {
+      "agents_count": 4,
+      "mappers_count": 3,
+      "mappers": [
+        {
+          "conversation_id": "ab1118d1-2d0b-4e3e-a318-29a343a9e33f",
+          "label": "Cognitive Task Analysis Architect part_02",
+          "start_time": "2026-11-23T02:49:53+00:00",
+          "end_time": "2026-11-23T02:53:15+00:00",
+          "start_iso": "2026-11-23T02:49:53+00:00",
+          "end_iso": "2026-11-23T02:53:15+00:00",
+          "duration_seconds": 202.0,
+          "duration_minutes": 3.37,
+          "turns_count": 6,
+          "input_tokens": 46456,
+          "output_tokens": 22299,
+          "cache_read_tokens": 148083,
+          "thinking_tokens": 4167,
+          "active_tokens": 68755,
+          "total_tokens": 216838,
+          "cost_usd": 0.25,
+          "cost_breakdown_usd": {
+            "input_usd": 0.07,
+            "output_usd": 0.17,
+            "cache_read_usd": 0.01,
+            "total_usd": 0.25
+          },
+          "thinking_chars": 16676,
+          "thinking_turns_count": 5,
+          "error_thinking_traces": [
+            {
+              "step_index": 6,
+              "created_at": "2026-11-23T02:52:43Z",
+              "thinking_snippet": "Attempting to compile the CTA part with the provided command. The command specifies input, output, and manifest paths for the compilation process. This step is crucial for transforming the content into the desired output format."
+            }
+          ],
+          "tool_calls_count": 6,
+          "tool_calls_by_name": {
+            "read_file": 1,
+            "write_file": 1,
+            "run_command": 2,
+            "edit_file": 1,
+            "finish": 1
+          },
+          "tool_errors_count": 1,
+          "failed_commands": [
+            {
+              "step_index": 6,
+              "snippet": "Created At: 2026-11-22T21:52:43-05:00\nCompleted At: 2026-11-22T21:52:45-05:00\nCreated At: 2026-11-22T21:52:43-05:00\nCompleted At: 2026-11-22T21:52:45-05:00\nCommand exited with code 1.\n\nCommand output:"
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-11-23T02:49:53Z",
+              "input_tokens": 10728,
+              "output_tokens": 682,
+              "cache_read_tokens": 0,
+              "tools": [
+                "read_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-11-23T02:50:00Z",
+              "input_tokens": 12417,
+              "output_tokens": 19619,
+              "cache_read_tokens": 7436,
+              "tools": [
+                "write_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-11-23T02:52:35Z",
+              "input_tokens": 16047,
+              "output_tokens": 333,
+              "cache_read_tokens": 23503,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-11-23T02:52:45Z",
+              "input_tokens": 2464,
+              "output_tokens": 1047,
+              "cache_read_tokens": 38038,
+              "tools": [
+                "edit_file"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-11-23T02:52:59Z",
+              "input_tokens": 2670,
+              "output_tokens": 180,
+              "cache_read_tokens": 39020,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-11-23T02:53:07Z",
+              "input_tokens": 2130,
+              "output_tokens": 438,
+              "cache_read_tokens": 40086,
+              "tools": [
+                "finish"
+              ]
+            }
+          ],
+          "from_v3_telemetry_snapshot": false,
+          "terminal_status": "DONE",
+          "blocked_reason": "",
+          "compile_attempts_count": 0,
+          "compile_first_passed": null,
+          "first_compile_rules": [],
+          "category": "cta_mapper",
+          "shard_id": null,
+          "spawn_step": 22,
+          "spawn_time": "2026-11-23T02:49:53Z",
+          "model": "inherit",
+          "competencies": [],
+          "competencies_count": 0,
+          "tokens_per_competency": 0.0
+        },
+        {
+          "conversation_id": "4cc67548-78c8-4dc9-914c-ae9f19375c37",
+          "label": "Cognitive Task Analysis Architect part_03",
+          "start_time": "2026-11-23T02:49:53+00:00",
+          "end_time": "2026-11-23T02:53:16+00:00",
+          "start_iso": "2026-11-23T02:49:53+00:00",
+          "end_iso": "2026-11-23T02:53:16+00:00",
+          "duration_seconds": 203.0,
+          "duration_minutes": 3.38,
+          "turns_count": 4,
+          "input_tokens": 43822,
+          "output_tokens": 23806,
+          "cache_read_tokens": 71978,
+          "thinking_tokens": 3890,
+          "active_tokens": 67628,
+          "total_tokens": 139606,
+          "cost_usd": 0.25,
+          "cost_breakdown_usd": {
+            "input_usd": 0.07,
+            "output_usd": 0.18,
+            "cache_read_usd": 0.01,
+            "total_usd": 0.25
+          },
+          "thinking_chars": 15562,
+          "thinking_turns_count": 3,
+          "error_thinking_traces": [],
+          "tool_calls_count": 4,
+          "tool_calls_by_name": {
+            "read_file": 1,
+            "write_file": 1,
+            "run_command": 1,
+            "finish": 1
+          },
+          "tool_errors_count": 0,
+          "failed_commands": [],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-11-23T02:49:53Z",
+              "input_tokens": 10725,
+              "output_tokens": 618,
+              "cache_read_tokens": 0,
+              "tools": [
+                "read_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-11-23T02:50:00Z",
+              "input_tokens": 12521,
+              "output_tokens": 22460,
+              "cache_read_tokens": 7255,
+              "tools": [
+                "write_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-11-23T02:52:58Z",
+              "input_tokens": 18344,
+              "output_tokens": 329,
+              "cache_read_tokens": 23968,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-11-23T02:53:06Z",
+              "input_tokens": 2232,
+              "output_tokens": 399,
+              "cache_read_tokens": 40755,
+              "tools": [
+                "finish"
+              ]
+            }
+          ],
+          "from_v3_telemetry_snapshot": false,
+          "terminal_status": "DONE",
+          "blocked_reason": "",
+          "compile_attempts_count": 0,
+          "compile_first_passed": null,
+          "first_compile_rules": [],
+          "category": "cta_mapper",
+          "shard_id": null,
+          "spawn_step": 22,
+          "spawn_time": "2026-11-23T02:49:53Z",
+          "model": "inherit",
+          "competencies": [],
+          "competencies_count": 0,
+          "tokens_per_competency": 0.0
+        },
+        {
+          "conversation_id": "73cfdb63-f1ca-458b-9009-33689951f927",
+          "label": "Cognitive Task Analysis Architect part_01",
+          "start_time": "2026-11-23T02:49:53+00:00",
+          "end_time": "2026-11-23T02:52:37+00:00",
+          "start_iso": "2026-11-23T02:49:53+00:00",
+          "end_iso": "2026-11-23T02:52:37+00:00",
+          "duration_seconds": 164.0,
+          "duration_minutes": 2.73,
+          "turns_count": 4,
+          "input_tokens": 33840,
+          "output_tokens": 18238,
+          "cache_read_tokens": 53720,
+          "thinking_tokens": 3524,
+          "active_tokens": 52078,
+          "total_tokens": 105798,
+          "cost_usd": 0.19,
+          "cost_breakdown_usd": {
+            "input_usd": 0.05,
+            "output_usd": 0.14,
+            "cache_read_usd": 0.0,
+            "total_usd": 0.19
+          },
+          "thinking_chars": 14098,
+          "thinking_turns_count": 3,
+          "error_thinking_traces": [],
+          "tool_calls_count": 4,
+          "tool_calls_by_name": {
+            "read_file": 1,
+            "write_file": 1,
+            "run_command": 1,
+            "finish": 1
+          },
+          "tool_errors_count": 0,
+          "failed_commands": [],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-11-23T02:49:53Z",
+              "input_tokens": 10727,
+              "output_tokens": 660,
+              "cache_read_tokens": 0,
+              "tools": [
+                "read_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-11-23T02:50:01Z",
+              "input_tokens": 5537,
+              "output_tokens": 16873,
+              "cache_read_tokens": 8556,
+              "tools": [
+                "write_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-11-23T02:52:17Z",
+              "input_tokens": 15145,
+              "output_tokens": 310,
+              "cache_read_tokens": 15897,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-11-23T02:52:28Z",
+              "input_tokens": 2431,
+              "output_tokens": 395,
+              "cache_read_tokens": 29267,
+              "tools": [
+                "finish"
+              ]
+            }
+          ],
+          "from_v3_telemetry_snapshot": false,
+          "terminal_status": "DONE",
+          "blocked_reason": "",
+          "compile_attempts_count": 0,
+          "compile_first_passed": null,
+          "first_compile_rules": [],
+          "category": "cta_mapper",
+          "shard_id": null,
+          "spawn_step": 22,
+          "spawn_time": "2026-11-23T02:49:53Z",
+          "model": "inherit",
+          "competencies": [],
+          "competencies_count": 0,
+          "tokens_per_competency": 0.0
+        }
+      ],
+      "mappers_max_wall_time": 203.0,
+      "harmonizer": {
+        "conversation_id": "16be374e-2609-4c6b-8b87-8b104579c1ec",
+        "label": "CTA Harmonizer",
+        "start_time": "2026-11-23T02:53:18+00:00",
+        "end_time": "2026-11-23T02:55:16+00:00",
+        "start_iso": "2026-11-23T02:53:18+00:00",
+        "end_iso": "2026-11-23T02:55:16+00:00",
+        "duration_seconds": 118.0,
+        "duration_minutes": 1.97,
+        "turns_count": 4,
+        "input_tokens": 42956,
+        "output_tokens": 15367,
+        "cache_read_tokens": 74797,
+        "thinking_tokens": 2888,
+        "active_tokens": 58323,
+        "total_tokens": 133120,
+        "cost_usd": 0.19,
+        "cost_breakdown_usd": {
+          "input_usd": 0.06,
+          "output_usd": 0.12,
+          "cache_read_usd": 0.01,
+          "total_usd": 0.19
+        },
+        "thinking_chars": 11555,
+        "thinking_turns_count": 3,
+        "error_thinking_traces": [],
+        "tool_calls_count": 5,
+        "tool_calls_by_name": {
+          "read_file": 2,
+          "write_file": 1,
+          "run_command": 1,
+          "finish": 1
+        },
+        "tool_errors_count": 0,
+        "failed_commands": [],
+        "steps": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-23T02:53:18Z",
+            "input_tokens": 9954,
+            "output_tokens": 448,
+            "cache_read_tokens": 0,
+            "tools": [
+              "read_file",
+              "read_file"
+            ]
+          },
+          {
+            "step_index": 4,
+            "created_at": "2026-11-23T02:53:23Z",
+            "input_tokens": 16204,
+            "output_tokens": 14340,
+            "cache_read_tokens": 9999,
+            "tools": [
+              "write_file"
+            ]
+          },
+          {
+            "step_index": 6,
+            "created_at": "2026-11-23T02:55:05Z",
+            "input_tokens": 14387,
+            "output_tokens": 229,
+            "cache_read_tokens": 26232,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 8,
+            "created_at": "2026-11-23T02:55:11Z",
+            "input_tokens": 2411,
+            "output_tokens": 350,
+            "cache_read_tokens": 38566,
+            "tools": [
+              "finish"
+            ]
+          }
+        ],
+        "from_v3_telemetry_snapshot": false,
+        "terminal_status": "DONE",
+        "blocked_reason": "",
+        "compile_attempts_count": 0,
+        "compile_first_passed": null,
+        "first_compile_rules": [],
+        "category": "cta_harmonizer",
+        "shard_id": null,
+        "spawn_step": 22,
+        "spawn_time": "2026-11-23T02:49:53Z",
+        "model": "inherit",
+        "competencies": [],
+        "competencies_count": 0,
+        "tokens_per_competency": 0.0
+      },
+      "harmonizers": [
+        {
+          "conversation_id": "16be374e-2609-4c6b-8b87-8b104579c1ec",
+          "label": "CTA Harmonizer",
+          "start_time": "2026-11-23T02:53:18+00:00",
+          "end_time": "2026-11-23T02:55:16+00:00",
+          "start_iso": "2026-11-23T02:53:18+00:00",
+          "end_iso": "2026-11-23T02:55:16+00:00",
+          "duration_seconds": 118.0,
+          "duration_minutes": 1.97,
+          "turns_count": 4,
+          "input_tokens": 42956,
+          "output_tokens": 15367,
+          "cache_read_tokens": 74797,
+          "thinking_tokens": 2888,
+          "active_tokens": 58323,
+          "total_tokens": 133120,
+          "cost_usd": 0.19,
+          "cost_breakdown_usd": {
+            "input_usd": 0.06,
+            "output_usd": 0.12,
+            "cache_read_usd": 0.01,
+            "total_usd": 0.19
+          },
+          "thinking_chars": 11555,
+          "thinking_turns_count": 3,
+          "error_thinking_traces": [],
+          "tool_calls_count": 5,
+          "tool_calls_by_name": {
+            "read_file": 2,
+            "write_file": 1,
+            "run_command": 1,
+            "finish": 1
+          },
+          "tool_errors_count": 0,
+          "failed_commands": [],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-11-23T02:53:18Z",
+              "input_tokens": 9954,
+              "output_tokens": 448,
+              "cache_read_tokens": 0,
+              "tools": [
+                "read_file",
+                "read_file"
+              ]
+            },
+            {
+              "step_index": 4,
+              "created_at": "2026-11-23T02:53:23Z",
+              "input_tokens": 16204,
+              "output_tokens": 14340,
+              "cache_read_tokens": 9999,
+              "tools": [
+                "write_file"
+              ]
+            },
+            {
+              "step_index": 6,
+              "created_at": "2026-11-23T02:55:05Z",
+              "input_tokens": 14387,
+              "output_tokens": 229,
+              "cache_read_tokens": 26232,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 8,
+              "created_at": "2026-11-23T02:55:11Z",
+              "input_tokens": 2411,
+              "output_tokens": 350,
+              "cache_read_tokens": 38566,
+              "tools": [
+                "finish"
+              ]
+            }
+          ],
+          "from_v3_telemetry_snapshot": false,
+          "terminal_status": "DONE",
+          "blocked_reason": "",
+          "compile_attempts_count": 0,
+          "compile_first_passed": null,
+          "first_compile_rules": [],
+          "category": "cta_harmonizer",
+          "shard_id": null,
+          "spawn_step": 22,
+          "spawn_time": "2026-11-23T02:49:53Z",
+          "model": "inherit",
+          "competencies": [],
+          "competencies_count": 0,
+          "tokens_per_competency": 0.0
+        }
+      ],
+      "harmonizer_duration": 118.0,
+      "total_stage_wall_time": 321.0,
+      "total_input_tokens": 167074,
+      "total_output_tokens": 79710,
+      "total_cache_tokens": 348578,
+      "total_active_tokens": 246784,
+      "cost_usd": 0.87,
+      "cost_breakdown_usd": {
+        "input_usd": 0.25,
+        "output_usd": 0.6,
+        "cache_read_usd": 0.03,
+        "total_usd": 0.87
+      },
+      "critical_mapper": "Cognitive Task Analysis Architect part_03"
+    },
+    "stage_3_authors": {
+      "shards_count": 0,
+      "shards": [],
+      "min_duration_seconds": 0.0,
+      "median_duration_seconds": 0.0,
+      "max_duration_seconds": 0.0,
+      "straggler_shard": "N/A",
+      "straggler_delay_vs_median": 0.0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "total_author_active_tokens": 0,
+      "total_author_cache_tokens": 0,
+      "cost_usd": 0.0,
+      "cost_breakdown_usd": {
+        "input_usd": 0.0,
+        "output_usd": 0.0,
+        "cache_read_usd": 0.0,
+        "total_usd": 0.0
+      },
+      "avg_tokens_per_competency": 0.0,
+      "first_compile_passed_count": 0,
+      "first_compile_total": 0,
+      "first_compile_pass_rate": 0.0,
+      "first_compile_top_rules": []
+    },
+    "stage_3b_repairs": {
+      "repairs_count": 0,
+      "repairs": [],
+      "total_repair_rounds": 0,
+      "repair_rounds": [],
+      "blocked_repairs_count": 0,
+      "done_repairs_count": 0,
+      "min_duration_seconds": 0.0,
+      "median_duration_seconds": 0.0,
+      "max_duration_seconds": 0.0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "total_active_tokens": 0,
+      "total_cache_tokens": 0,
+      "cost_usd": 0.0,
+      "cost_breakdown_usd": {
+        "input_usd": 0.0,
+        "output_usd": 0.0,
+        "cache_read_usd": 0.0,
+        "total_usd": 0.0
+      },
+      "slowest_repair": "N/A"
+    },
+    "stage_5_judges": {
+      "judges_count": 0,
+      "judge_waves_count": 1,
+      "judges": [],
+      "max_judge_duration": 0.0,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "total_active_tokens": 0,
+      "total_cache_tokens": 0,
+      "cost_usd": 0.0,
+      "cost_breakdown_usd": {
+        "input_usd": 0.0,
+        "output_usd": 0.0,
+        "cache_read_usd": 0.0,
+        "total_usd": 0.0
+      },
+      "repairs_count": 0,
+      "repairs": [],
+      "passed_first_attempt": false,
+      "has_rejudge": false,
+      "round_1_passed": null,
+      "round_1_discrepancies_count": 0,
+      "round_1_flaw_detected_count": 0,
+      "round_1_kernel_override_count": 0,
+      "round_1_agreement_rate": null,
+      "final_passed": false,
+      "rounds_history": [],
+      "agreement_rate": 0.0,
+      "discrepancies_count": 0,
+      "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+      "batch_items_count": 30,
+      "initial_errors_count": 0,
+      "repair_iterations": 0,
+      "supervisor_interventions_count": 0,
+      "infra_interventions_count": 0,
+      "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+      "actions_taken": [
+        "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+        "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+        "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 30 reactivos."
+      ]
+    }
+  },
+  "orchestrator_audit": {
+    "metrics": {
+      "conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+      "label": "Director (Orchestrator)",
+      "start_time": "2026-11-23T02:45:07+00:00",
+      "end_time": "2026-11-23T02:49:53+00:00",
+      "start_iso": "2026-11-23T02:45:07+00:00",
+      "end_iso": "2026-11-23T02:49:53+00:00",
+      "duration_seconds": 286.0,
+      "duration_minutes": 4.77,
+      "turns_count": 6,
+      "input_tokens": 120027,
+      "output_tokens": 44218,
+      "cache_read_tokens": 259242,
+      "thinking_tokens": 247,
+      "active_tokens": 164245,
+      "total_tokens": 423487,
+      "cost_usd": 0.53,
+      "cost_breakdown_usd": {
+        "input_usd": 0.18,
+        "output_usd": 0.33,
+        "cache_read_usd": 0.02,
+        "total_usd": 0.53
+      },
+      "thinking_chars": 996,
+      "thinking_turns_count": 4,
+      "error_thinking_traces": [],
+      "tool_calls_count": 17,
+      "tool_calls_by_name": {
+        "read_file": 6,
+        "run_command": 1,
+        "update_focus": 2,
+        "update_steps": 2,
+        "define_subagent": 5,
+        "run_workflow": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-11-23T02:45:07Z",
+          "input_tokens": 15854,
+          "output_tokens": 163,
+          "cache_read_tokens": 0,
+          "tools": [
+            "read_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-11-23T02:45:11Z",
+          "input_tokens": 13130,
+          "output_tokens": 651,
+          "cache_read_tokens": 15902,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-11-23T02:45:20Z",
+          "input_tokens": 2996,
+          "output_tokens": 907,
+          "cache_read_tokens": 26985,
+          "tools": [
+            "update_focus",
+            "update_steps",
+            "read_file",
+            "read_file",
+            "read_file",
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-11-23T02:45:29Z",
+          "input_tokens": 43200,
+          "output_tokens": 41380,
+          "cache_read_tokens": 30039,
+          "tools": [
+            "define_subagent",
+            "define_subagent",
+            "define_subagent",
+            "define_subagent",
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-11-23T02:49:45Z",
+          "input_tokens": 41820,
+          "output_tokens": 613,
+          "cache_read_tokens": 73283,
+          "tools": [
+            "update_steps",
+            "update_focus",
+            "run_workflow"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-11-23T02:49:53Z",
+          "input_tokens": 3027,
+          "output_tokens": 504,
+          "cache_read_tokens": 113033,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": false,
+      "terminal_status": "UNKNOWN",
+      "blocked_reason": "",
+      "compile_attempts_count": 0,
+      "compile_first_passed": null,
+      "first_compile_rules": []
+    },
+    "time_decomposition": {
+      "cli_execution_seconds": 3.0,
+      "cli_execution_minutes": 0.05,
+      "supervisor_repair_seconds": 0.0,
+      "supervisor_repair_minutes": 0.0,
+      "barrier_wait_seconds": 0.0,
+      "barrier_wait_minutes": 0.0,
+      "model_thinking_seconds": 58.0,
+      "model_thinking_minutes": 0.97,
+      "total_tracked_seconds": 61.0
+    },
+    "interventions_count": 0,
+    "interventions": [],
+    "frictions": {
+      "hook_denials_count": 0,
+      "hook_denials": [],
+      "malformed_tool_calls_count": 0,
+      "malformed_tool_calls": [],
+      "run_workflow_count": 1,
+      "legacy_invoke_subagent_count": 0,
+      "legacy_manage_kill_count": 0,
+      "is_hybrid_workflow_fallback": false
+    }
+  },
+  "bottlenecks": [],
+  "subagents": [
+    {
+      "conversation_id": "ab1118d1-2d0b-4e3e-a318-29a343a9e33f",
+      "label": "Cognitive Task Analysis Architect part_02",
+      "start_time": "2026-11-23T02:49:53+00:00",
+      "end_time": "2026-11-23T02:53:15+00:00",
+      "start_iso": "2026-11-23T02:49:53+00:00",
+      "end_iso": "2026-11-23T02:53:15+00:00",
+      "duration_seconds": 202.0,
+      "duration_minutes": 3.37,
+      "turns_count": 6,
+      "input_tokens": 46456,
+      "output_tokens": 22299,
+      "cache_read_tokens": 148083,
+      "thinking_tokens": 4167,
+      "active_tokens": 68755,
+      "total_tokens": 216838,
+      "cost_usd": 0.25,
+      "cost_breakdown_usd": {
+        "input_usd": 0.07,
+        "output_usd": 0.17,
+        "cache_read_usd": 0.01,
+        "total_usd": 0.25
+      },
+      "thinking_chars": 16676,
+      "thinking_turns_count": 5,
+      "error_thinking_traces": [
+        {
+          "step_index": 6,
+          "created_at": "2026-11-23T02:52:43Z",
+          "thinking_snippet": "Attempting to compile the CTA part with the provided command. The command specifies input, output, and manifest paths for the compilation process. This step is crucial for transforming the content into the desired output format."
+        }
+      ],
+      "tool_calls_count": 6,
+      "tool_calls_by_name": {
+        "read_file": 1,
+        "write_file": 1,
+        "run_command": 2,
+        "edit_file": 1,
+        "finish": 1
+      },
+      "tool_errors_count": 1,
+      "failed_commands": [
+        {
+          "step_index": 6,
+          "snippet": "Created At: 2026-11-22T21:52:43-05:00\nCompleted At: 2026-11-22T21:52:45-05:00\nCreated At: 2026-11-22T21:52:43-05:00\nCompleted At: 2026-11-22T21:52:45-05:00\nCommand exited with code 1.\n\nCommand output:"
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-11-23T02:49:53Z",
+          "input_tokens": 10728,
+          "output_tokens": 682,
+          "cache_read_tokens": 0,
+          "tools": [
+            "read_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-11-23T02:50:00Z",
+          "input_tokens": 12417,
+          "output_tokens": 19619,
+          "cache_read_tokens": 7436,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-11-23T02:52:35Z",
+          "input_tokens": 16047,
+          "output_tokens": 333,
+          "cache_read_tokens": 23503,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-11-23T02:52:45Z",
+          "input_tokens": 2464,
+          "output_tokens": 1047,
+          "cache_read_tokens": 38038,
+          "tools": [
+            "edit_file"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-11-23T02:52:59Z",
+          "input_tokens": 2670,
+          "output_tokens": 180,
+          "cache_read_tokens": 39020,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-11-23T02:53:07Z",
+          "input_tokens": 2130,
+          "output_tokens": 438,
+          "cache_read_tokens": 40086,
+          "tools": [
+            "finish"
+          ]
+        }
+      ],
+      "from_v3_telemetry_snapshot": false,
+      "terminal_status": "DONE",
+      "blocked_reason": "",
+      "compile_attempts_count": 0,
+      "compile_first_passed": null,
+      "first_compile_rules": [],
+      "category": "cta_mapper",
+      "shard_id": null,
+      "spawn_step": 22,
+      "spawn_time": "2026-11-23T02:49:53Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "4cc67548-78c8-4dc9-914c-ae9f19375c37",
+      "label": "Cognitive Task Analysis Architect part_03",
+      "start_time": "2026-11-23T02:49:53+00:00",
+      "end_time": "2026-11-23T02:53:16+00:00",
+      "start_iso": "2026-11-23T02:49:53+00:00",
+      "end_iso": "2026-11-23T02:53:16+00:00",
+      "duration_seconds": 203.0,
+      "duration_minutes": 3.38,
+      "turns_count": 4,
+      "input_tokens": 43822,
+      "output_tokens": 23806,
+      "cache_read_tokens": 71978,
+      "thinking_tokens": 3890,
+      "active_tokens": 67628,
+      "total_tokens": 139606,
+      "cost_usd": 0.25,
+      "cost_breakdown_usd": {
+        "input_usd": 0.07,
+        "output_usd": 0.18,
+        "cache_read_usd": 0.01,
+        "total_usd": 0.25
+      },
+      "thinking_chars": 15562,
+      "thinking_turns_count": 3,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "read_file": 1,
+        "write_file": 1,
+        "run_command": 1,
+        "finish": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-11-23T02:49:53Z",
+          "input_tokens": 10725,
+          "output_tokens": 618,
+          "cache_read_tokens": 0,
+          "tools": [
+            "read_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-11-23T02:50:00Z",
+          "input_tokens": 12521,
+          "output_tokens": 22460,
+          "cache_read_tokens": 7255,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-11-23T02:52:58Z",
+          "input_tokens": 18344,
+          "output_tokens": 329,
+          "cache_read_tokens": 23968,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-11-23T02:53:06Z",
+          "input_tokens": 2232,
+          "output_tokens": 399,
+          "cache_read_tokens": 40755,
+          "tools": [
+            "finish"
+          ]
+        }
+      ],
+      "from_v3_telemetry_snapshot": false,
+      "terminal_status": "DONE",
+      "blocked_reason": "",
+      "compile_attempts_count": 0,
+      "compile_first_passed": null,
+      "first_compile_rules": [],
+      "category": "cta_mapper",
+      "shard_id": null,
+      "spawn_step": 22,
+      "spawn_time": "2026-11-23T02:49:53Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "73cfdb63-f1ca-458b-9009-33689951f927",
+      "label": "Cognitive Task Analysis Architect part_01",
+      "start_time": "2026-11-23T02:49:53+00:00",
+      "end_time": "2026-11-23T02:52:37+00:00",
+      "start_iso": "2026-11-23T02:49:53+00:00",
+      "end_iso": "2026-11-23T02:52:37+00:00",
+      "duration_seconds": 164.0,
+      "duration_minutes": 2.73,
+      "turns_count": 4,
+      "input_tokens": 33840,
+      "output_tokens": 18238,
+      "cache_read_tokens": 53720,
+      "thinking_tokens": 3524,
+      "active_tokens": 52078,
+      "total_tokens": 105798,
+      "cost_usd": 0.19,
+      "cost_breakdown_usd": {
+        "input_usd": 0.05,
+        "output_usd": 0.14,
+        "cache_read_usd": 0.0,
+        "total_usd": 0.19
+      },
+      "thinking_chars": 14098,
+      "thinking_turns_count": 3,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "read_file": 1,
+        "write_file": 1,
+        "run_command": 1,
+        "finish": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-11-23T02:49:53Z",
+          "input_tokens": 10727,
+          "output_tokens": 660,
+          "cache_read_tokens": 0,
+          "tools": [
+            "read_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-11-23T02:50:01Z",
+          "input_tokens": 5537,
+          "output_tokens": 16873,
+          "cache_read_tokens": 8556,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-11-23T02:52:17Z",
+          "input_tokens": 15145,
+          "output_tokens": 310,
+          "cache_read_tokens": 15897,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-11-23T02:52:28Z",
+          "input_tokens": 2431,
+          "output_tokens": 395,
+          "cache_read_tokens": 29267,
+          "tools": [
+            "finish"
+          ]
+        }
+      ],
+      "from_v3_telemetry_snapshot": false,
+      "terminal_status": "DONE",
+      "blocked_reason": "",
+      "compile_attempts_count": 0,
+      "compile_first_passed": null,
+      "first_compile_rules": [],
+      "category": "cta_mapper",
+      "shard_id": null,
+      "spawn_step": 22,
+      "spawn_time": "2026-11-23T02:49:53Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "16be374e-2609-4c6b-8b87-8b104579c1ec",
+      "label": "CTA Harmonizer",
+      "start_time": "2026-11-23T02:53:18+00:00",
+      "end_time": "2026-11-23T02:55:16+00:00",
+      "start_iso": "2026-11-23T02:53:18+00:00",
+      "end_iso": "2026-11-23T02:55:16+00:00",
+      "duration_seconds": 118.0,
+      "duration_minutes": 1.97,
+      "turns_count": 4,
+      "input_tokens": 42956,
+      "output_tokens": 15367,
+      "cache_read_tokens": 74797,
+      "thinking_tokens": 2888,
+      "active_tokens": 58323,
+      "total_tokens": 133120,
+      "cost_usd": 0.19,
+      "cost_breakdown_usd": {
+        "input_usd": 0.06,
+        "output_usd": 0.12,
+        "cache_read_usd": 0.01,
+        "total_usd": 0.19
+      },
+      "thinking_chars": 11555,
+      "thinking_turns_count": 3,
+      "error_thinking_traces": [],
+      "tool_calls_count": 5,
+      "tool_calls_by_name": {
+        "read_file": 2,
+        "write_file": 1,
+        "run_command": 1,
+        "finish": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-11-23T02:53:18Z",
+          "input_tokens": 9954,
+          "output_tokens": 448,
+          "cache_read_tokens": 0,
+          "tools": [
+            "read_file",
+            "read_file"
+          ]
+        },
+        {
+          "step_index": 4,
+          "created_at": "2026-11-23T02:53:23Z",
+          "input_tokens": 16204,
+          "output_tokens": 14340,
+          "cache_read_tokens": 9999,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 6,
+          "created_at": "2026-11-23T02:55:05Z",
+          "input_tokens": 14387,
+          "output_tokens": 229,
+          "cache_read_tokens": 26232,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 8,
+          "created_at": "2026-11-23T02:55:11Z",
+          "input_tokens": 2411,
+          "output_tokens": 350,
+          "cache_read_tokens": 38566,
+          "tools": [
+            "finish"
+          ]
+        }
+      ],
+      "from_v3_telemetry_snapshot": false,
+      "terminal_status": "DONE",
+      "blocked_reason": "",
+      "compile_attempts_count": 0,
+      "compile_first_passed": null,
+      "first_compile_rules": [],
+      "category": "cta_harmonizer",
+      "shard_id": null,
+      "spawn_step": 22,
+      "spawn_time": "2026-11-23T02:49:53Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    }
+  ],
+  "pipeline_state": {
+    "course_id": "solow_m20_v12_gemini_3_8_medium",
+    "conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+    "started_at": "2026-11-23T02:45:19.917709+00:00",
+    "updated_at": "2026-11-23T02:55:18.670433+00:00",
+    "last_stage": "01_cta",
+    "status": "completed",
+    "stages": {
+      "00_prepare": {
+        "stage_idx": "00",
+        "stage_name": "prepare",
+        "status": "completed",
+        "recorded_at": "2026-11-23T02:45:19.910090+00:00",
+        "duration_seconds": 0.05,
+        "subagents_count": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "thinking": 0,
+          "total": 0
+        }
+      },
+      "00b_bootstrap": {
+        "stage_idx": "00b",
+        "stage_name": "bootstrap",
+        "status": "completed",
+        "recorded_at": "2026-11-23T02:45:19.960497+00:00",
+        "duration_seconds": 0.1,
+        "subagents_count": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "thinking": 0,
+          "total": 0
+        }
+      },
+      "01_cta": {
+        "stage_idx": "01",
+        "stage_name": "cta",
+        "status": "completed",
+        "recorded_at": "2026-11-23T02:55:18.663771+00:00",
+        "duration_seconds": 0.74,
+        "subagents_count": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cached": 0,
+          "thinking": 0,
+          "total": 0
+        }
+      }
+    },
+    "artifact_counts": {
+      "pages": 36,
+      "competencies": 15,
+      "shards": 0,
+      "templates_compiled": 0,
+      "questions_built": 0
+    },
+    "tokens_total": {
+      "input": 0,
+      "output": 0,
+      "cached": 0,
+      "thinking": 0,
+      "total": 0
+    },
+    "subagents_summary": [],
+    "cohorts_summary": {},
+    "thinking_traces_summary": {
+      "total_thinking_turns": 0,
+      "total_thinking_chars": 0,
+      "total_thinking_tokens": 0,
+      "subagents_with_thinking": 0
+    }
+  },
+  "telemetry_snapshots": [
+    {
+      "stage_idx": "00",
+      "stage_name": "prepare",
+      "status": "completed",
+      "recorded_at": "2026-11-23T02:45:19.910090+00:00",
+      "duration_seconds": 0.05,
+      "conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+      "stage_tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "thinking": 0,
+        "total": 0
+      },
+      "subagents": [],
+      "cohorts_summary": {},
+      "metadata": {
+        "duration_seconds": 0.04681563377380371
+      },
+      "collector_overhead_ms": 7.18
+    },
+    {
+      "stage_idx": "00b",
+      "stage_name": "bootstrap",
+      "status": "completed",
+      "recorded_at": "2026-11-23T02:45:19.960497+00:00",
+      "duration_seconds": 0.1,
+      "conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+      "stage_tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "thinking": 0,
+        "total": 0
+      },
+      "subagents": [],
+      "cohorts_summary": {},
+      "metadata": {
+        "duration_seconds": 0.09723377227783203,
+        "lock_file": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_m20_v12_gemini_3_8_medium\\work\\.c2c_subagent_lock.json"
+      },
+      "collector_overhead_ms": 5.55
+    },
+    {
+      "stage_idx": "01",
+      "stage_name": "cta",
+      "status": "completed",
+      "recorded_at": "2026-11-23T02:55:18.663771+00:00",
+      "duration_seconds": 0.74,
+      "conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+      "stage_tokens": {
+        "input": 0,
+        "output": 0,
+        "cached": 0,
+        "thinking": 0,
+        "total": 0
+      },
+      "subagents": [],
+      "cohorts_summary": {},
+      "metadata": {
+        "duration_seconds": 0.7394542694091797,
+        "competencies": 15
+      },
+      "collector_overhead_ms": 6.81
+    }
+  ],
+  "thinking_traces_summary": {
+    "total_thinking_turns": 18,
+    "total_thinking_chars": 58887,
+    "total_thinking_tokens": 14716,
+    "orchestrator_thinking_turns": 4,
+    "orchestrator_thinking_chars": 996,
+    "subagents_thinking_turns": 14,
+    "subagents_thinking_chars": 57891,
+    "stage_snapshots": {
+      "total_thinking_turns": 0,
+      "total_thinking_chars": 0,
+      "total_thinking_tokens": 0,
+      "subagents_with_thinking": 0
+    }
+  }
+}

@@ -1,0 +1,666 @@
+{
+  "course_id": "solow_m20_v12_gemini_3_8_medium_complete",
+  "conversation_id": "416315e2-972e-44e0-9978-8349aa3f3a83",
+  "run_dir": "reports\\c2c_audits\\20261122_224530_solow_m20_v12_gemini_3_8_medium_complete_416315e2",
+  "total_shards": 15,
+  "total_repairs": 0,
+  "median_wall_time_s": 410.0,
+  "median_repair_wall_time_s": 0.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_13",
+    "label": "Shard Author shard_13",
+    "conversation_id": "8d592715-dbf0-408b-bf72-79840d9b0308",
+    "wall_time_s": 320.0,
+    "pre_1st_compile_s": 301.0,
+    "post_1st_compile_s": 19.0,
+    "compile_runs": 1,
+    "compile_fails": 0,
+    "edits_count": 0,
+    "turns_count": 4,
+    "active_tokens": 117053,
+    "thinking_tokens": 7387,
+    "competencies_count": 2,
+    "error_codes": [],
+    "error_snippets": [],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": "The initial step involves reading the data file. The scope lock and rules are inspected to understand the access permissions and transformation instructions. The intent is to read the input and prepare for processing via a compilation command.   "
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "7d1de0bb-ba06-4f8a-9da0-57aecdceea9c",
+      "wall_time_s": 706.0,
+      "pre_1st_compile_s": 480.0,
+      "post_1st_compile_s": 226.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 154836,
+      "thinking_tokens": 9315,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-KATEX]",
+        "[TPL-DYNAMIC-RATIONALE]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The author data needs to be read from its source and then written to the shard's data file. A compilation step is needed to process this data.   "
+    },
+    {
+      "shard_id": "shard_15",
+      "label": "Shard Author shard_15",
+      "conversation_id": "5b579a3a-b664-4d3d-926f-1a708d93f8ee",
+      "wall_time_s": 598.0,
+      "pre_1st_compile_s": 459.0,
+      "post_1st_compile_s": 139.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 5,
+      "turns_count": 11,
+      "active_tokens": 203392,
+      "thinking_tokens": 11649,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[INVARIANT]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the instruction to read the specified work order file. The instruction specifies a `.md` file, indicating a potential need to parse markdown content. There is an explicit scope lock on the read operation, meaning the task is limit"
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "cc86851c-06e8-42f8-be36-6cdaa6e8ce18",
+      "wall_time_s": 561.0,
+      "pre_1st_compile_s": 377.0,
+      "post_1st_compile_s": 184.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 188915,
+      "thinking_tokens": 12666,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Shard author is `shard_02`, working on the specified work order and data file. The task involves reading from and writing to the designated file paths. This establishes the context for the current operation.   "
+    },
+    {
+      "shard_id": "shard_14",
+      "label": "Shard Author shard_14",
+      "conversation_id": "28372824-ac75-46d1-9d51-f0e9642aa7d4",
+      "wall_time_s": 540.0,
+      "pre_1st_compile_s": 395.0,
+      "post_1st_compile_s": 145.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 3,
+      "turns_count": 9,
+      "active_tokens": 184154,
+      "thinking_tokens": 7974,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "e6799825-4e99-41c6-8583-ebcf58501d96",
+      "wall_time_s": 520.0,
+      "pre_1st_compile_s": 354.0,
+      "post_1st_compile_s": 166.0,
+      "compile_runs": 4,
+      "compile_fails": 4,
+      "edits_count": 7,
+      "turns_count": 18,
+      "active_tokens": 170491,
+      "thinking_tokens": 8665,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-TAUTOLOGICAL-IDENTITY]"
+      ],
+      "error_snippets": [
+        "ModuleNotFoundError: No module named 'c2c_ver'",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_13",
+      "label": "Shard Author shard_13",
+      "conversation_id": "8d592715-dbf0-408b-bf72-79840d9b0308",
+      "wall_time_s": 320.0,
+      "pre_1st_compile_s": 301.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 4,
+      "active_tokens": 117053,
+      "thinking_tokens": 7387,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The initial step involves reading the data file. The scope lock and rules are inspected to understand the access permissions and transformation instructions. The intent is to read the input and prepare for processing via a compilation command.   "
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "bc74499a-4af3-4101-83cf-b4f87f32331b",
+      "wall_time_s": 343.0,
+      "pre_1st_compile_s": 324.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 120263,
+      "thinking_tokens": 7005,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The instructions specify reading from one file and writing to another, followed by compilation. The files and compilation target seem specific to \"shard_09.\" Focused on data transfer and code generation for this shard.   "
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "e2a442ac-fd91-4e1a-97b4-e9c0019c7325",
+      "wall_time_s": 356.0,
+      "pre_1st_compile_s": 278.0,
+      "post_1st_compile_s": 78.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 4,
+      "turns_count": 11,
+      "active_tokens": 132809,
+      "thinking_tokens": 5702,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-D4]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: The task involves reading a specified data file and preparing for writing, implying a data processing or transformation operation is needed. The instructions indicate a scope lock, limiting actions to reading and writing within th"
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "58ec5208-fc69-4f0c-8171-c492b783a2d4",
+      "wall_time_s": 358.0,
+      "pre_1st_compile_s": 271.0,
+      "post_1st_compile_s": 87.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 127408,
+      "thinking_tokens": 6295,
+      "competencies_count": 1,
+      "error_codes": [
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Processing data for shard author `shard_10`. The input order and scope lock indicate the system is reading data from a specified file path and then writing the processed output to a corresponding directory.   "
+    },
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "25712d4d-029f-4489-85bb-514f0d2ce162",
+      "wall_time_s": 392.0,
+      "pre_1st_compile_s": 250.0,
+      "post_1st_compile_s": 142.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 6,
+      "active_tokens": 140839,
+      "thinking_tokens": 6772,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-KATEX]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (7 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Analyzing the task involves reading a file and preparing to write to a specified directory, associated with a particular author and shard. Initial step is to ensure correct file reading based on the provided work order details. Focus is on handling t"
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "7d1de0bb-ba06-4f8a-9da0-57aecdceea9c",
+      "wall_time_s": 706.0,
+      "pre_1st_compile_s": 480.0,
+      "post_1st_compile_s": 226.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 154836,
+      "thinking_tokens": 9315,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-KATEX]",
+        "[TPL-DYNAMIC-RATIONALE]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The author data needs to be read from its source and then written to the shard's data file. A compilation step is needed to process this data.   "
+    },
+    {
+      "shard_id": "shard_15",
+      "label": "Shard Author shard_15",
+      "conversation_id": "5b579a3a-b664-4d3d-926f-1a708d93f8ee",
+      "wall_time_s": 598.0,
+      "pre_1st_compile_s": 459.0,
+      "post_1st_compile_s": 139.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 5,
+      "turns_count": 11,
+      "active_tokens": 203392,
+      "thinking_tokens": 11649,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[INVARIANT]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the instruction to read the specified work order file. The instruction specifies a `.md` file, indicating a potential need to parse markdown content. There is an explicit scope lock on the read operation, meaning the task is limit"
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "cc86851c-06e8-42f8-be36-6cdaa6e8ce18",
+      "wall_time_s": 561.0,
+      "pre_1st_compile_s": 377.0,
+      "post_1st_compile_s": 184.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 188915,
+      "thinking_tokens": 12666,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "</SYSTEM_MESSAGE>"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Shard author is `shard_02`, working on the specified work order and data file. The task involves reading from and writing to the designated file paths. This establishes the context for the current operation.   "
+    },
+    {
+      "shard_id": "shard_14",
+      "label": "Shard Author shard_14",
+      "conversation_id": "28372824-ac75-46d1-9d51-f0e9642aa7d4",
+      "wall_time_s": 540.0,
+      "pre_1st_compile_s": 395.0,
+      "post_1st_compile_s": 145.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 3,
+      "turns_count": 9,
+      "active_tokens": 184154,
+      "thinking_tokens": 7974,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "e6799825-4e99-41c6-8583-ebcf58501d96",
+      "wall_time_s": 520.0,
+      "pre_1st_compile_s": 354.0,
+      "post_1st_compile_s": 166.0,
+      "compile_runs": 4,
+      "compile_fails": 4,
+      "edits_count": 7,
+      "turns_count": 18,
+      "active_tokens": 170491,
+      "thinking_tokens": 8665,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-TAUTOLOGICAL-IDENTITY]"
+      ],
+      "error_snippets": [
+        "ModuleNotFoundError: No module named 'c2c_ver'",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)",
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "a774c7b2-873c-442f-a9b7-091dc6525f7c",
+      "wall_time_s": 516.0,
+      "pre_1st_compile_s": 377.0,
+      "post_1st_compile_s": 139.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 162016,
+      "thinking_tokens": 8559,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-DYNAMIC-RATIONALE]",
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (7 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The task involves reading a specific file path. The file path is being validated to ensure correct data retrieval. It appears the operation focuses on a data file with author information.   "
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "b3cd2210-41db-4d2e-b783-119ff46acd0c",
+      "wall_time_s": 463.0,
+      "pre_1st_compile_s": 346.0,
+      "post_1st_compile_s": 117.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 4,
+      "turns_count": 13,
+      "active_tokens": 164829,
+      "thinking_tokens": 8729,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-STEM-SYMBOL-PARITY]",
+        "[TPL-ORPHAN-VARS]",
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the instructions and the scope lock. The task involves reading from a specified file path and writing to another, followed by compilation using a designated script. Understanding the file paths and the compilation process is criti"
+    },
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "7d43257a-3a1f-4eda-8ef8-812874d77355",
+      "wall_time_s": 410.0,
+      "pre_1st_compile_s": 387.0,
+      "post_1st_compile_s": 23.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 6,
+      "active_tokens": 147488,
+      "thinking_tokens": 7869,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial inspection of the work order indicates a file read operation is required. The instruction specifies reading a data file located at the provided path. Scope-lock confirms the authorized operation and target file.   "
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "bf50ba4c-44e3-4eb6-a416-6fbba4d9a032",
+      "wall_time_s": 399.0,
+      "pre_1st_compile_s": 364.0,
+      "post_1st_compile_s": 35.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 142772,
+      "thinking_tokens": 8709,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Reviewing the instructions, the focus is on acting as Shard Author `shard_06` and processing the specified data file. The work order and I/O paths are confirmed. Proceeding with the assigned task.   "
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "9170332c-e02a-44c0-850b-6221d313af86",
+      "wall_time_s": 398.0,
+      "pre_1st_compile_s": 268.0,
+      "post_1st_compile_s": 130.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 6,
+      "turns_count": 15,
+      "active_tokens": 150854,
+      "thinking_tokens": 8410,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-TAUTOLOGICAL-IDENTITY]",
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Checking for the specified scope lock and instructions, specifically read and write paths. It appears the task involves reading data from a specified location and writing to another. Additionally, compilation via a particular script is required.   "
+    },
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "25712d4d-029f-4489-85bb-514f0d2ce162",
+      "wall_time_s": 392.0,
+      "pre_1st_compile_s": 250.0,
+      "post_1st_compile_s": 142.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 6,
+      "active_tokens": 140839,
+      "thinking_tokens": 6772,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-ORPHAN-VARS]",
+        "[TPL-KATEX]",
+        "[TPL-STATIC-OPT]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (7 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Analyzing the task involves reading a file and preparing to write to a specified directory, associated with a particular author and shard. Initial step is to ensure correct file reading based on the provided work order details. Focus is on handling t"
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "58ec5208-fc69-4f0c-8171-c492b783a2d4",
+      "wall_time_s": 358.0,
+      "pre_1st_compile_s": 271.0,
+      "post_1st_compile_s": 87.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 127408,
+      "thinking_tokens": 6295,
+      "competencies_count": 1,
+      "error_codes": [
+        "[INVARIANT]"
+      ],
+      "error_snippets": [
+        "[UMBRAL >= 6 (6 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Processing data for shard author `shard_10`. The input order and scope lock indicate the system is reading data from a specified file path and then writing the processed output to a corresponding directory.   "
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "e2a442ac-fd91-4e1a-97b4-e9c0019c7325",
+      "wall_time_s": 356.0,
+      "pre_1st_compile_s": 278.0,
+      "post_1st_compile_s": 78.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 4,
+      "turns_count": 11,
+      "active_tokens": 132809,
+      "thinking_tokens": 5702,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-D4]"
+      ],
+      "error_snippets": [
+        "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: The task involves reading a specified data file and preparing for writing, implying a data processing or transformation operation is needed. The instructions indicate a scope lock, limiting actions to reading and writing within th"
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "bc74499a-4af3-4101-83cf-b4f87f32331b",
+      "wall_time_s": 343.0,
+      "pre_1st_compile_s": 324.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 120263,
+      "thinking_tokens": 7005,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The instructions specify reading from one file and writing to another, followed by compilation. The files and compilation target seem specific to \"shard_09.\" Focused on data transfer and code generation for this shard.   "
+    },
+    {
+      "shard_id": "shard_13",
+      "label": "Shard Author shard_13",
+      "conversation_id": "8d592715-dbf0-408b-bf72-79840d9b0308",
+      "wall_time_s": 320.0,
+      "pre_1st_compile_s": 301.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 4,
+      "active_tokens": 117053,
+      "thinking_tokens": 7387,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The initial step involves reading the data file. The scope lock and rules are inspected to understand the access permissions and transformation instructions. The intent is to read the input and prepare for processing via a compilation command.   "
+    }
+  ],
+  "repairs": []
+}

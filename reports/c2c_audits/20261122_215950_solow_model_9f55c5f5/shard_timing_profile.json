@@ -1,0 +1,14 @@
+{
+  "course_id": "solow_model",
+  "conversation_id": "9f55c5f5-818d-4c7e-ba6b-4b45a48ef1e8",
+  "run_dir": "reports\\c2c_audits\\20261122_215950_solow_model_9f55c5f5",
+  "total_shards": 0,
+  "total_repairs": 0,
+  "median_wall_time_s": 0.0,
+  "median_repair_wall_time_s": 0.0,
+  "gold_standard_cleanroom": null,
+  "top_5_stragglers": [],
+  "top_5_fastest": [],
+  "all_shards": [],
+  "repairs": []
+}

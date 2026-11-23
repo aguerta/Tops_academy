@@ -1,0 +1,14 @@
+{
+  "course_id": "solow_m20_v12_gemini_3_8_medium",
+  "conversation_id": "54548735-251f-4b3c-8a37-597035f99b66",
+  "run_dir": "reports\\c2c_audits\\20261122_215951_solow_m20_v12_gemini_3_8_medium_54548735",
+  "total_shards": 0,
+  "total_repairs": 0,
+  "median_wall_time_s": 0.0,
+  "median_repair_wall_time_s": 0.0,
+  "gold_standard_cleanroom": null,
+  "top_5_stragglers": [],
+  "top_5_fastest": [],
+  "all_shards": [],
+  "repairs": []
+}

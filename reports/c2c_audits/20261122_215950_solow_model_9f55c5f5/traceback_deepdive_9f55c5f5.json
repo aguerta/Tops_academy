@@ -1,0 +1,190 @@
+{
+  "conversation_id": "9f55c5f5-818d-4c7e-ba6b-4b45a48ef1e8",
+  "global_timings": {
+    "wall_clock_seconds": 392.0,
+    "wall_clock_minutes": 6.53,
+    "total_turns": 34,
+    "total_errors": 4,
+    "avg_inference_pct": 96.95,
+    "avg_tool_pct": 3.05
+  },
+  "stage_telemetry_v3": {
+    "work_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_model\\work",
+    "telemetry_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_model\\work\\telemetry\\by_conversation\\9f55c5f5-818d-4c7e-ba6b-4b45a48ef1e8",
+    "conversation_id_verified": true,
+    "snapshots_count": 4,
+    "stages": [
+      {
+        "stage_key": "00_prepare",
+        "stage_index": "00",
+        "stage_name": "prepare",
+        "timestamp": "2026-11-23T02:48:59.852036+00:00",
+        "duration_seconds": 0.06,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.056029558181762695
+        }
+      },
+      {
+        "stage_key": "00b_bootstrap",
+        "stage_index": "00b",
+        "stage_name": "bootstrap",
+        "timestamp": "2026-11-23T02:48:59.905169+00:00",
+        "duration_seconds": 0.11,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.10824418067932129,
+          "lock_file": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\solow_model\\work\\.c2c_subagent_lock.json"
+        }
+      },
+      {
+        "stage_key": "01_cta",
+        "stage_index": "01",
+        "stage_name": "cta",
+        "timestamp": "2026-11-23T02:58:00.623023+00:00",
+        "duration_seconds": 0.66,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.662015438079834,
+          "competencies": 18
+        }
+      },
+      {
+        "stage_key": "02_shard",
+        "stage_index": "02",
+        "stage_name": "shard",
+        "timestamp": "2026-11-23T02:58:01.989044+00:00",
+        "duration_seconds": 0.03,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.027106523513793945,
+          "shards": 13
+        }
+      }
+    ]
+  },
+  "thinking_traces": {
+    "total_thinking_turns": 0,
+    "total_thinking_chars": 0,
+    "agents": {}
+  },
+  "cta_architect": {
+    "CTA Architect (part_01)": {
+      "timings": {
+        "wall_time_seconds": 63.0,
+        "wall_time_minutes": 1.05,
+        "inference_seconds": 62.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.4,
+        "tool_pct": 1.6,
+        "turns_count": 4,
+        "input_tokens": 21784,
+        "output_tokens": 5018,
+        "cache_tokens": 39305,
+        "active_tokens": 26802
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_02)": {
+      "timings": {
+        "wall_time_seconds": 120.0,
+        "wall_time_minutes": 2.0,
+        "inference_seconds": 118.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 98.3,
+        "tool_pct": 1.7,
+        "turns_count": 5,
+        "input_tokens": 33676,
+        "output_tokens": 12309,
+        "cache_tokens": 84467,
+        "active_tokens": 45985
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_03)": {
+      "timings": {
+        "wall_time_seconds": 107.0,
+        "wall_time_minutes": 1.78,
+        "inference_seconds": 106.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 99.1,
+        "tool_pct": 0.9,
+        "turns_count": 5,
+        "input_tokens": 31727,
+        "output_tokens": 9932,
+        "cache_tokens": 80459,
+        "active_tokens": 41659
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Harmonizer": {
+      "timings": {
+        "wall_time_seconds": 39.0,
+        "wall_time_minutes": 0.65,
+        "inference_seconds": 32.0,
+        "tool_seconds": 6.0,
+        "inference_pct": 82.1,
+        "tool_pct": 15.4,
+        "turns_count": 8,
+        "input_tokens": 39073,
+        "output_tokens": 2172,
+        "cache_tokens": 157707,
+        "active_tokens": 41245
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    }
+  },
+  "shards": {},
+  "repairs": {},
+  "judges": {},
+  "error_taxonomy": {
+    "CTA Compilation & Schema Errors (CTA-SCHEMA / CTA-EV / DAG Cycle)": [
+      {
+        "agent": "Orchestrator",
+        "step_index": 5,
+        "snippet": "Command exited with code 1. | Command output: | usage: run.py [-h] | [--stage {prepare,ingest,cta,shard,templates,build,verify,publish,0,1,2",
+        "thinking": ""
+      },
+      {
+        "agent": "CTA Harmonizer",
+        "step_index": 11,
+        "snippet": "Command exited with code 1. | Command output: | FAIL: apply_harmonize failed: [CONSOLIDATED ERROR PACK] apply_harmonize failed (1 errors): |",
+        "thinking": ""
+      }
+    ],
+    "Non-Zero CLI Exit / Subprocess Probe (Exit Code 1)": [
+      {
+        "agent": "CTA Architect (part_02)",
+        "step_index": 4,
+        "snippet": "Encountered error in step execution: declaring permissions: failed to parse path: courses/solow_model/work/cta_parts/part_02_data.py must be",
+        "thinking": ""
+      },
+      {
+        "agent": "CTA Architect (part_03)",
+        "step_index": 4,
+        "snippet": "Encountered error in step execution: declaring permissions: failed to parse path: courses/solow_model/work/cta_parts/part_03_data.py must be",
+        "thinking": ""
+      }
+    ]
+  }
+}
