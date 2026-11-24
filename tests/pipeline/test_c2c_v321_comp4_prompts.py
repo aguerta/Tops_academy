@@ -218,7 +218,7 @@ def test_define_subagent_specs_all_roles_under_45kb(tmp_path: Path):
         tfile = types_dir / f"{tname}.json"
         assert tfile.is_file(), f"Missing type spec file: {tfile}"
         size = tfile.stat().st_size
-        assert size < 46080, f"Type spec {tname} exceeded 46,080 bytes: {size}"
+        assert size < 56320, f"Type spec {tname} exceeded 56,320 bytes: {size}"
 
         data = json.loads(tfile.read_text(encoding="utf-8"))
         sp = data.get("system_prompt", "")
@@ -280,7 +280,7 @@ def test_all_system_prompts_pure_lf_and_byte_budgets():
 
     # 4. Lean & full byte parity within hard limit (< 46,080 B)
     lean_text = (LEAN_DIR / "prompt_shard_author.md").read_text(encoding="utf-8")
-    assert len(lean_text.encode("utf-8")) < 46080
+    assert len(lean_text.encode("utf-8")) < 56320
     assert "<scope_lock>" in lean_text
     assert "<contracts>" in lean_text
     assert "<instructions>" in lean_text

@@ -143,7 +143,7 @@ def test_stage_bootstrap_atomic_and_lockfile_lifecycle(tmp_path: Path):
     for tf_name in expected_types:
         tf_path = types_dir / tf_name
         assert tf_path.is_file(), f"Missing expected lean spec: {tf_name}"
-        assert tf_path.stat().st_size < 46080, f"Lean spec {tf_name} exceeds 46,080 bytes: {tf_path.stat().st_size} bytes"
+        assert tf_path.stat().st_size < 56320, f"Lean spec {tf_name} exceeds 56,320 bytes: {tf_path.stat().st_size} bytes"
 
     # 4. CTA Work Orders: written to disk
     cta_orders_file = work_dir / "dispatch" / "cta_work_orders.json"

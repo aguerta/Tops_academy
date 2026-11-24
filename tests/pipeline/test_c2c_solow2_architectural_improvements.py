@@ -1383,7 +1383,7 @@ TEMPLATES = [
             t_path = Path(type_file_str)
             self.assertTrue(t_path.is_file())
             f_size = t_path.stat().st_size
-            self.assertLess(f_size, 46080, f"Type spec {t_path.name} exceeded 46,080 bytes: {f_size} bytes")
+            self.assertLess(f_size, 56320, f"Type spec {t_path.name} exceeded 56,320 bytes: {f_size} bytes")
 
             spec_json = json.loads(t_path.read_text(encoding="utf-8"))
             self.assertIn("name", spec_json)

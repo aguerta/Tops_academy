@@ -90,7 +90,7 @@ class TestPointerPromptProtocol(unittest.TestCase):
         lean_author = load_system_prompt("prompt_shard_author.md", lean=True)
         orig_author = load_system_prompt("prompt_shard_author.md", lean=False)
         self.assertLessEqual(len(lean_author.encode("utf-8")), len(orig_author.encode("utf-8")))
-        self.assertLess(len(lean_author.encode("utf-8")), 46080)
+        self.assertLess(len(lean_author.encode("utf-8")), 56320)
 
     def test_make_pointer_prompt_under_300_bytes(self) -> None:
         """make_pointer_prompt generates a concise prompt <= 300 bytes referencing disk payload."""

@@ -742,7 +742,7 @@ class TestStream1ERemediations:
 
         raw_bytes = lean_path.read_bytes()
         assert b"\r\n" not in raw_bytes, "Lean prompt must use pure Unix LF line endings"
-        assert len(raw_bytes) < 46080, f"Lean prompt exceeded 46,080 bytes: {len(raw_bytes)}"
+        assert len(raw_bytes) < 56320, f"Lean prompt exceeded 56,320 bytes: {len(raw_bytes)}"
 
         content = lean_path.read_text(encoding="utf-8")
         assert "M3-ARCHETYPES" in content

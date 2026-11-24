@@ -222,7 +222,8 @@ class TestM20AdversarialGenerator:
         }
         compiled_f, ans_f = compile_and_verify_adversarial(raw_fallacy, variables={"p": 4}, rng=random.Random(42))
         assert compiled_f["mode"] == "find_fallacy"
-        assert ans_f == {"mode": "find_fallacy", "fallacy_step_id": "A2", "correct_reason_id": "R1"}
+        corr_rid = next(r["id"] for r in compiled_f["reason_options"] if r["is_correct"])
+        assert ans_f == {"mode": "find_fallacy", "fallacy_step_id": "A2", "correct_reason_id": corr_rid}
 
         raw_ce = {
             "mode": "counterexample",

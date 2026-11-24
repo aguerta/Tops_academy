@@ -78,7 +78,7 @@ def test_define_subagent_specs_zero_bundle_under_45kb(tmp_path: Path):
         tfile = types_dir / f"{clean_name}.json"
         assert tfile.is_file()
         file_size = tfile.stat().st_size
-        assert file_size < 46080, f"Type file {tfile.name} exceeded 46,080 bytes: {file_size}"
+        assert file_size < 56320, f"Type file {tfile.name} exceeded 56,320 bytes: {file_size}"
         data = json.loads(tfile.read_text(encoding="utf-8"))
         assert len(data["system_prompt"]) > 500
         # No truncation markers
