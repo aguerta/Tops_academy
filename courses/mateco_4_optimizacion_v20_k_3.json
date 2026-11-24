@@ -1189,7 +1189,7 @@
       "interaction_type": "invariant_canvas",
       "type": "invariant_canvas",
       "context_application": "Evaluación conceptual y procedimental para C-01",
-      "stem": "Sobre el arco óptimo lineal que une $y(0)=5$ con $y(6)=21$ en $[0,6]$ ($3>0$), localice el punto medio $P_1$ en $t=3$:",
+      "stem": "Sobre el arco óptimo lineal que une $y(0)=5$ con $y(6)=21$ en $[0,6]$, localice el punto medio $P_1$ en $t=3$:",
       "hints": [
         "Como $y''(t)=0$, la trayectoria óptima es una recta entre los dos extremos.",
         "El punto medio temporal $t=3$ promedia las ordenadas extremas.",
@@ -1462,7 +1462,7 @@
       "interaction_type": "invariant_canvas",
       "type": "invariant_canvas",
       "context_application": "Evaluación conceptual y procedimental para C-01",
-      "stem": "En el problema variacional con $y(t)=4+4t$ sobre $[0,7]$ ($6>0$), coloque $P_1$ en $t=7$ y sincronice el deslizador `yT` al valor final:",
+      "stem": "En el problema variacional con $y(t)=4+4t$ sobre $[0,7]$, coloque $P_1$ en $t=7$ y sincronice el deslizador `yT` al valor final:",
       "hints": [
         "Calcule el valor terminal evaluando $y(7)=4+4 \\cdot 7$.",
         "Ubique $P_1$ sobre la recta en la abscisa final $t=7$.",
@@ -2739,7 +2739,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para C-01",
-      "stem": "Compare el criterio de Legendre en $V[x]=\\int_0^{5}(-9\\dot{x}^2+7x)\\,dt$ y $W[x]=\\int_0^{5}(9\\dot{x}^2+7x)\\,dt$ ($9>0$) y elija las ciertas:",
+      "stem": "Compare el criterio de Legendre en $V[x]=\\int_0^{5}(-9\\dot{x}^2+7x)\\,dt$ y $W[x]=\\int_0^{5}(9\\dot{x}^2+7x)\\,dt$ y elija las ciertas:",
       "hints": [
         "Calcule la segunda derivada parcial respecto a $\\dot{x}$ en ambos funcionales.",
         "Máximo requiere $F_{\\dot{x}\\dot{x}} \\le 0$ y mínimo requiere $G_{\\dot{x}\\dot{x}} \\ge 0$.",
@@ -4423,7 +4423,7 @@
         "Si el término terminal se anula ($2=0$), Bolza se reduce a Lagrange.",
         "La función terminal siempre se evalúa en $t=14$, nunca en $t=0$."
       ],
-      "detailed_solution": "Paso 1: Bolza suma la integral en $[0,14]$ y el término $2y(14)$. Paso 2: Si $2=0$, desaparece la parte terminal y queda Lagrange.",
+      "detailed_solution": "Paso 1: Bolza suma la integral en $[0,14]$ y el término $2y(14)$. Paso 2: Si la componente terminal $G \\equiv 0$, desaparece la parte terminal y queda Lagrange.",
       "common_misconception_warning": "Recuerde que el problema de Bolza combina ambos términos: la integral de Lagrange más la función terminal de Mayer.",
       "misconception_warning": "Recuerde que el problema de Bolza combina ambos términos: la integral de Lagrange más la función terminal de Mayer.",
       "interface_config": {
@@ -4436,7 +4436,7 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "Si $2=0$, el funcional de Bolza se reduce al de Lagrange",
+          "content": "Si la componente terminal $G \\equiv 0$, el funcional de Bolza se reduce al de Lagrange",
           "is_correct": true,
           "error_rationale": null
         },
@@ -4484,7 +4484,7 @@
         "Si el término terminal se anula ($8=0$), Bolza se reduce a Lagrange.",
         "La función terminal siempre se evalúa en $t=7$, nunca en $t=0$."
       ],
-      "detailed_solution": "Paso 1: Bolza suma la integral en $[0,7]$ y el término $8y(7)$. Paso 2: Si $8=0$, desaparece la parte terminal y queda Lagrange.",
+      "detailed_solution": "Paso 1: Bolza suma la integral en $[0,7]$ y el término $8y(7)$. Paso 2: Si la componente terminal $G \\equiv 0$, desaparece la parte terminal y queda Lagrange.",
       "common_misconception_warning": "Recuerde que el problema de Bolza combina ambos términos: la integral de Lagrange más la función terminal de Mayer.",
       "misconception_warning": "Recuerde que el problema de Bolza combina ambos términos: la integral de Lagrange más la función terminal de Mayer.",
       "interface_config": {
@@ -4520,7 +4520,7 @@
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "Si $8=0$, el funcional de Bolza se reduce al de Lagrange",
+          "content": "Si la componente terminal $G \\equiv 0$, el funcional de Bolza se reduce al de Lagrange",
           "is_correct": true,
           "error_rationale": null
         }
@@ -4545,7 +4545,7 @@
         "Si el término terminal se anula ($4=0$), Bolza se reduce a Lagrange.",
         "La función terminal siempre se evalúa en $t=13$, nunca en $t=0$."
       ],
-      "detailed_solution": "Paso 1: Bolza suma la integral en $[0,13]$ y el término $4y(13)$. Paso 2: Si $4=0$, desaparece la parte terminal y queda Lagrange.",
+      "detailed_solution": "Paso 1: Bolza suma la integral en $[0,13]$ y el término $4y(13)$. Paso 2: Si la componente terminal $G \\equiv 0$, desaparece la parte terminal y queda Lagrange.",
       "common_misconception_warning": "Recuerde que el problema de Bolza combina ambos términos: la integral de Lagrange más la función terminal de Mayer.",
       "misconception_warning": "Recuerde que el problema de Bolza combina ambos términos: la integral de Lagrange más la función terminal de Mayer.",
       "interface_config": {
@@ -4566,7 +4566,7 @@
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "Si $4=0$, el funcional de Bolza se reduce al de Lagrange",
+          "content": "Si la componente terminal $G \\equiv 0$, el funcional de Bolza se reduce al de Lagrange",
           "is_correct": true,
           "error_rationale": null
         },
@@ -43631,7 +43631,7 @@
       "interaction_type": "open_symbolic",
       "type": "open_symbolic",
       "context_application": "Evaluación conceptual y procedimental para Hab-09",
-      "stem": "Para $F(x,\\dot{x})=5x^2+2x\\dot{x}+3\\dot{x}^2$ ($3>0$), traduzca $u=\\dot{x}$ y deduzca mediante $F_x-\\frac{dF_{\\dot{x}}}{dt}=0$ la expresión de $\\ddot{x}$ en términos de $x$:",
+      "stem": "Para $F(x,\\dot{x})=5x^2+2x\\dot{x}+3\\dot{x}^2$, traduzca $u=\\dot{x}$ y deduzca mediante $F_x-\\frac{dF_{\\dot{x}}}{dt}=0$ la expresión de $\\ddot{x}$ en términos de $x$:",
       "hints": [
         "Calcule $F_x = 2 \\cdot 5 x + 2 u$ y $F_u = 2 x + 2 \\cdot 3 u$ con $u=\\dot{x}$.",
         "Aplique la derivada total respecto al tiempo: $\\frac{dF_u}{dt} = 2 \\dot{x} + 2 \\cdot 3 \\dot{u}$.",
@@ -43755,7 +43755,7 @@
       "interaction_type": "open_symbolic",
       "type": "open_symbolic",
       "context_application": "Evaluación conceptual y procedimental para Hab-09",
-      "stem": "Considere el funcional $\\int_0^T (3x^2+3xu+7u^2)\\,dt$ con $u=\\dot{x}$ y $H=F(x,u)+\\lambda u$ ($7>0$). Aplicando la equivalencia de Euler $F_x-\\frac{dF_u}{dt}=0$, exprese $\\ddot{x}$ en función de $x$:",
+      "stem": "Considere el funcional $\\int_0^T (3x^2+3xu+7u^2)\\,dt$ con $u=\\dot{x}$ y $H=F(x,u)+\\lambda u$. Aplicando la equivalencia de Euler $F_x-\\frac{dF_u}{dt}=0$, exprese $\\ddot{x}$ en función de $x$:",
       "hints": [
         "Calcule $F_x = 2 \\cdot 3 x + 3 u$ y $F_u = 3 x + 2 \\cdot 7 u$ con $u=\\dot{x}$.",
         "Aplique la derivada total respecto al tiempo: $\\frac{dF_u}{dt} = 3 \\dot{x} + 2 \\cdot 7 \\dot{u}$.",
@@ -43817,7 +43817,7 @@
       "interaction_type": "open_symbolic",
       "type": "open_symbolic",
       "context_application": "Evaluación conceptual y procedimental para Hab-09",
-      "stem": "Para $F(x,\\dot{x})=3x^2+5x\\dot{x}+2\\dot{x}^2$ ($2>0$), traduzca $u=\\dot{x}$ y deduzca mediante $F_x-\\frac{dF_{\\dot{x}}}{dt}=0$ la expresión de $\\ddot{x}$ en términos de $x$:",
+      "stem": "Para $F(x,\\dot{x})=3x^2+5x\\dot{x}+2\\dot{x}^2$, traduzca $u=\\dot{x}$ y deduzca mediante $F_x-\\frac{dF_{\\dot{x}}}{dt}=0$ la expresión de $\\ddot{x}$ en términos de $x$:",
       "hints": [
         "Calcule $F_x = 2 \\cdot 3 x + 5 u$ y $F_u = 5 x + 2 \\cdot 2 u$ con $u=\\dot{x}$.",
         "Aplique la derivada total respecto al tiempo: $\\frac{dF_u}{dt} = 5 \\dot{x} + 2 \\cdot 2 \\dot{u}$.",
