@@ -3,7 +3,8 @@
 
 - **Fecha de Evaluación:** 2026-11-22
 - **Evaluador:** `course_qa_auditor` — Top's Academy (Modo Agéntico: Fast Deterministic Pass + Adaptive Semantic Loop)
-- **Estado en Plataforma:** ACTIVO (`platform_validation_error: null`)
+- **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 04:14:50  
 - **Calificación Final Certificada:** **19.92 / 20.00 pts**
 - **Quality Tier:** **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**
 - **Mastery Path Readiness Index (MPRI):** **99.65 / 100.00** (`GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo`)

@@ -1,5 +1,10 @@
 # Reporte de Auditoría Técnica, Psicométrica y Pedagógica — `solow_m20_v11`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-24 04:14:50**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 04:14:50  
 > [!IMPORTANT]
 > **Veredicto Ejecutivo**: El curso **`solow_m20_v11` ("Solow M20 V11")** alcanza una calificación global de **19.30 / 20.00 puntos** (**Tier: EXCELENTE (17.0 - 20.0)**) y un **Mastery Path Readiness Index (`MPRI`) de 96.68 / 100.00** (**GOLD MASTERY PATH**). El banco de **621 reactivos** distribuidos en **20 micro-competencias** demuestra una ejecución sobresaliente del contrato M20 (`0.00%` MC7, `100.00%` evocación activa/discriminación condicional, `100.00%` calibración tri-banda ZPD y `100.00%` acuerdo en arbitraje ciego Stage-5 sobre 155 ítems auditados). No obstante, el **Loop de Verificación Semántica Adaptativa** identificó **tres hallazgos de rigor matemático y psicométrico** que impiden la perfección absoluta y se registran como nuevas reglas candidatas (`discovered_lint_rules`):
 > 1. **Error algebraico de especificación en `Q-Hab07-473` (Hab-07)**: En el modelo Cobb-Douglas con progreso tecnológico neutral de Hicks ($Y = e^{gt}K^a L^{1-a}$, con $a = 0.3, b = 1 - a = 0.7$), la tasa asintótica de crecimiento del producto es $g_Y = n + \frac{g}{b}$ (igual a la del capital $g_K$), o bajo otra convención $g_Y = n + \frac{a g}{b}$ si el cambio técnico no se reescala. El enunciado escribe $g_Y = n + \frac{g}{0.7}$, mientras que el `misconception_warning` contradice directamente la fórmula del enunciado afirmando que la tasa de $Y$ es $n + \frac{a g}{b}$ (que supera a $n + g$ si $a > 1/2$).

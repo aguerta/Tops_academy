@@ -1,5 +1,10 @@
 # Reporte de Auditoría QA: `solow_v13_m20` (Solow V13 M20)
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-24 04:14:51**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 04:14:51  
 **Calificación Final QM-OSCQR**: **19.92 / 20.00** — **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**  
 **Índice de Preparación para el Dominio (MPRI)**: **99.65 / 100.00** — **GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo**  
 **Fecha de Auditoría**: 2026-11-24  

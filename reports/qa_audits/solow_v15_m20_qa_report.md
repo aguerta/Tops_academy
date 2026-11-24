@@ -1,5 +1,10 @@
 # Auditoría de Calidad Pedagógica, Psicométrica y Path-to-Mastery v2.0: `solow_v15_m20`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-24 04:14:51**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 04:14:51  
 **Curso:** Solow V15 M20 (`solow_v15_m20.json`)  
 **Calificación Normativa QM-OSCQR:** **20.00 / 20.00** — *EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY*  
 **Mastery Path Readiness Index (MPRI):** **100.00 / 100.00** — *GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo*  

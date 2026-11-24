@@ -1,5 +1,10 @@
 # Auditoría de Calidad Pedagógica, Psicométrica y Path-to-Mastery: `solow_m20_v7`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-24 04:14:50**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 04:14:50  
 > **Veredicto Ejecutivo**: **19.94 / 20.00** — **EXCELENTE (17.00 - 20.00 pts) — PLATINUM MASTERY**  
 > **Mastery Path Readiness Index (MPRI)**: **99.85 / 100.00** — **GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo**  
 > **Fecha de Auditoría**: 2026-11-22 | **Reactivos**: 470 | **Competencias**: 20 (2 Hechos, 11 Conceptos, 7 Habilidades) | **Jueces Ciegos Stage-5**: 145/145 (100.00% acuerdo)
