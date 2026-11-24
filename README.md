@@ -26,14 +26,15 @@ An end-to-end neuro-symbolic educational platform and multi-agent pipeline that 
 3. [Single Command Launcher](#single-command-launcher)
 4. [Practice Platform & Antigravity Study Harness Features](#practice-platform--antigravity-study-harness-features)
 5. [4-Axis Authoring Architecture & 6 Higher-Order Bloom Modalities (M20)](#4-axis-authoring-architecture--6-higher-order-bloom-modalities-m20)
-6. [Course Bank Format, KaTeXAST & Validator CLI (23 Rules + 3 Strict + MPRI)](#course-bank-format-katexast--validator-cli-23-rules--3-strict--mpri)
-7. [Content-to-Course Antigravity Skill Ecosystem (7 Skills)](#content-to-course-antigravity-skill-ecosystem-7-skills)
-8. [Automated Test Matrix (4 Isolated Domains + E2E)](#automated-test-matrix-4-isolated-domains--e2e)
-9. [Active Production Courses & Benchmark Telemetry](#active-production-courses--benchmark-telemetry)
-10. [Certified Milestones Registry (M1 – M20-B)](#certified-milestones-registry-m1--m20-b)
-11. [Active Engineering Roadmap (`FUTURE_MILESTONES.md`)](#active-engineering-roadmap-future_milestonesmd)
-12. [Repository Structure](#repository-structure)
-13. [License](#license)
+6. [Hard Limits of Deterministic App-Grading ($0 API) & How to Cover the Gaps](#hard-limits-of-deterministic-app-grading-0-api--how-to-cover-the-gaps)
+7. [Course Bank Format, KaTeXAST & Validator CLI (23 Rules + 3 Strict + MPRI)](#course-bank-format-katexast--validator-cli-23-rules--3-strict--mpri)
+8. [Content-to-Course Antigravity Skill Ecosystem (7 Skills)](#content-to-course-antigravity-skill-ecosystem-7-skills)
+9. [Automated Test Matrix (4 Isolated Domains + E2E)](#automated-test-matrix-4-isolated-domains--e2e)
+10. [Active Production Courses & Benchmark Telemetry](#active-production-courses--benchmark-telemetry)
+11. [Certified Milestones Registry (M1 – M20-B)](#certified-milestones-registry-m1--m20-b)
+12. [Active Engineering Roadmap (`FUTURE_MILESTONES.md`)](#active-engineering-roadmap-future_milestonesmd)
+13. [Repository Structure](#repository-structure)
+14. [License](#license)
 
 ---
 
@@ -50,6 +51,7 @@ All architectural specifications, historical certifications, and active roadmaps
 | 📋 [`docs/PROJECT.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/PROJECT.md) | **Core Project Specification:** Foundation contracts, schema interfaces, and baseline subsystem definitions. |
 | 🧪 [`docs/TEST_INFRA.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/TEST_INFRA.md) & [`docs/TEST_READY.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/TEST_READY.md) | **Test Infrastructure & Readiness Specs:** E2E Playwright harness design and verification checklists. |
 | 📐 [`docs/specs/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/) | **Deep Technical Specifications:** Detailed specs for Study Harness ([`m06_study_harness.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md)), FSRS-5/6 SRS ([`m08_srs_fsrs_fluency.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m08_srs_fsrs_fluency.md)), Hierarchical ContentCore ([`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md)), Mastery 2.0 ([`m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md)), Formal Kernel ([`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md)), and 4-Axis Archetypes ([`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md)). |
+| 🔬 [`docs/investigaciones/05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md) | **First-Principles Cognitive Audit & Deterministic Boundary:** Rigorous analysis of what `$0 API` deterministic grading can and cannot improve, `N=1` falsifiable hypotheses, and Milestone 22 gating. |
 
 ---
 
@@ -192,6 +194,49 @@ To eradicate syntactic overfitting and passive option elimination, Milestone 20 
 
 ---
 
+## Hard Limits of Deterministic App-Grading ($0 API) & How to Cover the Gaps
+
+Top's Academy operates under a **hard `$0 API` deterministic-grading constraint** (offline-first PWA, zero paid runtime LLM calls). Under first principles, this architectural boundary strictly determines which components of **Adaptive Expertise** the platform can improve—and which ones it **cannot** reliably grade or train.
+
+### 1. What Deterministic App-Grading CAN vs. CANNOT Improve
+
+Expertise develops sequentially: **Fluency first** (automating core schemas to free working memory), followed by **Flexibility / Adaptive Expertise** (breaking template overfitting under novel framing).
+
+| Capability / Cognitive Mechanism | Deterministic App-Grading (`$0 API`) | Exact Scope & Boundary |
+| :--- | :---: | :--- |
+| **Routine Fluency & Retention** (automated operators, `D-XX-YY` trap immunity, `FSRS-5/6` spacing, timed execution) | **Strong** | Fully verifiable via exact numeric/symbolic equivalence (`mathjs`/`SymPy`) and spaced retrieval schedules. |
+| **1. Deep Structure vs. Surface Dissociation** (recognizing the underlying math under unfamiliar cover stories/notation; spotting violated regularity conditions) | **Supported (bounded)** | Verifiable when unit labels are stripped (*Fuzzy Boundary* selection) or when counterexample witnesses / violated hypotheses are checked deterministically. |
+| **2. Expert Decision-Tree Gating** (qualitative/structural analysis before jumping to algebra) | **Supported (partial)** | Verifiable via forced pre-computation checkpoints (sign, convexity, convergence regime, identifiability, boundary behavior) before symbolic execution. |
+| **3. Controlled Variety (Anti-Overfitting)** (interleaving + rotating `direct` $\to$ `inverse` $\to$ `perturbation` $\to$ `boundary` invariants) | **Supported** | Verifiable deterministically when `archetype` metadata and cross-unit sampling are active. |
+| **4. Open-Ended Synthesis & Model Defense** (writing long blank-page proofs, defending empirical/economic assumptions on noisy data, natural-language causal explanation) | **Cannot be graded** | **Permanently outside the deterministic boundary.** Any in-app attempt without an authoritative grader degrades into self-grading and reinforces the *Illusion of Explanatory Depth*. |
+
+### 2. First-Principles Reasons Behind These Limits
+
+1. **Verification Physics:** Deterministic grading requires a machine-checkable invariant (algebraic equivalence, numeric tolerance, finite topological graph, counterexample witness, or executable test assertions). Arbitrary prose proofs and empirical model adequacy ("are these assumptions realistic for this dataset?") have no canonical syntactic invariant.
+2. **Closed-Scaffolding Illusion:** Even higher-order interactive widgets (`proof_dag` Parsons-style step ordering, `unstructured_model` role selectors, `adversarial_break` fixed-list selection) remove the hardest part of expert reasoning—**blank-page problem formulation**. High scores on scaffolded widgets do not guarantee cold blank-page transfer.
+3. **Why Proof Assistants (Lean 4) Do Not Solve Student Grading:**
+   - *Extraneous Cognitive Load:* Human working memory holds ~4 chunks. Asking an economics or statistics student to learn domain theory *while* fighting dependent-type syntax, Mathlib lemma names, and tactic mechanics turns domain practice into a compiler-fluency bottleneck. Wrapping Lean 4 in tactic dropdowns merely recreates `proof_dag`.
+   - *Formal vs. Empirical Adequacy:* Lean 4 verifies deductive validity from fixed axioms; it cannot verify whether a mathematical model's assumptions match a messy real-world scenario.
+4. **Why Fast / On-Device "System 1" LLMs (e.g., Gemini Nano / Non-Thinking Flash) Do Not Solve It:**
+   - Auditing a novel mathematical proof or open model defense is a **System 2** deliberative task (catching subtle quantifier swaps, boundary exceptions, and hidden logical leaps). Fast/small System-1 models exhibit high false-positive rates on plausible-sounding mathematical prose and hallucinate counterexamples—producing **authoritative false confidence**, which is worse than having no grader. Cloud frontier System-2 APIs break the hard `$0 API` offline constraint.
+5. **Small-Sample Sparsity (`N = 1`):** For a solo learner, statistical models like IRT/Elo or ultra-granular `competency × archetype × D-XX-YY` FSRS split review history into too many sparse cells to beat competency-level scheduling.
+
+### 3. Self-Learner Practice Protocol: What You Must Do Outside the App to Cover These Gaps
+
+Treat Top's Academy as your **Fluency + Formal Discrimination Engine**, not a complete substitute for deliberative mathematical work. **Follow the cognitive sequence**: build core fluency and trap immunity inside the app *first* (so working memory is free), then deliberately practice the uncovered gaps off-app:
+
+| Gap Left by Deterministic App-Grading | What a Self-Learner Must Practice Off-App | Concrete Verification / Anti-Self-Deception Rule |
+| :--- | :--- | :--- |
+| **Blank-Page Problem Formulation** (closed-scaffolding illusion in `proof_dag`, `unstructured_model`, labeled units) | **Cold Unlabeled Problem Sets:** Take 2–3 mixed past-exam or textbook problems from *different* chapters without looking at chapter titles. Before writing any algebra, write down: *(1) which theorem/model applies and why*, *(2) what regularity conditions must hold*, and *(3) what qualitative behavior (sign, boundary, limit) you expect*. | Do not open hints or solutions until your formulation is written on paper. If you picked the wrong model, log it as a **framing failure**, not a calculation slip. |
+| **Long Blank-Page Proofs & Open Synthesis** (Mechanism 4 — ungradable deterministically) | **Weekly Blank-Page "Shop Time" (30–60 min):** Derive 1–2 foundational theorems per unit from scratch on blank paper or LaTeX—with zero pre-written blocks, zero hints, and zero reference slides. | Audit every step against the reference proof or paste your written proof into an external **System-2 reasoning model** / peer review instructed strictly to hunt for *unstated assumptions, invalid quantifier swaps, and logical leaps*. |
+| **Empirical Model Defense & Noisy Data** (formal vs. empirical adequacy) | **Open Modeling / Simulation Drills:** Take a real or synthetic noisy dataset (Python/R) and defend *why* a given estimator, objective, or equilibrium model fits—and explicitly test what breaks when a key assumption is violated. | Write down your prediction *before* running the simulation, then compare against empirical residuals or edge-case breakdowns. |
+| **Illusion of Explanatory Depth** (confusing in-app recognition with causal understanding) | **Delayed Self-Explanation ($\ge 15\text{ min}$ after closing the app):** Take a break away from the screen, then write a 3–5 bullet causal explanation of a core theorem or mechanism from memory (why it works and when it fails). | Compare line-by-line against lecture slides or the textbook. Any hand-waved step ("and then by standard properties...") marks an unlearned link you must re-derive. |
+| **Unverified Real-World Transfer** (high in-app scores vs. real exam performance) | **Post-Exam Transfer Audit:** After every timed university exam or mock paper, tag every missed point into one of three buckets: *(a) Fluency/recall lapse*, *(b) Framing/model-selection failure*, or *(c) Open synthesis / proof-writing gap*. | Only buckets *(a)* and *(b)* should be fixed by more Top's Academy drills; bucket *(c)* requires more blank-page Shop Time and external System-2 critique. |
+
+*Full first-principles audit and falsifiable `N=1` telemetry design: [`docs/investigaciones/05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md).*
+
+---
+
 ## Course Bank Format, KaTeXAST & Validator CLI (23 Rules + 3 Strict + MPRI)
 
 Course banks are validated through a 3-pass deterministic validator (`src/validator/`) and a 7-linter **Mastery Pedagogical Rigor Index (MPRI / 100 pts)** pre-publish quality gate:
@@ -328,7 +373,8 @@ Current engineering priorities tracked in [`docs/future_milestones/FUTURE_MILEST
 | :---: | :--- | :--- | :--- |
 | 🧬 **P0** | **Milestone 19: Sustainable Scaling to $k=4$ (`1,284+` Items), *First-Pass* Architecture ($\ge 75\%$ FTP) & Google AI Pro Quota Protection** | **6 FTP Levers ✅ Implemented in code (2026-11-22)** (`c2c_ver`, Typed Contract Skeletons, Rejection Sampling, `[TPL-ORPHAN-VARS]`/`[PROSE-NORM]` auto-healing, `1:1`/`2:1` weighted sharding, `.rejudge_pending.json`), raising Stage 3 FTP to `30.0–38.5%`. Remaining: converge `Skill` FTP to $\ge 75\%$ and certify full $k=4$ run (`<= 11.55M` gross tokens, `< 10 min`). | [`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
 | 📐 **P1** | **Milestone 16 (Phase 2): Automated Algebraic Deduction with `z3-solver` (Python)** | **Phase 1 ✅ active in shadow mode (`[Z3-RULE-WARNING]` in `shard_ast_transforms.py`, `150 ms` timeout, `0` false positives across `805` templates)**. Remaining (~1 d): Phase 2 bounded AST verification in `check_templates.py` for `TPL-D4`. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
-| 🏛️ **P1** | **Milestone 9 (Merged with M21): Native LLM Ordered `modules[]`, Subtopic Quizzes & PPT Challenge** | Quick Wins + Phase A (`modulesPreserveOrder`) ✅ closed. Remaining (~0.5–1 d): Phase B native LLM emission of ordered `modules[]` validated at publish, slide/note deduplication, Subtopic Quizzes (3–5 items), and PPT Challenge (8–12 items). | [`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
+| 🏛️ **P1** | **Milestone 9 (Merged with M21): Native LLM Ordered `modules[]`, Contrasting Cases `ContentCore` & PPT Challenge** | Quick Wins + Phase A (`modulesPreserveOrder`) ✅ closed. Remaining (~0.5–1 d): Phase B native LLM emission of ordered `modules[]` + `ContentCore` (upgraded to `1–2` **Contrasting Cases** in Block 4), slide/note deduplication, Subtopic Quizzes (3–5 items), and PPT Challenge (8–12 items). | [`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
+| 🔬 **P1/P2** | **Milestone 22 (Gated): `N=1` Falsifiable Telemetry, Cold Transfer Probe & Fluency $\to$ Adaptive Expertise Transition** | **Phase 0 (P1 Gate):** Preserve `archetype` in published JSONs, add minimal `N=1` local event log (H1–H4), and ship a **Cold Unlabeled Transfer Probe**. **Phase 1 (P2, evidence-gated):** Only build interventions proven by Phase 0 (4-strikes incorporation loop, `masteryTier` scaffolding fade-out, unlabeled cross-unit / qualitative-gate transfer). | [`05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md) |
 | 🔒 **P1** | **Milestone 18: Continuous Certification Harness (Prompt-Compiler CI + SLA)** | CI gate `test_system_prompts_compile_clean.py` ✅ active (verifying M20 micro-examples + `ast.parse` on `lean/` prompts). Remaining (~0.5 d): automated SLA regression benchmark gate. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | 🛡️ **P3** | **Milestone 15 (Phase 2): Native Perceus C Lean 4 FFI Kernel** | Python Hypothesis DRT (`test_c2c_hook_guard_drt.py`) ✅ closed. Native Lean 4 FFI binary (`<0.5 ms`) deferred to P3 research. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 
