@@ -27,6 +27,7 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
   const [copiedId, setCopiedId] = useState(false);
   const isMountedRef = useRef(true);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -52,6 +53,20 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
       setLastSyncedAt(undefined);
     }
     setFeedback(null);
+  }, [isOpen]);
+
+  useEffect(() => {
+    const el = dialogRef.current;
+    if (!isOpen) {
+      if (el?.open) el.close();
+      return;
+    }
+    if (el && !el.open) {
+      el.showModal();
+    }
+    return () => {
+      if (el?.open) el.close();
+    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -128,13 +143,19 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
   const isConnected = Boolean(getSyncConfig()?.gistId);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="m-auto w-[calc(100%-2rem)] max-w-md bg-white rounded-2xl border border-ka-border shadow-xl p-0 overflow-hidden backdrop:bg-slate-900/50 backdrop:backdrop-blur-xs"
       aria-labelledby="sync-modal-title"
     >
-      <div className="bg-white rounded-2xl border border-ka-border shadow-xl w-full max-w-md overflow-hidden">
+      <div>
         <div className="flex items-center justify-between px-5 py-4 border-b border-ka-border bg-slate-50">
           <div className="flex items-center gap-2.5">
             <Cloud className="w-5 h-5 text-ka-blue" />
@@ -273,6 +294,6 @@ export const SyncSettingsModal: React.FC<SyncSettingsModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </dialog>
   );
 };

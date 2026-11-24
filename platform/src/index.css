@@ -153,3 +153,13 @@ body {
 .footer-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* Native modal dialog scroll-chaining prevention */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}

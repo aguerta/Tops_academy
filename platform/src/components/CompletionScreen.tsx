@@ -109,7 +109,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
         e.key === 'Escape' ||
         (e.key.toLowerCase() === 'v' && (e.ctrlKey || e.metaKey) && !e.altKey)
       ) {
-        if (e.key === 'Escape' && document.querySelector('[role="dialog"]')) return;
+        if (e.key === 'Escape' && document.querySelector('dialog[open], [role="dialog"]')) return;
         e.preventDefault();
         onBackToCourse();
       }

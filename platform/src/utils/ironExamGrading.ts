@@ -165,7 +165,7 @@ export function gradeIronExamQuestion(
 
     case 'multiple_select': {
       const correctIds = getCorrectOptionIds(q).sort();
-      const chosenIds = [...draft.selectedMultiOptions].sort();
+      const chosenIds = draft.selectedMultiOptions.toSorted();
       const ok =
         chosenIds.length === correctIds.length &&
         chosenIds.every((val, idx) => val === correctIds[idx]);

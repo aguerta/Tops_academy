@@ -435,7 +435,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     } else if (currentQuestion.type === 'multiple_select') {
       // Strictly all-or-nothing grading using canonical correct IDs
       const correctIds = getCorrectOptionIds(currentQuestion).sort();
-      const sSorted = [...selectedMultiOptions].sort();
+      const sSorted = selectedMultiOptions.toSorted();
 
       correct =
         sSorted.length === correctIds.length &&

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MetacognitiveConfidence, Question } from '../../types';
 
 interface MetacognitiveModalProps {
@@ -50,6 +50,22 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
   onCancel,
   onConfirm,
 }) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const el = dialogRef.current;
+    if (!isOpen) {
+      if (el?.open) el.close();
+      return;
+    }
+    if (el && !el.open) {
+      el.showModal();
+    }
+    return () => {
+      if (el?.open) el.close();
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const total = questions.length;
@@ -61,17 +77,20 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
   const canConfirm = total > 0 && (globalConfidence !== null || allItemsCalibrated);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-3 sm:p-4 overflow-y-auto"
-      role="presentation"
+    <dialog
+      ref={dialogRef}
+      onCancel={(e) => {
+        e.preventDefault();
+        if (!isTimeExpired) onCancel();
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isTimeExpired) onCancel();
+      }}
+      aria-labelledby="metacognitive-modal-title"
+      data-testid="metacognitive-modal"
+      className="m-auto w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] max-w-lg bg-white rounded-xl border border-slate-200 shadow-2xl p-4 sm:p-6 max-h-[92dvh] overflow-y-auto min-w-0 backdrop:bg-slate-900/60"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="metacognitive-modal-title"
-        data-testid="metacognitive-modal"
-        className="w-full max-w-lg bg-white rounded-xl border border-slate-200 shadow-2xl p-4 sm:p-6 space-y-4 my-auto max-h-[92dvh] overflow-y-auto min-w-0"
-      >
+      <div className="space-y-4">
         <div className="space-y-1">
           <div className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-700">
             Auditoría Metacognitiva Pre-Calificación
@@ -224,6 +243,6 @@ export const MetacognitiveModal: React.FC<MetacognitiveModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

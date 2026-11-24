@@ -98,7 +98,7 @@ export const ProgressLogView: React.FC<ProgressLogViewProps> = ({
 
     if (!sortByUrgency) return rows;
 
-    return [...rows].sort((a, b) => {
+    return rows.toSorted((a, b) => {
       if (a.started !== b.started) return a.started ? -1 : 1;
       const ra = a.r ?? 2;
       const rb = b.r ?? 2;

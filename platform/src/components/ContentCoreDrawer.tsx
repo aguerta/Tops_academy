@@ -12,37 +12,31 @@ type DrawerTab = 'blocks' | 'glossary';
 export const ContentCoreDrawer: React.FC<ContentCoreDrawerProps> = ({ module, onClose }) => {
   const [activeTab, setActiveTab] = useState<DrawerTab>('blocks');
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     if (!module) return;
     setActiveTab('blocks');
   }, [module?.id]);
 
-  // Escape key closes drawer + body scroll lock
+  // Sync native modal dialog state and focus close button
   useEffect(() => {
-    if (!module) return;
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
+    const el = dialogRef.current;
+    if (!module) {
+      if (el?.open) el.close();
+      return;
+    }
+    if (el && !el.open) {
+      el.showModal();
+    }
     const timer = setTimeout(() => {
       closeButtonRef.current?.focus();
     }, 20);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = originalOverflow;
+      if (el?.open) el.close();
     };
-  }, [module, onClose]);
+  }, [module]);
 
   if (!module) return null;
 
@@ -61,23 +55,21 @@ export const ContentCoreDrawer: React.FC<ContentCoreDrawerProps> = ({ module, on
   );
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       aria-labelledby="content-core-drawer-title"
       data-testid="content-core-drawer"
+      className="m-0 ml-auto h-full max-h-none w-full max-w-[600px] bg-white shadow-2xl border-l border-ka-border-card p-0 open:flex flex-col min-w-0 backdrop:bg-black/45 backdrop:backdrop-blur-[1px]"
     >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/45 backdrop-blur-[1px] transition-opacity cursor-pointer"
-        onClick={onClose}
-        aria-hidden="true"
-        data-testid="content-core-backdrop"
-      />
-
       {/* Slide-over panel compatible with 480px-640px Split View */}
-      <div className="relative z-10 w-full max-w-[600px] h-full bg-white shadow-2xl border-l border-ka-border-card flex flex-col min-w-0">
+      <div className="w-full h-full flex flex-col min-w-0">
         {/* Header */}
         <header className="px-4 sm:px-6 py-4 border-b border-ka-border-subtle bg-slate-50 flex items-start justify-between gap-3 shrink-0">
           <div className="min-w-0 flex-1">
@@ -387,6 +379,6 @@ export const ContentCoreDrawer: React.FC<ContentCoreDrawerProps> = ({ module, on
           )}
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

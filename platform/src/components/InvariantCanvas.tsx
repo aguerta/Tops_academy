@@ -100,7 +100,7 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
       const sortedNew = Array.from(new Set(draftGroupNodes)).sort();
       const key = sortedNew.join(',');
       const exists = (value.infoSets || []).some(
-        (grp) => [...grp].sort().join(',') === key
+        (grp) => grp.toSorted().join(',') === key
       );
       if (!exists) {
         onChange({ ...value, infoSets: [...(value.infoSets || []), sortedNew] });
@@ -521,7 +521,7 @@ export const InvariantCanvas: React.FC<InvariantCanvasProps> = ({
     }
     if (topPts.length < 2) return '';
     const fwd = topPts.map(([sx, sy], idx) => `${idx === 0 ? 'M' : 'L'} ${sx.toFixed(1)} ${sy.toFixed(1)}`).join(' ');
-    const rev = [...botPts].reverse().map(([sx, sy]) => `L ${sx.toFixed(1)} ${sy.toFixed(1)}`).join(' ');
+    const rev = botPts.toReversed().map(([sx, sy]) => `L ${sx.toFixed(1)} ${sy.toFixed(1)}`).join(' ');
     return `${fwd} ${rev} Z`;
   };
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   AdaptiveExamSummary,
   AdaptiveModuleResult,
@@ -103,6 +103,7 @@ export const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('library');
   const [selectedUnitIndex, setSelectedUnitIndex] = useState<number | null>(null);
   const [focusCompetencyId, setFocusCompetencyId] = useState<string | null>(null);
+  const quitDialogRef = useRef<HTMLDialogElement>(null);
 
   // Mobile Back Navigation & Safety states
   const [showExitToast, setShowExitToast] = useState(false);
@@ -243,18 +244,26 @@ export const App: React.FC = () => {
     return unregister;
   }, [viewMode, showQuitConfirm]);
 
-  // Esc opens the quit confirmation; a second Esc confirms the exit
+  // Sync quit confirmation native <dialog>
+  useEffect(() => {
+    const el = quitDialogRef.current;
+    if (!el) return;
+    if (showQuitConfirm && !el.open) {
+      el.showModal();
+    } else if (!showQuitConfirm && el.open) {
+      el.close();
+    }
+  }, [showQuitConfirm]);
+
+  // Esc opens the quit confirmation; a second Esc confirms the exit (handled by <dialog> onCancel)
   useEffect(() => {
     if (viewMode !== 'practice') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.isComposing || e.repeat || e.defaultPrevented) return;
-      if (!showQuitConfirm && document.querySelector('[role="dialog"]')) return;
+      if (showQuitConfirm) return;
+      if (document.querySelector('dialog[open], [role="dialog"]')) return;
       e.preventDefault();
-      if (showQuitConfirm) {
-        handleQuitSession();
-      } else {
-        setShowQuitConfirm(true);
-      }
+      setShowQuitConfirm(true);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -267,7 +276,7 @@ export const App: React.FC = () => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' || e.isComposing || e.repeat || e.defaultPrevented) return;
       if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
-      if (document.querySelector('[role="dialog"]') || document.body.style.overflow === 'hidden') return;
+      if (document.querySelector('dialog[open], [role="dialog"]') || document.body.style.overflow === 'hidden') return;
       const t = e.target as HTMLElement | null;
       if (t && t !== document.body && /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
       const comps = activeCourse.competencies;
@@ -295,7 +304,7 @@ export const App: React.FC = () => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.isComposing || e.repeat || e.defaultPrevented) return;
       // Let open dialogs / the mobile sidebar consume Esc first
-      if (document.querySelector('[role="dialog"]') || document.body.style.overflow === 'hidden') return;
+      if (document.querySelector('dialog[open], [role="dialog"]') || document.body.style.overflow === 'hidden') return;
       e.preventDefault();
       setActiveCourse(null);
       navigateView('library');
@@ -1194,15 +1203,21 @@ export const App: React.FC = () => {
       )}
 
       {/* Modal: Confirmación de abandono de práctica/examen */}
-      {showQuitConfirm && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="quit-dialog-title"
-          data-testid="quit-confirm-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        >
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center border border-slate-200">
+      <dialog
+        ref={quitDialogRef}
+        onCancel={(e) => {
+          e.preventDefault();
+          handleQuitSession();
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setShowQuitConfirm(false);
+        }}
+        aria-labelledby="quit-dialog-title"
+        data-testid="quit-confirm-modal"
+        className="m-auto w-[calc(100%-2rem)] max-w-sm bg-white rounded-2xl p-6 shadow-2xl text-center border border-slate-200 backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+      >
+        {showQuitConfirm && (
+          <div>
             <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
               ⚠️
             </div>
@@ -1218,6 +1233,7 @@ export const App: React.FC = () => {
             <div className="flex gap-3">
               <button
                 type="button"
+                autoFocus
                 data-testid="quit-confirm-continue"
                 onClick={() => setShowQuitConfirm(false)}
                 className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-ka-text-primary font-bold text-sm rounded-xl transition-colors cursor-pointer"
@@ -1234,8 +1250,8 @@ export const App: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </dialog>
     </div>
   );
 };
