@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Strict Mode Test Course Pass (`test_strict_pass`)
 
-- **Fecha de Evaluación:** 2026-11-22
+- **Fecha de Evaluación:** 2026-11-24
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
@@ -18,7 +18,7 @@
 | **D1: Arquitectura Curricular y Granularidad** | **4.0** | 4.0 | 100% | ✅ Impecable |
 | **D2: Calidad Psicométrica y Reactivos** | **5.0** | 5.0 | 100% | ✅ Impecable |
 | **D3: Andamiaje y Pistas Socráticas** | **5.0** | 5.0 | 100% | ✅ Impecable |
-| **D4: Alineación Instruccional y ZPD** | **4.0** | 4.0 | 100% | ✅ Impecable |
+| **D4: Alineación Instruccional y ZPD (Piso Bloom Expected: `3.85` \| Real Generado: `0.00` / 5.0)** | **4.0** | 4.0 | 100% | ✅ Impecable |
 | **D5: Ergonomía Técnica y KaTeX** | **2.0** | 2.0 | 100% | ✅ Impecable |
 | **Penalizaciones Duras** | **-0.0** | - | - | ✅ Sin penalizaciones |
 | **TOTAL** | **20.0** | **20.0** | **100.0%** | 🏆 **EXCELENTE (PLATINUM MASTERY)** |
@@ -48,13 +48,14 @@
 
 | Pilar Cognitivo | Puntaje | Máximo | Calificación |
 | :--- | :---: | :---: | :---: |
-| **1. Progresión Adaptativa ZPD y Bloom** | **20.00** | 20.0 | 100.0% |
+| **1. Progresión Adaptativa ZPD y Bloom (Piso Expected: `3.85` \| Real Generado: `0.00` / 5.0 — N/A)** | **20.00** | 20.0 | 100.0% |
 | **2. Modalidad de Evocación y Anti-Gaming** | **20.00** | 20.0 | 100.0% |
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **25.00** | 25.0 | 100.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **15.00** | 15.0 | 100.0% |
 | **5. Topología DAG e Interleaving** | **10.00** | 10.0 | 100.0% |
 | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
 | **TOTAL MPRI** | **100.00** | **100.0** | **100.0% (GOLD MASTERY PATH)** |
+| **📊 Piso Bloom Expected vs. Real Generado (1–5)** | **Real: `0.00`** | **Piso Expected: `3.85`** | **Tier: `N/A` (`Analyze+Evaluate`: `100.0%`)** |
 
 ---
 
@@ -89,7 +90,7 @@ El curso **Strict Mode Test Course Pass** ha sido **certificado y aprobado** con
     },
     "platform_status": "ACTIVO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-22"
+    "evaluation_date": "2026-11-24"
   },
   "dimension_scores": {},
   "penalties_applied": [],

@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Base Course (`math_base`)
 
-- **Fecha de Evaluación:** 2026-11-22
+- **Fecha de Evaluación:** 2026-11-24
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** RECHAZADO
 - **Calificación Final Certificada:** **13.1 / 20.0 pts**
@@ -18,7 +18,7 @@
 | **D1: Arquitectura Curricular y Granularidad** | **3.1** | 4.0 | 78% | ⚠️ Observación menor |
 | **D2: Calidad Psicométrica y Reactivos** | **5.0** | 5.0 | 100% | ✅ Impecable |
 | **D3: Andamiaje y Pistas Socráticas** | **4.0** | 5.0 | 80% | ⚠️ Observación menor |
-| **D4: Alineación Instruccional y ZPD** | **4.0** | 4.0 | 100% | ✅ Impecable |
+| **D4: Alineación Instruccional y ZPD (Piso Bloom Expected: `3.85` \| Real Generado: `0.00` / 5.0)** | **4.0** | 4.0 | 100% | ✅ Impecable |
 | **D5: Ergonomía Técnica y KaTeX** | **2.0** | 2.0 | 100% | ✅ Impecable |
 | **Penalizaciones Duras** | **-5.0** | - | - | ⚠️ Penalizaciones aplicadas |
 | **TOTAL** | **13.1** | **20.0** | **65.6%** | 🏆 **DEFICIENTE (11.0 - 13.9 pts)** |
@@ -37,7 +37,7 @@
 - Andamiaje formativo: 0.0% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Unicidad diagnóstica real de rationales: 100.0% (rationales numéricos desconectados=0, advertencias clonadas/mudas=0).
 
 #### D4. Alineación Instruccional y ZPD (4.0 / 4.0 pts)
-- Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 0.00/5.0 (piso adaptativo 3.85, 100.0% Analyze+Evaluate, tier: N/A, incoherencias=0).
+- Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom Real Generado: 0.00/5.0 vs Piso Bloom Expected (Adaptativo): 3.85/5.0 (100.0% Analyze+Evaluate, tier: N/A, incoherencias=0).
 
 #### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
 - Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...}, 0 identificadores crudos, 0 colisiones por concatenación, 0 identidades tautológicas, 0 formatos flotantes/asteriscos crudos y 0 residuos de plantilla/reemplazo (template_vars=0, blind_repl=0).
@@ -48,13 +48,14 @@
 
 | Pilar Cognitivo | Puntaje | Máximo | Calificación |
 | :--- | :---: | :---: | :---: |
-| **1. Progresión Adaptativa ZPD y Bloom** | **20.00** | 20.0 | 100.0% |
+| **1. Progresión Adaptativa ZPD y Bloom (Piso Expected: `3.85` \| Real Generado: `0.00` / 5.0 — N/A)** | **20.00** | 20.0 | 100.0% |
 | **2. Modalidad de Evocación y Anti-Gaming** | **20.00** | 20.0 | 100.0% |
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **0.00** | 25.0 | 0.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **15.00** | 15.0 | 100.0% |
 | **5. Topología DAG e Interleaving** | **9.65** | 10.0 | 96.5% |
 | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
 | **TOTAL MPRI** | **74.65** | **100.0** | **74.7% (PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad)** |
+| **📊 Piso Bloom Expected vs. Real Generado (1–5)** | **Real: `0.00`** | **Piso Expected: `3.85`** | **Tier: `N/A` (`Analyze+Evaluate`: `100.0%`)** |
 
 ---
 
@@ -89,7 +90,7 @@ El curso **Base Course** ha sido **RECHAZADO** para despliegue en plataforma con
     },
     "platform_status": "RECHAZADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-22"
+    "evaluation_date": "2026-11-24"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -110,7 +111,7 @@ El curso **Base Course** ha sido **RECHAZADO** para despliegue en plataforma con
     "instructional_alignment": {
       "score": 4.0,
       "max": 4.0,
-      "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom ponderado: 0.00/5.0 (piso adaptativo 3.85, 100.0% Analyze+Evaluate, tier: N/A, incoherencias=0)."
+      "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en Apply+; Índice Bloom Real Generado: 0.00/5.0 vs Piso Bloom Expected (Adaptativo): 3.85/5.0 (100.0% Analyze+Evaluate, tier: N/A, incoherencias=0)."
     },
     "technical_ergonomics": {
       "score": 2.0,
