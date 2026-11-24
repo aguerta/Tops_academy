@@ -1,5 +1,10 @@
 # Reporte de Auditoría Técnica y Pedagógica — `mateco_4_optimizacion_v20_k_3`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-24 15:02:50**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 15:02:50  
 **Curso:** Mateco 4 Optimización (`mateco_4_optimizacion_v20_k_3`)  
 **Calificación Final QM-OSCQR:** **19.72 / 20.00** — **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**  
 **Índice MPRI:** **99.65 / 100.00** — **GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo**  

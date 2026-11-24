@@ -5763,5 +5763,90 @@
       "usd_per_page": 0.17
     },
     "bottlenecks_count": 1
+  },
+  {
+    "run_id": "20261124_142457_mateco_4_optimizacion_k4_v2_753e4e81",
+    "timestamp": "2026-11-24T19:24:57.524245+00:00",
+    "course_id": "mateco_4_optimizacion_k4_v2",
+    "course_title": "Mateco 4 Optimizacion K4 V2",
+    "conversation_id": "753e4e81-d4e5-4916-9eac-076c1c9e92e8",
+    "workload": {
+      "source_files_count": 6,
+      "pages_or_slides": 71,
+      "input_mb": 3.61,
+      "competencies": 32,
+      "questions": 1472,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1579.0,
+      "agent_compute_seconds": 9279.0,
+      "speedup": 5.88,
+      "total_tokens": 16516609,
+      "total_active_tokens": 5263849,
+      "input_tokens": 3768686,
+      "output_tokens": 1412441,
+      "total_input_tokens": 3848693,
+      "total_output_tokens": 1415156,
+      "cache_read_tokens": 11252760,
+      "pricing_model": "gemini-4-hydrogen",
+      "total_cost_usd": 17.23,
+      "cost_breakdown_usd": {
+        "input_usd": 5.77,
+        "output_usd": 10.61,
+        "cache_read_usd": 0.84,
+        "total_usd": 17.23
+      },
+      "stage_costs_usd": {
+        "stage_1a_vision": 0.0,
+        "stage_1b_cta": 1.22,
+        "stage_3_authors": 11.97,
+        "stage_3b_repairs": 1.03,
+        "stage_5_judges": 2.85,
+        "orchestrator": 0.15,
+        "other_subagents": 0.0,
+        "total_usd": 17.23
+      },
+      "total_turns": 350,
+      "subagents_count": 65,
+      "tool_errors": 34,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 190.0,
+      "stage_3_max_wall": 279.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (147/147 REACTIVOS)",
+        "batch_items_count": 147,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 5 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 5 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 3 ola(s) de jueces ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 147 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 232628.3,
+      "active_tokens_per_page": 74138.7,
+      "tokens_per_input_kb": 4472.9,
+      "tokens_per_competency": 516144.0,
+      "active_tokens_per_competency": 164495.3,
+      "author_tokens_per_competency": 108200.2,
+      "tokens_per_question": 11220.5,
+      "active_tokens_per_question": 3576.0,
+      "seconds_per_page": 22.24,
+      "seconds_per_question": 1.07,
+      "questions_per_minute": 55.93,
+      "agent_seconds_per_question": 6.3,
+      "output_tokens_per_question": 961.4,
+      "usd_per_question": 0.01,
+      "usd_per_competency": 0.54,
+      "usd_per_page": 0.24
+    },
+    "bottlenecks_count": 1
   }
 ]

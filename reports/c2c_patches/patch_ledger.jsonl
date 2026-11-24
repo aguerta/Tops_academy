@@ -1764,3 +1764,25 @@
 {"timestamp": "2026-11-24T18:54:27.148923+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
 {"timestamp": "2026-11-24T18:54:27.216810+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
 {"timestamp": "2026-11-24T18:54:27.757521+00:00", "course_id": "m20_canonical_course", "total_patches": 1, "healed": 1, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 1}}
+{"timestamp": "2026-11-24T19:46:58.416439+00:00", "course_id": "greene_append_v3", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:09.030984+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:09.135654+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:12.328693+00:00", "course_id": "c", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:19.435587+00:00", "course_id": "macro_base", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:19.963254+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:21.882423+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:21.961472+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:23.746454+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:24.890005+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T19:47:26.372594+00:00", "course_id": "micro_course", "total_patches": 2, "healed": 2, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 2}}
+{"timestamp": "2026-11-24T19:47:26.884658+00:00", "course_id": "m20_canonical_course", "total_patches": 1, "healed": 1, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 1}}
+{"timestamp": "2026-11-24T19:47:36.937857+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-24T19:47:37.018440+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-24T19:47:37.216323+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
+{"timestamp": "2026-11-24T20:05:10.723586+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T20:05:12.731372+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T20:05:12.800148+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T20:05:13.342493+00:00", "course_id": "c", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T20:05:14.255941+00:00", "course_id": "m20_canonical_course", "total_patches": 1, "healed": 1, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 1}}
+{"timestamp": "2026-11-24T20:05:14.697379+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-24T20:05:15.661686+00:00", "course_id": "m20_unit_course", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}

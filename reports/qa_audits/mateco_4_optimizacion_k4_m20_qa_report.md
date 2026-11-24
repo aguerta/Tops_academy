@@ -1,5 +1,10 @@
 # Reporte de Auditoría QA — `mateco_4_optimizacion_k4_m20`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-24 15:02:49**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-24 15:02:49  
 **Curso:** Mateco 4 Optimizacion K4 M20 (`mateco_4_optimizacion_k4_m20`)  
 **Fecha de Auditoría:** 2026-11-24  
 **Calificación Final QM-OSCQR:** **19.58 / 20.00** — **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**  
