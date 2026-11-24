@@ -286,6 +286,50 @@ try {
   assert.ok(open1);
   assert.equal(open1.solution, 'normalized sol');
 
+  // 6b. mergeM22Events & replaceM22Events
+  const localMerge = [
+    makeEvent({ id: 'm_3', timestamp: '2026-11-24T12:03:00.000Z', question_id: 'Q3' }),
+    makeEvent({ id: 'm_1', timestamp: '2026-11-24T12:01:00.000Z', question_id: 'Q1_local' }),
+  ];
+  const remoteMerge = [
+    makeEvent({ id: 'm_1', timestamp: '2026-11-24T12:01:00.000Z', question_id: 'Q1_remote' }),
+    makeEvent({ id: 'm_2', timestamp: '2026-11-24T12:02:00.000Z', question_id: 'Q2' }),
+    makeEvent({ id: 'm_0', timestamp: 'not-a-date', question_id: 'Q0' }),
+  ];
+  const mergedEvents = telemetry.mergeM22Events(localMerge, remoteMerge);
+  assert.deepEqual(
+    mergedEvents.map((e) => e.id),
+    ['m_0', 'm_1', 'm_2', 'm_3'],
+    'mergeM22Events must deduplicate by id and sort chronologically (invalid timestamps -> 0)'
+  );
+  assert.equal(mergedEvents[1].question_id, 'Q1_local', 'dedup should prefer local event on id collision');
+
+  // 5,000 FIFO cap in mergeM22Events
+  const localBulk = Array.from({ length: 3000 }, (_, i) =>
+    makeEvent({
+      id: `cap_l_${i}`,
+      timestamp: new Date(Date.UTC(2026, 10, 24, 0, 0, i)).toISOString(),
+    })
+  );
+  const remoteBulk = Array.from({ length: 2500 }, (_, i) =>
+    makeEvent({
+      id: `cap_r_${i}`,
+      timestamp: new Date(Date.UTC(2026, 10, 24, 1, 0, i)).toISOString(),
+    })
+  );
+  const mergedCapped = telemetry.mergeM22Events(localBulk, remoteBulk);
+  assert.equal(mergedCapped.length, 5000);
+  assert.equal(mergedCapped[0].id, 'cap_l_500');
+  assert.equal(mergedCapped[4999].id, 'cap_r_2499');
+
+  // replaceM22Events writes capped array to storage
+  telemetry.replaceM22Events(mergedEvents);
+  assert.deepEqual(
+    telemetry.loadM22Events().map((e) => e.id),
+    ['m_0', 'm_1', 'm_2', 'm_3']
+  );
+  telemetry.clearM22Events();
+
   if (originalDescriptor) {
     Object.defineProperty(globalThis, 'localStorage', originalDescriptor);
   }

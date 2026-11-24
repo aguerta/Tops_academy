@@ -75,6 +75,7 @@ import {
 import {
   getSyncConfig,
   PROGRESS_SYNCED_EVENT,
+  scheduleBackgroundSync,
   syncWithGist,
 } from './utils/cloudSync';
 
@@ -946,6 +947,7 @@ export const App: React.FC = () => {
             'iron_exam'
           )
         );
+        scheduleBackgroundSync();
       }
 
       const summary = updateCourseChallengeWithSkillCalibration(
@@ -995,6 +997,7 @@ export const App: React.FC = () => {
             sessionType === 'challenge' ? 'iron_exam' : sessionType
           )
         );
+        scheduleBackgroundSync();
       }
 
       if (

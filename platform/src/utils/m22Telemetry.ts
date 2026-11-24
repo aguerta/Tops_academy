@@ -116,6 +116,50 @@ export function appendM22Events(events: M22AttemptEvent[]): M22AttemptEvent[] {
 }
 
 /**
+ * Replaces all persisted M22 attempt events with the given array (capped at 5,000 FIFO).
+ */
+export function replaceM22Events(events: M22AttemptEvent[]): void {
+  writeAllRawEvents(Array.isArray(events) ? events : []);
+}
+
+function parseEventTimestamp(timestamp?: string): number {
+  if (!timestamp) return 0;
+  const ms = Date.parse(timestamp);
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+/**
+ * Merges local and remote M22 attempt events by deduplicating on `event.id`,
+ * sorting chronologically, and capping at 5,000 events (FIFO).
+ */
+export function mergeM22Events(
+  localEvents: M22AttemptEvent[],
+  remoteEvents: M22AttemptEvent[]
+): M22AttemptEvent[] {
+  const combined = [
+    ...(Array.isArray(localEvents) ? localEvents : []),
+    ...(Array.isArray(remoteEvents) ? remoteEvents : []),
+  ];
+  const seen = new Set<string>();
+  const deduped: M22AttemptEvent[] = [];
+
+  for (const ev of combined) {
+    if (!ev || typeof ev !== 'object' || typeof ev.id !== 'string' || typeof ev.question_id !== 'string') {
+      continue;
+    }
+    if (seen.has(ev.id)) continue;
+    seen.add(ev.id);
+    deduped.push(ev);
+  }
+
+  deduped.sort((a, b) => parseEventTimestamp(a.timestamp) - parseEventTimestamp(b.timestamp));
+
+  return deduped.length > M22_TELEMETRY_MAX_EVENTS
+    ? deduped.slice(deduped.length - M22_TELEMETRY_MAX_EVENTS)
+    : deduped;
+}
+
+/**
  * Clears persisted M22 attempt events (all courses, or only a specific courseId).
  */
 export function clearM22Events(courseId?: string): void {

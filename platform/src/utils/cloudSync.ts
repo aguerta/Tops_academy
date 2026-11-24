@@ -2,6 +2,7 @@ import {
   CompetencyMastery,
   CourseMasteryRecord,
   FsrsCardState,
+  M22AttemptEvent,
   MisconceptionEntry,
   QuestionType,
   SrsReviewTelemetry,
@@ -9,10 +10,12 @@ import {
   UnitTestRecord,
 } from '../types';
 import { MAX_MODALITY_LATENCY_WINDOW, MAX_SRS_TELEMETRY_ENTRIES } from './fsrsEngine';
+import { loadM22Events, mergeM22Events, replaceM22Events } from './m22Telemetry';
 
 const PROGRESS_STORAGE_KEY = 'tops_academic_progress_v1';
 const SYNC_CONFIG_KEY = 'tops_gist_sync_v1';
 const GIST_FILENAME = 'tops_progress.json';
+const M22_GIST_FILENAME = 'tops_m22_telemetry.json';
 
 export const PROGRESS_SYNCED_EVENT = 'tops-progress-synced';
 
@@ -403,6 +406,33 @@ function writeLocalProgress(data: Record<string, CourseMasteryRecord>): void {
   window.dispatchEvent(new CustomEvent(PROGRESS_SYNCED_EVENT));
 }
 
+interface RawGistFile {
+  content?: unknown;
+  truncated?: boolean;
+  raw_url?: unknown;
+}
+
+async function resolveGistFileRaw(
+  gistFile: RawGistFile | undefined
+): Promise<{ ok: true; raw: unknown } | { ok: false; message: string }> {
+  let remoteRaw: unknown = gistFile?.content;
+  if (gistFile?.truncated && typeof gistFile?.raw_url === 'string' && gistFile.raw_url) {
+    const rawRes = await fetch(gistFile.raw_url, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+    if (!rawRes.ok) {
+      const errText = await rawRes.text().catch(() => rawRes.statusText);
+      return {
+        ok: false,
+        message: `GitHub Raw Gist (${rawRes.status}): ${errText}`,
+      };
+    }
+    remoteRaw = await rawRes.text();
+  }
+  return { ok: true, raw: remoteRaw };
+}
+
 /**
  * Synchronizes localStorage mastery progress with the configured private GitHub Gist.
  * Creates the private Gist automatically if `gistId` is empty.
@@ -438,6 +468,7 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
       // First-time setup: create a new private (secret) Gist
       if (!cfg.gistId) {
         const localData = readLocalProgress();
+        const localM22 = loadM22Events();
         const res = await fetch('https://api.github.com/gists', {
           method: 'POST',
           headers,
@@ -447,6 +478,9 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
             files: {
               [GIST_FILENAME]: {
                 content: JSON.stringify(localData, null, 2),
+              },
+              [M22_GIST_FILENAME]: {
+                content: JSON.stringify(localM22, null, 2),
               },
             },
           }),
@@ -493,21 +527,39 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
       }
 
       const gistJson = await getRes.json();
-      const gistFile = gistJson?.files?.[GIST_FILENAME];
-      let remoteRaw: unknown = gistFile?.content;
-      if (gistFile?.truncated && typeof gistFile?.raw_url === 'string' && gistFile.raw_url) {
-        const rawRes = await fetch(gistFile.raw_url, {
-          method: 'GET',
-          cache: 'no-store',
-        });
-        if (!rawRes.ok) {
-          const errText = await rawRes.text().catch(() => rawRes.statusText);
-          return {
-            status: 'error',
-            message: `GitHub Raw Gist (${rawRes.status}): ${errText}`,
-          };
+      const gistFile = gistJson?.files?.[GIST_FILENAME] as RawGistFile | undefined;
+      const resolvedProgress = await resolveGistFileRaw(gistFile);
+      if (!resolvedProgress.ok) {
+        return { status: 'error', message: resolvedProgress.message };
+      }
+      const remoteRaw = resolvedProgress.raw;
+
+      const m22GistFile = gistJson?.files?.[M22_GIST_FILENAME] as RawGistFile | undefined;
+      let remoteM22: M22AttemptEvent[] = [];
+      let m22RemoteMalformed = false;
+      if (m22GistFile) {
+        const resolvedM22 = await resolveGistFileRaw(m22GistFile);
+        if (!resolvedM22.ok) {
+          return { status: 'error', message: resolvedM22.message };
         }
-        remoteRaw = await rawRes.text();
+        if (typeof resolvedM22.raw === 'string' && resolvedM22.raw.trim()) {
+          try {
+            const parsedM22 = JSON.parse(resolvedM22.raw);
+            if (Array.isArray(parsedM22)) {
+              remoteM22 = parsedM22.filter(
+                (item): item is M22AttemptEvent =>
+                  Boolean(item) &&
+                  typeof item === 'object' &&
+                  typeof item.id === 'string' &&
+                  typeof item.question_id === 'string'
+              );
+            } else {
+              m22RemoteMalformed = true;
+            }
+          } catch {
+            m22RemoteMalformed = true;
+          }
+        }
       }
 
       let remoteData: Record<string, CourseMasteryRecord> = {};
@@ -546,18 +598,42 @@ export async function syncWithGist(overrideConfig?: GistSyncConfig): Promise<Syn
         writeLocalProgress(merged);
       }
 
+      let shouldPatchM22 = false;
+      let mergedM22Serialized = '';
+      if (!m22RemoteMalformed) {
+        const latestLocalM22 = loadM22Events();
+        const mergedM22 = mergeM22Events(latestLocalM22, remoteM22);
+        mergedM22Serialized = JSON.stringify(mergedM22, null, 2);
+        const localM22Serialized = JSON.stringify(latestLocalM22, null, 2);
+        const remoteM22Serialized = JSON.stringify(remoteM22, null, 2);
+
+        if (mergedM22Serialized !== localM22Serialized) {
+          replaceM22Events(mergedM22);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(PROGRESS_SYNCED_EVENT));
+          }
+        }
+
+        shouldPatchM22 =
+          mergedM22Serialized !== remoteM22Serialized || (!m22GistFile && mergedM22.length > 0);
+      }
+
+      const patchFiles: Record<string, { content: string }> = {};
       if (mergedSerialized !== remoteSerialized || !gistFile) {
+        patchFiles[GIST_FILENAME] = { content: mergedSerialized };
+      }
+      if (shouldPatchM22) {
+        patchFiles[M22_GIST_FILENAME] = { content: mergedM22Serialized };
+      }
+
+      if (Object.keys(patchFiles).length > 0) {
         const patchRes = await fetch(
           `https://api.github.com/gists/${encodeURIComponent(cfg.gistId)}`,
           {
             method: 'PATCH',
             headers,
             body: JSON.stringify({
-              files: {
-                [GIST_FILENAME]: {
-                  content: mergedSerialized,
-                },
-              },
+              files: patchFiles,
             }),
           }
         );
