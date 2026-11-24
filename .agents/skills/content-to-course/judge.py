@@ -56,6 +56,12 @@ _DOUBLE_READ_PRIORITY_TYPES: Set[str] = {
 }
 
 
+def _compute_template_hash(template: Dict[str, Any]) -> str:
+    """Compute a deterministic SHA-256 hash of a template, ignoring internal '_' keys."""
+    clean = {k: v for k, v in template.items() if not str(k).startswith("_")}
+    return hashlib.sha256(json.dumps(clean, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
 def _compute_template_risk_score(
     t_obj: Dict[str, Any],
     compile_history: Optional[Dict[str, int]] = None,
@@ -547,11 +553,13 @@ def generate_judge_batch(
     evaluated_file = work / "verification" / "evaluated_competencies.json"
     evaluated_ids: Set[str] = set()
     saved_hashes: Dict[str, str] = {}
+    saved_template_hashes: Dict[str, str] = {}
     if evaluated_file.is_file():
         try:
             ev_data = json.loads(evaluated_file.read_text(encoding="utf-8"))
             evaluated_ids = set(ev_data.get("evaluated_competency_ids", []))
             saved_hashes = ev_data.get("competency_hashes", {})
+            saved_template_hashes = ev_data.get("template_hashes", {})
         except Exception:
             pass
     elif (work / "evaluated_competencies.json").is_file():
@@ -559,6 +567,7 @@ def generate_judge_batch(
             ev_data = json.loads((work / "evaluated_competencies.json").read_text(encoding="utf-8"))
             evaluated_ids = set(ev_data.get("evaluated_competency_ids", []))
             saved_hashes = ev_data.get("competency_hashes", {})
+            saved_template_hashes = ev_data.get("template_hashes", {})
         except Exception:
             pass
 
@@ -994,16 +1003,21 @@ def generate_judge_batch(
     new_comp_ids = {t.get("competency_id", "comp-01") for t, _ in planned_items}
     total_evaluated_ids = sorted(evaluated_ids.union(new_comp_ids))
     total_hashes = dict(saved_hashes)
+    total_template_hashes = dict(saved_template_hashes)
     for t in templates:
         cid = str(t.get("competency_id", "comp-01"))
         t_sha = t.get("_sha256") or hashlib.sha256(json.dumps(t, sort_keys=True).encode("utf-8")).hexdigest()
         total_hashes[cid] = t_sha
+        tid = str(t.get("id") or t.get("template_id") or "").strip()
+        if tid:
+            total_template_hashes[tid] = _compute_template_hash(t)
 
     ev_payload = {
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "evaluated_competency_ids": total_evaluated_ids,
         "evaluated_count": len(total_evaluated_ids),
         "competency_hashes": total_hashes,
+        "template_hashes": total_template_hashes,
     }
     (v_dir / "evaluated_competencies.json").write_text(json.dumps(ev_payload, indent=2, ensure_ascii=False), encoding="utf-8")
     (work / "evaluated_competencies.json").write_text(json.dumps(ev_payload, indent=2, ensure_ascii=False), encoding="utf-8")

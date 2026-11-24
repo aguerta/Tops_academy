@@ -2853,17 +2853,110 @@ class PipelineRunner:
                 changed.add(cid)
         return sorted(changed)
 
+    def _detect_changed_templates(self, explicit_ids: Optional[List[str]] = None) -> Tuple[List[str], List[str]]:
+        """Detect changed/failed templates via SHA-256 hash-diff against evaluated_competencies.json.
+
+        Returns (sorted_competency_ids, sorted_template_ids). Falls back to
+        ([], []) or legacy competency-level detection if template_hashes is absent.
+        """
+        from judge import _compute_template_hash, _load_templates
+
+        ev_p = self.work_dir / "verification" / "evaluated_competencies.json"
+        if not ev_p.is_file():
+            ev_p = self.work_dir / "evaluated_competencies.json"
+        ev_data = json.loads(ev_p.read_text(encoding="utf-8")) if ev_p.is_file() else {}
+        saved_tpl_hashes: Dict[str, str] = ev_data.get("template_hashes", {}) if isinstance(ev_data, dict) else {}
+
+        failed_tids: Set[str] = set()
+        for rp_name in ("judge_report_baseline.json", "judge_report.json"):
+            rp = self.work_dir / rp_name
+            if rp.is_file():
+                try:
+                    rdata = json.loads(rp.read_text(encoding="utf-8"))
+                    failed_tids.update(str(x).strip() for x in (rdata.get("failed_templates") or []) if str(x).strip())
+                except Exception:
+                    pass
+                break
+
+        templates = _load_templates(self.work_dir / "templates")
+        if not templates:
+            return [], []
+
+        if not explicit_ids:
+            if saved_tpl_hashes:
+                target_cids: Set[str] = set()
+                target_tids: Set[str] = set()
+                for t in templates:
+                    tid = str(t.get("id") or t.get("template_id") or "").strip()
+                    cid = str(t.get("competency_id", "")).strip()
+                    if not tid:
+                        continue
+                    if tid not in saved_tpl_hashes or saved_tpl_hashes[tid] != _compute_template_hash(t):
+                        target_tids.add(tid)
+                        if cid:
+                            target_cids.add(cid)
+                return sorted(target_cids), sorted(target_tids)
+            return self._detect_changed_competencies(), []
+
+        by_tid: Dict[str, Dict[str, Any]] = {}
+        by_cid: Dict[str, List[Dict[str, Any]]] = {}
+        for t in templates:
+            tid = str(t.get("id") or t.get("template_id") or "").strip()
+            cid = str(t.get("competency_id", "")).strip()
+            if tid:
+                by_tid[tid.upper()] = t
+            if cid:
+                by_cid.setdefault(cid.upper(), []).append(t)
+
+        target_cids = set()
+        target_tids = set()
+        for raw in explicit_ids:
+            tok = str(raw).strip()
+            if not tok:
+                continue
+            tok_u = tok.upper()
+            if tok_u in by_tid:
+                t = by_tid[tok_u]
+                tid = str(t.get("id") or t.get("template_id") or "").strip()
+                cid = str(t.get("competency_id", "")).strip()
+                if tid:
+                    target_tids.add(tid)
+                if cid:
+                    target_cids.add(cid)
+            elif tok_u in by_cid:
+                comp_tpls = by_cid[tok_u]
+                cid_canonical = str(comp_tpls[0].get("competency_id", tok)).strip()
+                target_cids.add(cid_canonical)
+                comp_tids = [str(t.get("id") or t.get("template_id") or "").strip() for t in comp_tpls]
+                has_saved_for_comp = any(tid and tid in saved_tpl_hashes for tid in comp_tids)
+                if has_saved_for_comp:
+                    changed_or_failed: List[str] = []
+                    for t, tid in zip(comp_tpls, comp_tids):
+                        if not tid:
+                            continue
+                        if tid not in saved_tpl_hashes or saved_tpl_hashes[tid] != _compute_template_hash(t) or tid in failed_tids:
+                            changed_or_failed.append(tid)
+                    if changed_or_failed:
+                        target_tids.update(changed_or_failed)
+                    else:
+                        target_tids.update(tid for tid in comp_tids if tid)
+                else:
+                    target_tids.update(tid for tid in comp_tids if tid)
+
+        return sorted(target_cids), sorted(target_tids)
+
     def run_stage_rejudge(self) -> Dict[str, Any]:
-        """Auxiliary Stage: Surgical re-arbitration. Re-judges ONLY repaired competencies (--ids, or auto-detected by template hash change)."""
+        """Auxiliary Stage: Surgical re-arbitration. Re-judges ONLY changed/failed templates via SHA-256 hash-diff."""
         import shutil
         t0 = time.time()
         print("\n" + "=" * 70)
         print("[AUX STAGE: REJUDGE] Surgical blind re-arbitration (no mass re-dispatch)")
         print("=" * 70)
-        target = [str(x).strip() for x in (self.ids or []) if str(x).strip()] or self._detect_changed_competencies()
-        if not target:
-            print("  [+] No repaired/targeted competencies detected. Nothing to re-judge.")
-            return {"status": "nothing_to_rejudge", "ids": []}
+        explicit = [str(x).strip() for x in (self.ids or []) if str(x).strip()]
+        target, target_tids = self._detect_changed_templates(explicit_ids=explicit or None)
+        if not target and not target_tids:
+            print("  [+] No repaired/targeted templates detected. Nothing to re-judge.")
+            return {"status": "nothing_to_rejudge", "ids": [], "template_ids": []}
 
         jr_p = self.work_dir / "judge_report.json"
         base_p = self.work_dir / "judge_report_baseline.json"
@@ -2879,24 +2972,39 @@ class PipelineRunner:
                     shutil.move(str(f), str(archive / f"{d.name}__{f.name}"))
 
         (self.work_dir / "rejudge_scope.json").write_text(
-            json.dumps({"ids": target, "baseline": base_p.name if base_p.is_file() else None}, indent=2), encoding="utf-8"
+            json.dumps(
+                {"ids": target, "template_ids": target_tids, "baseline": base_p.name if base_p.is_file() else None},
+                indent=2,
+            ),
+            encoding="utf-8",
         )
-        res = dispatch_judges(self.work_dir, ids=target, pointer=not self.no_pointer)
+        dispatch_ids = target_tids if target_tids else target
+        res = dispatch_judges(self.work_dir, ids=dispatch_ids, pointer=not self.no_pointer)
         n_sub = len(res.get("Subagents", []))
-        if target and n_sub == 0:
+        if dispatch_ids and n_sub == 0:
             raise RuntimeError(
-                f"Rejudge dispatch produced 0 judges for {len(target)} target(s) "
-                f"({', '.join(target)}). Aborting before empty wave."
+                f"Rejudge dispatch produced 0 judges for {len(dispatch_ids)} target(s) "
+                f"({', '.join(dispatch_ids)}). Aborting before empty wave."
             )
         (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
         (self.work_dir / "dispatch" / "judge_work_orders.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"  [+] Re-judging {len(target)} competency(ies): {', '.join(target)} -> {n_sub} judge(s)")
+        print(
+            f"  [+] Re-judging {len(target_tids) if target_tids else len(target)} template(s)/target(s) "
+            f"across {len(target)} competency(ies): {', '.join(target)} -> {n_sub} judge(s)"
+        )
         print("  [>] After judges reply: run.py --stage rejudge-compare")
         record_stage_timing(self.work_dir, "rejudge", time.time() - t0)
-        return {"status": "dispatched", "ids": target, "subagents_count": n_sub, "Subagents": res.get("Subagents", []), "item_files": res.get("item_files", [])}
+        return {
+            "status": "dispatched",
+            "ids": target,
+            "template_ids": target_tids,
+            "subagents_count": n_sub,
+            "Subagents": res.get("Subagents", []),
+            "item_files": res.get("item_files", []),
+        }
 
     def run_stage_rejudge_compare(self) -> Dict[str, Any]:
-        """Auxiliary Stage: Compare surgical re-judge answers and merge them into the full judge_report.json (other competencies keep their verdicts)."""
+        """Auxiliary Stage: Compare surgical re-judge answers and merge them into the full judge_report.json (other templates/competencies keep their verdicts)."""
         t0 = time.time()
         print("\n" + "=" * 70)
         print("[AUX STAGE: REJUDGE-COMPARE] Merging surgical verdicts into full report")
@@ -2905,14 +3013,21 @@ class PipelineRunner:
         base_p = self.work_dir / "judge_report_baseline.json"
         if not scope_p.is_file():
             raise RuntimeError("No rejudge_scope.json: run --stage rejudge first.")
-        target = set(json.loads(scope_p.read_text(encoding="utf-8")).get("ids", []))
+        scope_data = json.loads(scope_p.read_text(encoding="utf-8"))
+        target = set(scope_data.get("ids", []))
+        target_tids = set(scope_data.get("template_ids", []))
         partial = compare_judge_responses(work_dir=self.work_dir)
         (self.work_dir / "judge_report_rejudge.json").write_text(json.dumps(partial, indent=2, ensure_ascii=False), encoding="utf-8")
 
         base = json.loads(base_p.read_text(encoding="utf-8")) if base_p.is_file() else {"disagreements": [], "total_items": 0, "agreed_items": 0}
         def _cid(d: Dict[str, Any]) -> str:
             return str(d.get("cid") or d.get("competency_id") or "")
-        kept = [d for d in (base.get("disagreements") or base.get("discordances") or []) if _cid(d) not in target]
+        def _in_scope(d: Dict[str, Any]) -> bool:
+            if target_tids:
+                tid = str(d.get("template_id") or "")
+                return (tid in target_tids) if tid else (_cid(d) in target)
+            return _cid(d) in target
+        kept = [d for d in (base.get("disagreements") or base.get("discordances") or []) if not _in_scope(d)]
         discord = kept + list(partial.get("disagreements") or [])
         base_total = int(base.get("total_items", base.get("total", 0)) or 0)
         total_items = base_total if base_total else partial.get("total_items", 0)
@@ -2929,6 +3044,7 @@ class PipelineRunner:
             "all_complete": complete, "failed_templates": failed_t, "failed_competencies": failed_c,
             "affected_template_ids": failed_t, "disagreements": discord, "discordances": discord,
             "rejudged_competencies": sorted(target),
+            "rejudged_templates": sorted(target_tids),
         })
         (self.work_dir / "judge_report.json").write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
         base_p.write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")

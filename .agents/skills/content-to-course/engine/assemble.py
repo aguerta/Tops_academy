@@ -1533,6 +1533,14 @@ def assemble_question(
     if template.get("graph"):
         assembled["graph"] = template["graph"]
 
+    archetype = template.get("archetype")
+    if isinstance(archetype, str) and archetype.strip():
+        assembled["archetype"] = str(archetype).strip().lower()
+
+    assumption_id = template.get("assumption_id")
+    if isinstance(assumption_id, str) and assumption_id.strip():
+        assembled["assumption_id"] = str(assumption_id).strip()
+
     if isinstance(common_misconception_warning, str) and common_misconception_warning:
         clean_warning = _strip_giveaway_prefix(common_misconception_warning)
         common_misconception_warning = sanitize_katex_syntax(
