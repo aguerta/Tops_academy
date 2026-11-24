@@ -1,12 +1,13 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-24 14:24:57`. Total de ejecuciones auditadas: **85**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-24 16:49:24`. Total de ejecuciones auditadas: **86**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Costo (USD) | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-24 21:49` | **estadistica_3_pre_cl_k3** (`e7d34485`) | 43 pág (1.56 MB) | 18 comp / 558 preg | 71.0 min (4260.0s) | **1.65x** | 6,275,442 | **`$6.67`** | **11,246.3** | **7.63s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
 | `2026-11-24 19:24` | **mateco_4_optimizacion_k4_v2** (`753e4e81`) | 71 pág (3.61 MB) | 32 comp / 1472 preg | 26.3 min (1579.0s) | **5.88x** | 16,516,609 | **`$17.23`** | **11,220.5** | **1.07s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-24 18:19` | **mateco_4_optimizacion_k3_v2_m20** (`36fdd76d`) | 71 pág (3.61 MB) | 27 comp / 903 preg | 19.9 min (1194.0s) | **5.22x** | 10,987,590 | **`$11.97`** | **12,167.9** | **1.32s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-24 17:34` | **mateco_4_optimizacion_k4_m20** (`b6c38c5f`) | 71 pág (3.61 MB) | 31 comp / 1452 preg | 43.6 min (2614.0s) | **5.49x** | 28,694,346 | **`$26.84`** | **19,761.9** | **1.8s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
@@ -97,11 +98,11 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.06x`
-- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.58 USD`
-- **Densidad de Tokens Promedio por Pregunta**: `45,639.7 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `4.97 s/pregunta`
-- **Rendimiento Promedio de Generación**: `27.04 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `5.02x`
+- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.47 USD`
+- **Densidad de Tokens Promedio por Pregunta**: `45,155.3 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `5.01 s/pregunta`
+- **Rendimiento Promedio de Generación**: `26.77 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*
