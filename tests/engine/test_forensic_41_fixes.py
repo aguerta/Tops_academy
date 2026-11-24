@@ -316,27 +316,8 @@ def test_l2_c05_m01_m05_adversarial_and_proof_negative_numbers():
 
 
 def test_l3_01_02_06_assemble_and_invariants():
-    from engine.assemble import _assemble_invariant_canvas, _assemble_unstructured_model
+    from engine.assemble import _assemble_unstructured_model
     from engine.invariants import validate_katex_syntax
-
-    # L3-01: invariant_canvas target_value & point_coords x/y normalization
-    ic, ic_ans = _assemble_invariant_canvas(
-        {
-            "mode": "cartesian",
-            "interactive_points": [{"id": "P1", "initial_x": 0, "initial_y": 0}],
-            "sliders": [{"id": "s1", "min": 0, "max": 10, "initial": 1}],
-            "invariants": [
-                {"kind": "point_coords", "target": "P1", "x": "@px@", "y": "@py@", "error_rationale": "Ajusta P1."},
-                {"kind": "slider_eq", "slider_id": "s1", "target_value": "@sv@", "error_rationale": "Ajusta s1."},
-            ],
-        },
-        {"px": 3, "py": 4, "sv": 5},
-        {},
-        {},
-    )
-    assert ic["invariants"][0]["target_x"] == 3
-    assert ic["invariants"][0]["target_y"] == 4
-    assert ic["invariants"][1]["target"] == 5
 
     # L3-02: validate_katex_syntax exempts correct_answer from Rule 15 exposed command check
     assert validate_katex_syntax(r"\frac{a}{b}", "correct_answer") == []
@@ -433,55 +414,6 @@ def test_l4_01_03_judge_m20_arbitration():
     assert not judge._check_m20_answer_match({"sample_witness": {"x": 2}}, gt_adv, "adversarial_break")[0]
     assert not judge._check_m20_answer_match({"sample_witness": {"x": -7}}, gt_adv, "adversarial_break")[0]
     assert not judge._check_m20_answer_match({"sample_witness": {"x": -3.5}}, gt_adv, "adversarial_break")[0]
-
-    # 3. invariant_canvas cartesian flat vs nested target_state + invariants fallthrough + kink_at without target_y
-    gt_ic_flat = {
-        "correct_answer": {"mode": "cartesian", "target_state": {"pt_kink": {"x": 5, "y": 10}}},
-        "invariants": [
-            {"id": "INV_POS", "kind": "point_coords", "point_id": "pt_kink", "target_x": 5, "target_y": 10},
-            {"id": "INV_KINK", "kind": "kink_at", "curve_id": "budget", "x": 5, "target": 0.5},
-        ],
-    }
-    ok_ic_norm, msg_ic_norm = judge._check_m20_answer_match(
-        {"points": {"pt_kink": {"x": 5, "y": 10}}},
-        gt_ic_flat,
-        "invariant_canvas",
-    )
-    assert ok_ic_norm, msg_ic_norm
-
-    gt_ic_fallthrough = {
-        "correct_answer": {
-            "mode": "cartesian",
-            "target_state": {"points": {"pt_kink": {"x": 5, "y": 10}}, "extra_field": "ignore_if_invs_hold"},
-        },
-        "invariants": [
-            {"id": "INV_POS", "kind": "point_coords", "point_id": "pt_kink", "target_x": 5, "target_y": 10},
-            {"id": "INV_KINK", "kind": "kink_at", "point_id": "pt_kink", "x": 5},
-        ],
-    }
-    ok_ic_ft, msg_ic_ft = judge._check_m20_answer_match(
-        {"points": {"pt_kink": {"x": 5.01, "y": 10.0}}},
-        gt_ic_fallthrough,
-        "invariant_canvas",
-    )
-    assert ok_ic_ft, msg_ic_ft
-    assert not judge._check_m20_answer_match(
-        {"points": {"pt_kink": {"x": 2, "y": 10}}},
-        gt_ic_fallthrough,
-        "invariant_canvas",
-    )[0]
-
-    # 4. invariant_canvas tree edge ID vs [from, to] pair
-    gt_tree = {
-        "correct_answer": {"mode": "tree", "required_edges": [["N1", "N2"]], "required_info_sets": [["N2", "N3"]]},
-        "edges": [{"id": "E1", "from": "N1", "to": "N2"}],
-    }
-    ok_tree, msg_tree = judge._check_m20_answer_match(
-        {"mode": "tree", "required_edges": ["E1"], "required_info_sets": [["N3", "N2"]]},
-        gt_tree,
-        "invariant_canvas",
-    )
-    assert ok_tree, msg_tree
 
 
 def test_fib_single_digit_homogeneous_stem_no_false_leak():

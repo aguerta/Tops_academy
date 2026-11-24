@@ -24,32 +24,6 @@ def test_conceptual_statement_with_latex_is_exempt():
     assert not _is_conceptual_statement("$5$")
 
 
-def _canvas(tx, ty, slider_target=5):
-    return {
-        "stem": "Ubique el punto.",
-        "hints": ["a" * 30, "b" * 30, "c" * 30],
-        "invariant_canvas": {
-            "mode": "cartesian",
-            "x_range": [0, 90],
-            "y_range": [0, 50],
-            "sliders": [{"id": "s1", "min": 0, "max": 10, "step": 1, "initial": 0}],
-            "invariants": [
-                {"id": "I1", "kind": "point_coords", "point_id": "P1", "target_x": tx, "target_y": ty},
-                {"id": "I2", "kind": "slider_eq", "slider_id": "s1", "target": slider_target},
-            ],
-        },
-    }
-
-
-def test_canvas_out_of_bounds_detected_and_clean_passes():
-    _, errs = check_instance_invariants(_canvas(100, 10), "invariant_canvas")
-    assert any("CANVAS-OUT-OF-BOUNDS" in e for e in errs)
-    _, errs = check_instance_invariants(_canvas(10, 10, slider_target=50), "invariant_canvas")
-    assert any("CANVAS-OUT-OF-BOUNDS" in e for e in errs)
-    _, errs = check_instance_invariants(_canvas(10, 10), "invariant_canvas")
-    assert not any("CANVAS-OUT-OF-BOUNDS" in e for e in errs)
-
-
 def _adv(stem):
     return {
         "stem": stem,

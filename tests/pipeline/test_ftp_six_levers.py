@@ -129,6 +129,11 @@ class TestLever1CanonicalVerifiers:
         assert c2c_ver.equiv("exp(x + 1)", "exp(1)*exp(x)", variables=["x"]) is True
         assert c2c_ver.equiv("sqrt(4*x)", "2*sqrt(x)", variables=["x"]) is True
         assert c2c_ver.equiv("log(2*x)", "log(x) + log(2)", variables=["x"]) is True
+        # Implicit multiplication & ^ / ** / ln support
+        assert c2c_ver.equiv("3x+5v^2", "3*x + 5*v**2", variables=["x", "v"]) is True
+        assert c2c_ver.equiv("3x+5(v^2)", "3*x + 5*v**2", variables=["x", "v"]) is True
+        assert c2c_ver.equiv("2xy", "2*x*y", variables=["x", "y"]) is True
+        assert c2c_ver.equiv("xln(x)", "x*log(x)", variables=["x"]) is True
 
         assert c2c_ver.equiv("2*x + 3", "2*x + 2", variables=["x"]) is False
         assert c2c_ver.equiv("z + 2*x", "2*x", variables=["x"]) is False
@@ -157,6 +162,24 @@ class TestLever1CanonicalVerifiers:
                     "is_correct": False,
                     "distractor_id": "D-C01-02",
                     "error_rationale": rats["D-C01-02"],
+                },
+                {
+                    "value": r"$y = @a@x + 2@b@$",
+                    "is_correct": False,
+                    "distractor_id": "D-C01-01",
+                    "error_rationale": rats["D-C01-01"],
+                },
+                {
+                    "value": r"$y = 2@a@x + @b@$",
+                    "is_correct": False,
+                    "distractor_id": "D-C01-02",
+                    "error_rationale": rats["D-C01-02"],
+                },
+                {
+                    "value": r"$y = @b@ - @a@x$",
+                    "is_correct": False,
+                    "distractor_id": "D-C01-01",
+                    "error_rationale": rats["D-C01-01"],
                 },
             ],
         }
@@ -252,15 +275,6 @@ class TestLever1CanonicalVerifiers:
         }
         assert c2c_ver.m20_guard(cm_res, rats, "concept_matching") is True
 
-        ic_res = {
-            "vars": {"a": 2},
-            "invariant_canvas": {
-                "mode": "cartesian",
-                "invariants": [{"kind": "point_coords", "point_id": "P1", "target_x": "@a@", "target_y": "4", "distractor_id": "D-C01-01", "error_rationale": rats["D-C01-01"]}],
-            },
-        }
-        assert c2c_ver.m20_guard(ic_res, rats, "invariant_canvas") is True
-
     def test_sandbox_injection_and_end_to_end_compile_shard(self, tmp_path: Path):
         # Sandbox security: engine.sandbox still banned; c2c_ver available without import
         with pytest.raises(SecurityViolationError):
@@ -328,6 +342,8 @@ def gen_3(rng):
             {"value": r"$f(@d@)-f(0)>0$", "is_correct": True},
             {"value": r"$f(@d@)-f(0)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": RATS["D-Hab01-04"]},
             {"value": r"$f(@d@)-f(0)=@d@$", "is_correct": False, "distractor_id": "D-Hab01-05", "error_rationale": RATS["D-Hab01-05"]},
+            {"value": r"$f(@d@)-f(0)=-@ad@$", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": r"Invierte el signo del incremento $@a@\cdot@d@=@ad@$ al restar $f(0)=@b@$."},
+            {"value": r"$f(@d@)-f(0)=@a@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": r"Suma la pendiente $@a@$ y el intercepto $@b@$ sin multiplicar por $@d@$."},
         ],
     }
 
@@ -344,6 +360,8 @@ def gen_4(rng):
             {"value": r"$f(@x@)=@a@(@x@)-@b@$", "is_correct": False, "distractor_id": "D-Hab01-06", "error_rationale": RATS["D-Hab01-06"]},
             {"value": r"$f(@x@)=@a@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": RATS["D-Hab01-02"]},
             {"value": r"$f(@x@)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": RATS["D-Hab01-01"]},
+            {"value": r"$f(@x@)=-@a@(@x@)+@b@$", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": r"Cambia el signo de la pendiente negativa $@a@$ al evaluar en $x=@x@$."},
+            {"value": r"$f(@x@)=@x@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": r"Omite multiplicar $x=@x@$ por la pendiente negativa $@a@$ antes de sumar $@b@$."},
         ],
     }
 
@@ -611,6 +629,8 @@ def gen_3(rng):
             {"value": r"$f(@d@)-f(0)>0$", "is_correct": True},
             {"value": r"$f(@d@)-f(0)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": RATS["D-Hab01-03"]},
             {"value": r"$f(@d@)-f(0)=@d@$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": RATS["D-Hab01-04"]},
+            {"value": r"$f(@d@)-f(0)=-@ad@$", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": r"Invierte el signo del incremento $@a@\cdot@d@=@ad@$ al restar $f(0)=@b@$."},
+            {"value": r"$f(@d@)-f(0)=@a@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": r"Suma pendiente $@a@$ e intercepto $@b@$ sin multiplicar por $@d@$."},
         ],
     }
 
@@ -627,6 +647,8 @@ def gen_4(rng):
             {"value": r"$f(@x@)=@a@(@x@)-@b@$", "is_correct": False, "distractor_id": "D-Hab01-05", "error_rationale": RATS["D-Hab01-05"]},
             {"value": r"$f(@x@)=@a@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-06", "error_rationale": RATS["D-Hab01-06"]},
             {"value": r"$f(@x@)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": RATS["D-Hab01-01"]},
+            {"value": r"$f(@x@)=-@a@(@x@)+@b@$", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": r"Invierte el signo negativo de $@a@$ al multiplicar por $x=@x@$."},
+            {"value": r"$f(@x@)=@x@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": r"Omite la pendiente $@a@$ al evaluar la función en $x=@x@$."},
         ],
     }
 
@@ -736,9 +758,12 @@ TEMPLATES = [
                 "vars": {"a": 2},
                 "options": [
                     {"value": "$x=2$", "is_correct": True},
+                    {"value": "$x>0$", "is_correct": True},
                     {"value": "$x=3$", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": "Error con doble punto en parámetro @a@.."},
                     {"value": "$x=4$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": "Error segundo válido con parámetro @a@."},
                     {"value": "$x=5$", "is_correct": False, "distractor_id": "D-Hab01-05", "error_rationale": "Error tercero válido con parámetro @a@."},
+                    {"value": "$x=6$", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": "Error cuarto válido con parámetro @a@."},
+                    {"value": "$x=7$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": "Error quinto válido con parámetro @a@."},
                 ],
             },
             competency_id="Hab-01",
@@ -761,7 +786,7 @@ class TestLever6ComplexityWeightedSharding:
         assert plan_shards.MAX_SKILLS_PER_SHARD == 1
 
         c_skill = {"id": "Hab-01", "type": "skill", "recommended_modalities": ["FIB", "MS"]}
-        c_heavy_m20 = {"id": "C-01", "type": "concept", "recommended_modalities": ["invariant_canvas", "open_symbolic"]}
+        c_heavy_m20 = {"id": "C-01", "type": "concept", "recommended_modalities": ["unstructured_model", "open_symbolic"]}
         c_light_concept = {"id": "C-02", "type": "concept", "recommended_modalities": ["MC7", "open_symbolic", "MS"]}
         c_light_fact = {"id": "H-01", "type": "fact", "recommended_modalities": ["MC7", "FIB"]}
 

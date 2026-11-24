@@ -320,6 +320,8 @@ def g1(rng):
         {"value": f"Sesgo {a+5}", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": "Error sistematico al no invertir la matriz de covarianza para @k@."},
         {"value": f"Sesgo {a+10}", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": "Omite la correlacion asintotica entre regresores al operar con @k@."},
         {"value": f"Sesgo {a+15}", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": "Usa la varianza muestral simple sin ajuste robusto para el valor @k@."},
+        {"value": f"Sesgo {a+20}", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": "Ignora el grado de libertad en el denominador muestral para @k@."},
+        {"value": f"Sesgo {a+25}", "is_correct": False, "distractor_id": "D-Hab01-05", "error_rationale": "Aplica raiz cuadrada indebida al coeficiente lineal de @k@."},
     ]
     return {"vars": {"k": k, "ans": a}, "options": opts}
 def g2(rng):
@@ -333,7 +335,7 @@ def g4(rng):
     return {"vars": {"k": k, "ans": a}, "correct": a, "ds": [("D-Hab01-06", str(a + 15), "Fija arbitrariamente el estimador puntual utilizando el parametro @k@.")]}
 def v1(r):
     a = r.get("vars", {}).get("k", 0) * 2; opts = r.get("options", [])
-    return len([o for o in opts if o.get("is_correct")]) == 2 and {o.get("value") for o in opts if o.get("is_correct")} == {f"Estimador: {a}", f"Doble 2*k: {a}"} and all(not o.get("is_correct") and o.get("distractor_id") in {"D-Hab01-01","D-Hab01-02","D-Hab01-03"} and len(str(o.get("error_rationale",""))) >= 20 for o in opts if not o.get("is_correct"))
+    return len([o for o in opts if o.get("is_correct")]) == 2 and {o.get("value") for o in opts if o.get("is_correct")} == {f"Estimador: {a}", f"Doble 2*k: {a}"} and all(not o.get("is_correct") and o.get("distractor_id") in {"D-Hab01-01","D-Hab01-02","D-Hab01-03","D-Hab01-04","D-Hab01-05"} and len(str(o.get("error_rationale",""))) >= 20 for o in opts if not o.get("is_correct"))
 def v2(r): return str(r.get("correct","")).strip() == str(r.get("vars",{}).get("k",0)*r.get("vars",{}).get("p",0)+10)
 def v3(r): v = r.get("vars",{}); return str(r.get("correct","")).strip() == str((v.get("k",0)+v.get("d",0))*3-v.get("k",0))
 def v4(r): v = r.get("vars",{}); k = v.get("k",0); return str(r.get("correct","")).strip() == str(k*k+k//2)

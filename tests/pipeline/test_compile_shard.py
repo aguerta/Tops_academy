@@ -560,6 +560,8 @@ def gen_c01_3(rng):
         {"value": f"Option C {z + 3}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid third option caused by misapplying sign on parameter @z@."},
         {"value": f"Option D {z + 4}", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Invalid fourth option caused by omitting coefficient on parameter @z@."},
         {"value": f"Option E {z + 5}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid fifth option caused by shifting boundary constant on parameter @z@."},
+        {"value": f"Option F {z + 6}", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Invalid sixth option caused by inverting slope on parameter @z@."},
+        {"value": f"Option G {z + 7}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid seventh option caused by doubling intercept on parameter @z@."},
     ]
     return {"vars": {"z": z}, "options": opts}
 
@@ -568,7 +570,7 @@ def ver_c01_3(res):
     z = res.get("vars", {}).get("z", 0)
     opts = res.get("options", [])
     if {o.get("value") for o in opts if o.get("is_correct")} != {f"Option A {z + 1}", f"Option B {z + 2}"}: return False
-    exp_f = {f"Option C {z + 3}": "D-01-01", f"Option D {z + 4}": "D-01-02", f"Option E {z + 5}": "D-01-01"}
+    exp_f = {f"Option C {z + 3}": "D-01-01", f"Option D {z + 4}": "D-01-02", f"Option E {z + 5}": "D-01-01", f"Option F {z + 6}": "D-01-02", f"Option G {z + 7}": "D-01-01"}
     return all(
         o.get("value") in exp_f
         and o.get("distractor_id") == exp_f[o.get("value")]

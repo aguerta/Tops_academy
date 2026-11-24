@@ -273,7 +273,7 @@ def test_all_system_prompts_pure_lf_and_byte_budgets():
     assert "DONE:" in legacy_text
     assert "compile_shard.py" in legacy_text
     assert "proof_dag" in legacy_text and "adversarial_break" in legacy_text
-    assert "invariant_canvas" in legacy_text and "concept_matching" in legacy_text
+    assert "concept_matching" in legacy_text
     assert "unstructured_model" in legacy_text
     assert "stem_variants" in legacy_text
     assert "ArtifactMetadata" in legacy_text

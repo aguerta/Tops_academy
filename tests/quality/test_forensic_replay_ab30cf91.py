@@ -1245,6 +1245,18 @@ def gen_ms(rng):
             "distractor_id": "D-Hab99-01",
             "error_rationale": "Anula indebidamente el factor diez al evaluar la cota lineal de @k@ sin termino constante.",
         },
+        {
+            "value": f"Valor invertido con signo negativo igual a -@ans@.",
+            "is_correct": False,
+            "distractor_id": "D-Hab99-02",
+            "error_rationale": "Invierte el signo del producto decimal de @k@ obteniendo -@ans@ en lugar de positivo.",
+        },
+        {
+            "value": f"Valor unitario sin factor diez igual a @k@.",
+            "is_correct": False,
+            "distractor_id": "D-Hab99-01",
+            "error_rationale": "Omite multiplicar por diez el parametro base @k@ dejando el resultado sin escalar.",
+        },
     ]
     return {"vars": v, "options": opts}
 
@@ -1263,13 +1275,15 @@ def ver_ms(r):
         "Valor desplazado con error aditivo igual a @d1@.": "D-Hab99-01",
         "Valor truncado con sesgo aditivo igual a @d2@.": "D-Hab99-02",
         "Valor nulo por cancelacion lineal de @k@.": "D-Hab99-01",
+        "Valor invertido con signo negativo igual a -@ans@.": "D-Hab99-02",
+        "Valor unitario sin factor diez igual a @k@.": "D-Hab99-01",
     }
     t_vals = {o.get("value") for o in opts if o.get("is_correct") is True}
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len([o for o in opts if o.get("is_correct") is True]) == 2
         and t_vals == expected_true
-        and len(f_opts) == 3
+        and len(f_opts) == 5
         and all(
             o.get("value") in expected_false
             and o.get("distractor_id") == expected_false[o.get("value")]

@@ -394,6 +394,9 @@ class TestAssembleQuestionSafeguardsIntegration:
                     "is_correct": False,
                     "error_rationale": r"Término no relacionado",
                 },
+                {"content": r"$A^T A = 0$", "is_correct": False, "error_rationale": r"Una matriz ortogonal es invertible."},
+                {"content": r"$A^T = 2I$", "is_correct": False, "error_rationale": r"En matrices ortogonales se cumple $A^T = A^{-1}$."},
+                {"content": r"$A^{-1} = -A^T$", "is_correct": False, "error_rationale": r"La inversa coincide con la transpuesta $A^T$."},
             ],
         }
 
@@ -407,7 +410,7 @@ class TestAssembleQuestionSafeguardsIntegration:
 
         assert assembled["interaction_type"] == "multiple_select"
         options = assembled["options"]
-        assert len(options) == 4
+        assert len(options) == 7
 
         # Check that matrix break '\\ ' is preserved in the identity option
         opt_matrix = next(opt for opt in options if "Identidad:" in opt["content"])

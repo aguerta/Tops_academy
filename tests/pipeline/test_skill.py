@@ -576,7 +576,7 @@ class TestGenericTemplateEngine:
         assert len(set(d_ids)) == 6
 
     def test_template_ms_cardinality(self):
-        """Multiple-select questions must have 4-6 options with correct count between 1 and n-1."""
+        """Multiple-select questions must have exactly 7 options with correct count between 2 and 5."""
         template = {
             "id": "T-02",
             "competency_id": "Hab-01",
@@ -584,7 +584,7 @@ class TestGenericTemplateEngine:
             "stem": "Select all valid propositions:",
             "hints": ["H1", "H2", "H3"],
             "solution": "Sol",
-            "distractor_ids": ["D-01", "D-02"],
+            "distractor_ids": ["D-01", "D-02", "D-03", "D-04", "D-05"],
         }
         gen_result = {
             "vars": {},
@@ -593,13 +593,16 @@ class TestGenericTemplateEngine:
                 {"content": "Opt B", "is_correct": True},
                 {"content": "Opt C", "is_correct": False, "distractor_id": "D-01"},
                 {"content": "Opt D", "is_correct": False, "distractor_id": "D-02"},
+                {"content": "Opt E", "is_correct": False, "distractor_id": "D-03"},
+                {"content": "Opt F", "is_correct": False, "distractor_id": "D-04"},
+                {"content": "Opt G", "is_correct": False, "distractor_id": "D-05"},
             ],
         }
         q = assemble_question(template, gen_result, "Hab-01", question_index=1, seed=42)
 
-        assert 4 <= len(q["options"]) <= 6
+        assert len(q["options"]) == 7
         correct_count = sum(1 for o in q["options"] if o.get("is_correct"))
-        assert 1 <= correct_count < len(q["options"])
+        assert 2 <= correct_count <= 5
 
     def test_template_fib_tolerance_and_equivalents(self):
         """Fill-in-the-blank generates scalar value with tolerance and accepted equivalents."""

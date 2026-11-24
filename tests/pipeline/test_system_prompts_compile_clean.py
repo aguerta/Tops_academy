@@ -352,12 +352,12 @@ def test_m20_micro_examples_in_prompt_shard_author_compile_clean():
 
 
 def test_c02_m20_shard_example_in_prompt_shard_author_compiles_clean(tmp_path: Path):
-    """Validates the second full Form-C shard example (C-02: MC7 + open_symbolic + invariant_canvas) compiles cleanly."""
+    """Validates the second full Form-C shard example (C-02: MC7 + open_symbolic + multiple_select) compiles cleanly."""
     shard_author_prompt = c2c_dir / "system_prompts" / "lean" / "prompt_shard_author.md"
     prompt_text = shard_author_prompt.read_text(encoding="utf-8")
 
     blocks = re.findall(r"```python\s+(.+?)```", prompt_text, re.DOTALL)
-    c02_block = next((b for b in blocks if "T-C02-01" in b and "invariant_canvas" in b), None)
+    c02_block = next((b for b in blocks if "T-C02-01" in b and "multiple_select" in b or ("T-C02-01" in b and "gen_ms1" in b)), None)
     assert c02_block is not None, "Missing C-02 Form-C shard example in prompt_shard_author.md"
 
     work_dir = tmp_path / "work_c02"
@@ -398,7 +398,7 @@ def test_c02_m20_shard_example_in_prompt_shard_author_compiles_clean(tmp_path: P
         '        [\n'
         '            ("A-C02-01", r"Precios e ingreso estrictamente positivos $p_1,p_2,m>0$", r"Permite definir interceptos finitos y pendiente negativa."),\n'
         '        ],\n'
-        '        ["MC7", "open_symbolic", "invariant_canvas"],\n'
+        '        ["MC7", "open_symbolic", "multiple_select"],\n'
         '    )\n'
         ']\n'
     )

@@ -249,6 +249,9 @@ def test_assemble_question_preserves_author_error_rationale_ms():
                 "distractor_id": "D-MS-02",
                 "error_rationale": None,
             },
+            {"content": "El sesgo de OLS desaparece aunque exista endogeneidad.", "is_correct": False, "error_rationale": "La endogeneidad rompe el insesgamiento de OLS."},
+            {"content": "El estimador IV requiere que los instrumentos sean irrelevantes.", "is_correct": False, "error_rationale": "Los instrumentos deben ser relevantes y exógenos."},
+            {"content": "La matriz de covarianza de IV es nula en muestras grandes.", "is_correct": False, "error_rationale": "La varianza asintótica es positiva y finita."},
         ],
     }
     cta_map = {
@@ -439,20 +442,23 @@ def test_assemble_question_mc7_and_ms_strips_giveaway_and_interpolates_vars():
     gen_result_ms = {
         "vars": {"alpha": "0.05"},
         "options": [
-            {"content": "Opción correcta 1", "is_correct": True},
-            {"content": "Opción correcta 2", "is_correct": True},
+            {"content": "La hipótesis nula se rechaza cuando el valor p es menor que alpha.", "is_correct": True},
+            {"content": "El nivel de significancia acota la probabilidad del error de tipo I.", "is_correct": True},
             {
-                "content": "Opción incorrecta 1",
+                "content": "La hipótesis nula se acepta automáticamente si el nivel alpha es igual a cero.",
                 "is_correct": False,
                 "distractor_id": "D-MS-01",
                 "error_rationale": "Error de signo: Se utilizó un nivel de significancia erróneo de @alpha@.",
             },
             {
-                "content": "Opción incorrecta 2",
+                "content": "Se rechaza la hipótesis nula solamente cuando el valor p supera a alpha.",
                 "is_correct": False,
                 "distractor_id": "D-MS-02",
                 "error_rationale": "Confusión de conceptos: Rechaza H0 cuando p > alpha.",
             },
+            {"content": "Acepta H0 automáticamente cuando alpha = 0.05 sin calcular el estadístico.", "is_correct": False, "error_rationale": "Debe evaluarse el valor p frente a alpha = 0.05."},
+            {"content": "Duplica el nivel de significancia en pruebas bilaterales sin ajustar la cola.", "is_correct": False, "error_rationale": "La región crítica se reparte simétricamente con alpha = 0.05."},
+            {"content": "Confunde el error tipo I con la potencia estadística de la prueba.", "is_correct": False, "error_rationale": "La potencia es 1 - beta, distinta de la significancia."},
         ],
     }
     assembled_ms = assemble_question(

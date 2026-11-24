@@ -550,6 +550,8 @@ def gen_c01_4(rng):
         {"value": f"La eficiencia alcanza el maximo absoluto para la cota T = {t_val} K.", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Falso: la eficiencia unitaria requiere cero absoluto en el foco frio @tc@."},
         {"value": f"El calor absorbido se convierte totalmente en trabajo a {t_val} K.", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Falso: contradice el postulado de Kelvin-Planck sobre el foco caliente @th@."},
         {"value": f"La entropia neta del universo disminuye en equilibrio a T = {t_val} K.", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Falso: en un proceso reversible a @tc@ constante la variacion total de entropia es nula."},
+        {"value": f"El ciclo opera con gradiente positivo pese a T = {t_val} K.", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Falso: cuando ambos focos estan a @tc@ K el gradiente es nulo."},
+        {"value": f"El rendimiento supera la unidad al fijar T = {t_val} K.", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Falso: por la Segunda Ley nunca supera el limite de Carnot a @th@ K."},
     ]
     return {"vars": {"tc": t_val, "th": t_val}, "options": opts}
 
@@ -560,7 +562,13 @@ def ver_c01_4(res):
     opts = res.get("options", [])
     exp_t = {f"La eficiencia reversible es nula en el limite isotermo T = {t} K.", f"No es posible extraer trabajo util bajo equilibrio termico a {t} K."}
     if {o.get("value") for o in opts if o.get("is_correct")} != exp_t: return False
-    exp_f = {f"La eficiencia alcanza el maximo absoluto para la cota T = {t} K.": "D-01-01", f"El calor absorbido se convierte totalmente en trabajo a {t} K.": "D-01-02", f"La entropia neta del universo disminuye en equilibrio a T = {t} K.": "D-01-02"}
+    exp_f = {
+        f"La eficiencia alcanza el maximo absoluto para la cota T = {t} K.": "D-01-01",
+        f"El calor absorbido se convierte totalmente en trabajo a {t} K.": "D-01-02",
+        f"La entropia neta del universo disminuye en equilibrio a T = {t} K.": "D-01-02",
+        f"El ciclo opera con gradiente positivo pese a T = {t} K.": "D-01-01",
+        f"El rendimiento supera la unidad al fijar T = {t} K.": "D-01-02",
+    }
     return all(
         o.get("value") in exp_f
         and o.get("distractor_id") == exp_f[o.get("value")]

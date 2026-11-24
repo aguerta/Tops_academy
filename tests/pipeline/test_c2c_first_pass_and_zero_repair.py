@@ -53,28 +53,28 @@ def test_r15_ms_calibrated_bounds():
             "detailed_solution": "Solución detallada paso a paso que supera ochenta caracteres de longitud mínima.",
         }
 
-    # 0.84x and 1.19x should pass under [0.80, 1.20]
+    # 0.84x and 1.19x should pass under [0.80, 1.20] (7 options: 3 true, 4 false)
     ok_low, errs_low = check_instance_invariants(
-        _make_ms(["A" * 84, "B" * 84], ["C" * 100, "D" * 100]),
+        _make_ms(["A" * 84, "B" * 84, "E" * 84], ["C" * 100, "D" * 100, "F" * 100, "G" * 100]),
         "multiple_select",
     )
     assert ok_low, errs_low
 
     ok_high, errs_high = check_instance_invariants(
-        _make_ms(["A" * 119, "B" * 119], ["C" * 100, "D" * 100]),
+        _make_ms(["A" * 119, "B" * 119, "E" * 119], ["C" * 100, "D" * 100, "F" * 100, "G" * 100]),
         "multiple_select",
     )
     assert ok_high, errs_high
 
     # 1.29x and 0.75x must still fail
     ok_too_long, errs_tl = check_instance_invariants(
-        _make_ms(["A" * 129, "B" * 129], ["C" * 100, "D" * 100]),
+        _make_ms(["A" * 129, "B" * 129, "E" * 129], ["C" * 100, "D" * 100, "F" * 100, "G" * 100]),
         "multiple_select",
     )
     assert not ok_too_long and any("MS length anti-giveaway violation" in e for e in errs_tl)
 
     ok_too_short, errs_ts = check_instance_invariants(
-        _make_ms(["A" * 75, "B" * 75], ["C" * 100, "D" * 100]),
+        _make_ms(["A" * 75, "B" * 75, "E" * 75], ["C" * 100, "D" * 100, "F" * 100, "G" * 100]),
         "multiple_select",
     )
     assert not ok_too_short and any("MS length anti-giveaway violation" in e for e in errs_ts)
@@ -313,28 +313,7 @@ def test_concept_matching_relabels_targets_post_shuffle():
     assert non_identity
 
 
-def test_canvas_step_mismatch_and_degenerate_literal_cond():
-    ic_bad = {
-        "stem": "Ubique $P_1$ en el plano:",
-        "invariant_canvas": {
-            "mode": "cartesian",
-            "x_range": [0, 10],
-            "y_range": [0, 10],
-            "step": 2,
-            "interactive_curves": [{"id": "c1", "label": "$y=x$", "expression": "x"}],
-            "invariants": [{"id": "I1", "kind": "point_coords", "point_id": "P1", "target_x": 3, "target_y": 4}],
-        },
-        "hints": ["Pista uno suficientemente larga.", "Pista dos suficientemente larga.", "Pista tres suficientemente larga."],
-        "detailed_solution": "Solución detallada paso a paso que supera ochenta caracteres de longitud mínima.",
-    }
-    ok_bad, errs_bad = check_instance_invariants(ic_bad, "invariant_canvas")
-    assert not ok_bad and any("[CANVAS-STEP-MISMATCH]" in e for e in errs_bad), errs_bad
-
-    ic_good = dict(ic_bad)
-    ic_good["invariant_canvas"] = {**ic_bad["invariant_canvas"], "invariants": [{"id": "I1", "kind": "point_coords", "point_id": "P1", "target_x": 4, "target_y": 6}]}
-    ok_good, errs_good = check_instance_invariants(ic_good, "invariant_canvas")
-    assert ok_good, errs_good
-
+def test_degenerate_literal_cond():
     ms_degen = {
         "stem": "Sobre $[0, 6]$ ($3>0$), seleccione:",
         "options": [
@@ -343,6 +322,8 @@ def test_canvas_step_mismatch_and_degenerate_literal_cond():
             {"content": "El integrando es nulo.", "is_correct": False, "distractor_id": "D-01", "error_rationale": "Error en integrando."},
             {"content": "El horizonte es infinito.", "is_correct": False, "distractor_id": "D-02", "error_rationale": "Error en horizonte."},
             {"content": "No hay término terminal.", "is_correct": False, "distractor_id": "D-03", "error_rationale": "Error en término."},
+            {"content": "La trayectoria diverge en $t=0$.", "is_correct": False, "distractor_id": "D-04", "error_rationale": "Error en trayectoria."},
+            {"content": "El multiplicador es negativo.", "is_correct": False, "distractor_id": "D-05", "error_rationale": "Error en multiplicador."},
         ],
         "hints": ["Pista uno suficientemente larga.", "Pista dos suficientemente larga.", "Pista tres suficientemente larga."],
         "detailed_solution": "Solución detallada paso a paso que supera ochenta caracteres de longitud mínima.",
@@ -364,17 +345,6 @@ def test_m20_rigor_gates_in_check_templates():
     )
     assert any("MS-MIN-OPTIONS" in e for e in errs_ms)
 
-    errs_ic: list[str] = []
-    check_templates._check_m20_rigor_for_instance(
-        {"invariant_canvas": {"mode": "cartesian", "fixed_curves": [{"id": "c1"}], "interactive_curves": [], "sliders": [], "invariants": [{"kind": "point_coords"}]}},
-        "invariant_canvas",
-        strict=True,
-        competency_id="C-01",
-        tpl_id="T-C01-02",
-        errors=errs_ic,
-    )
-    assert any("CANVAS-TRIVIAL-1PT" in e for e in errs_ic)
-
     errs_cm: list[str] = []
     check_templates._check_m20_rigor_for_instance(
         {"concept_matching": {"premises": [{"id": "P1"}, {"id": "P2"}], "targets": [{"id": "T1"}, {"id": "T2"}, {"id": "T3", "is_distractor": True}], "correct_pairs": {"P1": "T1", "P2": "T2"}}},
@@ -389,8 +359,8 @@ def test_m20_rigor_gates_in_check_templates():
     errs_div = check_templates._check_competency_rigor_diversity(
         "C-01",
         [
-            {"interaction_type": "multiple_select", "template_id": "T-C01-01", "options": [{"is_correct": True}] * 2 + [{"is_correct": False}] * 3},
-            {"interaction_type": "multiple_select", "template_id": "T-C01-02", "options": [{"is_correct": True}] * 2 + [{"is_correct": False}] * 3},
+            {"interaction_type": "multiple_select", "template_id": "T-C01-01", "options": [{"is_correct": True}] * 2 + [{"is_correct": False}] * 5},
+            {"interaction_type": "multiple_select", "template_id": "T-C01-02", "options": [{"is_correct": True}] * 2 + [{"is_correct": False}] * 5},
         ],
         strict=True,
     )
@@ -415,7 +385,7 @@ def test_dispatch_skeleton_rotates_ms_expected_correct_count():
     )
     assert "expected_correct_count=3" in skel
     assert "expected_correct_count=2" in skel
-    assert "5..6 opciones" in skel
+    assert "7 opciones, 2..5 correctas" in skel
     assert "variar falacia (ej. S2)" in skel
     assert "variar falacia (ej. S4)" in skel
 

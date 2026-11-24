@@ -493,7 +493,7 @@ TEMPLATES = [
             work_bad,
             cid="Hab-20",
             is_skill=True,
-            recommended_modalities=["invariant_canvas", "open_symbolic"],
+            recommended_modalities=["proof_dag", "open_symbolic"],
         )
         shard_fib_code = r'''
 RATS = {
@@ -556,33 +556,6 @@ TEMPLATES = [
         (shards_ok / "shard_01_data.py").write_text(shard_fib_code, encoding="utf-8")
         ok_good, errs_good = compile_shard(work_ok, shard_id="shard_01", strict=True, min_archetypes=4, seeds=20, fail_total=True)
         assert ok_good, f"CTA Architect matching modality plan should pass: {errs_good}"
-
-    def test_invariant_canvas_target_coordinate_leak_rejected(self):
-        """Cartesian invariant_canvas questions must reject target coordinates leaked verbatim in stem."""
-        base_ic = {
-            "mode": "cartesian",
-            "x_range": [0, 20],
-            "y_range": [0, 30],
-            "invariants": [
-                {"id": "INV_POS", "kind": "point_coords", "point_id": "pt_kink", "target_x": 5, "target_y": 14, "tolerance": 0.5}
-            ],
-        }
-        leaking_q = {
-            "interaction_type": "invariant_canvas",
-            "stem": r"Identifique sobre el plano el punto de quiebre $(\bar{x}_1, x_2) = (5, 14)$ con $m = 24$:",
-            "hints": ["Calcula m - p1*x_bar.", "Verifica ambos tramos.", "Ubica el vertice resultante."],
-            "invariant_canvas": base_ic,
-        }
-        ok_leak, errs_leak = check_instance_invariants(leaking_q, "invariant_canvas")
-        assert not ok_leak and any("leaked verbatim in stem text" in e for e in errs_leak)
-
-        clean_q = {
-            **leaking_q,
-            "stem": r"Con $m = 24$, $p_1 = 2$, $p_2 = 1$ y descuento desde $\bar{x}_1 = 5$, calcula $x_2^*$ y ubica el vértice:",
-        }
-        ok_clean, errs_clean = check_instance_invariants(clean_q, "invariant_canvas")
-        assert ok_clean, f"Non-leaking canvas stem failed unexpectedly: {errs_clean}"
-
 
 class TestM20EndToEndAssembleValidateAudit:
     def test_all_six_modalities_plus_fib_ds_assemble_validate_and_audit(self):
@@ -673,31 +646,6 @@ class TestM20EndToEndAssembleValidateAudit:
                 },
             ),
             (
-                "invariant_canvas",
-                {
-                    "vars": {"x": 10},
-                    "invariant_canvas": {
-                        "mode": "tree",
-                        "interaction_mode": "both",
-                        "nodes": [
-                            {"id": "N0", "label": "J1", "x": 100, "y": 40, "player": "1"},
-                            {"id": "N1", "label": "J2", "x": 60, "y": 140, "player": "2"},
-                            {"id": "N2", "label": "J2", "x": 140, "y": 140, "player": "2"},
-                        ],
-                        "edges": [
-                            {"id": "E1", "from": "N0", "to": "N1", "label": "A"},
-                            {"id": "E2", "from": "N0", "to": "N2", "label": "B"},
-                        ],
-                        "tree_invariants": {
-                            "required_edges": ["E1"],
-                            "required_info_sets": [["N1", "N2"]],
-                            "distractor_id": "D-Hab20-06",
-                            "edge_error_rationale": r"Selecciona trayectoria subóptima sin conservar conjunto de información con $@x@$ nodos.",
-                        },
-                    },
-                },
-            ),
-            (
                 "concept_matching",
                 {
                     "vars": {"x": 2},
@@ -758,7 +706,7 @@ class TestM20EndToEndAssembleValidateAudit:
         audit = run_full_audit(course)
         mod = audit["dimension_summaries"]["retrieval_modality_linter"]
         assert mod["fib_count"] == 5
-        assert mod["bloom_superior_count"] == 30
+        assert mod["bloom_superior_count"] == 25
         assert mod["active_generation_or_discrimination_pct"] == 100.0
         assert mod["mc7_count"] == 0
         assert mod["m20_contract_active"] is True

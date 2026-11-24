@@ -466,10 +466,13 @@ import random
 def gen_h01_4(rng):
     a = rng.randint(2, 20)
     opts = [
-        {"content": f"Opción verdadera 1 {a}", "value": f"val_{a}_1", "is_correct": True},
-        {"content": f"Opción verdadera 2 {a}", "value": f"val_{a}_2", "is_correct": True},
-        {"content": f"Opción falsa 1 {a}", "value": f"fake_{a}_1", "is_correct": False, "distractor_id": "D-H01-01", "error_rationale": "Rationale explicativo largo para opción falsa 1 con parámetro @a@."},
-        {"content": f"Opción falsa 2 {a}", "value": f"fake_{a}_2", "is_correct": False, "distractor_id": "D-H01-02", "error_rationale": "Rationale explicativo largo para opción falsa 2 con parámetro @a@."},
+        {"content": f"La condición de equilibrio se cumple con {a} positivo.", "value": f"val_{a}_1", "is_correct": True},
+        {"content": f"El parámetro estructural {a} garantiza estabilidad.", "value": f"val_{a}_2", "is_correct": True},
+        {"content": f"Asume pendiente invertida -{a} en el equilibrio.", "value": f"fake_{a}_1", "is_correct": False, "distractor_id": "D-H01-01", "error_rationale": "Rationale explicativo largo para pendiente invertida con parámetro @a@."},
+        {"content": f"Omite el término constante {a} al derivar.", "value": f"fake_{a}_2", "is_correct": False, "distractor_id": "D-H01-02", "error_rationale": "Rationale explicativo largo por omisión de constante con parámetro @a@."},
+        {"content": f"Duplica el coeficiente principal 2*{a} sin justificación.", "value": f"fake_{a}_3", "is_correct": False, "distractor_id": "D-H01-01", "error_rationale": "Rationale explicativo largo por duplicación de coeficiente con parámetro @a@."},
+        {"content": f"Sustituye el factor {a} por cero en el denominador.", "value": f"fake_{a}_4", "is_correct": False, "distractor_id": "D-H01-02", "error_rationale": "Rationale explicativo largo por sustitución nula con parámetro @a@."},
+        {"content": f"Aplica signo negativo espurio -{a} al intercepto.", "value": f"fake_{a}_5", "is_correct": False, "distractor_id": "D-H01-01", "error_rationale": "Rationale explicativo largo por signo negativo espurio con parámetro @a@."},
     ]
     return {"vars": {"a": a}, "options": opts}
 
@@ -648,6 +651,9 @@ def test_r19_anti_leak_mc7_and_ms(interaction_type: str, leaked_stem: str, token
             {"content": "Opción verdadera 2", "is_correct": True},
             {"content": "Opción falsa 1", "is_correct": False, "distractor_id": "D1", "error_rationale": "Rationale explicativo suficientemente largo para pasar validación."},
             {"content": "Opción falsa 2", "is_correct": False, "distractor_id": "D2", "error_rationale": "Rationale explicativo suficientemente largo para pasar validación."},
+            {"content": "Opción falsa 3", "is_correct": False, "distractor_id": "D3", "error_rationale": "Rationale explicativo suficientemente largo para pasar validación."},
+            {"content": "Opción falsa 4", "is_correct": False, "distractor_id": "D4", "error_rationale": "Rationale explicativo suficientemente largo para pasar validación."},
+            {"content": "Opción falsa 5", "is_correct": False, "distractor_id": "D5", "error_rationale": "Rationale explicativo suficientemente largo para pasar validación."},
         ]
 
     q_data = {

@@ -116,30 +116,36 @@ def test_ms_length_symmetry_guard():
             ),
         }
 
-    # Asymmetric: avg_true ~ 72, avg_false ~ 56 -> ratio ~ 1.29x > 1.15x
+    # Asymmetric: avg_true ~ 72, avg_false ~ 56 -> ratio ~ 1.29x > 1.15x (7 options: 3 true, 4 false)
     biased = _make_ms(
         [
             "La inversión neta agregada iguala exactamente la fracción constante del ingreso",
             "El capital se acumula de forma continua a tasa proporcional al producto total",
+            "El producto per cápita crece mientras la inversión supere a la dilución total",
         ],
         [
             "El ahorro depende siempre de la tasa de interés real",
             "La depreciación debe ser cero para que exista equilibrio",
+            "El consumo agregado equivale al producto total siempre",
+            "La población decrece cuando el capital alcanza el nivel",
         ],
     )
     ok_biased, errs_biased = check_instance_invariants(biased, "multiple_select")
     assert not ok_biased
     assert any("MS length anti-giveaway violation" in e for e in errs_biased)
 
-    # Balanced: avg_true ~ 64, avg_false ~ 62 -> ratio ~ 1.03x <= 1.15x
+    # Balanced: avg_true ~ 64, avg_false ~ 62 -> ratio ~ 1.03x <= 1.15x (7 options: 3 true, 4 false)
     balanced = _make_ms(
         [
             "La inversión neta iguala una fracción constante del producto Y.",
             "El capital crece de manera continua en proporción directa a sY.",
+            "La tasa de ahorro exógena s permanece fija a lo largo del tiempo.",
         ],
         [
             "La tasa de ahorro responde endógenamente a la tasa de interés.",
             "El equilibrio estacionario exige que la depreciación sea nula.",
+            "La producción agregada ignora por completo el acervo de capital.",
+            "El flujo de inversión neta excede siempre al producto total Y.",
         ],
     )
     ok_bal, errs_bal = check_instance_invariants(balanced, "multiple_select")

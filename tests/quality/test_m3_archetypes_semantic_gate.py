@@ -330,6 +330,18 @@ def gen_h01_4(rng):
             "distractor_id": "D-H-01-01",
             "error_rationale": "Ignora que el foco frio @tc@ > 0 impide que 1 - @tc@/@th@ alcance la unidad.",
         },
+        {
+            "value": "La eficiencia depende unicamente de la suma @th@ + @tc@ de temperaturas.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-02",
+            "error_rationale": "Sustituye el cociente adimensional @tc@/@th@ por una suma directa sin sentido fisico.",
+        },
+        {
+            "value": "El trabajo neto excede la energia total absorbida cuando @ratio@ > 1.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-03",
+            "error_rationale": "Viola la primera ley al suponer eficiencia mayor que la unidad para @ratio@.",
+        },
     ]
     return {"vars": {"tc": tc, "th": th, "ratio": ratio, "d6": d6}, "options": opts}
 
@@ -348,13 +360,15 @@ def ver_h01_4(res):
         "La eficiencia coincide con la semidiferencia @d6@ entre focos termicos.": "D-H-01-06",
         "La fraccion de trabajo util equivale directamente a @tc@/@th@ para todo @tc@.": "D-H-01-01",
         "El ciclo alcanza rendimiento unitario cuando @th@ es finito y positivo.": "D-H-01-01",
+        "La eficiencia depende unicamente de la suma @th@ + @tc@ de temperaturas.": "D-H-01-02",
+        "El trabajo neto excede la energia total absorbida cuando @ratio@ > 1.": "D-H-01-03",
     }
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_true
-        and len(f_opts) == 3
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_false
             and o.get("distractor_id") == exp_false[o.get("value")]
@@ -643,6 +657,18 @@ def gen_h01_4(rng):
             "distractor_id": "D-H-01-01",
             "error_rationale": "Ignora que el foco frio @tc@ > 0 impide que 1 - @tc@/@th@ alcance la unidad.",
         },
+        {
+            "value": "La eficiencia depende unicamente de la suma @th@ + @tc@ de temperaturas.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-02",
+            "error_rationale": "Sustituye el cociente adimensional @tc@/@th@ por una suma directa sin sentido fisico.",
+        },
+        {
+            "value": "El trabajo neto excede la energia total absorbida cuando @ratio@ > 1.",
+            "is_correct": False,
+            "distractor_id": "D-H-01-03",
+            "error_rationale": "Viola la primera ley al suponer eficiencia mayor que la unidad para @ratio@.",
+        },
     ]
     return {"vars": {"tc": tc, "th": th, "ratio": ratio, "d6": d6}, "options": opts}
 
@@ -661,13 +687,15 @@ def ver_h01_4(res):
         "La eficiencia coincide con la semidiferencia @d6@ entre focos termicos.": "D-H-01-06",
         "La fraccion de trabajo util equivale directamente a @tc@/@th@ para todo @tc@.": "D-H-01-01",
         "El ciclo alcanza rendimiento unitario cuando @th@ es finito y positivo.": "D-H-01-01",
+        "La eficiencia depende unicamente de la suma @th@ + @tc@ de temperaturas.": "D-H-01-02",
+        "El trabajo neto excede la energia total absorbida cuando @ratio@ > 1.": "D-H-01-03",
     }
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_true
-        and len(f_opts) == 3
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_false
             and o.get("distractor_id") == exp_false[o.get("value")]
@@ -936,6 +964,24 @@ def gen_ms(rng):
                 "is_correct": False,
                 "distractor_id": "D-H-01-02",
                 "error_rationale": "Justificación errónea dependiente de @w@.",
+            },
+            {
+                "value": "Afirmación errónea tres con @v@",
+                "is_correct": False,
+                "distractor_id": "D-H-01-01",
+                "error_rationale": "Justificación errónea tres dependiente de @v@.",
+            },
+            {
+                "value": "Afirmación errónea cuatro con @w@",
+                "is_correct": False,
+                "distractor_id": "D-H-01-02",
+                "error_rationale": "Justificación errónea cuatro dependiente de @w@.",
+            },
+            {
+                "value": "Afirmación errónea cinco con @v@ y @w@",
+                "is_correct": False,
+                "distractor_id": "D-H-01-01",
+                "error_rationale": "Justificación errónea cinco dependiente de @v@ y @w@.",
             },
         ],
     }
@@ -1258,6 +1304,18 @@ def gen_ms(rng):
                 "distractor_id": "D-Hab-01-03",
                 "error_rationale": "Anula el término principal de escala respecto a @k@ y @d1@.",
             },
+            {
+                "value": "Afirmación errónea por doble escala con @d2@.",
+                "is_correct": False,
+                "distractor_id": "D-Hab-01-01",
+                "error_rationale": "Duplica indebidamente el factor de escala respecto a @k@ y @d2@.",
+            },
+            {
+                "value": "Afirmación errónea por signo opuesto con @d1@.",
+                "is_correct": False,
+                "distractor_id": "D-Hab-01-02",
+                "error_rationale": "Invierte el signo del parámetro de escala respecto a @k@ y @d1@.",
+            },
         ],
     }
 def ver_ms(res):
@@ -1265,7 +1323,13 @@ def ver_ms(res):
     opts = res.get("options", [])
     exp_t = {"Afirmación verdadera fundamental sobre factor @k@.", "Segunda afirmación verdadera complementaria con @k@."}
     if {o.get("value") for o in opts if o.get("is_correct")} != exp_t: return False
-    exp_f = {"Afirmación errónea basada en valor espurio @d1@.": "D-Hab-01-01", "Afirmación errónea con valor desplazado @d2@.": "D-Hab-01-02", "Afirmación errónea por factor nulo con @d1@.": "D-Hab-01-03"}
+    exp_f = {
+        "Afirmación errónea basada en valor espurio @d1@.": "D-Hab-01-01",
+        "Afirmación errónea con valor desplazado @d2@.": "D-Hab-01-02",
+        "Afirmación errónea por factor nulo con @d1@.": "D-Hab-01-03",
+        "Afirmación errónea por doble escala con @d2@.": "D-Hab-01-01",
+        "Afirmación errónea por signo opuesto con @d1@.": "D-Hab-01-02",
+    }
     return all(
         o.get("value") in exp_f
         and o.get("distractor_id") == exp_f[o.get("value")]

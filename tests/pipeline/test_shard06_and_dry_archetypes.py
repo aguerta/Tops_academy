@@ -149,11 +149,12 @@ def gen_directo(rng):
         {"value": r"$@d2@$", "is_correct": False, "distractor_id": "D-Hab06-02", "error_rationale": "Confusión en la escala del incremento de paso @step@ dentro del modelo lineal."},
         {"value": r"$@d3@$", "is_correct": False, "distractor_id": "D-Hab06-03", "error_rationale": "Desplazamiento erróneo del parámetro base @base@ en la estimación directa."},
         {"value": r"$@d4@$", "is_correct": False, "distractor_id": "D-Hab06-04", "error_rationale": "Multiplicación incorrecta del incremento @step@ durante la estimación lineal."},
+        {"value": r"$@d5@$", "is_correct": False, "distractor_id": "D-Hab06-05", "error_rationale": "Exceso de incremento en el parámetro base @base@ al calcular @d5@."},
     ]
     return {
         "vars": {
             "base": base, "step": step, "ans": v_corr,
-            "d1": d1, "d2": d2, "d3": d3, "d4": d4,
+            "d1": d1, "d2": d2, "d3": d3, "d4": d4, "d5": d5,
         },
         "options": opts,
     }
@@ -166,13 +167,13 @@ def ver_directo(res):
         return False
     opts = res.get("options", [])
     exp_t = {r"$@ans@$ es el estimador lineal directo", r"El incremento acumulado es $3(@step@)$ sobre @base@"}
-    exp_f = {f"$@d{i}@$": f"D-Hab06-0{i}" for i in range(1, 5)}
+    exp_f = {f"$@d{i}@$": f"D-Hab06-0{i}" for i in range(1, 6)}
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_t
-        and len(f_opts) == 4
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_f
             and o.get("distractor_id") == exp_f[o.get("value")]
@@ -1273,8 +1274,9 @@ def _gen_c01(rng, arch):
             "Desplazamiento positivo erroneo al evaluar valor base @n@ del modelo.",
             "Error de escala acumulado sobre el parametro @n@ del modelo lineal.",
             "Ajuste residual equivocado aplicado sobre parametro @n@ evaluado.",
+            "Inversion de signo en el desplazamiento lineal de @n@ evaluado.",
         ]
-        d_vals = [ans - 2, ans + 2, ans + 4, ans + 6]
+        d_vals = [ans - 2, ans + 2, ans + 4, ans + 6, ans + 8]
         opts = [
             {"value": "El estimador directo lineal suma diez unidades al parametro @n@ dando @ans@.", "is_correct": True},
             {"value": "La estimacion aditiva para base @n@ es exactamente @ans@.", "is_correct": True},
@@ -1326,13 +1328,13 @@ def ver_c01_1(res):
         "El estimador directo lineal suma diez unidades al parametro @n@ dando @ans@.",
         "La estimacion aditiva para base @n@ es exactamente @ans@.",
     }
-    exp_f = {f"$@d{i}@$": f"D-C01-0{i}" for i in range(1, 5)}
+    exp_f = {f"$@d{i}@$": f"D-C01-0{i}" for i in range(1, 6)}
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_t
-        and len(f_opts) == 4
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_f
             and o.get("distractor_id") == exp_f[o.get("value")]

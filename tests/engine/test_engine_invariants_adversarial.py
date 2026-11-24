@@ -431,47 +431,53 @@ class TestInvariantChecksAdversarial:
                 {"content": "Strict exogeneity of regressors", "is_correct": True, "error_rationale": None},
                 {"content": "Endogeneity of error terms", "is_correct": False, "error_rationale": "Viola el supuesto de exogeneidad estricta."},
                 {"content": "Perfect multicollinearity", "is_correct": False, "error_rationale": "Impide invertir la matriz de regresores."},
+                {"content": "Zero variance of regressors", "is_correct": False, "error_rationale": "Los regresores constantes impiden identificación."},
+                {"content": "Autocorrelated errors in OLS", "is_correct": False, "error_rationale": "Viola la esfericidad de los errores."},
+                {"content": "Non-linear conditional expectation", "is_correct": False, "error_rationale": "Viola la linealidad en parámetros."},
             ],
         }
         # Valid baseline
         valid, errs = check_instance_invariants(base_ms, "multiple_select")
         assert valid, errs
 
-        # Violation 1: Less than 4 options
+        # Violation 1: Less than 7 options
         q_3opts = dict(base_ms, options=base_ms["options"][:3])
         v1, errs1 = check_instance_invariants(q_3opts, "multiple_select")
         assert not v1
-        assert any("MS requires 4 to 6 options" in e for e in errs1)
+        assert any("MS requires exactly 7 options" in e for e in errs1)
 
         # Violation 2: Zero correct options
         q_0correct = {
             **base_ms,
             "options": [
                 {"content": f"Opcion {i}", "is_correct": False, "error_rationale": f"Rationale distractor {i}"}
-                for i in range(4)
+                for i in range(7)
             ],
         }
         v2, errs2 = check_instance_invariants(q_0correct, "multiple_select")
         assert not v2
-        assert any("MS correct count must be between 1 and 3 (found 0 correct" in e for e in errs2)
+        assert any("MS correct count must be between 2 and 5 (found 0 correct" in e for e in errs2)
 
         # Violation 3: All options correct
         q_allcorrect = {
             **base_ms,
-            "options": [{"content": f"Opcion {i}", "is_correct": True, "error_rationale": None} for i in range(4)],
+            "options": [{"content": f"Opcion {i}", "is_correct": True, "error_rationale": None} for i in range(7)],
         }
         v3, errs3 = check_instance_invariants(q_allcorrect, "multiple_select")
         assert not v3
-        assert any("MS correct count must be between 1 and 3 (found 4 correct" in e for e in errs3)
+        assert any("MS correct count must be between 2 and 5 (found 7 correct" in e for e in errs3)
 
         # Violation 4: Duplicate option content in MS
         q_dup = {
             **base_ms,
             "options": [
                 {"content": "Misma opcion repetida", "is_correct": True, "error_rationale": None},
-                {"content": "Misma opcion repetida", "is_correct": False, "error_rationale": "Rationale distractor"},
+                {"content": "Misma opcion repetida", "is_correct": True, "error_rationale": None},
                 {"content": "Tercera opcion", "is_correct": False, "error_rationale": "Rationale 3"},
                 {"content": "Cuarta opcion", "is_correct": False, "error_rationale": "Rationale 4"},
+                {"content": "Quinta opcion", "is_correct": False, "error_rationale": "Rationale 5"},
+                {"content": "Sexta opcion", "is_correct": False, "error_rationale": "Rationale 6"},
+                {"content": "Septima opcion", "is_correct": False, "error_rationale": "Rationale 7"},
             ],
         }
         v4, errs4 = check_instance_invariants(q_dup, "multiple_select")
@@ -836,6 +842,9 @@ class TestInvariantChecksAdversarial:
                 {"text": "Opción correcta válida 2 del modelo", "is_correct": True},
                 {"text": "Opción incorrecta sin rationale", "is_correct": False},
                 {"text": "Otra opción incorrecta con distractor", "is_correct": False, "distractor_id": "D-ERR-01"},
+                {"text": "Tercera opción incorrecta del modelo", "is_correct": False},
+                {"text": "Cuarta opción incorrecta del modelo", "is_correct": False},
+                {"text": "Quinta opción incorrecta del modelo", "is_correct": False},
             ],
         }
         cta_map = {
@@ -846,7 +855,7 @@ class TestInvariantChecksAdversarial:
         }
 
         q = assemble_question(tpl, gen_res, "Hab-01", 1, cta_distractors_map=cta_map, seed=1)
-        assert len(q["options"]) == 4
+        assert len(q["options"]) == 7
 
         # Verify all incorrect options have non-empty error_rationale
         for opt in q["options"]:
@@ -1264,7 +1273,9 @@ class TestQuotaScalingAdversarial:
                     "            {'text': 'Insesgadez del estimador OLS', 'is_correct': True},\n"
                     "            {'text': 'Varianza minima entre lineales insesgados', 'is_correct': True},\n"
                     "            {'text': 'Normalidad exacta en muestras pequenas', 'is_correct': False},\n"
-                    "            {'text': 'Sesgo asintotico no nulo', 'is_correct': False}\n"
+                    "            {'text': 'Sesgo asintotico no nulo', 'is_correct': False},\n"
+                    "            {'text': 'Inconsistencia bajo exogeneidad estricta', 'is_correct': False},\n"
+                    "            {'text': 'Multicolinealidad perfecta requerida', 'is_correct': False}\n"
                     "        ]\n"
                     "    }\n"
                 ),
@@ -1291,7 +1302,10 @@ class TestQuotaScalingAdversarial:
                     "            {'text': 'Presencia de heterocedasticidad', 'is_correct': True},\n"
                     "            {'text': 'Autocorrelacion serial entre residuos', 'is_correct': True},\n"
                     "            {'text': 'Homocedasticidad uniforme', 'is_correct': False},\n"
-                    "            {'text': 'Independencia temporal de perturbaciones', 'is_correct': False}\n"
+                    "            {'text': 'Independencia temporal de perturbaciones', 'is_correct': False},\n"
+                    "            {'text': 'Esperanza condicional nula de errores', 'is_correct': False},\n"
+                    "            {'text': 'Exogeneidad estricta de regresores', 'is_correct': False},\n"
+                    "            {'text': 'Normalidad asintotica del estimador', 'is_correct': False}\n"
                     "        ]\n"
                     "    }\n"
                 ),

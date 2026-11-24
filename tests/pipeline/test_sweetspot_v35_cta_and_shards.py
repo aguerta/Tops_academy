@@ -959,13 +959,14 @@ def _gen_c06(rng, arch):
     if arch == 1:
         ans = n + 10
         v = {"n": n, "ans": ans}
-        for i in range(1, 5):
+        for i in range(1, 6):
             v[f"d{i}"] = ans + i * 2
         _rat1 = [
             "Omisión del desplazamiento aditivo respecto a @n@ al estimar @d1@.",
             "Duplicación del término independiente sobre @ans@ obteniendo @d2@.",
             "Aplicación de pendiente errónea en la muestra @n@ que produce @d3@.",
             "Desajuste de escala en el estimador @ans@ que desvía el resultado a @d4@.",
+            "Sustitución inversa del término independiente respecto a @n@ produciendo @d5@.",
         ]
         opts = [
             {"value": r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.", "is_correct": True},
@@ -973,7 +974,7 @@ def _gen_c06(rng, arch):
         ]
         opts += [
             {"value": f"$@d{i}@$", "is_correct": False, "distractor_id": f"D-C06-0{i}", "error_rationale": _rat1[i - 1]}
-            for i in range(1, 5)
+            for i in range(1, 6)
         ]
         return {"vars": v, "options": opts}
     elif arch == 2:
@@ -1005,13 +1006,13 @@ def ver_c06_1(res):
         r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.",
         r"El desplazamiento asintótico exacto suma diez unidades sobre @n@ hasta @ans@.",
     }
-    exp_f = {f"$@d{i}@$": f"D-C06-0{i}" for i in range(1, 5)}
+    exp_f = {f"$@d{i}@$": f"D-C06-0{i}" for i in range(1, 6)}
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_t
-        and len(f_opts) == 4
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_f
             and o.get("distractor_id") == exp_f[o.get("value")]
@@ -1222,13 +1223,14 @@ def _gen_c06(rng, arch):
     if arch == 1:
         ans = n + 10
         v = {"n": n, "ans": ans}
-        for i in range(1, 5):
+        for i in range(1, 6):
             v[f"d{i}"] = ans + i * 2
         _rat1 = [
             "Omisión del desplazamiento aditivo respecto a @n@ al estimar @d1@.",
             "Duplicación del término independiente sobre @ans@ obteniendo @d2@.",
             "Aplicación de pendiente errónea en la muestra @n@ que produce @d3@.",
             "Desajuste de escala en el estimador @ans@ que desvía el resultado a @d4@.",
+            "Sustitución inversa del término independiente respecto a @n@ produciendo @d5@.",
         ]
         opts = [
             {"value": r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.", "is_correct": True},
@@ -1236,7 +1238,7 @@ def _gen_c06(rng, arch):
         ]
         opts += [
             {"value": f"$@d{i}@$", "is_correct": False, "distractor_id": f"D-C06-0{i}", "error_rationale": _rat1[i - 1]}
-            for i in range(1, 5)
+            for i in range(1, 6)
         ]
         return {"vars": v, "options": opts}
     elif arch == 2:
@@ -1267,13 +1269,13 @@ def ver_c06_1(res):
         r"El estimador lineal aditivo alcanza @ans@ cuando la muestra es @n@.",
         r"El desplazamiento asintótico exacto suma diez unidades sobre @n@ hasta @ans@.",
     }
-    exp_f = {f"$@d{i}@$": f"D-C06-0{i}" for i in range(1, 5)}
+    exp_f = {f"$@d{i}@$": f"D-C06-0{i}" for i in range(1, 6)}
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_t
-        and len(f_opts) == 4
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_f
             and o.get("distractor_id") == exp_f[o.get("value")]

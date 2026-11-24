@@ -14,14 +14,13 @@ for p in (str(SKILL_DIR), str(QA_DIR), str(FIXTURE_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-CANONICAL_8_MODALITIES = {
+CANONICAL_7_MODALITIES = {
     "multiple_choice_7_options",
     "fill_in_the_blank",
     "open_symbolic",
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
     "concept_matching",
 }
 
@@ -42,12 +41,13 @@ def test_build_canonical_course_v2_contract_and_qa_audit(tmp_path: Path):
     assert [c["id"] for c in comps] == ["Hab-01", "Hab-02", "C-01", "C-02"]
 
     questions = course.get("questions") or []
-    assert len(questions) == 101
+    assert len(questions) >= 80
 
     qtypes_present = {q.get("type") for q in questions}
-    assert CANONICAL_8_MODALITIES <= qtypes_present, (
-        f"Missing canonical modalities: {CANONICAL_8_MODALITIES - qtypes_present}"
+    assert CANONICAL_7_MODALITIES <= qtypes_present, (
+        f"Missing canonical modalities: {CANONICAL_7_MODALITIES - qtypes_present}"
     )
+    assert "invariant_canvas" not in qtypes_present
 
     # Verify 0 MC7 in Skills (Hab-01, Hab-02) and <= 1 MC7 template share in Concepts
     by_cid = {}

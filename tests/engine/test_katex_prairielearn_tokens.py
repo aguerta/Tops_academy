@@ -137,6 +137,9 @@ def test_multiple_select_variable_interpolation_and_invariants():
                 "is_correct": False,
                 "error_rationale": "Sí converge bajo @var_type@.",
             },
+            {"content": "Diverge exponencialmente con @var_type@.", "is_correct": False, "error_rationale": "Es consistente bajo @var_type@."},
+            {"content": "Requiere normalidad exacta para consistencia.", "is_correct": False, "error_rationale": "La consistencia de @estimator@ no exige normalidad."},
+            {"content": "Tiene varianza asintótica infinita.", "is_correct": False, "error_rationale": "La varianza asintótica es finita."},
         ],
         "vars": {
             "estimator": "$\\hat{\\theta}_{IV}$",
@@ -471,6 +474,9 @@ def test_multiple_select_content_and_value_fallback():
                 "is_correct": False,
                 "error_rationale": "El sesgo converge a cero a tasa @rate@.",
             },
+            {"content": "La distribución límite carece de media.", "is_correct": False, "error_rationale": "Posee media nula a tasa @rate@."},
+            {"content": "El número de parámetros @k@ anula la consistencia.", "is_correct": False, "error_rationale": "Con @k@ fijo se mantiene la consistencia."},
+            {"content": "La varianza crece linealmente con el tamaño muestral.", "is_correct": False, "error_rationale": "La varianza decrece con $n$."},
         ],
         "vars": {
             "rate": "$1/\\sqrt{n}$",

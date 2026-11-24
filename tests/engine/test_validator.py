@@ -265,11 +265,25 @@ print("IMPORT_OK")
         assert "VALID" in proc_module.stdout
 
     def test_strict_flag_semantics(self) -> None:
-        """Verifies that --strict enforces solutions and misconception warnings."""
+        """Verifies that --strict enforces solutions, misconception warnings, and 7-option MS."""
         fixture_path = FIXTURES_DIR / "28_valid_complete_course.json"
         data = json.loads(fixture_path.read_text(encoding="utf-8"))
 
+        # Legacy 5-option MS fixture passes strict=False
         assert validate_course_content(json.dumps(data), strict=False).is_valid is True
+
+        # Upgrade legacy MS questions in-memory to 7 options (2..5 correct) for strict=True baseline
+        for q in data.get("questions", []):
+            if (q.get("interaction_type") or q.get("type")) == "multiple_select" and len(q.get("options", [])) < 7:
+                while len(q["options"]) < 7:
+                    idx = len(q["options"]) + 1
+                    q["options"].append({
+                        "id": f"opt_pad_{idx}",
+                        "content": f"Distractor {idx}",
+                        "is_correct": False,
+                        "error_rationale": "Razonamiento diagnóstico adicional de prueba.",
+                    })
+
         assert validate_course_content(json.dumps(data), strict=True).is_valid is True
 
         data_no_sol = copy.deepcopy(data)
@@ -309,31 +323,37 @@ class TestInteractionTypesAndEdgeCases:
         q = course["questions"][0]
         q["interaction_type"] = "multiple_select"
 
-        # 3 options: fails (must be 4-6)
+        # 3 options: fails in both strict=False and strict=True
         q["options"] = [
             {"id": "opt_1", "content": "Opt 1", "is_correct": True},
-            {"id": "opt_2", "content": "Opt 2", "is_correct": False, "error_rationale": "Razonamiento del error 2"},
+            {"id": "opt_2", "content": "Opt 2", "is_correct": True},
             {"id": "opt_3", "content": "Opt 3", "is_correct": False, "error_rationale": "Razonamiento del error 3"},
         ]
-        res3 = validate_course_content(json.dumps(course))
+        res3 = validate_course_content(json.dumps(course), strict=False)
         assert not res3.is_valid
         assert any(e.code == "ERR_MS_COUNT" for e in res3.errors)
 
-        # 4 options: passes
+        # 4 options: passes strict=False (legacy), fails strict=True (must be 7)
         q["options"].append({"id": "opt_4", "content": "Opt 4", "is_correct": False, "error_rationale": "Razonamiento del error 4"})
-        res4 = validate_course_content(json.dumps(course))
-        assert res4.is_valid
+        assert validate_course_content(json.dumps(course), strict=False).is_valid
+        res4_strict = validate_course_content(json.dumps(course), strict=True)
+        assert any(e.code == "ERR_MS_COUNT" for e in res4_strict.errors)
 
-        # 6 options: passes
+        # 6 options: passes strict=False (legacy), fails strict=True (must be 7)
         q["options"].append({"id": "opt_5", "content": "Opt 5", "is_correct": False, "error_rationale": "Razonamiento del error 5"})
         q["options"].append({"id": "opt_6", "content": "Opt 6", "is_correct": False, "error_rationale": "Razonamiento del error 6"})
-        res6 = validate_course_content(json.dumps(course))
-        assert res6.is_valid
+        assert validate_course_content(json.dumps(course), strict=False).is_valid
 
-        # 7 options: fails
+        # 7 options with 2 correct: passes both strict=False and strict=True (MS count & correct range)
         q["options"].append({"id": "opt_7", "content": "Opt 7", "is_correct": False, "error_rationale": "Razonamiento del error 7"})
-        res7 = validate_course_content(json.dumps(course))
-        assert not res7.is_valid
+        assert validate_course_content(json.dumps(course), strict=False).is_valid
+        res7_strict = validate_course_content(json.dumps(course), strict=True)
+        assert not any(e.code in ("ERR_MS_COUNT", "ERR_MS_CORRECT") and e.item_id == q["id"] for e in res7_strict.errors)
+
+        # 7 options with 1 correct: fails strict=True with ERR_MS_CORRECT (must be 2..5)
+        q["options"][1] = {"id": "opt_2", "content": "Opt 2", "is_correct": False, "error_rationale": "Razonamiento del error 2"}
+        res7_1corr = validate_course_content(json.dumps(course), strict=True)
+        assert any(e.code == "ERR_MS_CORRECT" and e.item_id == q["id"] for e in res7_1corr.errors)
 
     def test_fn_fill_in_the_blank_validation(self, base_valid_course: dict) -> None:
         course = copy.deepcopy(base_valid_course)

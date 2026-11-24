@@ -270,7 +270,7 @@ class TestCtaModalityEnforcementAndMerge:
         work = tmp_path / "work_merge"
         _write_manifest(work)
 
-        c1 = _make_cta_dict_comp("C-01", "concept", rec_mods=["open_symbolic", "proof_dag", "invariant_canvas"])
+        c1 = _make_cta_dict_comp("C-01", "concept", rec_mods=["open_symbolic", "proof_dag", "unstructured_model"])
         c2 = _make_cta_dict_comp(
             "C-02",
             "concept",
@@ -311,7 +311,7 @@ class TestCtaModalityEnforcementAndMerge:
         assert merged["recommended_modalities"] == [
             "open_symbolic",
             "proof_dag",
-            "invariant_canvas",
+            "unstructured_model",
             "concept_matching",
         ]
 
@@ -323,7 +323,7 @@ class TestPlanShardsAndDispatchScaling:
         comps = [
             _make_cta_dict_comp("Hab-01", "skill", rec_mods=["open_symbolic", "fill_in_the_blank", "multiple_select"]),
             _make_cta_dict_comp("Hab-02", "skill", rec_mods=["fill_in_the_blank", "open_symbolic", "proof_dag", "adversarial_break"]),
-            _make_cta_dict_comp("C-01", "concept", rec_mods=["concept_matching", "invariant_canvas"]),
+            _make_cta_dict_comp("C-01", "concept", rec_mods=["concept_matching", "unstructured_model"]),
             _make_cta_dict_comp("C-02", "concept", rec_mods=["open_symbolic", "proof_dag", "adversarial_break"]),
             _make_cta_dict_comp("C-03", "concept", rec_mods=["fill_in_the_blank", "multiple_select"]),
         ]
@@ -576,7 +576,7 @@ def gen_4(r):
     return {"vars": {"a": a, "x": x, "b": b}, "options": [
         _o(f"$y = {a*x+b}$", None, None), _o(f"$y > {b}$", None, None), _o(f"$y > {a}$", None, None),
         _o(f"$y = {a*x-b}$", "D-Hab01-01", r1), _o(f"$y = {a*(x+b)}$", "D-Hab01-05", r2),
-        _o(f"$y = {b}$", "D-Hab01-02", r3),
+        _o(f"$y = {b}$", "D-Hab01-02", r3), _o(f"$y = {a*x+2*b}$", "D-Hab01-01", r1),
     ]}
 def gen_5(r):
     a, d = r.randint(4, 22), r.randint(3, 18)
@@ -587,7 +587,8 @@ def gen_5(r):
     return {"vars": {"a": a, "d": d, "b": b}, "options": [
         _o(f"$\\Delta y = {a*d}$", None, None), _o(f"$\\Delta y > 0$ ($a={a}$)", None, None),
         _o(f"$\\Delta y = {a+d}$", "D-Hab01-03", r1), _o(f"$\\Delta y = {b}$", "D-Hab01-06", r2),
-        _o(f"$\\Delta y = {-a*d}$", "D-Hab01-01", r3),
+        _o(f"$\\Delta y = {-a*d}$", "D-Hab01-01", r3), _o(f"$\\Delta y = {a*d+b}$", "D-Hab01-06", r2),
+        _o(f"$\\Delta y = {2*a*d}$", "D-Hab01-03", r1),
     ]}
 def gen_6(r):
     a, x, b = -r.randint(4, 22), r.randint(5, 25), r.randint(6, 32)
@@ -597,7 +598,8 @@ def gen_6(r):
     return {"vars": {"a": a, "x": x, "b": b}, "options": [
         _o(f"$f({x}) = {a*x+b}$", None, None), _o(f"$f({x}) < {b}$", None, None),
         _o(f"$f({x}) = {a*x-b}$", "D-Hab01-01", r1), _o(f"$f({x}) = {a*(x+b)}$", "D-Hab01-03", r2),
-        _o(f"$f({x}) = {b}$", "D-Hab01-02", r3),
+        _o(f"$f({x}) = {b}$", "D-Hab01-02", r3), _o(f"$f({x}) = {a*x+2*b}$", "D-Hab01-01", r1),
+        _o(f"$f({x}) = {2*a*x+b}$", "D-Hab01-03", r2),
     ]}
 def ver_1(c, v): return abs(_pv(c) - (v["a"] * v["x"] + 7)) < 1e-4
 def ver_2(c, v): return abs(_pv(c) - (v["y"] - v["b"]) / v["a"]) < 1e-4
@@ -662,17 +664,17 @@ def gen_3(r):
     m, k = r.randint(4, 30), r.randint(3, 25)
     rm1 = r"Resta $@k@$ de $@m@$ ignorando adición positiva de ambos términos."
     rm2 = r"Multiplica $@m@$ y $@k@$ confundiendo suma con área rectangular."
-    return {"vars": {"m": m, "k": k}, "options": [_o(f"${m+k}$", None, None), _o(f"${m+k}>0$", None, None), _o(f"${m+k}>1$", None, None), _o(f"${m-k}$", "D-Hab01-03", rm1), _o(f"${m*k}$", "D-Hab01-04", rm2)]}
+    return {"vars": {"m": m, "k": k}, "options": [_o(f"${m+k}$", None, None), _o(f"${m+k}>0$", None, None), _o(f"${m+k}>1$", None, None), _o(f"${m-k}$", "D-Hab01-03", rm1), _o(f"${m*k}$", "D-Hab01-04", rm2), _o(f"${m+2*k}$", "D-Hab01-05", rm1), _o(f"${m-2*k}$", "D-Hab01-06", rm2)]}
 def gen_4(r):
     a, b = -r.randint(4, 30), r.randint(6, 40)
-    return {"vars": {"a": a, "b": b}, "options": [_o(f"$z={a+b}$", None, None), _o(f"$z<{b}$", None, None), _o(f"$z={a-b}$", "D-Hab01-05", RATS["D-Hab01-05"]), _o(f"$z={b-a}$", "D-Hab01-06", RATS["D-Hab01-06"]), _o(f"$z={a}$", "D-Hab01-05", RATS["D-Hab01-05"])]}
+    return {"vars": {"a": a, "b": b}, "options": [_o(f"$z={a+b}$", None, None), _o(f"$z<{b}$", None, None), _o(f"$z={a-b}$", "D-Hab01-05", RATS["D-Hab01-05"]), _o(f"$z={b-a}$", "D-Hab01-06", RATS["D-Hab01-06"]), _o(f"$z={a}$", "D-Hab01-05", RATS["D-Hab01-05"]), _o(f"$z={a+2*b}$", "D-Hab01-03", RATS["D-Hab01-03"]), _o(f"$z={b+2*a}$", "D-Hab01-04", RATS["D-Hab01-04"])]}
 def ver_1(c, v): return abs(_pv(c) - (v["a"] * v["b"] + 5)) < 1e-4
 def ver_2(c, v): return abs(_pv(c) - (v["p"] * v["q"] + 11)) < 1e-4
 def _ms_chk(r, cond):
     o = r.get("options", []) if isinstance(r, dict) else []
     t = [u for u in o if u.get("is_correct") is True]
     f = [u for u in o if u.get("is_correct") is False]
-    return len(o) == 5 and len(t) in (2, 3) and len(f) in (2, 3) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
+    return len(o) == 7 and len(t) in (2, 3, 4, 5) and len(f) >= 2 and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
 def ver_3(r):
     v = r.get("vars", {}); sm = v.get("m", 0) + v.get("k", 0)
     return v.get("m", 0) > 0 and v.get("k", 0) > 0 and _ms_chk(
@@ -757,11 +759,11 @@ def gen_3(r):
     a, k = r.randint(4, 30), r.randint(3, 25)
     ra = r"Resta el término $@k@$ del parámetro $@a@$ ignorando que la operación correcta exige sumar ambos términos positivos."
     rb = r"Multiplica factores $@a@$ y $@k@$ confundiendo el producto con el incremento directo de la expresión lineal."
-    return {"vars": {"a": a, "k": k}, "options": [_o(f"${a+k}$", None, None), _o(f"${a+k}>0$", None, None), _o(f"${a+k}>1$", None, None), _o(f"${a-k}$", "D-C01-02", ra), _o(f"${a*k+1}$", "D-C01-03", rb)]}
+    return {"vars": {"a": a, "k": k}, "options": [_o(f"${a+k}$", None, None), _o(f"${a+k}>0$", None, None), _o(f"${a+k}>1$", None, None), _o(f"${a-k}$", "D-C01-02", ra), _o(f"${a*k+1}$", "D-C01-03", rb), _o(f"${a+2*k}$", "D-C01-01", ra), _o(f"${a*k+2}$", "D-C01-02", rb)]}
 def gen_4(r):
     a, m = r.randint(4, 28), r.randint(3, 22)
     ra = r"Suma linealmente los factores $@a@$ y $@m@$ en vez de aplicar correctamente la regla multiplicativa completa."
-    return {"vars": {"a": a, "m": m}, "options": [_o(f"$p={a*m}$", None, None), _o(f"$p>{a}$", None, None), _o(f"$p={a+m}$", "D-C01-01", ra), _o(f"$p=-{m}$", "D-C01-03", RATS["D-C01-03"]), _o(f"$p={a}$", "D-C01-01", ra)]}
+    return {"vars": {"a": a, "m": m}, "options": [_o(f"$p={a*m}$", None, None), _o(f"$p>{a}$", None, None), _o(f"$p={a+m}$", "D-C01-01", ra), _o(f"$p=-{m}$", "D-C01-03", RATS["D-C01-03"]), _o(f"$p={a}$", "D-C01-01", ra), _o(f"$p={a+2*m}$", "D-C01-02", ra), _o(f"$p=-{a+m}$", "D-C01-03", RATS["D-C01-03"])]}
 def ver_1(c, v):
     import sympy; x = sympy.Symbol("x")
     try: return sympy.simplify(sympy.sympify(str(c)) - v["a"] * (x + 1)) == 0
@@ -779,7 +781,7 @@ def _ms_chk(r, cond):
     o = r.get("options", []) if isinstance(r, dict) else []
     t = [u for u in o if u.get("is_correct") is True]
     f = [u for u in o if u.get("is_correct") is False]
-    return len(o) == 5 and len(t) in (2, 3) and len(f) in (2, 3) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
+    return len(o) == 7 and len(t) in (2, 3, 4, 5) and len(f) >= 2 and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
 def ver_3(r):
     v = r.get("vars", {}); sm = v.get("a", 0) + v.get("k", 0)
     return v.get("a", 0) > 0 and v.get("k", 0) > 0 and _ms_chk(

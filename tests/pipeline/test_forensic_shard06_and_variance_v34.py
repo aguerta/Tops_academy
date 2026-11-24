@@ -306,6 +306,7 @@ def gen_hab06_1(rng):
         {"value": r"H = @d2@", "is_correct": False, "distractor_id": "D-Hab06-02", "error_rationale": "Confunde el ratio de fiabilidad con la proporcion de varianza @q@ generando @d2@."},
         {"value": r"H = @d3@", "is_correct": False, "distractor_id": "D-Hab06-03", "error_rationale": "Asume que MCO supera a VI debido al sesgo con estimador @b_ls@ resultando @d3@."},
         {"value": r"H = @d4@", "is_correct": False, "distractor_id": "D-Hab06-04", "error_rationale": "Suma las varianzas en el denominador del estadistico de Hausman. Con valor @v_ls@ obteniendo @d4@."},
+        {"value": r"H = @d5@", "is_correct": False, "distractor_id": "D-Hab06-05", "error_rationale": "Duplica el numerador cuadratico respecto a @b_iv@ y @b_ls@ generando @d5@."},
     ]
 
     return {"vars": v, "options": opts}
@@ -339,13 +340,14 @@ def ver_hab06_1(res):
         r"H = @d2@": "D-Hab06-02",
         r"H = @d3@": "D-Hab06-03",
         r"H = @d4@": "D-Hab06-04",
+        r"H = @d5@": "D-Hab06-05",
     }
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_t
-        and len(f_opts) == 4
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_f
             and o.get("distractor_id") == exp_f[o.get("value")]
@@ -559,7 +561,7 @@ def gen_directo(rng):
     step = rng.randint(2, 8)
     ans = base * step
     v = {"base": base, "step": step, "ans": ans}
-    for i in range(1, 5):
+    for i in range(1, 6):
         v[f"d{i}"] = ans + i * 5
     opts = [
         {"value": r"El producto directo resultante equivale a $@ans@$ para $@base@$ y $@step@$", "is_correct": True},
@@ -568,6 +570,7 @@ def gen_directo(rng):
         {"value": r"$@d2@$", "is_correct": False, "distractor_id": "D-HabM3-02", "error_rationale": "Omitir la covarianza entre regresores. Error estructural con el valor @d2@."},
         {"value": r"$@d3@$", "is_correct": False, "distractor_id": "D-HabM3-03", "error_rationale": "Varianza no consistente obtenida al emplear matriz homocedástica con valor @d3@."},
         {"value": r"$@d4@$", "is_correct": False, "distractor_id": "D-HabM3-04", "error_rationale": "Instrumento débil con baja correlación en la identificación usando el valor @d4@."},
+        {"value": r"$@d5@$", "is_correct": False, "distractor_id": "D-HabM3-05", "error_rationale": "Sesgo por truncamiento muestral no corregido al calcular @d5@."},
     ]
     return {"vars": v, "options": opts}
 
@@ -582,13 +585,13 @@ def ver_directo(res):
         r"El producto directo resultante equivale a $@ans@$ para $@base@$ y $@step@$",
         r"La escala lineal exacta de $@base@$ por $@step@$ produce $@ans@$",
     }
-    exp_f = {f"$@d{i}@$": f"D-HabM3-0{i}" for i in range(1, 5)}
+    exp_f = {f"$@d{i}@$": f"D-HabM3-0{i}" for i in range(1, 6)}
     t_opts = [o for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len(t_opts) == 2
         and {o.get("value") for o in t_opts} == exp_t
-        and len(f_opts) == 4
+        and len(f_opts) == 5
         and all(
             o.get("value") in exp_f
             and o.get("distractor_id") == exp_f[o.get("value")]
