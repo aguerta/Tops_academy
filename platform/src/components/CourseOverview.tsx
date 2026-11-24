@@ -13,6 +13,7 @@ import { MasteryLegend } from './MasteryLegend';
 import { MasteryGrid } from './MasteryGrid';
 import { MathText } from './MathText';
 import { ContentCoreDrawer } from './ContentCoreDrawer';
+import { getPdfUrl } from '../data/pdfLinks';
 
 interface CourseOverviewProps {
   course: Course;
@@ -672,7 +673,22 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                         </span>
                       </div>
                       <h3 className="text-base font-extrabold text-ka-text-primary mt-1 break-words [overflow-wrap:anywhere]">
-                        <MathText text={mod.title} inline />
+                        {(() => {
+                          const modPdfUrl = getPdfUrl(mod.source_file || mod.title);
+                          return modPdfUrl ? (
+                            <a
+                              href={modPdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Abrir PDF en una nueva ventana"
+                              className="hover:text-ka-blue hover:underline transition-colors"
+                            >
+                              <MathText text={mod.title} inline />
+                            </a>
+                          ) : (
+                            <MathText text={mod.title} inline />
+                          );
+                        })()}
                       </h3>
                     </div>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ContentModule } from '../types';
 import { MathText } from './MathText';
+import { getPdfUrl } from '../data/pdfLinks';
 
 interface ContentCoreDrawerProps {
   module: ContentModule | null;
@@ -96,11 +97,24 @@ export const ContentCoreDrawer: React.FC<ContentCoreDrawerProps> = ({ module, on
             >
               <MathText text={core?.title || module.title} inline />
             </h2>
-            {module.source_file && (
-              <p className="text-xs text-slate-500 mt-0.5 truncate">
-                📄 {module.source_file}
-              </p>
-            )}
+            {module.source_file && (() => {
+              const sourcePdfUrl = getPdfUrl(module.source_file);
+              return sourcePdfUrl ? (
+                <a
+                  href={sourcePdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abrir PDF en una nueva ventana"
+                  className="inline-block text-xs text-ka-blue hover:underline mt-0.5 truncate max-w-full"
+                >
+                  📄 {module.source_file}
+                </a>
+              ) : (
+                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                  📄 {module.source_file}
+                </p>
+              );
+            })()}
           </div>
 
           <button

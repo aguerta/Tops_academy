@@ -8,6 +8,7 @@ import {
 } from '../utils/masteryStorage';
 import { formatCooldownRemaining, getCooldownRemainingMs } from '../utils/fsrsEngine';
 import { MathText } from './MathText';
+import { getPdfUrl } from '../data/pdfLinks';
 
 interface MasteryGridProps {
   course: Course;
@@ -102,18 +103,38 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                         🧭 UNIDAD 0 • GET READY
                       </span>
                     )}
-                    {firstEvidence && (
-                      <span
-                        data-testid={`evidence-badge-${unit.id}`}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold normal-case tracking-normal bg-slate-100 text-slate-700 border border-slate-200 max-w-full truncate"
-                      >
-                        <span>📄</span>
-                        <span className="truncate">
-                          {evidenceDoc || 'Documento'}
-                          {evidencePage !== undefined ? ` • pág. ${evidencePage}` : ''}
+                    {firstEvidence && (() => {
+                      const pdfUrl = getPdfUrl(evidenceDoc);
+                      const label = (
+                        <>
+                          <span>📄</span>
+                          <span className="truncate">
+                            {evidenceDoc || 'Documento'}
+                            {evidencePage !== undefined ? ` • pág. ${evidencePage}` : ''}
+                          </span>
+                        </>
+                      );
+                      return pdfUrl ? (
+                        <a
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid={`evidence-badge-${unit.id}`}
+                          title={`Abrir ${evidenceDoc || 'documento'} en una nueva ventana`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold normal-case tracking-normal bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-ka-blue border border-slate-200 hover:border-blue-300 max-w-full truncate transition-colors"
+                        >
+                          {label}
+                        </a>
+                      ) : (
+                        <span
+                          data-testid={`evidence-badge-${unit.id}`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold normal-case tracking-normal bg-slate-100 text-slate-700 border border-slate-200 max-w-full truncate"
+                        >
+                          {label}
                         </span>
-                      </span>
-                    )}
+                      );
+                    })()}
                     {compMastery?.needs_review && (
                       <span
                         data-testid={`red-dot-${unit.id}`}
