@@ -661,6 +661,15 @@ class ArchitectureDAGLinter(BaseLinter):
         stems_n1 = cls._extract_content_stems(n1)
         stems_n2 = cls._extract_content_stems(n2)
         shared_n = stems_n1 & stems_n2
+        if not same_category:
+            cid1 = str(c1.get("id") or "").strip()
+            cid2 = str(c2.get("id") or "").strip()
+            p1 = {str(x).strip() for x in (c1.get("prerequisites") or [])}
+            p2 = {str(x).strip() for x in (c2.get("prerequisites") or [])}
+            min_n = min(len(stems_n1), len(stems_n2)) if (stems_n1 and stems_n2) else 0
+            name_overlap_ratio = (len(shared_n) / min_n) if min_n > 0 else 0.0
+            if ((cid1 and cid1 in p2) or (cid2 and cid2 in p1)) and name_overlap_ratio < 0.75:
+                return False
         if not shared_n:
             return False
         if same_category:
