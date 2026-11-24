@@ -1076,10 +1076,11 @@ export function isCompetencyCompleted(compMastery?: CompetencyMastery): boolean 
 }
 
 /**
- * Calculates course progress using the strict 80/20 model:
- * - Average of Unit Tests across all units contributes 0-80% (avg * 0.80).
- * - Course Challenge (100% required) contributes the remaining 0-20% (cc_pct * 0.20).
- * - Total = round(unitTestsContribution + ccContribution).
+ * Calculates course progress using the points-based 80/20 model:
+ * - Average of mastery points (0-100) across all competencies contributes 0-80% (avgPoints * 0.80).
+ * - Course Challenge (0-100%) contributes the remaining 0-20% (ccPercentage * 0.20).
+ * - Total = round(pointsContribution + ccContribution).
+ * - Status is 'completed' only when percentage === 100 (all skills Mastered 100 pts + Course Challenge 100%).
  */
 export function calculateCourseProgress(
   record?: CourseMasteryRecord,
@@ -1113,7 +1114,7 @@ export function calculateCourseProgress(
 
   let completedUnits = 0;
   let inProgressUnits = 0;
-  let sumUnitTestPercentages = 0;
+  let sumPoints = 0;
 
   for (const comp of compList) {
     if (isUnitCompleted(comp)) {
@@ -1122,15 +1123,14 @@ export function calculateCourseProgress(
       inProgressUnits++;
     }
 
-    if (comp.unit_test && comp.unit_test.total_questions > 0) {
-      sumUnitTestPercentages += comp.unit_test.percentage;
-    }
+    const pts = typeof comp.points === 'number' ? comp.points : TIER_POINTS[comp.status] ?? 0;
+    sumPoints += Math.min(100, Math.max(0, pts));
   }
 
   const notStartedUnits = Math.max(0, totalUnits - completedUnits - inProgressUnits);
 
-  const avgUnitTests = sumUnitTestPercentages / totalUnits;
-  const unitTestsContribution = avgUnitTests * 0.8;
+  const avgPoints = sumPoints / totalUnits;
+  const pointsContribution = avgPoints * 0.8;
 
   const cc = record.course_challenge;
   const ccPercentage =
@@ -1139,14 +1139,13 @@ export function calculateCourseProgress(
       : 0;
   const ccContribution = (ccPercentage / 100) * 20;
 
-  const rawPercentage = Math.round(unitTestsContribution + ccContribution);
+  const rawPercentage = Math.round(pointsContribution + ccContribution);
   const percentage = Math.min(100, Math.max(0, rawPercentage));
 
   const allUnitTests100 = completedUnits >= totalUnits && totalUnits > 0;
-  const cc100 = cc?.completed === true || ccPercentage === 100;
 
   let status: CourseProgressStatus = 'not_started';
-  if (allUnitTests100 && cc100) {
+  if (percentage === 100) {
     status = 'completed';
   } else if (allUnitTests100) {
     status = 'unit_tests_mastered';

@@ -277,7 +277,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                           className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-300 flex items-center gap-1 shadow-sm shrink-0"
                         >
                           <span>✓</span>
-                          <span>80% Mastered</span>
+                          <span>{percentage}% Mastered</span>
                         </span>
                       ) : isInProgress ? (
                         <span
