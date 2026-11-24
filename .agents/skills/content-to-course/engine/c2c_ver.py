@@ -8,8 +8,9 @@ checks are enforced deterministically.
 
 from __future__ import annotations
 
+import functools
 import math
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from engine.template_healing import parse_katex_number
 
@@ -59,6 +60,97 @@ def _ver_numeric(candidate: Any, exact: Any, tol: float = 0.005) -> bool:
     return abs(cand_f - exact_f) <= float(tol)
 
 
+@functools.lru_cache(maxsize=4096)
+def _ver_equiv_cached(
+    cand_s: str,
+    exp_s: str,
+    var_names: Tuple[str, ...],
+    tol_f: float,
+) -> bool:
+    import sympy
+
+    sym_locals: Dict[str, Any] = {vn: sympy.Symbol(vn) for vn in var_names}
+
+    try:
+        c_expr = sympy.sympify(cand_s.replace("^", "**"), locals=sym_locals)
+        e_expr = sympy.sympify(exp_s.replace("^", "**"), locals=sym_locals)
+    except Exception:
+        return False
+
+    if c_expr is None or e_expr is None:
+        return False
+
+    allowed_syms = set(sym_locals.values()) | e_expr.free_symbols
+    if var_names and (c_expr.free_symbols - allowed_syms):
+        return False
+
+    if c_expr == e_expr:
+        return True
+
+    eval_syms = (
+        [sym_locals[vn] for vn in var_names]
+        if var_names
+        else sorted(c_expr.free_symbols | e_expr.free_symbols, key=lambda s: s.name)
+    )
+
+    if not eval_syms:
+        try:
+            cv = complex(c_expr.evalf())
+            ev = complex(e_expr.evalf())
+        except Exception:
+            cv = ev = None
+        if (
+            cv is not None
+            and ev is not None
+            and abs(cv.imag) <= 1e-9
+            and abs(ev.imag) <= 1e-9
+            and math.isfinite(cv.real)
+            and math.isfinite(ev.real)
+        ):
+            if abs(cv.real - ev.real) <= tol_f * max(1.0, abs(ev.real)):
+                return True
+            if abs(cv.real - ev.real) > max(1e-3, 10.0 * tol_f) * max(1.0, abs(ev.real), abs(cv.real)):
+                return False
+        try:
+            return sympy.simplify(c_expr - e_expr) == 0
+        except Exception:
+            return False
+
+    valid_points = 0
+    near_miss = False
+    for pt_idx, base_val in enumerate(_MULTI_POINT_GRID):
+        subs = {
+            sym: base_val + (0.07 * s_idx) + (0.03 * pt_idx if s_idx > 0 else 0.0)
+            for s_idx, sym in enumerate(eval_syms)
+        }
+        try:
+            cv = complex(c_expr.evalf(subs=subs))
+            ev = complex(e_expr.evalf(subs=subs))
+        except Exception:
+            continue
+        if abs(cv.imag) > 1e-9 or abs(ev.imag) > 1e-9:
+            continue
+        if not (math.isfinite(cv.real) and math.isfinite(ev.real)):
+            continue
+        diff_abs = abs(cv.real - ev.real)
+        if diff_abs > max(1e-3, 10.0 * tol_f) * max(1.0, abs(ev.real), abs(cv.real)):
+            return False
+        if diff_abs > tol_f * max(1.0, abs(ev.real)):
+            near_miss = True
+            break
+        valid_points += 1
+
+    if not near_miss and valid_points >= 2:
+        return True
+
+    try:
+        if sympy.simplify(c_expr - e_expr) == 0:
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def _ver_equiv(
     candidate: Any,
     expected: Any,
@@ -78,69 +170,8 @@ def _ver_equiv(
     if "=" in cand_s or "=" in exp_s:
         return False
 
-    import sympy
-
-    var_names = [str(v).strip() for v in (variables or []) if str(v).strip()]
-    sym_locals: Dict[str, Any] = {vn: sympy.Symbol(vn) for vn in var_names}
-
-    try:
-        c_expr = sympy.sympify(cand_s.replace("^", "**"), locals=sym_locals)
-        e_expr = sympy.sympify(exp_s.replace("^", "**"), locals=sym_locals)
-    except Exception:
-        return False
-
-    if c_expr is None or e_expr is None:
-        return False
-
-    allowed_syms = set(sym_locals.values()) | e_expr.free_symbols
-    if var_names and (c_expr.free_symbols - allowed_syms):
-        return False
-
-    try:
-        diff = sympy.simplify(c_expr - e_expr)
-        if diff == 0:
-            return True
-    except Exception:
-        pass
-
-    eval_syms = (
-        [sym_locals[vn] for vn in var_names]
-        if var_names
-        else sorted(c_expr.free_symbols | e_expr.free_symbols, key=lambda s: s.name)
-    )
-
-    if not eval_syms:
-        try:
-            cv = complex(c_expr.evalf())
-            ev = complex(e_expr.evalf())
-        except Exception:
-            return False
-        if abs(cv.imag) > 1e-9 or abs(ev.imag) > 1e-9:
-            return False
-        if not (math.isfinite(cv.real) and math.isfinite(ev.real)):
-            return False
-        return abs(cv.real - ev.real) <= float(tol) * max(1.0, abs(ev.real))
-
-    valid_points = 0
-    for pt_idx, base_val in enumerate(_MULTI_POINT_GRID):
-        subs = {
-            sym: base_val + (0.07 * s_idx) + (0.03 * pt_idx if s_idx > 0 else 0.0)
-            for s_idx, sym in enumerate(eval_syms)
-        }
-        try:
-            cv = complex(c_expr.evalf(subs=subs))
-            ev = complex(e_expr.evalf(subs=subs))
-        except Exception:
-            continue
-        if abs(cv.imag) > 1e-9 or abs(ev.imag) > 1e-9:
-            continue
-        if not (math.isfinite(cv.real) and math.isfinite(ev.real)):
-            continue
-        if abs(cv.real - ev.real) > float(tol) * max(1.0, abs(ev.real)):
-            return False
-        valid_points += 1
-
-    return valid_points >= 2
+    var_names = tuple(str(v).strip() for v in (variables or []) if str(v).strip())
+    return _ver_equiv_cached(cand_s, exp_s, var_names, float(tol))
 
 
 def _has_bad_sentinel(val: Any) -> bool:

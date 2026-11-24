@@ -522,3 +522,24 @@ def test_katex_healing_handles_digit_star_paren_and_adjacent_placeholders_in_mat
     # Inside $...$, adjacent placeholders are healed to \cdot; outside $...$, they stay unhealed so validator rejects them
     assert heal_katex_display_str("Con $@s@@L0@$") == r"Con $@s@ \cdot @L0@$"
     assert heal_katex_display_str("Con @s@@L0@") == "Con @s@@L0@"
+
+
+def test_fast_symbolic_equivalence_preserves_exact_semantics():
+    from engine.c2c_ver import _ver_equiv
+    from engine.invariants import _expressions_collide
+
+    # Algebraic identities must still be detected as equal / colliding
+    assert _expressions_collide("(1/1)*r", "r") is True
+    assert _expressions_collide("(x + 1)**2", "x**2 + 2*x + 1") is True
+    assert _expressions_collide("sin(x)**2 + cos(x)**2", "1") is False  # free_symbols mismatch (x vs empty)
+    assert _expressions_collide("2*x + 3", "2*x + 4") is False
+    assert _expressions_collide("a/6", "a/3") is False
+
+    # _ver_equiv: exact identities, transcendental equivalence, and strict non-equivalence
+    assert _ver_equiv("(x + 1)**2", "x**2 + 2*x + 1", variables=["x"]) is True
+    assert _ver_equiv("exp(2*n*t)", "(exp(n*t))**2", variables=["n", "t"]) is True
+    assert _ver_equiv("log(a*b)", "log(a) + log(b)", variables=["a", "b"]) is True
+    assert _ver_equiv("2*x", "x**2", variables=["x"]) is False
+    assert _ver_equiv("2*x + y", "2*x", variables=["x"]) is False  # undeclared variable y rejected
+    assert _ver_equiv("1/2", "0.5") is True
+    assert _ver_equiv("1/3", "0.5") is False

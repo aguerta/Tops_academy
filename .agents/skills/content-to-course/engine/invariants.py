@@ -1010,11 +1010,11 @@ def _normalize_expr_key(expr: str) -> str:
     return re.sub(r"\s+", "", str(expr or "").strip().strip("$"))
 
 
-def _expressions_collide(expr_a: str, expr_b: str) -> bool:
-    na = _normalize_expr_key(expr_a)
-    nb = _normalize_expr_key(expr_b)
-    if not na or not nb:
-        return False
+_COLLIDE_PROBE_GRID = (1.7321, 2.6183)
+
+
+@functools.lru_cache(maxsize=4096)
+def _expressions_collide_cached(na: str, nb: str) -> bool:
     if na == nb:
         return True
     try:
@@ -1022,17 +1022,66 @@ def _expressions_collide(expr_a: str, expr_b: str) -> bool:
         fb = float(nb.replace(",", "."))
         if abs(fa - fb) <= 1e-9:
             return True
+        return False
     except Exception:
         pass
+    if len(na) > 180 or len(nb) > 180:
+        return False
     try:
         import sympy as sp  # type: ignore
         sa = sp.sympify(na.replace("^", "**"))
         sb = sp.sympify(nb.replace("^", "**"))
-        if sa.free_symbols == sb.free_symbols and sp.simplify(sa - sb) == 0:
+        if sa == sb:
+            return True
+        if sa.free_symbols != sb.free_symbols:
+            return False
+        syms = sorted(sa.free_symbols, key=lambda s: s.name)
+        if not syms:
+            try:
+                va = complex(sa.evalf())
+                vb = complex(sb.evalf())
+                if (
+                    abs(va.imag) <= 1e-9
+                    and abs(vb.imag) <= 1e-9
+                    and math.isfinite(va.real)
+                    and math.isfinite(vb.real)
+                ):
+                    if abs(va.real - vb.real) > 1e-4 * max(1.0, abs(va.real), abs(vb.real)):
+                        return False
+            except Exception:
+                pass
+        else:
+            for pt_idx, base_val in enumerate(_COLLIDE_PROBE_GRID):
+                subs = {
+                    sym: base_val + (0.07 * s_idx) + (0.03 * pt_idx if s_idx > 0 else 0.0)
+                    for s_idx, sym in enumerate(syms)
+                }
+                try:
+                    va = complex(sa.evalf(subs=subs))
+                    vb = complex(sb.evalf(subs=subs))
+                except Exception:
+                    continue
+                if abs(va.imag) > 1e-9 or abs(vb.imag) > 1e-9:
+                    continue
+                if not (math.isfinite(va.real) and math.isfinite(vb.real)):
+                    continue
+                if abs(va.real - vb.real) > 1e-4 * max(1.0, abs(va.real), abs(vb.real)):
+                    return False
+        if sp.simplify(sa - sb) == 0:
             return True
     except Exception:
         pass
     return False
+
+
+def _expressions_collide(expr_a: str, expr_b: str) -> bool:
+    na = _normalize_expr_key(expr_a)
+    nb = _normalize_expr_key(expr_b)
+    if not na or not nb:
+        return False
+    if na == nb:
+        return True
+    return _expressions_collide_cached(na, nb) if na <= nb else _expressions_collide_cached(nb, na)
 
 
 _PLACEHOLDER_RATIONALE_PAT = re.compile(
