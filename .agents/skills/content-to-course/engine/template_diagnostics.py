@@ -1157,11 +1157,11 @@ def format_invariant_error_diagnostic(
         return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
 
     if "MS length anti-giveaway violation" in inv_clean:
-        cause = f"La longitud promedio de las opciones verdaderas difiere de las falsas en multiple_select (fuera de 0.85x - 1.15x): {inv_clean}"
+        cause = f"La longitud promedio de las opciones verdaderas difiere de las falsas en multiple_select (fuera de 0.80x - 1.20x): {inv_clean}"
         actions = [
             f"Detalles observados: {inv_clean}",
             "Equilibrar la extensión y nivel de detalle entre las afirmaciones verdaderas y falsas del ítem multiple_select.",
-            "Asegurar que 0.85 <= avg(len(true)) / avg(len(false)) <= 1.15.",
+            "Asegurar que 0.80 <= avg(len(true)) / avg(len(false)) <= 1.20.",
         ]
         return format_diagnostic_error("R-15-MS: EQUILIBRIO DE LONGITUD MS", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
 

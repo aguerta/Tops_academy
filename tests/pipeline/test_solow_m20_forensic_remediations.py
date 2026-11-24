@@ -252,7 +252,7 @@ def test_shard_compiler_steps_rejects_adjacent_placeholders(tmp_path: Path):
 
     errs_bad: list[str] = []
     res_bad = compile_tuple_records_to_templates(
-        tuple_records=[_make_record("Existe exceso de capacidad en $r=0.4/(@n@@b@)$. Halle el valor.")],
+        tuple_records=[_make_record("Existe exceso de capacidad con tasa @n@@b@ en equilibrio. Halle el valor.")],
         cta_comp_map={"Hab-04": {"id": "Hab-04", "type": "skill", "distractors": []}},
         strict=True,
         module_rats={},

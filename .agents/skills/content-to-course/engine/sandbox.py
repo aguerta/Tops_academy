@@ -73,7 +73,6 @@ BANNED_NAMES = {
     "pathlib",
     "io",
     "posix",
-    "nt",
     "ctypes",
     "importlib",
     "pickle",

@@ -736,7 +736,8 @@ cross_check=verify
         if isinstance(hints_raw, (list, tuple)):
             _adj_texts.extend(str(h) for h in hints_raw if h)
         for _atxt in _adj_texts:
-            m_adj = _adj_placeholder_re.search(_atxt)
+            _atxt_healed = heal_katex_display_str(_atxt)
+            m_adj = _adj_placeholder_re.search(_atxt_healed)
             if m_adj:
                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, _atxt)
                 err_msg = (

@@ -428,3 +428,97 @@ def test_mateco_sanitized_no_degenerate_literal_conditions():
     txt = mateco_p.read_text(encoding="utf-8")
     assert not re.search(r"Si\s+\$[1-9]\d*=0\$", txt)
     assert not re.search(r"\(\$[1-9]\d*>0\$\)", txt)
+
+
+def test_post_render_sanitize_katex_heals_sympy_in_math_only():
+    from engine.assemble import sanitize_katex_syntax
+
+    # Inside $...$, SymPy multiplication/power/sqrt injected via @var@ are healed
+    rendered = sanitize_katex_syntax("La derivada es $6*L + x**2 + sqrt(k)$ en equilibrio.")
+    assert r"6 \cdot L" in rendered
+    assert "x^{2}" in rendered
+    assert r"\sqrt{k}" in rendered
+
+    # Bare open_symbolic expressions without $ or with heal_sympy_in_math=False stay raw SymPy
+    assert sanitize_katex_syntax("6*L + x**2") == "6*L + x**2"
+    assert sanitize_katex_syntax("$6*L + x**2$", heal_sympy_in_math=False) == "$6*L + x**2$"
+
+
+def test_dispatch_skeleton_attaches_assumption_to_every_boundary_and_symbolic_ok_ds():
+    skel = dispatch._build_author_skeleton(
+        [
+            {
+                "cid": "Hab-01",
+                "is_skill": True,
+                "comp_k": 2,
+                "min_tpls": 8,
+                "distractor_ids": ["D-Hab01-01"],
+                "assumption_ids": ["A-Hab01-01", "A-Hab01-02"],
+                "target_bloom": "Evaluate",
+                "norm_rec_mods": ["FIB", "open_symbolic", "MS", "proof_dag"],
+            }
+        ],
+        eff_tpl_per_mod=2,
+    )
+    # Both boundary_or_edge_case slots must receive an assumption_id
+    boundary_count = skel.count("'archetype': \"boundary_or_edge_case\"")
+    aid_count = skel.count("'assumption_id':")
+    assert boundary_count >= 2
+    assert aid_count == boundary_count
+    assert "A-Hab01-01" in skel and "A-Hab01-02" in skel
+    # Key inline reminders present
+    assert "MISMOS @var@ en las 4 variantes" in skel
+    assert "Balance MS: len(true)~=len(false)" in skel
+    assert ">=10 claves unicas en 50 seeds" in skel
+    # Execute injected _ok_ds helper for both symbolic and numeric cases
+    code_body = skel.split("```python\n", 1)[1].rsplit("\n```", 1)[0]
+    ns: dict = {}
+    helper_only = "\n".join(
+        ln for ln in code_body.splitlines()
+        if ln.startswith(("def _ok_ds", "    ")) and not ln.startswith("    {") and not ln.startswith("        ")
+    )
+    # Extract exact _ok_ds block cleanly
+    start = code_body.index("def _ok_ds(")
+    end = code_body.index("def _no_fib_leak(")
+    exec(code_body[start:end], ns)
+    ok_ds = ns["_ok_ds"]
+    assert ok_ds("8-10*z", [("D1", "8 + 10*z"), ("D2", "10*z - 8")]) is True
+    assert ok_ds("8-10*z", [("D1", "8 - 10*z"), ("D2", "10*z - 8")]) is False
+    assert ok_ds(10.0, [("D1", 12.0), ("D2", 8.0)]) is True
+    assert ok_ds(10.0, [("D1", 10.01), ("D2", 8.0)]) is False
+
+
+def test_r15_ms_diagnostic_mentions_080_120_bounds():
+    from engine.template_diagnostics import format_invariant_error_diagnostic
+
+    msg = format_invariant_error_diagnostic(
+        "C-01",
+        "T-C01-01",
+        "Q-C01-001",
+        "MS length anti-giveaway violation: correct options too short on average (avg_true=51.0 vs avg_false=64.0, ratio=0.79x < 0.80x).",
+    )
+    assert "0.80x - 1.20x" in msg
+    assert "0.85x - 1.15x" not in msg
+
+
+def test_sandbox_allows_local_nt_variable_but_blocks_import_nt():
+    import pytest
+    from engine.sandbox import SandboxSecurityError, validate_code_ast
+
+    assert validate_code_ast("def gen(rng):\n    n, t = 0.02, 5\n    nt = n * t\n    return {'nt': nt}\n") is True
+
+    with pytest.raises(SandboxSecurityError):
+        validate_code_ast("import nt\n")
+
+
+def test_katex_healing_handles_digit_star_paren_and_adjacent_placeholders_in_math():
+    from engine.assemble import sanitize_katex_syntax
+    from engine.template_healing import heal_katex_display_str
+
+    assert heal_katex_display_str("Evalúa $2*(x + 1)$.") == r"Evalúa $2 \cdot (x + 1)$."
+    assert sanitize_katex_syntax("Evalúa $2*(x + 1)$.") == r"Evalúa $2 \cdot (x + 1)$."
+    assert sanitize_katex_syntax("2*(x + 1)") == "2*(x + 1)"
+
+    # Inside $...$, adjacent placeholders are healed to \cdot; outside $...$, they stay unhealed so validator rejects them
+    assert heal_katex_display_str("Con $@s@@L0@$") == r"Con $@s@ \cdot @L0@$"
+    assert heal_katex_display_str("Con @s@@L0@") == "Con @s@@L0@"

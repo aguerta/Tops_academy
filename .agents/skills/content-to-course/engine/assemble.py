@@ -260,7 +260,11 @@ def render_template(template_str: str, variables: Dict[str, Any]) -> str:
     return format_template_string(template_str, variables)
 
 
-def sanitize_katex_syntax(text: str, canonicalize_coefficients: bool = False) -> str:
+def sanitize_katex_syntax(
+    text: str,
+    canonicalize_coefficients: bool = False,
+    heal_sympy_in_math: bool = True,
+) -> str:
     r"""Sanitize KaTeX syntax by fixing f-string artifacts, unclosed nested macros, and delimiter issues.
     
     - Collapses overescaped LaTeX commands (e.g. \\frac, \\text -> \frac, \text) preserving matrix breaks (R-23).
@@ -346,6 +350,23 @@ def sanitize_katex_syntax(text: str, canonicalize_coefficients: bool = False) ->
             return f"{delim}{_collapse_algebraic_signs(inner)}{delim}"
 
         text = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _canonicalize_math_signs, text)
+
+    # 0e. Post-render SymPy-to-KaTeX healing strictly inside $...$ / $$...$$ math blocks
+    # Heals raw SymPy artifacts injected via @var@ at render time (e.g. '6*L' -> '6 \cdot L',
+    # 'x**2' -> 'x^{2}', 'sqrt(k)' -> '\sqrt{k}') without touching plain prose or bare symbolic answers.
+    if heal_sympy_in_math and "$" in text:
+        def _heal_sympy_math_block(match: re.Match) -> str:
+            raw_span = match.group(0)
+            delim = "$$" if raw_span.startswith("$$") else "$"
+            inner = raw_span[len(delim):-len(delim)]
+            if not inner:
+                return raw_span
+            inner = re.sub(r"([A-Za-z0-9_)\]])\*\*([A-Za-z0-9_]+)", r"\1^{\2}", inner)
+            inner = re.sub(r"(?<![A-Za-z0-9_\\])(\d+)\*([A-Za-z(])", r"\1 \\cdot \2", inner)
+            inner = re.sub(r"(?<![\\a-zA-Z])sqrt\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", inner)
+            return f"{delim}{inner}{delim}"
+
+        text = re.sub(r"\$\$[^$]+\$\$|\$(?!\s)[^$\n]+?(?<!\s)\$", _heal_sympy_math_block, text)
 
     # Replace '$$$' with '$$'
     while "$$$" in text:
@@ -1679,14 +1700,22 @@ def assemble_question(
         if ans_val is None:
             ans_val = gen_result.get("value", "")
 
-        str_val = _strip_outer_math_dollars(sanitize_katex_syntax(format_template_string(str(ans_val).strip(), variables)))
+        str_val = _strip_outer_math_dollars(
+            sanitize_katex_syntax(
+                format_template_string(str(ans_val).strip(), variables),
+                heal_sympy_in_math=False,
+            )
+        )
         if not str_val:
             raise ValueError(f"open_symbolic correct answer expression cannot be empty for {competency_id} #{question_index}")
 
         raw_canonical = gen_result.get("canonical_algebraic")
         if raw_canonical is not None:
             canonical_val = _strip_outer_math_dollars(
-                sanitize_katex_syntax(format_template_string(str(raw_canonical).strip(), variables))
+                sanitize_katex_syntax(
+                    format_template_string(str(raw_canonical).strip(), variables),
+                    heal_sympy_in_math=False,
+                )
             )
         else:
             canonical_val = str_val
@@ -1703,7 +1732,10 @@ def assemble_question(
                 formatted_eq = str(eq)
             elif isinstance(eq, str):
                 formatted_eq = _strip_outer_math_dollars(
-                    sanitize_katex_syntax(format_template_string(eq.strip(), variables))
+                    sanitize_katex_syntax(
+                        format_template_string(eq.strip(), variables),
+                        heal_sympy_in_math=False,
+                    )
                 )
             else:
                 formatted_eq = str(eq)

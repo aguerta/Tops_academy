@@ -1586,58 +1586,72 @@ def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: 
         all_qtypes.update(slot_qtypes)
         slot_meta = _assign_slot_metadata(slot_qtypes, is_skill=is_skill, target_bloom=target_bloom)
         clean_cid = re.sub(r"[^A-Za-z0-9]", "", cid) or "COMP"
-        assumption_attached = False
+        aid_idx = 0
         ms_slot_idx = 0
         ms_corr_cycle = (3, 2, 1, 4)
         adv_slot_idx = 0
         adv_pos_cycle = ("S2", "S4", "S3")
+        uniq_note = "; >=10 claves unicas en 50 seeds" if is_skill else ""
         for slot_pos, (qt, (arch, diff, bloom_lbl)) in enumerate(zip(slot_qtypes, slot_meta), start=1):
             g_idx += 1
             tpl_id = f"T-{clean_cid}-{slot_pos:02d}"
             if qt == "FIB":
-                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # for _ in range(40): ... if _ok_ds(ans, ds, tol=0.005) and _no_fib_leak(ans, vars_d): break")
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # for _ in range(40): ... if _ok_ds(ans, ds, tol=0.005) and _no_fib_leak(ans, vars_d): break{uniq_note}")
                 ver_hint = "# return c2c_ver.numeric(c, exact_val, tol=0.005)"
                 fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+            elif qt == "MC7":
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # for _ in range(40): ... if _ok_ds(ans, ds): break  # (did, val, rationale_con_@var@){uniq_note}")
+                ver_hint = "# return c2c_ver.numeric(c, v['ans'], tol=1e-4)"
+                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+            elif qt == "open_symbolic":
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # for _ in range(40): ... if _ok_ds(ans, ds): break{uniq_note}")
+                ver_hint = "# return c2c_ver.equiv(c, expected_expr, variables=['x'])"
+                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+            elif qt == "MS":
+                exp_cnt = ms_corr_cycle[ms_slot_idx % len(ms_corr_cycle)]
+                ms_slot_idx += 1
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # Balance MS: len(true)~=len(false) (0.85x-1.15x); cada distractor con @var@ en rationale")
+                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'MS', expected_correct_count={exp_cnt})  # 5..6 opciones"
+                fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
+            elif qt == "adversarial_break":
+                adv_pos = adv_pos_cycle[adv_slot_idx % len(adv_pos_cycle)]
+                adv_slot_idx += 1
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')")
+                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'adversarial_break')  # si find_fallacy, variar falacia (ej. {adv_pos})"
+                fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
             else:
                 fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')")
-                if qt == "MC7":
-                    ver_hint = "# return c2c_ver.numeric(c, v['ans'], tol=1e-4)"
-                    fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
-                elif qt == "open_symbolic":
-                    ver_hint = "# return c2c_ver.equiv(c, expected_expr, variables=['x'])"
-                    fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
-                elif qt == "MS":
-                    exp_cnt = ms_corr_cycle[ms_slot_idx % len(ms_corr_cycle)]
-                    ms_slot_idx += 1
-                    ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'MS', expected_correct_count={exp_cnt})  # 5..6 opciones"
-                    fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
-                elif qt == "adversarial_break":
-                    adv_pos = adv_pos_cycle[adv_slot_idx % len(adv_pos_cycle)]
-                    adv_slot_idx += 1
-                    ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'adversarial_break')  # si find_fallacy, variar falacia (ej. {adv_pos})"
-                    fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
-                else:
-                    ver_hint = f"# return c2c_ver.m20_guard(r, RATS, {json.dumps(qt)})"
-                    fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
+                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, {json.dumps(qt)})"
+                fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
 
-            attach_aid = aids and not assumption_attached and (arch == "boundary_or_edge_case" or slot_pos == len(slot_qtypes))
+            attach_aid = bool(aids) and (arch == "boundary_or_edge_case" or (aid_idx == 0 and slot_pos == len(slot_qtypes)))
             if attach_aid:
-                assumption_attached = True
-            aid_field = f" 'assumption_id': {json.dumps(aids[0])}," if attach_aid else ""
+                aid_val = aids[aid_idx % len(aids)]
+                aid_idx += 1
+                aid_field = f" 'assumption_id': {json.dumps(aid_val)},"
+            else:
+                aid_field = ""
             tpl_lines.append("    {")
             tpl_lines.append(f"        'id': {json.dumps(tpl_id)}, 'cid': {json.dumps(cid)}, 'qtype': {json.dumps(qt)},")
             tpl_lines.append(f"        'archetype': {json.dumps(arch)}, 'band': ({json.dumps(diff)}, {json.dumps(bloom_lbl)}),{aid_field}  # target_bloom={target_bloom}")
             tpl_lines.append(f"        'gen': gen_{g_idx}, 'ver': ver_{g_idx},")
-            tpl_lines.append("        'stem_variants': ['', '', ''], 'hints': ['', '', ''], 'sol': '', 'rats': RATS,")
+            tpl_lines.append("        'stem_variants': ['', '', ''],  # MISMOS @var@ en las 4 variantes; conservar '=' si hay ecuacion")
+            tpl_lines.append("        'hints': ['', '', ''], 'sol': '', 'rats': RATS,")
             tpl_lines.append("    },")
 
     helper_lines: List[str] = []
-    if all_qtypes & {"FIB", "MC7"}:
+    if all_qtypes & {"FIB", "MC7", "open_symbolic"}:
         helper_lines = [
             "",
             "def _ok_ds(ans, ds, tol=0.015):",
-            "    vals = [float(ans)] + [float(v) for _, v, *_ in ds]",
-            "    return len({round(x, 6) for x in vals}) == len(vals) and all(q - p >= max(0.02 * max(abs(p), abs(q), 1e-9), 3 * tol) for p, q in zip(sorted(vals), sorted(vals)[1:]))",
+            "    raw = [ans] + [v for _, v, *_ in ds]",
+            "    norm = [str(x).replace(' ', '') for x in raw]",
+            "    if len(set(norm)) != len(norm): return False",
+            "    try:",
+            "        vals = [float(x) for x in raw]",
+            "        return all(q - p >= max(0.02 * max(abs(p), abs(q), 1e-9), 3 * tol) for p, q in zip(sorted(vals), sorted(vals)[1:]))",
+            "    except (TypeError, ValueError):",
+            "        return True",
             "def _no_fib_leak(ans, vdict):",
             "    return round(float(ans), 4) not in {round(float(v), 4) for k, v in vdict.items() if k != 'ans' and isinstance(v, (int, float)) and not isinstance(v, bool)}",
         ]

@@ -127,7 +127,7 @@ def heal_katex_display_str(text: str) -> str:
             inner,
         )
         inner = re.sub(r"([A-Za-z0-9_)\]])\*\*([A-Za-z0-9_]+)", r"\1^{\2}", inner)
-        inner = re.sub(r"(?<![A-Za-z0-9_\\])(\d+)\*([A-Za-z])", r"\1 \\cdot \2", inner)
+        inner = re.sub(r"(?<![A-Za-z0-9_\\])(\d+)\*([A-Za-z(])", r"\1 \\cdot \2", inner)
         inner = re.sub(r"(?<![\\a-zA-Z])sqrt\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", inner)
         inner = _HEAL_SCI_RE.sub(_repl_sci, inner)
         return f"{delim}{inner}{delim}"
