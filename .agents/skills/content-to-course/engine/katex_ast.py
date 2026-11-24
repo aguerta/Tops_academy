@@ -671,13 +671,13 @@ def pykatex_validate_with_column(
 
 def _collapse_algebraic_signs_and_coeffs(math_body: str, collapse_unit_coeffs: bool = True) -> str:
     """Helper to canonicalize double signs and unitary coefficients in pure math string."""
-    # 1. Collapses double signs: + -5 -> - 5, - -5 -> + 5, etc.
+    # 1. Collapses double signs: + -5 -> - 5, p+-5 -> p - 5, - -5 -> + 5, etc.
     for _ in range(5):
         orig_body = math_body
-        math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
-        math_body = re.sub(r"(?<![a-zA-Z\\])-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-        math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-        math_body = re.sub(r"(?<![a-zA-Z\\])-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+        math_body = re.sub(r"(?<!\\)\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+        math_body = re.sub(r"(?<!\\)-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+        math_body = re.sub(r"(?<!\\)\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+        math_body = re.sub(r"(?<!\\)-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
         if math_body == orig_body:
             break
 

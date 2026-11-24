@@ -331,13 +331,13 @@ def sanitize_katex_syntax(
         text = canonicalize_algebraic_katex(text, collapse_unit_coeffs=canonicalize_coefficients)
     else:
         def _collapse_algebraic_signs(math_body: str) -> str:
-            # Collapses double signs from template interpolation: + -5 -> - 5, - -5 -> + 5, etc.
+            # Collapses double signs from template interpolation: + -5 -> - 5, p+-5 -> p - 5, - -5 -> + 5, etc.
             for _ in range(5):
                 orig_body = math_body
-                math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
-                math_body = re.sub(r"(?<![a-zA-Z\\])-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-                math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-                math_body = re.sub(r"(?<![a-zA-Z\\])-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+                math_body = re.sub(r"(?<!\\)\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+                math_body = re.sub(r"(?<!\\)-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+                math_body = re.sub(r"(?<!\\)\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+                math_body = re.sub(r"(?<!\\)-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
                 if math_body == orig_body:
                     break
             return math_body

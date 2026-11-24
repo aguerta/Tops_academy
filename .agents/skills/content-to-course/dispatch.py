@@ -3402,6 +3402,14 @@ def build_dispatch(
             error_bullets = ""
             if all_active:
                 error_bullets = "### Diagnóstico Consolidado de Fallos y Discordancias:\n" + "\n".join(f"- `{e}`" for e in all_active[:25]) + "\n\n"
+                if any(
+                    any(kw in str(d).lower() for kw in ("blocked", "falta", "subespecific", "funcional", "ecuacion", "ecuación"))
+                    for d in (diag.get("judge_disagreements") or [])
+                ):
+                    error_bullets += (
+                        "> **[EPISTEMIC-SWEEP OBLIGATORIO — ANTI WHACK-A-MOLE]:** El Blind Judge bloqueó al menos un reactivo por enunciado incompleto o falta de ecuación/parámetro del modelo. "
+                        "Antes de compilar, audita **TODAS las plantillas hermanas** de esta competencia en el shard para asegurar que cada `stem_variant` incluya el funcional objetivo, ecuaciones de estado y parámetros necesarios en esta misma ronda.\n\n"
+                    )
             if spec_locs:
                 loc_blocks: List[str] = ["### Líneas Exactas y Contexto Infractor (`specific_error_report`):"]
                 for s_loc in spec_locs[:10]:

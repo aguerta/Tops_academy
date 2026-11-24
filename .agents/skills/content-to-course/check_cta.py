@@ -947,6 +947,14 @@ def _validate_competencies_rules(
                     warnings.append(
                         f"[CTA-HINT-SHORT]{line_tag} Distractor '{did}' remediation_hint is in calibrated warning band 70-79 chars ({len(hint)} < 80): '{hint}'"
                     )
+                if hint:
+                    m_ex = re.search(r"(?:\b[a-zA-Z]\(\s*\d+(?:\.\d+)?\s*\)\s*=\s*-?\d+|\bt\s*=\s*[1-9]\d*\b)", hint)
+                    if m_ex:
+                        line_no = locator.get_line(did, "remediation_hint") if locator else (locator.get_line(did) if locator else None)
+                        line_tag = f" (línea {line_no})" if line_no else ""
+                        warnings.append(
+                            f"[CTA-HINT-STATIC-EXAMPLE]{line_tag} Distractor '{did}' remediation_hint contiene constante numérica de ejemplo ('{m_ex.group(0)}'); redacta remediation_hint 100% simbólico/conceptual para evitar contradecir semillas parametrizadas."
+                        )
 
             # Check distractor evidence
             ev = d.get("evidence")

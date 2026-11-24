@@ -218,6 +218,7 @@ async def run_wave_from_manifest(
     phase_name: str,
     max_concurrency: Optional[int] = None,
     max_retries: Optional[int] = None,
+    max_concurrent_batch: int = 0,
 ) -> List[str]:
     """Read a C2C dispatch manifest and run workers with bounded concurrency, startup jitter, and auto-retry."""
     path = Path(manifest_path)
@@ -339,7 +340,15 @@ async def run_wave_from_manifest(
                 raise last_err
             return str(last_res or "")
 
-    results = await parallel(subagents, _run_worker)
+    if max_concurrent_batch > 0 and len(subagents) > max_concurrent_batch:
+        results: List[str] = []
+        total_batches = (len(subagents) + max_concurrent_batch - 1) // max_concurrent_batch
+        for batch_idx in range(0, len(subagents), max_concurrent_batch):
+            batch = subagents[batch_idx : batch_idx + max_concurrent_batch]
+            log(f"[WAVE-BATCH] {phase_name}: batch {batch_idx // max_concurrent_batch + 1}/{total_batches} ({len(batch)} workers)")
+            results.extend(await parallel(batch, _run_worker))
+    else:
+        results = await parallel(subagents, _run_worker)
     log(f"Completed {len(results)}/{total} workers for {phase_name}")
     return results
 
@@ -671,6 +680,29 @@ async def _run_cta_pipeline(
     }
 
 
+def _find_pending_shards(work_path: Path) -> Optional[List[str]]:
+    """Return list of shard IDs missing their compiled shard_XX.json, or None if not yet sharded."""
+    manifest_path = work_path / "shards" / "pre_shard_manifest.json"
+    if not manifest_path.is_file():
+        return None
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    raw_shards = manifest.get("shards") or []
+    if not isinstance(raw_shards, list) or not raw_shards:
+        return None
+    pending: List[str] = []
+    for entry in raw_shards:
+        sid = entry.get("shard_id") if isinstance(entry, dict) else str(entry)
+        if not sid:
+            continue
+        compiled_json = work_path / "shards" / f"{sid}.json"
+        if not compiled_json.is_file() or compiled_json.stat().st_size == 0:
+            pending.append(str(sid))
+    return pending
+
+
 async def _run_post_cta_pipeline(
     work_path: Path,
     work_dir_arg: str,
@@ -681,35 +713,63 @@ async def _run_post_cta_pipeline(
     cli_env: Optional[Dict[str, str]],
     max_repair_rounds: int,
 ) -> Dict[str, Any]:
-    """Execute Stage 2..6B: shard -> authors -> templates -> build -> judges -> gates -> repair loop."""
-    dispatch_dir = work_path / "dispatch"
-    phase("Stage 2: Sharding")
-    shard_cmd_args = ["--stage", "shard", "--work-dir", work_dir_arg]
-    if _WF_ARGS.get("shards") is not None:
-        shard_cmd_args.extend(["--shards", str(_WF_ARGS["shards"])])
-    if _WF_ARGS.get("comps_per_shard") is not None:
-        shard_cmd_args.extend(["--comps-per-shard", str(_WF_ARGS["comps_per_shard"])])
-    if _WF_ARGS.get("templates_per_modality") is not None:
-        shard_cmd_args.extend(["--templates-per-modality", str(_WF_ARGS["templates_per_modality"])])
-    await run_cli(
-        _build_run_py_cmd(python_exe, run_py, director_id, *shard_cmd_args),
-        "C2C stage shard",
-        env_extra=cli_env,
-    )
+    """Execute Stage 2..6B: shard -> authors -> templates -> build -> judges -> gates -> repair loop.
 
-    phase("Stage 3: Dispatch & Run Authors")
-    author_dispatch_args = ["dispatch-authors", "--work-dir", work_dir_arg]
-    if _WF_ARGS.get("templates_per_modality") is not None:
-        author_dispatch_args.extend(["--templates-per-modality", str(_WF_ARGS["templates_per_modality"])])
-    await run_cli(
-        _build_python_cmd(python_exe, dispatch_py, *author_dispatch_args),
-        "C2C dispatch authors",
-        env_extra=cli_env,
-    )
-    author_results = await run_wave_from_manifest(
-        str(dispatch_dir / "authors.json"),
-        "Stage 3: Shard Authors Wave",
-    )
+    Idempotent on resume: if pre_shard_manifest.json already exists and all shards have compiled
+    shard_XX.json artifacts (unless force_reshard=True), skips Stage 2 & Stage 3 instead of
+    re-spawning a duplicate wave of Shard Authors over already-compiled shards.
+    """
+    dispatch_dir = work_path / "dispatch"
+    force_reshard = bool(_WF_ARGS.get("force_reshard"))
+    pending_shards = None if force_reshard else _find_pending_shards(work_path)
+
+    if pending_shards is None:
+        phase("Stage 2: Sharding")
+        shard_cmd_args = ["--stage", "shard", "--work-dir", work_dir_arg]
+        if _WF_ARGS.get("shards") is not None:
+            shard_cmd_args.extend(["--shards", str(_WF_ARGS["shards"])])
+        if _WF_ARGS.get("comps_per_shard") is not None:
+            shard_cmd_args.extend(["--comps-per-shard", str(_WF_ARGS["comps_per_shard"])])
+        if _WF_ARGS.get("templates_per_modality") is not None:
+            shard_cmd_args.extend(["--templates-per-modality", str(_WF_ARGS["templates_per_modality"])])
+        await run_cli(
+            _build_run_py_cmd(python_exe, run_py, director_id, *shard_cmd_args),
+            "C2C stage shard",
+            env_extra=cli_env,
+        )
+
+    author_results: Dict[str, Any] = {"skipped_all_compiled": True, "count": 0}
+    if pending_shards is None or len(pending_shards) > 0:
+        phase("Stage 3: Dispatch & Run Authors")
+        author_dispatch_args = ["dispatch-authors", "--work-dir", work_dir_arg]
+        if _WF_ARGS.get("templates_per_modality") is not None:
+            author_dispatch_args.extend(["--templates-per-modality", str(_WF_ARGS["templates_per_modality"])])
+        await run_cli(
+            _build_python_cmd(python_exe, dispatch_py, *author_dispatch_args),
+            "C2C dispatch authors",
+            env_extra=cli_env,
+        )
+        authors_manifest_path = dispatch_dir / "authors.json"
+        if pending_shards is not None and authors_manifest_path.is_file():
+            try:
+                m_data = json.loads(authors_manifest_path.read_text(encoding="utf-8"))
+                pending_set = set(pending_shards)
+                if isinstance(m_data.get("Subagents"), list):
+                    m_data["Subagents"] = [
+                        s for s in m_data["Subagents"]
+                        if any(pid in str(s.get("Role", "")) or pid in str(s.get("Prompt", "")) for pid in pending_set)
+                    ]
+                    m_data["subagents_count"] = len(m_data["Subagents"])
+                    authors_manifest_path.write_text(json.dumps(m_data, indent=2, ensure_ascii=False), encoding="utf-8")
+            except Exception:
+                pass
+        author_results = await run_wave_from_manifest(
+            str(authors_manifest_path),
+            "Stage 3: Shard Authors Wave",
+            max_concurrent_batch=int(_WF_ARGS.get("author_wave_size") or 9),
+        )
+    else:
+        phase("Stage 2-3: Skipped (all shards already compiled)")
 
     phase("Stage 4: Templates & Build")
     await run_cli(
@@ -871,7 +931,12 @@ async def run_c2c_workflow() -> Dict[str, Any]:
         manifest_path = dispatch_dir / manifest_file
         phase_label = f"C2C Wave: {mode.upper()}"
         wave_start = time.time()
-        results = await run_wave_from_manifest(str(manifest_path), phase_label)
+        wave_batch_size = int(_WF_ARGS.get("author_wave_size") or 9) if mode == "authors" else 0
+        results = await run_wave_from_manifest(
+            str(manifest_path),
+            phase_label,
+            max_concurrent_batch=wave_batch_size,
+        )
         unfinished_cids: List[str] = []
         if mode == "repair":
             unfinished_cids = _collect_unfinished_repair_ids(

@@ -1263,20 +1263,43 @@ def check_instance_invariants(
         # Item-level options integrity (telltales, synthetic clone prefix, padding, vacuous quantifiers)
         errors.extend(check_item_level_options_integrity(options_raw, interaction_type))
 
-    # Degenerate literal numeric conditions (e.g., "Si $2=0$", "($6>0$)") [TPL-DEGENERATE-LITERAL-COND]
+    # Degenerate literal numeric conditions (e.g., "Si $2=0$", "($6>0$)", "se anula el coeficiente $5$") [TPL-DEGENERATE-LITERAL-COND]
     _degen_texts: List[Tuple[str, str]] = []
     if isinstance(stem, str) and stem:
         _degen_texts.append(("stem", stem))
+    _sol_val = instance.get("detailed_solution")
+    if isinstance(_sol_val, str) and _sol_val:
+        _degen_texts.append(("detailed_solution", _sol_val))
+    for h_i, h_val in enumerate(instance.get("hints") or []):
+        if isinstance(h_val, str) and h_val:
+            _degen_texts.append((f"hint {h_i + 1}", h_val))
     if isinstance(options_raw, list):
         for o_i, o_d in enumerate(options_raw):
             if isinstance(o_d, dict):
                 _oc = o_d.get("content") if o_d.get("content") is not None else o_d.get("value")
                 if isinstance(_oc, str) and _oc:
                     _degen_texts.append((f"option {o_i + 1}", _oc))
+    _pd_obj = instance.get("proof_dag")
+    if isinstance(_pd_obj, dict):
+        for s_i, st in enumerate(_pd_obj.get("steps") or []):
+            if isinstance(st, dict) and isinstance(st.get("content"), str) and st["content"]:
+                _degen_texts.append((f"proof_dag.step[{s_i + 1}]", st["content"]))
+    _adv_obj = instance.get("adversarial_break")
+    if isinstance(_adv_obj, dict):
+        for s_i, st in enumerate(_adv_obj.get("steps") or []):
+            if isinstance(st, dict) and isinstance(st.get("content"), str) and st["content"]:
+                _degen_texts.append((f"adversarial_break.step[{s_i + 1}]", st["content"]))
+        for r_i, ro in enumerate(_adv_obj.get("reason_options") or []):
+            if isinstance(ro, dict) and isinstance(ro.get("content"), str) and ro["content"]:
+                _degen_texts.append((f"adversarial_break.reason_option[{r_i + 1}]", ro["content"]))
     _degen_eq_re = re.compile(r"\$\s*[1-9]\d*(?:\.\d+)?\s*=\s*0\s*\$")
     _degen_cmp_re = re.compile(r"\(\s*\$\s*[1-9]\d*(?:\.\d+)?\s*[><]=?\s*0\s*\$\s*\)")
+    _degen_null_re = re.compile(
+        r"\banula(?:n|ra|se)?\s+(?:el\s+coeficiente\s+|los\s+coeficientes\s+|el\s+par[aá]metro\s+)?\$\s*[1-9]\d*(?:\.\d+)?\s*\$",
+        re.IGNORECASE,
+    )
     for _d_ctx, _d_txt in _degen_texts:
-        for _dm in list(_degen_eq_re.finditer(_d_txt)) + list(_degen_cmp_re.finditer(_d_txt)):
+        for _dm in list(_degen_eq_re.finditer(_d_txt)) + list(_degen_cmp_re.finditer(_d_txt)) + list(_degen_null_re.finditer(_d_txt)):
             errors.append(
                 f"[TPL-DEGENERATE-LITERAL-COND] Degenerate numeric literal condition '{_dm.group(0)}' detected in {_d_ctx}."
             )
@@ -1596,6 +1619,7 @@ def check_instance_invariants(
                 errors.append("proof_dag.steps must be a non-empty list.")
             else:
                 valid_ids: Set[str] = set()
+                seen_pd_contents: Set[str] = set()
                 req_just = bool(dag.get("require_justification", False))
                 for s_idx, st in enumerate(steps):
                     if not isinstance(st, dict):
@@ -1605,6 +1629,11 @@ def check_instance_invariants(
                     content = str(st.get("content") or "").strip()
                     if not sid or not content:
                         errors.append(f"proof_dag.steps[{s_idx}] missing id or content.")
+                    else:
+                        norm_pd = re.sub(r"\s+", "", content)
+                        if norm_pd in seen_pd_contents:
+                            errors.append(f"Duplicate option content detected in proof_dag.steps: '{content}'")
+                        seen_pd_contents.add(norm_pd)
                     errors.extend(validate_katex_syntax(content, f"proof_dag.steps[{s_idx}].content", variables=effective_vars))
                     if st.get("is_fallacy"):
                         rat = st.get("error_rationale")
@@ -1656,6 +1685,14 @@ def check_instance_invariants(
                             errors.extend(validate_katex_syntax(rat, f"adversarial_break.steps[{s_idx}].error_rationale", variables=effective_vars))
                 if fallacy_cnt != 1:
                     errors.append(f"adversarial_break find_fallacy must have exactly 1 fallacy step (found {fallacy_cnt}).")
+                seen_ro: List[str] = []
+                for ro in adv.get("reason_options") or []:
+                    if isinstance(ro, dict):
+                        rc = str(ro.get("content") or ro.get("value") or "").strip()
+                        if rc:
+                            if any(rc == prev or _expressions_collide(rc, prev) for prev in seen_ro):
+                                errors.append(f"Duplicate option content detected in adversarial_break.reason_options: '{rc}'")
+                            seen_ro.append(rc)
             elif mode == "counterexample":
                 if not isinstance(adv.get("inputs"), list) or not adv["inputs"]:
                     errors.append("adversarial_break counterexample requires non-empty 'inputs'.")
@@ -1751,23 +1788,35 @@ def check_instance_invariants(
                                 f"unstructured_model.phase1_variables.items[{it_idx}] contains a generic placeholder 'error_rationale': '{it['error_rationale']}'"
                             )
 
+                seen_p2_opts: List[str] = []
                 for o_idx, opt in enumerate(p2_opts):
                     if isinstance(opt, dict):
                         for fld in ("content", "error_rationale"):
                             fval = opt.get(fld)
                             if isinstance(fval, str) and fval:
                                 errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase2_assumptions.options[{o_idx}].{fld}", variables=effective_vars))
+                        oc = str(opt.get("content") or opt.get("value") or "").strip()
+                        if oc:
+                            if any(oc == prev or _expressions_collide(oc, prev) for prev in seen_p2_opts):
+                                errors.append(f"Duplicate option content detected in unstructured_model.phase2_assumptions: '{oc}'")
+                            seen_p2_opts.append(oc)
                         if isinstance(opt.get("error_rationale"), str) and _is_placeholder_rationale_inv(opt["error_rationale"]):
                             errors.append(
                                 f"unstructured_model.phase2_assumptions.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'"
                             )
 
+                seen_p3_opts: List[str] = []
                 for o_idx, opt in enumerate(p3.get("options") or []):
                     if isinstance(opt, dict):
                         for fld in ("content", "error_rationale"):
                             fval = opt.get(fld)
                             if isinstance(fval, str) and fval:
                                 errors.extend(validate_katex_syntax(fval, f"unstructured_model.phase3_formulation.options[{o_idx}].{fld}", variables=effective_vars))
+                        oc = str(opt.get("content") or opt.get("value") or "").strip()
+                        if oc:
+                            if any(oc == prev or _expressions_collide(oc, prev) for prev in seen_p3_opts):
+                                errors.append(f"Duplicate option content detected in unstructured_model.phase3_formulation: '{oc}'")
+                            seen_p3_opts.append(oc)
                         if not opt.get("is_correct") and isinstance(opt.get("error_rationale"), str) and _is_placeholder_rationale_inv(opt["error_rationale"]):
                             errors.append(
                                 f"unstructured_model.phase3_formulation.options[{o_idx}] contains a generic placeholder 'error_rationale': '{opt['error_rationale']}'"
