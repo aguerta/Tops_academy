@@ -56,7 +56,7 @@ from engine.epistemic_closure import (
     check_epistemic_closure,
     check_open_symbolic_answer_closure,
 )
-from engine.invariants import check_instance_invariants, validate_katex_syntax
+from engine.invariants import check_instance_invariants, placeholder_leaks_answer, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
 from engine.stage_contract import is_skill_type, MIN_DIVERSITY_RATIO
 from engine.sandbox import (
@@ -195,6 +195,213 @@ def _check_stem_variant_parity(template: Dict[str, Any]) -> List[Tuple[str, List
                 file=sys.stderr,
             )
     return violations
+
+
+def _check_stem_equation_parity(template: Dict[str, Any]) -> List[str]:
+    """Detect stem_variants that omit a defining functional equation present in >= 50% of variants."""
+    itype = str(template.get("interaction_type", "")).strip().lower()
+    if itype not in ("open_symbolic", "fill_in_the_blank", "fib"):
+        return []
+    raw_variants = template.get("stem_variants")
+    if not isinstance(raw_variants, list) or len(raw_variants) < 2:
+        return []
+    func_eq_re = re.compile(
+        r"(?:\\(?:phi|psi|Phi|Psi|dot\{[^}]+\})\s*(?:\([^)]*\))?|[A-Za-z](?:_[A-Za-z0-9{}]+)?\s*\([^)]*\)|[YVFf]\s*)\s*="
+    )
+    valid_variants = [(idx, sv) for idx, sv in enumerate(raw_variants) if isinstance(sv, str) and sv.strip()]
+    if len(valid_variants) < 2:
+        return []
+    eq_indices = [idx for idx, sv in valid_variants if func_eq_re.search(sv)]
+    if not eq_indices:
+        return []
+    threshold = max(1, (len(valid_variants) + 1) // 2)
+    if len(eq_indices) < threshold:
+        return []
+    return [
+        f"stem_variants[{idx}]"
+        for idx, sv in valid_variants
+        if not func_eq_re.search(sv) and r"\frac{d" not in sv
+    ]
+
+
+_ABS_WORD_BIAS_RE = re.compile(r"\b(?:siempre|nunca|únicamente|jamás|ignora|todo[sa]?)\b", re.IGNORECASE)
+
+
+def _check_m20_rigor_for_instance(
+    assembled_q: Dict[str, Any],
+    interaction_type: str,
+    strict: bool,
+    competency_id: str,
+    tpl_id: str,
+    errors: List[str],
+    warnings_out: Optional[List[str]] = None,
+) -> None:
+    """Enforce M2.0 structural rigor on the first assembled instance of a template."""
+    if interaction_type == "multiple_select":
+        opts = assembled_q.get("options") or []
+        if strict and isinstance(opts, list) and not (5 <= len(opts) <= 6):
+            errors.append(format_diagnostic_error(
+                "MS-MIN-OPTIONS: OPCIONES INSUFICIENTES EN MULTIPLE_SELECT",
+                competency_id,
+                tpl_id,
+                tpl_id,
+                "options",
+                f"len(options)={len(opts)}",
+                f"[-] [MS-MIN-OPTIONS] En '{tpl_id}': multiple_select en modo estricto exige 5 a 6 opciones (encontradas {len(opts)}).",
+                [
+                    "Ampliar la lista 'options' a 5 o 6 opciones diagnósticas (variando cuántas son verdaderas).",
+                    "Añadir al menos un distractor adicional con 'distractor_id' y 'error_rationale' dinámico.",
+                ],
+            ))
+        if isinstance(opts, list) and opts:
+            t_opts = [str(o.get("content") or o.get("text") or "") for o in opts if isinstance(o, dict) and o.get("is_correct") is True]
+            f_opts = [str(o.get("content") or o.get("text") or "") for o in opts if isinstance(o, dict) and not o.get("is_correct")]
+            if t_opts and f_opts:
+                t_abs = sum(1 for t in t_opts if _ABS_WORD_BIAS_RE.search(t)) / len(t_opts)
+                f_abs = sum(1 for f in f_opts if _ABS_WORD_BIAS_RE.search(f)) / len(f_opts)
+                if f_abs >= 0.50 and t_abs == 0.0:
+                    w_msg = (
+                        f"WARNING: [TPL-MS-ABSOLUTE-WORD-BIAS] En '{tpl_id}': {int(f_abs * 100)}% de distractores MS "
+                        "usan palabras absolutas ('siempre', 'nunca', 'únicamente', 'ignora', 'todo') vs 0% en correctas."
+                    )
+                    _logger.warning(w_msg)
+                    if warnings_out is not None:
+                        warnings_out.append(w_msg)
+
+    elif interaction_type == "invariant_canvas":
+        ic = assembled_q.get("invariant_canvas")
+        if strict and isinstance(ic, dict) and str(ic.get("mode") or "cartesian").strip().lower() == "cartesian":
+            fixed_c = ic.get("fixed_curves") or []
+            inter_c = ic.get("interactive_curves") or []
+            sliders = ic.get("sliders") or []
+            ineq = ic.get("inequality")
+            invs = ic.get("invariants") or []
+            if (
+                len(fixed_c) > 0
+                and len(inter_c) == 0
+                and len(sliders) == 0
+                and not ineq
+                and len(invs) == 1
+                and isinstance(invs[0], dict)
+                and str(invs[0].get("kind") or "").strip() == "point_coords"
+            ):
+                errors.append(format_diagnostic_error(
+                    "CANVAS-TRIVIAL-1PT: LIENZO TRIVIAL DE 1 PUNTO SOBRE CURVA FIJA",
+                    competency_id,
+                    tpl_id,
+                    tpl_id,
+                    "invariant_canvas",
+                    "fixed_curves>0, interactive_curves=0, sliders=0, 1x point_coords",
+                    f"[-] [CANVAS-TRIVIAL-1PT] En '{tpl_id}': la curva solución ya está dibujada en 'fixed_curves' y solo pide ubicar 1 punto P1.",
+                    [
+                        "Usa 'interactive_curves' o 'sliders' para que el estudiante construya/ajuste la curva, o exige >= 2 invariantes no triviales.",
+                    ],
+                ))
+
+    elif interaction_type == "concept_matching":
+        cm = assembled_q.get("concept_matching")
+        if strict and isinstance(cm, dict):
+            premises = cm.get("premises") or []
+            targets = cm.get("targets") or []
+            pairs = cm.get("correct_pairs") or {}
+            matched_tids = set(pairs.values()) if isinstance(pairs, dict) else set()
+            n_distractors = sum(
+                1 for tg in targets
+                if isinstance(tg, dict) and (tg.get("is_distractor") is True or tg.get("id") not in matched_tids)
+            )
+            if len(premises) < 4 or n_distractors < 2:
+                errors.append(format_diagnostic_error(
+                    "MATCHING-MIN-RIGOR: PARES O DISTRACTORES INSUFICIENTES",
+                    competency_id,
+                    tpl_id,
+                    tpl_id,
+                    "concept_matching",
+                    f"premises={len(premises)}, distractors={n_distractors}",
+                    f"[-] [MATCHING-MIN-RIGOR] En '{tpl_id}': concept_matching exige >= 4 premisas y >= 2 targets distractores (actual: {len(premises)} premisas, {n_distractors} distractores).",
+                    [
+                        "Amplía 'premises' a >= 4 premisas distintas y agrega >= 2 'targets' distractores con 'distractor_id' y 'error_rationale'.",
+                    ],
+                ))
+
+
+def _check_competency_rigor_diversity(
+    cid: str,
+    comp_questions: List[Dict[str, Any]],
+    strict: bool,
+    warnings_out: Optional[List[str]] = None,
+) -> List[str]:
+    """Competency-level rigor checks: MS correct-count diversity, fallacy position bias, and linear proof_dag."""
+    errs: List[str] = []
+    ms_by_tpl: Dict[str, Set[int]] = defaultdict(set)
+    adv_fallacy_by_tpl: Dict[str, Set[str]] = defaultdict(set)
+    pd_linear_by_tpl: Dict[str, bool] = {}
+
+    for q in comp_questions:
+        if not isinstance(q, dict):
+            continue
+        qt = str(q.get("interaction_type") or q.get("type") or "").strip().lower()
+        tid = str(q.get("template_id") or q.get("id") or "?")
+        if qt == "multiple_select":
+            opts = q.get("options") or []
+            c_cnt = sum(1 for o in opts if isinstance(o, dict) and o.get("is_correct") is True)
+            ms_by_tpl[tid].add(c_cnt)
+        elif qt == "adversarial_break":
+            adv = q.get("adversarial_break") or {}
+            if isinstance(adv, dict) and str(adv.get("mode") or "").lower() == "find_fallacy":
+                ca = q.get("correct_answer") or {}
+                fsid = str(ca.get("fallacy_step_id") or "")
+                if fsid:
+                    adv_fallacy_by_tpl[tid].add(fsid)
+        elif qt == "proof_dag":
+            pd = q.get("proof_dag") or {}
+            if isinstance(pd, dict):
+                steps = pd.get("steps") or []
+                edges = pd.get("edges") or []
+                valid_cnt = sum(1 for s in steps if isinstance(s, dict) and not s.get("is_fallacy"))
+                in_deg: Dict[str, int] = defaultdict(int)
+                out_deg: Dict[str, int] = defaultdict(int)
+                for e in edges:
+                    if isinstance(e, (list, tuple)) and len(e) == 2:
+                        out_deg[str(e[0])] += 1
+                        in_deg[str(e[1])] += 1
+                is_linear = (
+                    valid_cnt <= 3
+                    and all(v <= 1 for v in in_deg.values())
+                    and all(v <= 1 for v in out_deg.values())
+                )
+                pd_linear_by_tpl[tid] = pd_linear_by_tpl.get(tid, True) and is_linear
+
+    if strict and len(ms_by_tpl) >= 2:
+        all_counts = {c for cnts in ms_by_tpl.values() for c in cnts}
+        if all_counts == {2}:
+            errs.append(format_diagnostic_error(
+                "MS-CORRECT-COUNT-DIVERSITY: TODAS LAS PLANTILLAS MS TIENEN 2 CORRECTAS",
+                cid,
+                ", ".join(sorted(ms_by_tpl)),
+                cid,
+                "multiple_select.options",
+                "correct_count == 2 en 100% de plantillas MS",
+                f"[-] [MS-CORRECT-COUNT-DIVERSITY] En '{cid}': todas las plantillas multiple_select ({len(ms_by_tpl)}) tienen exactamente 2 opciones correctas.",
+                [
+                    "Varía el número de opciones correctas entre plantillas MS (p. ej. 3 correctas en una plantilla y 1 o 2 en otra).",
+                ],
+            ))
+
+    if len(adv_fallacy_by_tpl) >= 2:
+        all_fsids = {f for fs in adv_fallacy_by_tpl.values() for f in fs}
+        if all_fsids == {"S3"}:
+            w_msg = f"WARNING: [ADV-FALLACY-POS-BIAS] En '{cid}': 100% de plantillas find_fallacy colocan la falacia en 'S3'."
+            _logger.warning(w_msg)
+            if warnings_out is not None:
+                warnings_out.append(w_msg)
+
+    if len(pd_linear_by_tpl) >= 1 and all(pd_linear_by_tpl.values()):
+        w_msg = f"WARNING: [PROOF-DAG-LINEAR] En '{cid}': todas las plantillas proof_dag son cadenas lineales de <= 3 pasos sin ramificación."
+        _logger.warning(w_msg)
+        if warnings_out is not None:
+            warnings_out.append(w_msg)
+
+    return errs
 
 
 def _check_stem_derivative_giveaway(text: str) -> Optional[Tuple[str, str]]:
@@ -867,6 +1074,41 @@ def check_single_template(
             ]
         ))
 
+    eq_parity_violations = _check_stem_equation_parity(template)
+    for eq_field in eq_parity_violations:
+        errors.append(format_diagnostic_error(
+            "TPL-STEM-EQUATION-PARITY: OMISIÓN DE ECUACIÓN FUNCIONAL EN STEM_VARIANT",
+            competency_id,
+            tpl_id,
+            tpl_id,
+            eq_field,
+            "La variante omite la ecuación o función de producción definida en las demás variantes.",
+            f"[-] [TPL-STEM-EQUATION-PARITY] violation in '{tpl_id}': '{eq_field}' no contiene '=' pese a que la mayoría de 'stem_variants' define explícitamente la función del modelo.",
+            [
+                f"Incluir explícitamente la ecuación definitoria del modelo dentro de '{eq_field}'.",
+                "Garantizar clausura epistémica en el 100% de las variantes de 'stem_variants'.",
+            ]
+        ))
+
+    if interaction_type in ("open_symbolic", "fill_in_the_blank"):
+        _unlabeled_re = re.compile(
+            r"\b(?:para|con|si|dados?)\s+\$?@[a-zA-Z_]\w*@\$?\s+y\s+\$?@[a-zA-Z_]\w*@\$?",
+            re.IGNORECASE,
+        )
+        for _sv_idx, _sv_txt in enumerate(template.get("stem_variants") or []):
+            if isinstance(_sv_txt, str):
+                _um = _unlabeled_re.search(_sv_txt)
+                if _um:
+                    _u_msg = (
+                        f"WARNING: [TPL-UNLABELED-PARAM] En '{tpl_id}' (stem_variants[{_sv_idx}]): "
+                        f"parámetros numéricos sin etiqueta simbólica ('{_um.group(0)}'). "
+                        "Etiqueta cada parámetro explícitamente (ej. '$a=@a@$ y $n=@n@$')."
+                    )
+                    _logger.warning(_u_msg)
+                    if warnings_out is not None:
+                        warnings_out.append(_u_msg)
+                    break
+
     # Concise explanation check (blocking under strict=True)
     sol_text = str(template.get("solution") or template.get("sol") or template.get("explanation_es") or "").strip()
     if len(sol_text) < 60 and (strict or len(sol_text) > 0):
@@ -970,10 +1212,13 @@ def check_single_template(
     distractor_contents_by_slot: Dict[Any, List[str]] = defaultdict(list)
     distractor_rationales_by_slot: Dict[Any, List[str]] = defaultdict(list)
     epistemic_checked = False
+    rigor_checked = False
     checked_symbolic_stems: Set[str] = set()
     epistemic_hard_reported = False
     executed_seed_count = 0
     valid_invariant_count = 0
+    ph_leak_seeds: List[str] = []
+    ph_raw_values: Set[str] = set()
 
     for idx, item in enumerate(batch_results):
         if not item.get("success"):
@@ -981,6 +1226,18 @@ def check_single_template(
         executed_seed_count += 1
         gen_res = item.get("result", {})
         seed_val = item.get("seed", idx)
+
+        if interaction_type == "open_symbolic" and isinstance(gen_res, dict):
+            _raw_sym = gen_res.get("symbolic_config") or template.get("symbolic_config")
+            if isinstance(_raw_sym, dict):
+                _raw_ph = _raw_sym.get("placeholder")
+                if isinstance(_raw_ph, str) and _raw_ph.strip():
+                    ph_raw_values.add(_raw_ph.strip())
+                _raw_corr = str(gen_res.get("correct") or gen_res.get("expected_answer") or "").strip()
+                _raw_eqs = gen_res.get("accepted_equivalents") or []
+                _raw_fvars = _raw_sym.get("variables") or gen_res.get("variables") or []
+                if placeholder_leaks_answer(_raw_ph, _raw_corr, _raw_eqs, _raw_fvars):
+                    ph_leak_seeds.append(f"seed={seed_val}")
 
         try:
             assembled_q = assemble_question(
@@ -1038,6 +1295,19 @@ def check_single_template(
                     slot_key = did or str(opt.get("id") or opt.get("option_id") or f"slot_{opt_idx}").strip()
                     distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
                     distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
+                    if idx == 0 and re.match(
+                        r"^\s*(?:Bajo|Suponiendo|Si\s+(?:se\s+)?(?:asume|supone|omite|fuera|existiera))\b",
+                        opt_txt,
+                        re.IGNORECASE,
+                    ):
+                        cond_msg = (
+                            f"WARNING: [TPL-MS-CONDITIONAL-DISTRACTOR] En '{tpl_id}' ({slot_key}): "
+                            f"la opción falsa inicia con marco condicional contrafactual ('{opt_txt[:60]}...'). "
+                            "Verifica que sea incondicionalmente falsa en el modelo."
+                        )
+                        _logger.warning(cond_msg)
+                        if warnings_out is not None:
+                            warnings_out.append(cond_msg)
 
         # Validate unrendered placeholders
         pl_errs = check_unrendered_placeholders_in_instance(assembled_q, gen_res.get("vars", {}))
@@ -1101,9 +1371,36 @@ def check_single_template(
                         raw_inv_failures[canon_key][1].append(seed_tag)
         if not seed_has_error:
             valid_invariant_count += 1
+        if not rigor_checked:
+            rigor_checked = True
+            _check_m20_rigor_for_instance(
+                assembled_q=assembled_q,
+                interaction_type=interaction_type,
+                strict=strict,
+                competency_id=competency_id,
+                tpl_id=tpl_id,
+                errors=errors,
+                warnings_out=warnings_out,
+            )
 
     if zero_valid_out is not None and executed_seed_count >= 10 and valid_invariant_count == 0:
         zero_valid_out.append(tpl_id)
+
+    _is_dynamic_ph = len(ph_raw_values) > 1
+    _is_systematic_leak = len(ph_leak_seeds) >= max(2, executed_seed_count // 2)
+    if (_is_dynamic_ph and len(ph_leak_seeds) >= 2) or _is_systematic_leak:
+        errors.append(format_diagnostic_error(
+            "TPL-PLACEHOLDER-ANSWER-LEAK: PLACEHOLDER REVELA RESPUESTA CORRECTA",
+            competency_id,
+            tpl_id,
+            ph_leak_seeds,
+            "symbolic_config.placeholder",
+            f"Fuga sistemática en {len(ph_leak_seeds)}/{executed_seed_count} semillas",
+            f"[-] [TPL-PLACEHOLDER-ANSWER-LEAK] En '{tpl_id}': symbolic_config.placeholder coincide o es equivalente a la respuesta correcta en {len(ph_leak_seeds)} semillas ({ph_leak_seeds[:5]}).",
+            [
+                "Usa un ejemplo estático genérico en symbolic_config['placeholder'] sin interpolar variables activas de gen_*.",
+            ],
+        ))
 
     # Consolidate assembly failures
     for asm_err, seed_list in raw_asm_failures.items():
@@ -1701,6 +1998,14 @@ def _eval_comp_diversity_and_parity_worker(
                 competency=comp_obj,
                 questions=comp_questions,
                 strict=True,
+            )
+        )
+    if comp_questions:
+        c_errors.extend(
+            _check_competency_rigor_diversity(
+                cid=cid,
+                comp_questions=comp_questions,
+                strict=strict,
             )
         )
     return c_errors

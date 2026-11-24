@@ -157,7 +157,11 @@ def format_template_string(
             return _safe_format_value(val, fmt_spec)
         return m.group(0)
 
-    result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
+    for _ in range(2):
+        _next_result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
+        if _next_result == result:
+            break
+        result = _next_result
     sentinel_values: Dict[str, str] = {}
 
     def _stash_sentinel(val_s: str) -> str:
@@ -1369,6 +1373,26 @@ def _assemble_concept_matching(
     rng.shuffle(premises)
     rng.shuffle(targets)
 
+    old_to_new_tid: Dict[str, str] = {}
+    for t_new_idx, tg_entry in enumerate(targets, start=1):
+        new_tid = f"T{t_new_idx}"
+        old_to_new_tid[str(tg_entry["id"])] = new_tid
+        tg_entry["id"] = new_tid
+    clean_pairs = {pid: old_to_new_tid.get(tid, tid) for pid, tid in clean_pairs.items()}
+    if pair_rationales:
+        remapped_pr: Dict[str, str] = {}
+        for pk, pv in pair_rationales.items():
+            new_pk = pk
+            for sep in ("->", ":"):
+                if sep in pk:
+                    left, right = pk.split(sep, 1)
+                    right_s = right.strip()
+                    if right_s in old_to_new_tid:
+                        new_pk = f"{left}{sep}{old_to_new_tid[right_s]}"
+                    break
+            remapped_pr[new_pk] = pv
+        pair_rationales = remapped_pr
+
     compiled_cm: Dict[str, Any] = {
         "left_title": sanitize_katex_syntax(format_template_string(str(raw_cm.get("left_title") or "Premisa"), variables)),
         "right_title": sanitize_katex_syntax(format_template_string(str(raw_cm.get("right_title") or "Consecuencia"), variables)),
@@ -1693,6 +1717,13 @@ def assemble_question(
         sym_cfg = dict(sym_cfg_raw) if isinstance(sym_cfg_raw, dict) else {}
         if isinstance(gen_result.get("variables"), list) and "variables" not in sym_cfg:
             sym_cfg["variables"] = [str(x) for x in gen_result["variables"]]
+        try:
+            from engine.invariants import placeholder_leaks_answer
+        except ImportError:
+            from .invariants import placeholder_leaks_answer
+        if placeholder_leaks_answer(sym_cfg.get("placeholder"), str_val, equivalents, sym_cfg.get("variables")):
+            _ph_vars = ", ".join(str(v) for v in (sym_cfg.get("variables") or ["x"]))
+            sym_cfg["placeholder"] = f"Ej: expr({_ph_vars})"
 
         assembled["interface_config"] = {
             "allow_calculator": False,

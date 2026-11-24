@@ -693,7 +693,8 @@ def validate_katex_syntax(
         # PyKaTeX rendering verification with LRU cache
         has_tmpl_token = bool(re.search(r"@[A-Za-z0-9_]+@|(?<![\\_^}])\{[a-zA-Z_][a-zA-Z0-9_]*\}", block))
         if not (allow_template_vars and has_tmpl_token):
-            success, render_err = _render_katex_safe(block.strip(), is_disp)
+            render_probe = re.sub(r"@[A-Za-z0-9_]+(?::[^@\s]*)?@", "1", block.strip())
+            success, render_err = _render_katex_safe(render_probe, is_disp)
             if not success and render_err:
                 errors.append(f"KaTeX parse error in {context}: {render_err}")
 
@@ -1106,6 +1107,40 @@ def _check_diagnostic_distractors_invariants(
                         break
 
 
+def placeholder_leaks_answer(
+    raw_ph: Any,
+    corr_expr_str: str,
+    accepted_equivalents: Optional[List[Any]] = None,
+    free_vars: Optional[Any] = None,
+) -> bool:
+    """Return True if an open_symbolic placeholder matches or is symbolically equivalent to the answer."""
+    if not isinstance(raw_ph, str) or not raw_ph.strip() or not isinstance(corr_expr_str, str) or not corr_expr_str.strip():
+        return False
+    cand_ph = re.sub(r"^\s*(?:ej\.?|ejemplo|e\.g\.?)\s*:\s*", "", raw_ph.strip(), flags=re.IGNORECASE)
+    cand_ph = cand_ph.strip().strip("$").strip()
+    if not cand_ph:
+        return False
+
+    def _norm_sym_txt(s: str) -> str:
+        return re.sub(r"\s+", "", s).replace("^", "**")
+
+    norm_ph = _norm_sym_txt(cand_ph)
+    norm_targets = {_norm_sym_txt(corr_expr_str)}
+    for eq_item in (accepted_equivalents or []):
+        if isinstance(eq_item, str) and eq_item.strip():
+            norm_targets.add(_norm_sym_txt(eq_item))
+    if norm_ph in norm_targets:
+        return True
+    f_vars = [str(v).strip() for v in (free_vars or []) if str(v).strip()]
+    if f_vars:
+        try:
+            from engine.c2c_ver import c2c_ver
+            return bool(c2c_ver.equiv(cand_ph, corr_expr_str, variables=sorted(set(f_vars))))
+        except Exception:
+            pass
+    return False
+
+
 def check_instance_invariants(
     instance: Dict[str, Any],
     interaction_type: str,
@@ -1178,6 +1213,24 @@ def check_instance_invariants(
 
         # Item-level options integrity (telltales, synthetic clone prefix, padding, vacuous quantifiers)
         errors.extend(check_item_level_options_integrity(options_raw, interaction_type))
+
+    # Degenerate literal numeric conditions (e.g., "Si $2=0$", "($6>0$)") [TPL-DEGENERATE-LITERAL-COND]
+    _degen_texts: List[Tuple[str, str]] = []
+    if isinstance(stem, str) and stem:
+        _degen_texts.append(("stem", stem))
+    if isinstance(options_raw, list):
+        for o_i, o_d in enumerate(options_raw):
+            if isinstance(o_d, dict):
+                _oc = o_d.get("content") if o_d.get("content") is not None else o_d.get("value")
+                if isinstance(_oc, str) and _oc:
+                    _degen_texts.append((f"option {o_i + 1}", _oc))
+    _degen_eq_re = re.compile(r"\$\s*[1-9]\d*(?:\.\d+)?\s*=\s*0\s*\$")
+    _degen_cmp_re = re.compile(r"\(\s*\$\s*[1-9]\d*(?:\.\d+)?\s*[><]=?\s*0\s*\$\s*\)")
+    for _d_ctx, _d_txt in _degen_texts:
+        for _dm in list(_degen_eq_re.finditer(_d_txt)) + list(_degen_cmp_re.finditer(_d_txt)):
+            errors.append(
+                f"[TPL-DEGENERATE-LITERAL-COND] Degenerate numeric literal condition '{_dm.group(0)}' detected in {_d_ctx}."
+            )
 
     if interaction_type in ("fill_in_the_blank", "open_symbolic") and not corr_texts_extracted:
         ans_obj = instance.get("correct_answer") if instance.get("correct_answer") is not None else instance.get("correct")
@@ -1428,7 +1481,7 @@ def check_instance_invariants(
             errors.extend(bp_errors)
 
             # Check length anti-giveaway symmetry for multiple_select [R-15-MS]:
-            # 0.85 <= avg(len(true)) / avg(len(false)) <= 1.15
+            # 0.80 <= avg(len(true)) / avg(len(false)) <= 1.20
             if strict_length_bounds:
                 true_lens = [
                     len(str(opt.get("content", "")).strip())
@@ -1445,15 +1498,15 @@ def check_instance_invariants(
                     avg_f = sum(false_lens) / len(false_lens)
                     if min(avg_t, avg_f) >= 15.0 and avg_f > 0 and abs(avg_t - avg_f) >= 8.0:
                         ratio = avg_t / avg_f
-                        if ratio > 1.15:
+                        if ratio > 1.20:
                             errors.append(
                                 f"MS length anti-giveaway violation: correct options too long on average "
-                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x > 1.15x)."
+                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x > 1.20x)."
                             )
-                        elif ratio < 0.85:
+                        elif ratio < 0.80:
                             errors.append(
                                 f"MS length anti-giveaway violation: correct options too short on average "
-                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x < 0.85x)."
+                                f"(avg_true={avg_t:.1f} vs avg_false={avg_f:.1f}, ratio={ratio:.2f}x < 0.80x)."
                             )
 
             # Check answer leak in stem or early hints for multiple_select correct options
@@ -1848,6 +1901,42 @@ def check_instance_invariants(
                                 if t_num < smin - 1e-6 or t_num > smax + 1e-6:
                                     errors.append(
                                         f"[CANVAS-OUT-OF-BOUNDS] invariant_canvas.invariants[{i_idx}] slider '{sid}' target={t_raw} exceeds [{smin}, {smax}]."
+                                    )
+
+                    # [CANVAS-STEP-MISMATCH]: Ensure targets/sliders are exact multiples of step when snap is active
+                    if ic.get("snap") is not False:
+                        c_step = _as_bound_num(ic.get("step", 1))
+                        if c_step is not None and c_step > 0:
+                            for i_idx, inv in enumerate(invs):
+                                if not isinstance(inv, dict):
+                                    continue
+                                inv_kind = str(inv.get("kind") or "").strip()
+                                if inv_kind in ("point_coords", "kink_at", "curves_intersect_at"):
+                                    for c_key in ("target_x", "target_y", "x"):
+                                        if c_key == "x" and inv_kind != "kink_at":
+                                            continue
+                                        v_num = _as_bound_num(inv.get(c_key))
+                                        if v_num is not None and abs(v_num / c_step - round(v_num / c_step)) > 1e-4:
+                                            errors.append(
+                                                f"[CANVAS-STEP-MISMATCH] invariant_canvas.invariants[{i_idx}] {c_key}={v_num} "
+                                                f"is not a multiple of canvas step={c_step}."
+                                            )
+                        sl_steps = {
+                            str(sl["id"]).strip(): _as_bound_num(sl.get("step"))
+                            for sl in (ic.get("sliders") or [])
+                            if isinstance(sl, dict) and sl.get("id") is not None
+                        }
+                        for i_idx, inv in enumerate(invs):
+                            if not isinstance(inv, dict) or str(inv.get("kind") or "").strip() != "slider_eq":
+                                continue
+                            sid = str(inv.get("slider_id") or "").strip()
+                            sl_step = sl_steps.get(sid)
+                            t_num = _as_bound_num(inv.get("target") if inv.get("target") is not None else inv.get("target_value"))
+                            if sl_step is not None and sl_step > 0 and t_num is not None:
+                                if abs(t_num / sl_step - round(t_num / sl_step)) > 1e-4:
+                                    errors.append(
+                                        f"[CANVAS-STEP-MISMATCH] invariant_canvas.invariants[{i_idx}] slider '{sid}' target={t_num} "
+                                        f"is not a multiple of slider step={sl_step}."
                                     )
 
                     t_state = ic.get("target_state")

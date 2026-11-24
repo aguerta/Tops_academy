@@ -26,14 +26,19 @@ from typing import Any, Dict, List, Optional, Tuple, Union, Set
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine.stage_contract import (  # noqa: E402
+    ARCHETYPE_KINDS,
+    BLOOM_LEVELS,
+    BLOOM_RANK,
     DEFAULT_TEMPLATES_PER_MODALITY,
     competency_contract,
     contract_tokens as _s4_tokens,
     is_skill_type,
+    max_achievable_bloom_rank,
     quota_for_competency,
     quota_for_type,
     render_contract_tokens,
     required_templates_for_competency,
+    template_bloom_bounds,
 )
 
 _S4 = _s4_tokens()
@@ -1453,6 +1458,68 @@ def dispatch_cta_reduce(
     return {"dispatched_at": dispatched_at, "Subagents": subagents, "item_files": item_files}
 
 
+def _assign_slot_metadata(
+    slot_qtypes: List[str],
+    is_skill: bool,
+    target_bloom: str,
+) -> List[Tuple[str, str, str]]:
+    """Pre-assign valid, non-colliding (archetype, difficulty, bloom) tuples for each template slot."""
+    n = len(slot_qtypes)
+    if n == 0:
+        return []
+    archetypes = [ARCHETYPE_KINDS[i % len(ARCHETYPE_KINDS)] for i in range(n)]
+    diffs_base = ("easy", "medium", "hard")
+    target_rank = BLOOM_RANK.get(str(target_bloom or "").strip().capitalize(), 3 if is_skill else 2)
+    max_mod_rank = max_achievable_bloom_rank(slot_qtypes) or 6
+    feasible_rank = min(target_rank, max_mod_rank)
+
+    # Pick which slot should hit feasible_rank (prefer boundary_or_edge_case, else last compatible slot)
+    target_slot_idx = None
+    for idx in range(n - 1, -1, -1):
+        bnds = template_bloom_bounds(slot_qtypes[idx], archetype=archetypes[idx]) or (1, 6)
+        min_r = max(bnds[0], BLOOM_RANK["Apply"]) if is_skill else bnds[0]
+        if min_r <= feasible_rank <= bnds[1]:
+            if archetypes[idx] == "boundary_or_edge_case" or target_slot_idx is None:
+                target_slot_idx = idx
+                if archetypes[idx] == "boundary_or_edge_case":
+                    break
+
+    used_per_mod: Dict[str, Set[Tuple[str, str, str]]] = {}
+    out: List[Tuple[str, str, str]] = []
+    for idx, (qt, arch) in enumerate(zip(slot_qtypes, archetypes)):
+        bnds = template_bloom_bounds(qt, archetype=arch) or (1, 6)
+        min_r, max_r = bnds
+        if is_skill:
+            min_r = min(max_r, max(min_r, BLOOM_RANK["Apply"]))
+        pref_diff = diffs_base[idx % 3]
+        if idx == target_slot_idx and min_r <= feasible_rank <= max_r:
+            pref_rank = feasible_rank
+        elif pref_diff == "easy":
+            pref_rank = min_r
+        elif pref_diff == "medium":
+            pref_rank = min(max_r, max(min_r, (min_r + max_r) // 2))
+        else:
+            pref_rank = max_r
+
+        seen = used_per_mod.setdefault(qt, set())
+        chosen: Optional[Tuple[str, str, str]] = None
+        cand_ranks = [pref_rank] + [r for r in range(min_r, max_r + 1) if r != pref_rank]
+        cand_diffs = [pref_diff] + [d for d in diffs_base if d != pref_diff]
+        for r_val in cand_ranks:
+            for d_val in cand_diffs:
+                cand = (arch, d_val, BLOOM_LEVELS[r_val - 1])
+                if cand not in seen:
+                    chosen = cand
+                    break
+            if chosen is not None:
+                break
+        if chosen is None:
+            chosen = (arch, pref_diff, BLOOM_LEVELS[pref_rank - 1])
+        seen.add(chosen)
+        out.append(chosen)
+    return out
+
+
 def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: int) -> str:
     """Build a read-only Form-C contractual reference skeleton for author_XX_data.md."""
     mc7_aliases = {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"}
@@ -1468,6 +1535,7 @@ def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: 
     seen_dids: Set[str] = set()
     fn_lines: List[str] = []
     tpl_lines: List[str] = []
+    all_qtypes: Set[str] = set()
     g_idx = 0
 
     for entry in comp_entries:
@@ -1515,41 +1583,71 @@ def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: 
         while len(slot_qtypes) < min_tpls:
             slot_qtypes.append(active_fill[len(slot_qtypes) % len(active_fill)])
 
+        all_qtypes.update(slot_qtypes)
+        slot_meta = _assign_slot_metadata(slot_qtypes, is_skill=is_skill, target_bloom=target_bloom)
         clean_cid = re.sub(r"[^A-Za-z0-9]", "", cid) or "COMP"
-        for slot_pos, qt in enumerate(slot_qtypes, start=1):
+        assumption_attached = False
+        ms_slot_idx = 0
+        ms_corr_cycle = (3, 2, 1, 4)
+        adv_slot_idx = 0
+        adv_pos_cycle = ("S2", "S4", "S3")
+        for slot_pos, (qt, (arch, diff, bloom_lbl)) in enumerate(zip(slot_qtypes, slot_meta), start=1):
             g_idx += 1
             tpl_id = f"T-{clean_cid}-{slot_pos:02d}"
-            fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')")
             if qt == "FIB":
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # for _ in range(40): ... if _ok_ds(ans, ds, tol=0.005) and _no_fib_leak(ans, vars_d): break")
                 ver_hint = "# return c2c_ver.numeric(c, exact_val, tol=0.005)"
                 fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
-            elif qt == "MC7":
-                ver_hint = "# return c2c_ver.numeric(c, v['ans'], tol=1e-4)"
-                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
-            elif qt == "open_symbolic":
-                ver_hint = "# return c2c_ver.equiv(c, expected_expr, variables=['x'])"
-                fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
             else:
-                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, {json.dumps(qt)})"
-                fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
+                fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')")
+                if qt == "MC7":
+                    ver_hint = "# return c2c_ver.numeric(c, v['ans'], tol=1e-4)"
+                    fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+                elif qt == "open_symbolic":
+                    ver_hint = "# return c2c_ver.equiv(c, expected_expr, variables=['x'])"
+                    fn_lines.append(f"def ver_{g_idx}(c, v): raise NotImplementedError('TODO')  {ver_hint}")
+                elif qt == "MS":
+                    exp_cnt = ms_corr_cycle[ms_slot_idx % len(ms_corr_cycle)]
+                    ms_slot_idx += 1
+                    ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'MS', expected_correct_count={exp_cnt})  # 5..6 opciones"
+                    fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
+                elif qt == "adversarial_break":
+                    adv_pos = adv_pos_cycle[adv_slot_idx % len(adv_pos_cycle)]
+                    adv_slot_idx += 1
+                    ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'adversarial_break')  # si find_fallacy, variar falacia (ej. {adv_pos})"
+                    fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
+                else:
+                    ver_hint = f"# return c2c_ver.m20_guard(r, RATS, {json.dumps(qt)})"
+                    fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
 
-            extra_comment = (
-                f"  # target_bloom={target_bloom}"
-                + (f", if boundary_or_edge_case add 'assumption_id': {json.dumps(aids[0])}" if (aids and slot_pos == len(slot_qtypes)) else "")
-            )
+            attach_aid = aids and not assumption_attached and (arch == "boundary_or_edge_case" or slot_pos == len(slot_qtypes))
+            if attach_aid:
+                assumption_attached = True
+            aid_field = f" 'assumption_id': {json.dumps(aids[0])}," if attach_aid else ""
             tpl_lines.append("    {")
             tpl_lines.append(f"        'id': {json.dumps(tpl_id)}, 'cid': {json.dumps(cid)}, 'qtype': {json.dumps(qt)},")
-            tpl_lines.append("        'archetype': 'direct',  # choose across: direct | inverse | perturbation | boundary_or_edge_case")
-            tpl_lines.append(f"        'band': ('medium', 'Apply'),  # cover easy/medium/hard & >=2 Bloom levels{extra_comment}")
+            tpl_lines.append(f"        'archetype': {json.dumps(arch)}, 'band': ({json.dumps(diff)}, {json.dumps(bloom_lbl)}),{aid_field}  # target_bloom={target_bloom}")
             tpl_lines.append(f"        'gen': gen_{g_idx}, 'ver': ver_{g_idx},")
             tpl_lines.append("        'stem_variants': ['', '', ''], 'hints': ['', '', ''], 'sol': '', 'rats': RATS,")
             tpl_lines.append("    },")
+
+    helper_lines: List[str] = []
+    if all_qtypes & {"FIB", "MC7"}:
+        helper_lines = [
+            "",
+            "def _ok_ds(ans, ds, tol=0.015):",
+            "    vals = [float(ans)] + [float(v) for _, v, *_ in ds]",
+            "    return len({round(x, 6) for x in vals}) == len(vals) and all(q - p >= max(0.02 * max(abs(p), abs(q), 1e-9), 3 * tol) for p, q in zip(sorted(vals), sorted(vals)[1:]))",
+            "def _no_fib_leak(ans, vdict):",
+            "    return round(float(ans), 4) not in {round(float(v), 4) for k, v in vdict.items() if k != 'ans' and isinstance(v, (int, float)) and not isinstance(v, bool)}",
+        ]
 
     lines = [
         "```python",
         "RATS = {",
         *(rats_lines or ["    # Declarar entradas si aplica"]),
         "}",
+        *helper_lines,
         "",
         *fn_lines,
         "",

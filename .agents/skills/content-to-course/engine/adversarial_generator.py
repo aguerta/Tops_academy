@@ -369,6 +369,10 @@ def compile_and_verify_adversarial(
                 )
             if rng is not None:
                 rng.shuffle(compiled_reasons)
+            for new_idx, ro_entry in enumerate(compiled_reasons, start=1):
+                ro_entry["id"] = f"R{new_idx}"
+                if ro_entry.get("is_correct") is True:
+                    correct_reason_id = ro_entry["id"]
 
         compiled_adv: Dict[str, Any] = {
             "mode": "find_fallacy",
