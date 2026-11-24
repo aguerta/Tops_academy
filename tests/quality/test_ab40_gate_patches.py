@@ -188,12 +188,12 @@ class TestAB40ShardCompilerPatches:
     v = res.get("vars", {})
     k = v.get("k")
     opts = res.get("options", [])
-    if not isinstance(k, int) or len(opts) != 4:
+    if not isinstance(k, int) or len(opts) != 5:
         return False
-    exp_t = {f"$x > {k}$", f"$x + 1 > {k}$"}
+    exp_t = {f"$x > {k}$", f"$x + 1 > {k}$", f"$x + 2 > {k}$"}
     if {o.get("value") for o in opts if o.get("is_correct") is True} != exp_t:
         return False
-    exp_f = {f"$x < {k}$": "D-C-01-01", f"$x = {k - 1}$": "D-C-01-02"}
+    exp_f = {f"$x < {k}$": "D-C-01-01", f"$x = {k - 1}$": "D-C-01-02", f"$x \\le {k - 2}$": "D-C-01-01"}
     return all(
         o.get("value") in exp_f
         and o.get("distractor_id") == exp_f[o.get("value")]
@@ -206,7 +206,7 @@ class TestAB40ShardCompilerPatches:
     v = res.get("vars", {})
     k = v.get("k")
     opts = res.get("options", [])
-    exp_t = {f"$x > {k}$", f"$x + 1 > {k}$"}
+    exp_t = {f"$x > {k}$", f"$x + 1 > {k}$", f"$x + 2 > {k}$"}
     if {o.get("value") for o in opts if o.get("is_correct") is True} != exp_t:
         return False
     exp_f = {f"$x < {k}$": "D-C-01-01", f"$x = {k - 1}$": "D-C-01-02"}
@@ -220,7 +220,7 @@ class TestAB40ShardCompilerPatches:
     opts = res.get("options", [])
     t_vals = [str(o.get("value") or "") for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
-    if len(t_vals) != 2 or len(f_opts) != 2:
+    if len(t_vals) != 3 or len(f_opts) != 2:
         return False
     if any(tv.strip() in ("$0 = 1$", "$1 = 2$") for tv in t_vals):
         return False
@@ -235,7 +235,7 @@ class TestAB40ShardCompilerPatches:
     opts = res.get("options", [])
     t_vals = [str(o.get("value") or "") for o in opts if o.get("is_correct") is True]
     f_opts = [o for o in opts if o.get("is_correct") is False]
-    if len(t_vals) != 2 or len(f_opts) != 2:
+    if len(t_vals) != 3 or len(f_opts) != 2:
         return False
     if any("__MUTATED__" in tv or not (tv.startswith("$") and tv.endswith("$")) for tv in t_vals):
         return False
@@ -255,6 +255,7 @@ def gen_ms(rng):
         "options": [
             {{"value": f"$x > {{k}}$", "is_correct": True}},
             {{"value": f"$x + 1 > {{k}}$", "is_correct": True}},
+            {{"value": f"$x + 2 > {{k}}$", "is_correct": True}},
             {{
                 "value": f"$x < {{k}}$",
                 "is_correct": False,
@@ -347,6 +348,7 @@ TEMPLATES = [
                             "            {'value': f'$x + 1 > {k}$', 'is_correct': True, 'distractor_id': None},\n"
                             "            {'value': f'$x < {k}$', 'is_correct': False, 'distractor_id': 'D1', 'error_rationale': f'Inversión del sentido de desigualdad para el umbral numérico {k}.'},\n"
                             "            {'value': f'$x = {k-1}$', 'is_correct': False, 'distractor_id': 'D2', 'error_rationale': f'Sustitución por igualdad estricta debajo de la cota mínima {k}.'},\n"
+                            "            {'value': f'$x <= {k-2}$', 'is_correct': False, 'distractor_id': 'D1', 'error_rationale': f'Cota inferior cerrada dos unidades debajo del umbral numérico {k}.'},\n"
                             "        ],\n"
                             "        'distractors': [],\n"
                             "    }\n"
@@ -373,7 +375,7 @@ TEMPLATES = [
             "    opts = res['options']\n"
             "    exp_t = {f'$x > {k}$', f'$x + 1 > {k}$'}\n"
             "    if {o.get('value') for o in opts if o.get('is_correct')} != exp_t: return False\n"
-            "    exp_f = {f'$x < {k}$': 'D1', f'$x = {k-1}$': 'D2'}\n"
+            "    exp_f = {f'$x < {k}$': 'D1', f'$x = {k-1}$': 'D2', f'$x <= {k-2}$': 'D1'}\n"
             "    return all(o.get('value') in exp_f and o.get('distractor_id') == exp_f[o.get('value')] for o in opts if not o.get('is_correct'))\n"
         )
         ok_c1, errs_c1 = check_templates_file_or_dir(_make_tpl_file("c1", ver_c1), cta_path=cta_file, num_dry_run_seeds=10, strict=True)

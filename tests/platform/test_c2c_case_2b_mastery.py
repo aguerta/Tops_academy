@@ -685,6 +685,7 @@ def gen_ms(rng):
         {"content": f"El valor límite es menor a {k - 5}", "is_correct": False, "distractor_id": "D-C01-01", "error_rationale": "Subestimación sistemática del umbral crítico respecto al parámetro @k@"},
         {"content": f"La relación se anula para {k}", "is_correct": False, "distractor_id": "D-C01-02", "error_rationale": "Atribución espuria de anulación analítica en el dominio para parámetro @k@"},
         {"content": f"La tasa diverge sin cota para {k}", "is_correct": False, "distractor_id": "D-C01-03", "error_rationale": "Falsa divergencia asintótica sin cota en régimen estable con parámetro @k@"},
+        {"content": f"El equilibrio cae a cero con {k}", "is_correct": False, "distractor_id": "D-C01-01", "error_rationale": "Colapsa indebidamente el umbral positivo a cero respecto al parámetro @k@"},
     ]
     return {"vars": {"k": k}, "options": options, "correct": "A"}
 
@@ -694,9 +695,9 @@ def ver_ms(res):
     t = [o for o in opts if o.get("is_correct") is True]
     f = [o for o in opts if o.get("is_correct") is False]
     return (
-        len(opts) == 4
+        len(opts) == 5
         and len(t) == 1
-        and len(f) == 3
+        and len(f) == 4
         and "supera" in (t[0].get("content") or t[0].get("value") or "")
         and all(o.get("distractor_id") in valid_dids and len(o.get("error_rationale") or "") >= 20 for o in f)
     )

@@ -1239,6 +1239,12 @@ def gen_ms(rng):
             "distractor_id": "D-Hab99-02",
             "error_rationale": "Aplica una escala decimal truncada sobre el parametro @k@ y suma un sesgo residual hasta @d2@.",
         },
+        {
+            "value": f"Valor nulo por cancelacion lineal de @k@.",
+            "is_correct": False,
+            "distractor_id": "D-Hab99-01",
+            "error_rationale": "Anula indebidamente el factor diez al evaluar la cota lineal de @k@ sin termino constante.",
+        },
     ]
     return {"vars": v, "options": opts}
 
@@ -1256,13 +1262,14 @@ def ver_ms(r):
     expected_false = {
         "Valor desplazado con error aditivo igual a @d1@.": "D-Hab99-01",
         "Valor truncado con sesgo aditivo igual a @d2@.": "D-Hab99-02",
+        "Valor nulo por cancelacion lineal de @k@.": "D-Hab99-01",
     }
     t_vals = {o.get("value") for o in opts if o.get("is_correct") is True}
     f_opts = [o for o in opts if o.get("is_correct") is False]
     return (
         len([o for o in opts if o.get("is_correct") is True]) == 2
         and t_vals == expected_true
-        and len(f_opts) == 2
+        and len(f_opts) == 3
         and all(
             o.get("value") in expected_false
             and o.get("distractor_id") == expected_false[o.get("value")]

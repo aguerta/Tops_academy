@@ -66,7 +66,7 @@ class TestMasteryCalculationLogic:
         pass
 
     def test_python_mirror_mastery_rules_parity(self):
-        """Validates the core 80/20 formula and status transitions."""
+        """Validates the core points-based 80/20 formula and status transitions."""
         def calc_progress(competencies_data, cc_data):
             total_units = len(competencies_data)
             if total_units == 0:
@@ -74,7 +74,7 @@ class TestMasteryCalculationLogic:
 
             completed_units = 0
             in_progress_units = 0
-            sum_unit_tests = 0
+            sum_points = 0
 
             for comp in competencies_data:
                 ut = comp.get("unit_test")
@@ -87,20 +87,19 @@ class TestMasteryCalculationLogic:
                 elif is_started:
                     in_progress_units += 1
 
-                if ut and ut.get("total_questions", 0) > 0:
-                    sum_unit_tests += ut.get("percentage", 0)
+                pts = comp.get("points", 0)
+                sum_points += min(100, max(0, pts))
 
-            avg_ut = sum_unit_tests / total_units
-            ut_contrib = avg_ut * 0.80
+            avg_points = sum_points / total_units
+            points_contrib = avg_points * 0.80
 
             cc_pct = cc_data.get("percentage", 0) if cc_data and cc_data.get("total_questions", 0) > 0 else 0
             cc_contrib = (cc_pct / 100.0) * 20.0
 
-            total_pct = min(100, max(0, round(ut_contrib + cc_contrib)))
+            total_pct = min(100, max(0, round(points_contrib + cc_contrib)))
             all_ut_100 = completed_units >= total_units and total_units > 0
-            cc_100 = cc_data.get("completed") is True or cc_pct == 100
 
-            if all_ut_100 and cc_100:
+            if total_pct == 100:
                 status = "completed"
             elif all_ut_100:
                 status = "unit_tests_mastered"
@@ -123,18 +122,19 @@ class TestMasteryCalculationLogic:
         assert res["completed"] == 0
         assert res["in_progress"] == 0
 
-        # Case 2: Unit 1 has 1 practice attempt (started, but no unit test)
-        res = calc_progress([{"history": [{"type": "practice", "score": 5, "total": 5}]}, {}], {})
-        assert res["percentage"] == 0
+        # Case 2: 3 competencies with 80 points (Proficient) out of 10 total, no Unit Tests
+        # Average points = (3 * 80) / 10 = 24 -> 24 * 0.80 = 19.2 -> 19%
+        comps_3_of_10 = [{"points": 80, "history": [{"type": "practice", "score": 5, "total": 5}]} for _ in range(3)] + [{} for _ in range(7)]
+        res = calc_progress(comps_3_of_10, {})
+        assert res["percentage"] == 19
         assert res["status"] == "in_progress"
         assert res["completed"] == 0
-        assert res["in_progress"] == 1
+        assert res["in_progress"] == 3
 
-        # Case 3: Unit 1 has Unit Test 4/5 (80%), Unit 2 has 0%
-        # Average of Unit Tests = (80 + 0) / 2 = 40%
-        # Course progress = 40% * 0.80 = 32%
+        # Case 3: Unit 1 has Proficient (80 pts) & Unit Test 4/5 (80%), Unit 2 has 0 pts
+        # Average points = (80 + 0) / 2 = 40 -> 40 * 0.80 = 32%
         res = calc_progress([
-            {"unit_test": {"last_score": 4, "total_questions": 5, "percentage": 80}},
+            {"points": 80, "unit_test": {"last_score": 4, "total_questions": 5, "percentage": 80}},
             {}
         ], {})
         assert res["percentage"] == 32
@@ -142,43 +142,40 @@ class TestMasteryCalculationLogic:
         assert res["completed"] == 0
         assert res["in_progress"] == 1
 
-        # Case 4: Unit 1 has 5/5 (100%), Unit 2 has 0%
-        # Average of Unit Tests = (100 + 0) / 2 = 50%
-        # Course progress = 50% * 0.80 = 40%
+        # Case 4: Unit 1 has Unit Test 5/5 (100%, 80 pts), Unit 2 has 0 pts
         res = calc_progress([
-            {"unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
+            {"points": 80, "unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
             {}
         ], {})
-        assert res["percentage"] == 40
+        assert res["percentage"] == 32
         assert res["status"] == "in_progress"
         assert res["completed"] == 1
         assert res["in_progress"] == 0
 
-        # Case 5: Both Unit 1 and Unit 2 have 5/5 (100%), Course Challenge NOT taken
-        # Average of Unit Tests = (100 + 100) / 2 = 100%
-        # Course progress = 100% * 0.80 = 80% (VERDE LIGHT)
+        # Case 5: Both Unit 1 and Unit 2 have 5/5 (100%, 80 pts), Course Challenge NOT taken
+        # Average points = 80 -> 80 * 0.80 = 64% (VERDE LIGHT unit_tests_mastered)
         res = calc_progress([
-            {"unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
-            {"unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
+            {"points": 80, "unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
+            {"points": 80, "unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
         ], {})
-        assert res["percentage"] == 80
+        assert res["percentage"] == 64
         assert res["status"] == "unit_tests_mastered"
         assert res["completed"] == 2
 
-        # Case 6: Both units 100%, Course Challenge 100%
+        # Case 6: Both units Mastered (100 pts) + Unit Test 100%, Course Challenge 100%
         # Course progress = 80 + 20 = 100% (VERDE FUERTE)
         res = calc_progress([
-            {"unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
-            {"unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
+            {"points": 100, "unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
+            {"points": 100, "unit_test": {"last_score": 5, "total_questions": 5, "percentage": 100}},
         ], {"completed": True, "last_score": 30, "total_questions": 30, "percentage": 100})
         assert res["percentage"] == 100
         assert res["status"] == "completed"
         assert res["completed"] == 2
 
         # Case 7: Anti-Skipping Bug Prevention
-        # If student skipped all questions in Unit Test (0/5)
+        # If student skipped all questions in Unit Test (0/5, 0 pts)
         res = calc_progress([
-            {"unit_test": {"last_score": 0, "total_questions": 5, "percentage": 0}},
+            {"points": 0, "unit_test": {"last_score": 0, "total_questions": 5, "percentage": 0}},
             {}
         ], {})
         assert res["percentage"] == 0

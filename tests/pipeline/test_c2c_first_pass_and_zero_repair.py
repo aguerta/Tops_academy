@@ -543,3 +543,187 @@ def test_fast_symbolic_equivalence_preserves_exact_semantics():
     assert _ver_equiv("2*x + y", "2*x", variables=["x"]) is False  # undeclared variable y rejected
     assert _ver_equiv("1/2", "0.5") is True
     assert _ver_equiv("1/3", "0.5") is False
+
+
+def test_find_pending_shards_idempotent_on_resume(tmp_path: Path):
+    import ast
+    import json
+    from typing import List, Optional
+
+    wf_path = ROOT_DIR / ".agents" / "skills" / "content-to-course" / "workflows" / "c2c_wave_workflow.py"
+    tree = ast.parse(wf_path.read_text(encoding="utf-8"), filename=str(wf_path))
+    fn_node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_find_pending_shards")
+    mod = ast.Module(body=[fn_node], type_ignores=[])
+    ns: dict = {"Path": Path, "Optional": Optional, "List": List, "json": json}
+    exec(compile(mod, str(wf_path), "exec"), ns)
+    find_pending = ns["_find_pending_shards"]
+
+    # 1. No manifest -> None (must run Stage 2 sharding)
+    assert find_pending(tmp_path) is None
+
+    # 2. Manifest with 2 shards, only shard_01.json compiled -> ["shard_02"]
+    shards_dir = tmp_path / "shards"
+    shards_dir.mkdir(parents=True)
+    (shards_dir / "pre_shard_manifest.json").write_text(
+        json.dumps({"shards": [{"shard_id": "shard_01"}, {"shard_id": "shard_02"}]}),
+        encoding="utf-8",
+    )
+    (shards_dir / "shard_01.json").write_text('{"ok": true}', encoding="utf-8")
+    assert find_pending(tmp_path) == ["shard_02"]
+
+    # 3. Both compiled and non-empty -> [] (skip Stage 2 & 3)
+    (shards_dir / "shard_02.json").write_text('{"ok": true}', encoding="utf-8")
+    assert find_pending(tmp_path) == []
+
+
+def test_katex_collapses_variable_plus_minus_without_breaking_pm():
+    from engine.assemble import sanitize_katex_syntax
+    from engine.katex_ast import canonicalize_algebraic_katex
+
+    collapsed = canonicalize_algebraic_katex(r"q=23-8p+-5\dot{p}", whole_is_math=True)
+    assert "+-" not in collapsed
+    assert r"8p- 5\dot{p}" in collapsed
+
+    sanitized = sanitize_katex_syntax(r"Demanda $q=23-8p+-5\dot{p}$ y rango $x \pm 5$.")
+    assert "+-" not in sanitized
+    assert r"\pm 5" in sanitized
+
+
+def test_qa_dag_overlap_excludes_concept_to_skill_prerequisite_pair():
+    import importlib.util
+
+    qa_path = ROOT_DIR / ".agents" / "skills" / "course-qa-evaluator" / "scripts" / "standardized_audit_engine.py"
+    spec = importlib.util.spec_from_file_location("standardized_audit_engine", qa_path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(mod)
+    linter = mod.ArchitectureDAGLinter
+
+    c08 = {"id": "C-08", "type": "Concept", "name": "Transversalidad con Estado Final Libre", "prerequisites": ["C-05"]}
+    hab04 = {"id": "Hab-04", "type": "Skill", "name": "Transversalidad en Horizonte Finito e Instante Final Libre", "prerequisites": ["C-08"]}
+    assert linter._are_competencies_duplicate(c08, hab04) is False
+
+    c12 = {"id": "C-12", "type": "Concept", "name": "Principio del Máximo y Soluciones de Esquina", "description": "Condiciones necesarias del principio del máximo en control óptimo."}
+    c13 = {"id": "C-13", "type": "Concept", "name": "Hamiltoniano y Principio del Máximo", "description": "Condiciones necesarias del principio del máximo en control óptimo."}
+    assert linter._are_competencies_duplicate(c12, c13) is True
+
+
+def test_lean_cta_prompts_preserve_lf_and_new_rules():
+    lean_dir = ROOT_DIR / ".agents" / "skills" / "content-to-course" / "system_prompts" / "lean"
+    arch_bytes = (lean_dir / "prompt_cta_architect.md").read_bytes()
+    harm_bytes = (lean_dir / "prompt_cta_harmonizer.md").read_bytes()
+    assert b"\r\n" not in arch_bytes
+    assert b"\r\n" not in harm_bytes
+    assert "100% simbólico/conceptual" in arch_bytes.decode("utf-8")
+    assert "Desambiguación obligatoria en misma categoría" in harm_bytes.decode("utf-8")
+
+
+def test_unstructured_model_duplicate_options_caught_by_invariants():
+    from engine.invariants import check_instance_invariants
+
+    inst = {
+        "interaction_type": "unstructured_model",
+        "stem": "Formule el modelo de crecimiento óptimo con daño ambiental.",
+        "hints": [
+            "Identifique la variable de control y su derivada.",
+            "Escriba el funcional integrando utilidad y daño.",
+            "Derive la condición de Euler respecto al control.",
+        ],
+        "detailed_solution": "Se obtiene la condición $F_{\\dot{K}} = -e^{-5 t}\\frac{1}{C}$.",
+        "unstructured_model": {
+            "phase1_variables": {
+                "roles": ["estado", "control"],
+                "items": [
+                    {"id": "V1", "label": "$K(t)$", "correct_role": "estado"},
+                    {"id": "V2", "label": "$C(t)$", "correct_role": "control"},
+                ],
+            },
+            "phase2_assumptions": {
+                "options": [
+                    {"id": "A1", "content": "Utilidad logarítmica $U(C)=\\ln C$.", "is_correct": True},
+                    {"id": "A2", "content": "Tasa de descuento negativa.", "is_correct": False, "error_rationale": "La tasa $\\rho$ es positiva en este horizonte."},
+                ]
+            },
+            "phase3_formulation": {
+                "mode": "select",
+                "options": [
+                    {"id": "F1", "content": r"$F_{\dot{K}} = -e^{-5 t}\frac{1}{C}$", "is_correct": True},
+                    {"id": "F4", "content": r"$F_{\dot{K}} = -e^{-5 t}\frac{1}{C}$", "is_correct": False, "error_rationale": r"Confunde el signo o factor del consumo $C$ en $F_{\dot{K}}$."},
+                    {"id": "F2", "content": r"$F_{\dot{K}} = e^{-5 t}\frac{1}{C}$", "is_correct": False, "error_rationale": r"Omite el signo negativo de $\partial C / \partial \dot{K}$."},
+                ],
+            },
+        },
+    }
+    ok, errs = check_instance_invariants(inst, "unstructured_model")
+    assert ok is False
+    assert any("Duplicate option content detected in unstructured_model.phase3_formulation" in e for e in errs), errs
+
+
+def test_degenerate_literal_cond_extended_to_solution_and_proof_dag():
+    from engine.invariants import check_instance_invariants
+
+    inst = {
+        "interaction_type": "proof_dag",
+        "stem": "Clasifique el funcional $V[y]=\\int_0^3 (7y'+5t)\\,dt + 3y(3)^2$.",
+        "hints": [
+            "Observe el integrando y el término terminal.",
+            "Compare las definiciones de Bolza, Lagrange y Mayer.",
+            "Verifique qué término permanece activo.",
+        ],
+        "detailed_solution": "Si $5=0$, desaparece el término terminal.",
+        "proof_dag": {
+            "steps": [
+                {"id": "S1", "content": "Contiene término integral y terminal.", "is_fallacy": False},
+                {"id": "S2", "content": "En el caso en que se anula el coeficiente $5$, se reduce a Lagrange.", "is_fallacy": False},
+                {"id": "S3", "content": "Por tanto es un problema de Bolza.", "is_fallacy": False},
+            ],
+            "edges": [["S1", "S2"], ["S2", "S3"]],
+        },
+    }
+    ok, errs = check_instance_invariants(inst, "proof_dag")
+    assert ok is False
+    degen_errs = [e for e in errs if "TPL-DEGENERATE-LITERAL-COND" in e]
+    assert any("detailed_solution" in e for e in degen_errs), degen_errs
+    assert any("proof_dag.step[2]" in e for e in degen_errs), degen_errs
+
+
+def test_check_cta_flags_static_example_in_remediation_hint():
+    import check_cta
+
+    bad_cta = {
+        "contract_version": 2,
+        "competencies": [
+            {
+                "id": "Hab-01",
+                "type": "skill",
+                "name": "Ecuación de Euler",
+                "description_latex": "Resuelve la ecuación de Euler para funcionales cuadráticos con fronteras fijas en intervalos dados.",
+                "target_bloom": "Evaluate",
+                "doc": "doc.pdf",
+                "page": 1,
+                "prerequisites": [],
+                "assumptions": [{"id": "A-Hab01-01", "statement_latex": "$F \\in C^2$ en todo el intervalo.", "violation_consequence": "Pueden existir esquinas."}],
+                "recommended_modalities": ["fill_in_the_blank", "open_symbolic"],
+                "distractors": [
+                    {
+                        "id": "D-Hab01-01",
+                        "name": "Frontera fija errónea",
+                        "wrong_belief": "Evalúa en el extremo erróneo",
+                        "correct_belief": "Evalúa en t=T",
+                        "manifestation": "Usa t=1 en vez de t=T",
+                        "remediation_hint": "Sustituya $t=4$ en $x(4)=4$ y despeje $c_1$ con cuidado en la frontera.",
+                        "omitted_step": "Evaluar x(T)",
+                    }
+                ],
+            }
+        ],
+    }
+    warns: list[str] = []
+    check_cta._validate_competencies_rules(bad_cta["competencies"], warnings=warns)
+    assert any("CTA-HINT-STATIC-EXAMPLE" in w for w in warns), warns
+
+
+def test_c2c_wave_workflow_batches_stage3_authors_to_9():
+    wf_txt = (ROOT_DIR / ".agents" / "skills" / "content-to-course" / "workflows" / "c2c_wave_workflow.py").read_text(encoding="utf-8")
+    assert "max_concurrent_batch: int = 0" in wf_txt
+    assert 'int(_WF_ARGS.get("author_wave_size") or 9)' in wf_txt

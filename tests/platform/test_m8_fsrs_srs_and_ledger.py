@@ -147,7 +147,7 @@ assert.equal(loaded45d.competencies['C-01'].points, 80);
 assert.equal(loaded45d.competencies['C-01'].review_reason, 'decay');
 assert.equal(loaded45d.competencies['C-01'].unit_test.percentage, 100);
 const prog = masteryMod.calculateCourseProgress(loaded45d, 2);
-assert.equal(prog.percentage, 80, '80/20 course progress must remain intact after FSRS downgrade');
+assert.equal(prog.percentage, 64, 'Points-based 80/20 course progress must reflect Proficient (80 * 0.8 = 64) after FSRS downgrade');
 assert.equal(prog.status, 'unit_tests_mastered');
 """
     _run_node_driver(tmp_path, driver)
@@ -204,7 +204,7 @@ const recAfterTests = masteryMod.loadCourseMastery(course, tBase);
 assert.equal(recAfterTests.competencies['C-A'].status, 'Proficient', 'Unit Test 100% must cap at Proficient');
 assert.equal(recAfterTests.competencies['C-B'].status, 'Proficient');
 assert.equal(masteryMod.isUnitCompleted(recAfterTests.competencies['C-A']), true);
-assert.equal(masteryMod.calculateCourseProgress(recAfterTests, 2).percentage, 80);
+assert.equal(masteryMod.calculateCourseProgress(recAfterTests, 2).percentage, 64);
 
 // At tBase + 11h 59m: run Mastery Challenge covering BOTH Skill A (11h59m) and Skill B (13h59m)
 const tCheck = new Date(tBase.getTime() + (11 * 3600 + 59 * 60) * 1000);
@@ -608,5 +608,66 @@ const merged = cloudMod.mergeAllMasteryData(localCopy, remoteCopy);
 assert.ok(merged[course.course_id].competencies['C-01'].fsrs, 'CloudSync must preserve FSRS card');
 assert.ok(merged[course.course_id].misconception_ledger['D-C01-01'], 'CloudSync must preserve Misconception Ledger');
 assert.equal(merged[course.course_id].srs_telemetry.length, 500, 'CloudSync must cap srs_telemetry at 500');
+"""
+    _run_node_driver(tmp_path, driver)
+
+
+def test_points_based_80_20_course_progress(tmp_path: Path) -> None:
+    """Verifies points-based 80/20 course progress: 3x80 pts out of 10 -> 19%, 80 pts + CC -> 84% (not completed), 100 pts + CC -> 100% (completed)."""
+    mastery_mjs = tmp_path / "masteryStorage.mjs"
+    _bundle_ts_module(PLATFORM_SRC / "utils" / "masteryStorage.ts", mastery_mjs)
+
+    driver = f"""
+import assert from 'node:assert/strict';
+
+const store = {{}};
+globalThis.localStorage = {{
+  getItem: (k) => store[k] || null,
+  setItem: (k, v) => {{ store[k] = String(v); }},
+  removeItem: (k) => {{ delete store[k]; }},
+  clear: () => {{ for (const k in store) delete store[k]; }},
+}};
+globalThis.window = {{ localStorage: globalThis.localStorage }};
+
+const masteryMod = await import({mastery_mjs.as_uri()!r});
+
+// 1. 3 competencies at 80 pts (Proficient, no unit_test) out of 10 competencies -> avg 24 * 0.8 = 19.2 -> 19%
+const rec1 = {{
+  course_id: 'c_pts_1',
+  mastery_points: 0,
+  competencies: {{
+    'C-1': {{ status: 'Proficient', points: 80, last_practiced: '2026-11-10T10:00:00.000Z', history: [] }},
+    'C-2': {{ status: 'Proficient', points: 80, last_practiced: '2026-11-10T10:00:00.000Z', history: [] }},
+    'C-3': {{ status: 'Proficient', points: 80, last_practiced: '2026-11-10T10:00:00.000Z', history: [] }},
+  }},
+}};
+const p1 = masteryMod.calculateCourseProgress(rec1, 10);
+assert.equal(p1.percentage, 19);
+assert.equal(p1.status, 'in_progress');
+assert.equal(p1.completedUnits, 0);
+assert.equal(p1.inProgressUnits, 3);
+
+// 2. All 2 competencies at 80 pts + Unit Test 100% + Course Challenge 100% -> 64 + 20 = 84% ('unit_tests_mastered', NOT 'completed')
+const rec2 = {{
+  course_id: 'c_pts_2',
+  mastery_points: 0,
+  competencies: {{
+    'C-1': {{ status: 'Proficient', points: 80, last_practiced: '2026-11-10T10:00:00.000Z', unit_test: {{ last_score: 5, total_questions: 5, percentage: 100, completed_at: '2026-11-10T10:00:00.000Z' }}, history: [] }},
+    'C-2': {{ status: 'Proficient', points: 80, last_practiced: '2026-11-10T10:00:00.000Z', unit_test: {{ last_score: 5, total_questions: 5, percentage: 100, completed_at: '2026-11-10T10:00:00.000Z' }}, history: [] }},
+  }},
+  course_challenge: {{ completed: true, last_score: 10, total_questions: 10, percentage: 100, completed_at: '2026-11-10T10:00:00.000Z' }},
+}};
+const p2 = masteryMod.calculateCourseProgress(rec2, 2);
+assert.equal(p2.percentage, 84);
+assert.equal(p2.status, 'unit_tests_mastered');
+
+// 3. All 2 competencies at 100 pts (Mastered) + Unit Test 100% + Course Challenge 100% -> 100% ('completed')
+rec2.competencies['C-1'].status = 'Mastered';
+rec2.competencies['C-1'].points = 100;
+rec2.competencies['C-2'].status = 'Mastered';
+rec2.competencies['C-2'].points = 100;
+const p3 = masteryMod.calculateCourseProgress(rec2, 2);
+assert.equal(p3.percentage, 100);
+assert.equal(p3.status, 'completed');
 """
     _run_node_driver(tmp_path, driver)

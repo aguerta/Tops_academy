@@ -324,7 +324,8 @@ def gen_3(rng):
         "vars": {"a": a, "d": d, "b": b, "ad": ad},
         "options": [
             {"value": r"$f(@d@)-f(0)=@ad@$", "is_correct": True},
-            {"value": r"$f(@d@)>f(0)$ ($@a@>0$)", "is_correct": True},
+            {"value": r"$f(@d@)>f(0)$ con pendiente $@a@$", "is_correct": True},
+            {"value": r"$f(@d@)-f(0)>0$", "is_correct": True},
             {"value": r"$f(@d@)-f(0)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": RATS["D-Hab01-04"]},
             {"value": r"$f(@d@)-f(0)=@d@$", "is_correct": False, "distractor_id": "D-Hab01-05", "error_rationale": RATS["D-Hab01-05"]},
         ],
@@ -339,9 +340,10 @@ def gen_4(rng):
         "vars": {"a": a, "x": x, "b": b},
         "options": [
             {"value": r"$f(@x@)=@a@(@x@)+@b@$", "is_correct": True},
-            {"value": r"$f(@x@)<@b@$ ($@a@<0$)", "is_correct": True},
+            {"value": r"$f(@x@)<@b@$ con pendiente $@a@$", "is_correct": True},
             {"value": r"$f(@x@)=@a@(@x@)-@b@$", "is_correct": False, "distractor_id": "D-Hab01-06", "error_rationale": RATS["D-Hab01-06"]},
             {"value": r"$f(@x@)=@a@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-02", "error_rationale": RATS["D-Hab01-02"]},
+            {"value": r"$f(@x@)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": RATS["D-Hab01-01"]},
         ],
     }
 
@@ -353,24 +355,32 @@ S1 = [
     r"Determine la imagen $f(@x@)$ en la función afín $f(x) = @a@x + @b@/7$ (redondee a 4 decimales):",
     r"Calcule el valor de $f(x) = @a@x + @b@/7$ en $x = @x@$ (redondee a 4 decimales):",
     r"Obtenga numéricamente $f(@x@)$ para la recta $f(t)=@a@t+@b@/7$ (redondee a 4 decimales):",
+    r"¿Cuál es el resultado aproximado a 4 decimales de $f(@x@)$ si $f(x)=@a@x+@b@/7$?",
+    r"Encuentre la ordenada correspondiente a la abscisa $@x@$ bajo $f(u)=@a@u+@b@/7$ (4 decimales):",
 ]
 S2 = [
     r"Desplace $f(x) = @a@x + @b@$ evaluando la regla algebraica $f(x+@d@)$:",
     r"Exprese en términos de $x$ el polinomio $f(x+@d@)$ cuando $f(t)=@a@t+@b@$:",
     r"Halle la forma simbólica de $f(x+@d@)$ dado $f(x)=@a@x+@b@$:",
     r"Expanda la composición desplazada $f(x+@d@)$ de la recta $f(u)=@a@u+@b@$:",
+    r"Simplifique la traslación horizontal $f(x+@d@)$ partiendo de $f(x)=@a@x+@b@$:",
+    r"¿Qué expresión lineal en $x$ resulta al sustituir $x+@d@$ en $f(t)=@a@t+@b@$?",
 ]
 S3 = [
-    r"Para $f(x)=@a@x+@b@$ con incremento $@d@>0$, seleccione las afirmaciones válidas:",
-    r"Dada la recta $f(t)=@a@t+@b@$ ($@a@>0$) y paso $@d@$, marque las correctas:",
-    r"Analice el cambio $f(@d@)-f(0)$ cuando $f(x)=@a@x+@b@$ ($@a@>0$):",
-    r"Evalúe propiedades de variación en $@d@$ para la función afín $f(x)=@a@x+@b@$ ($@a@>0$):",
+    r"Para $f(x)=@a@x+@b@$ con incremento $@d@$ y pendiente positiva $@a@$, seleccione las afirmaciones válidas:",
+    r"Dada la recta $f(t)=@a@t+@b@$ (pendiente $@a@$) y paso $@d@$, marque las correctas:",
+    r"Analice el cambio $f(@d@)-f(0)$ cuando $f(x)=@a@x+@b@$ con pendiente positiva $@a@$:",
+    r"Evalúe propiedades de variación en $@d@$ para la función afín $f(x)=@a@x+@b@$ ($a=@a@$):",
+    r"Al comparar $f(@d@)$ contra $f(0)$ en $f(t)=@a@t+@b@$ ($a=@a@$), elija las ciertas:",
+    r"Identifique relaciones verdaderas sobre el incremento $f(@d@)-f(0)$ para $f(x)=@a@x+@b@$ ($a=@a@$):",
 ]
 S4 = [
-    r"Con pendiente negativa $@a@<0$ en $f(x)=@a@x+@b@$ evaluada en $x=@x@$, marque las válidas:",
-    r"Dado $f(t)=@a@t+@b@$ ($@a@<0$) en el punto $t=@x@$, seleccione las proposiciones ciertas:",
-    r"Para el caso límite $a=@a@<0$ en $f(x)=@a@x+@b@$ ($x=@x@$), elija las válidas:",
-    r"Verifique cotas de $f(@x@)$ bajo decrecimiento $@a@<0$ en la recta $@a@x+@b@$:",
+    r"Con pendiente negativa $@a@$ en $f(x)=@a@x+@b@$ evaluada en $x=@x@$, marque las válidas:",
+    r"Dado $f(t)=@a@t+@b@$ (pendiente $@a@$) en el punto $t=@x@$, seleccione las proposiciones ciertas:",
+    r"Para el caso límite $a=@a@$ en $f(x)=@a@x+@b@$ ($x=@x@$), elija las válidas:",
+    r"Verifique cotas de $f(@x@)$ bajo decrecimiento con $a=@a@$ en la recta $@a@x+@b@$:",
+    r"¿Qué afirmaciones se cumplen para $f(@x@)$ en la recta decreciente $f(x)=@a@x+@b@$ ($a=@a@$)?",
+    r"Contraste los valores de $f(@x@)$ frente a $@b@$ cuando la pendiente es $a=@a@$:",
 ]
 H1 = [
     r"Identifique la pendiente $@a@$ y el término racional $@b@/7$ de la función afín.",
@@ -597,7 +607,8 @@ def gen_3(rng):
         "vars": {"a": a, "d": d, "b": b, "ad": ad},
         "options": [
             {"value": r"$f(@d@)-f(0)=@ad@$", "is_correct": True},
-            {"value": r"$f(@d@)>f(0)$ ($@a@>0$)", "is_correct": True},
+            {"value": r"$f(@d@)>f(0)$ con pendiente $@a@$", "is_correct": True},
+            {"value": r"$f(@d@)-f(0)>0$", "is_correct": True},
             {"value": r"$f(@d@)-f(0)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-03", "error_rationale": RATS["D-Hab01-03"]},
             {"value": r"$f(@d@)-f(0)=@d@$", "is_correct": False, "distractor_id": "D-Hab01-04", "error_rationale": RATS["D-Hab01-04"]},
         ],
@@ -612,9 +623,10 @@ def gen_4(rng):
         "vars": {"a": a, "x": x, "b": b},
         "options": [
             {"value": r"$f(@x@)=@a@(@x@)+@b@$", "is_correct": True},
-            {"value": r"$f(@x@)<@b@$ ($@a@<0$)", "is_correct": True},
+            {"value": r"$f(@x@)<@b@$ con pendiente $@a@$", "is_correct": True},
             {"value": r"$f(@x@)=@a@(@x@)-@b@$", "is_correct": False, "distractor_id": "D-Hab01-05", "error_rationale": RATS["D-Hab01-05"]},
             {"value": r"$f(@x@)=@a@+@b@$", "is_correct": False, "distractor_id": "D-Hab01-06", "error_rationale": RATS["D-Hab01-06"]},
+            {"value": r"$f(@x@)=@b@$", "is_correct": False, "distractor_id": "D-Hab01-01", "error_rationale": RATS["D-Hab01-01"]},
         ],
     }
 
@@ -626,24 +638,32 @@ S1 = [
     r"Determine según la ec. afín $f(x)=@a@x+@b@$ (e.g. $x=@x@$) el valor exacto:",
     r"Calcule el valor de $f(x)=@a@x+@b@$ en $x=@x@$ usando la eq. dada:",
     r"Obtenga el valor de la función $f(t)=@a@t+@b@$ evaluada en $t=@x@$:",
+    r"¿Cuál es la imagen exacta de $f(@x@)$ para la recta $f(x)=@a@x+@b@$?",
+    r"Halle el resultado numérico al sustituir $u=@x@$ en $f(u)=@a@u+@b@$:",
 ]
 S2 = [
     r"Desplace $f(x)=@a@x+@b@$ evaluando $f(x+@d@)$:",
     r"Exprese en $x$ el polinomio $f(x+@d@)$ para $f(t)=@a@t+@b@$:",
     r"Halle simbólicamente $f(x+@d@)$ si $f(x)=@a@x+@b@$:",
-    r"Expanda algebraicamente la traslación $f(x+@d@)$ dada la regla $@a@x+@b@$:",
+    r"Expanda algebraicamente la traslación $f(x+@d@)$ dada la regla $f(x)=@a@x+@b@$:",
+    r"Obtenga la forma desarrollada de $f(x+@d@)$ a partir de $f(u)=@a@u+@b@$:",
+    r"¿Cómo queda escrita la composición afín $f(x+@d@)$ cuando $f(x)=@a@x+@b@$?",
 ]
 S3 = [
-    r"Para $f(x)=@a@x+@b@$ con incremento $@d@>0$, seleccione las afirmaciones válidas:",
-    r"Dada la recta $f(t)=@a@t+@b@$ ($@a@>0$) y paso $@d@$, marque las correctas:",
-    r"Analice el cambio $f(@d@)-f(0)$ cuando $f(x)=@a@x+@b@$ ($@a@>0$):",
-    r"Identifique propiedades exactas de la variación en $@d@$ para $f(x)=@a@x+@b@$ ($@a@>0$):",
+    r"Para $f(x)=@a@x+@b@$ con incremento $@d@$ y pendiente $@a@$, seleccione las afirmaciones válidas:",
+    r"Dada la recta $f(t)=@a@t+@b@$ (pendiente $@a@$) y paso $@d@$, marque las correctas:",
+    r"Analice el cambio $f(@d@)-f(0)$ cuando $f(x)=@a@x+@b@$ ($a=@a@$):",
+    r"Identifique propiedades exactas de la variación en $@d@$ para $f(x)=@a@x+@b@$ ($a=@a@$):",
+    r"Al evaluar la diferencia $f(@d@)-f(0)$ con $f(t)=@a@t+@b@$ ($a=@a@$), elija las ciertas:",
+    r"Determine cuáles proposiciones describen el incremento $f(@d@)-f(0)$ para $f(x)=@a@x+@b@$ ($a=@a@$):",
 ]
 S4 = [
-    r"Con $@a@<0$ en $f(x)=@a@x+@b@$ evaluada en $x=@x@$, marque las válidas:",
-    r"Dado $f(t)=@a@t+@b@$ ($@a@<0$) en $t=@x@$, seleccione las ciertas:",
-    r"Para el caso límite $a=@a@<0$ en $f(x)=@a@x+@b@$ ($x=@x@$), elija las válidas:",
-    r"Verifique propiedades de $f(@x@)$ cuando la pendiente es $@a@<0$ en $@a@x+@b@$:",
+    r"Con pendiente $a=@a@$ en $f(x)=@a@x+@b@$ evaluada en $x=@x@$, marque las válidas:",
+    r"Dado $f(t)=@a@t+@b@$ ($a=@a@$) en $t=@x@$, seleccione las ciertas:",
+    r"Para el caso límite $a=@a@$ en $f(x)=@a@x+@b@$ ($x=@x@$), elija las válidas:",
+    r"Verifique propiedades de $f(@x@)$ cuando la pendiente es $a=@a@$ en $@a@x+@b@$:",
+    r"¿Qué relaciones valen para $f(@x@)$ en la función decreciente $f(x)=@a@x+@b@$ ($a=@a@$)?",
+    r"Compare $f(@x@)$ con el intercepto $@b@$ cuando la recta tiene pendiente $a=@a@$:",
 ]
 H1 = [
     r"Identifique la pendiente $@a@$ y el término independiente $@b@$ de la función..",

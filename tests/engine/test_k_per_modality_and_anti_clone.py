@@ -569,29 +569,35 @@ def gen_3(r):
     rat = r"Omite elevar $@x@$ al cuadrado al combinar con constante $@d@$ y factor $@a@$."
     return {"vars": {"a": a, "x": x, "d": d, "ans": ans}, "correct": str(ans), "ds": [("D-Hab01-02", str(a * (x + d)), rat)]}
 def gen_4(r):
-    a, x, b = r.randint(4, 25), r.randint(5, 30), r.randint(6, 35)
+    a, x, b = r.randint(4, 25), r.randint(5, 30), r.randint(26, 50)
     r1 = r"Resta el término $@b@$ al producto $@a@\cdot@x@$ en lugar de sumarlo."
     r2 = r"Multiplica pendiente $@a@$ por suma $(@x@+@b@)$ distribuyendo erróneamente."
+    r3 = r"Omite el producto $@a@\cdot@x@$ y conserva solo el intercepto $@b@$."
     return {"vars": {"a": a, "x": x, "b": b}, "options": [
-        _o(f"$y = {a*x+b}$", None, None), _o(f"$y > {b}$", None, None),
+        _o(f"$y = {a*x+b}$", None, None), _o(f"$y > {b}$", None, None), _o(f"$y > {a}$", None, None),
         _o(f"$y = {a*x-b}$", "D-Hab01-01", r1), _o(f"$y = {a*(x+b)}$", "D-Hab01-05", r2),
+        _o(f"$y = {b}$", "D-Hab01-02", r3),
     ]}
 def gen_5(r):
     a, d = r.randint(4, 22), r.randint(3, 18)
     b = a * d + r.randint(11, 45)
     r1 = r"Suma linealmente $@a@$ y $@d@$ confundiendo adición con tasa por paso."
     r2 = r"Toma parámetro auxiliar $@b@$ como incremento en lugar de $@a@\cdot@d@$."
+    r3 = r"Invierte el signo del incremento por paso respecto a $@a@$ y $@d@$."
     return {"vars": {"a": a, "d": d, "b": b}, "options": [
         _o(f"$\\Delta y = {a*d}$", None, None), _o(f"$\\Delta y > 0$ ($a={a}$)", None, None),
         _o(f"$\\Delta y = {a+d}$", "D-Hab01-03", r1), _o(f"$\\Delta y = {b}$", "D-Hab01-06", r2),
+        _o(f"$\\Delta y = {-a*d}$", "D-Hab01-01", r3),
     ]}
 def gen_6(r):
     a, x, b = -r.randint(4, 22), r.randint(5, 25), r.randint(6, 32)
     r1 = r"Resta $@b@$ al término negativo $@a@\cdot@x@$ en lugar de sumarlo."
     r2 = r"Distribuye pendiente negativa $@a@$ sobre el intercepto $@b@$ en $x=@x@$."
+    r3 = r"Omite el término lineal $@a@\cdot@x@$ dejando solo el intercepto $@b@$."
     return {"vars": {"a": a, "x": x, "b": b}, "options": [
         _o(f"$f({x}) = {a*x+b}$", None, None), _o(f"$f({x}) < {b}$", None, None),
         _o(f"$f({x}) = {a*x-b}$", "D-Hab01-01", r1), _o(f"$f({x}) = {a*(x+b)}$", "D-Hab01-03", r2),
+        _o(f"$f({x}) = {b}$", "D-Hab01-02", r3),
     ]}
 def ver_1(c, v): return abs(_pv(c) - (v["a"] * v["x"] + 7)) < 1e-4
 def ver_2(c, v): return abs(_pv(c) - (v["y"] - v["b"]) / v["a"]) < 1e-4
@@ -600,7 +606,7 @@ def _ms_chk(r, cond):
     o = r.get("options", []) if isinstance(r, dict) else []
     t = [u for u in o if u.get("is_correct") is True]
     f = [u for u in o if u.get("is_correct") is False]
-    return len(o) == 4 and len(t) == 2 == len(f) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
+    return len(o) >= 5 and len(t) >= 2 and len(f) >= 2 and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
 def ver_4(r):
     v = r.get("vars", {}); val = v.get("a", 0) * v.get("x", 0) + v.get("b", 0)
     return _ms_chk(r, lambda t, f: any(_pv(u["value"]) == val for u in t) and any(">" in u["value"] for u in t) and all(_pv(u["value"]) != val for u in f))
@@ -656,17 +662,17 @@ def gen_3(r):
     m, k = r.randint(4, 30), r.randint(3, 25)
     rm1 = r"Resta $@k@$ de $@m@$ ignorando adición positiva de ambos términos."
     rm2 = r"Multiplica $@m@$ y $@k@$ confundiendo suma con área rectangular."
-    return {"vars": {"m": m, "k": k}, "options": [_o(f"${m+k}$", None, None), _o(f"${m+k}>0$", None, None), _o(f"${m-k}$", "D-Hab01-03", rm1), _o(f"${m*k}$", "D-Hab01-04", rm2)]}
+    return {"vars": {"m": m, "k": k}, "options": [_o(f"${m+k}$", None, None), _o(f"${m+k}>0$", None, None), _o(f"${m+k}>1$", None, None), _o(f"${m-k}$", "D-Hab01-03", rm1), _o(f"${m*k}$", "D-Hab01-04", rm2)]}
 def gen_4(r):
     a, b = -r.randint(4, 30), r.randint(6, 40)
-    return {"vars": {"a": a, "b": b}, "options": [_o(f"$z={a+b}$", None, None), _o(f"$z<{b}$", None, None), _o(f"$z={a-b}$", "D-Hab01-05", RATS["D-Hab01-05"]), _o(f"$z={b-a}$", "D-Hab01-06", RATS["D-Hab01-06"])]}
+    return {"vars": {"a": a, "b": b}, "options": [_o(f"$z={a+b}$", None, None), _o(f"$z<{b}$", None, None), _o(f"$z={a-b}$", "D-Hab01-05", RATS["D-Hab01-05"]), _o(f"$z={b-a}$", "D-Hab01-06", RATS["D-Hab01-06"]), _o(f"$z={a}$", "D-Hab01-05", RATS["D-Hab01-05"])]}
 def ver_1(c, v): return abs(_pv(c) - (v["a"] * v["b"] + 5)) < 1e-4
 def ver_2(c, v): return abs(_pv(c) - (v["p"] * v["q"] + 11)) < 1e-4
 def _ms_chk(r, cond):
     o = r.get("options", []) if isinstance(r, dict) else []
     t = [u for u in o if u.get("is_correct") is True]
     f = [u for u in o if u.get("is_correct") is False]
-    return len(o) == 4 and len(t) == 2 == len(f) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
+    return len(o) == 5 and len(t) in (2, 3) and len(f) in (2, 3) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
 def ver_3(r):
     v = r.get("vars", {}); sm = v.get("m", 0) + v.get("k", 0)
     return v.get("m", 0) > 0 and v.get("k", 0) > 0 and _ms_chk(
@@ -751,11 +757,11 @@ def gen_3(r):
     a, k = r.randint(4, 30), r.randint(3, 25)
     ra = r"Resta el término $@k@$ del parámetro $@a@$ ignorando que la operación correcta exige sumar ambos términos positivos."
     rb = r"Multiplica factores $@a@$ y $@k@$ confundiendo el producto con el incremento directo de la expresión lineal."
-    return {"vars": {"a": a, "k": k}, "options": [_o(f"${a+k}$", None, None), _o(f"${a+k}>0$", None, None), _o(f"${a-k}$", "D-C01-02", ra), _o(f"${a*k+1}$", "D-C01-03", rb)]}
+    return {"vars": {"a": a, "k": k}, "options": [_o(f"${a+k}$", None, None), _o(f"${a+k}>0$", None, None), _o(f"${a+k}>1$", None, None), _o(f"${a-k}$", "D-C01-02", ra), _o(f"${a*k+1}$", "D-C01-03", rb)]}
 def gen_4(r):
     a, m = r.randint(4, 28), r.randint(3, 22)
     ra = r"Suma linealmente los factores $@a@$ y $@m@$ en vez de aplicar correctamente la regla multiplicativa completa."
-    return {"vars": {"a": a, "m": m}, "options": [_o(f"$p={a*m}$", None, None), _o(f"$p>{a}$", None, None), _o(f"$p={a+m}$", "D-C01-01", ra), _o(f"$p=-{m}$", "D-C01-03", RATS["D-C01-03"])]}
+    return {"vars": {"a": a, "m": m}, "options": [_o(f"$p={a*m}$", None, None), _o(f"$p>{a}$", None, None), _o(f"$p={a+m}$", "D-C01-01", ra), _o(f"$p=-{m}$", "D-C01-03", RATS["D-C01-03"]), _o(f"$p={a}$", "D-C01-01", ra)]}
 def ver_1(c, v):
     import sympy; x = sympy.Symbol("x")
     try: return sympy.simplify(sympy.sympify(str(c)) - v["a"] * (x + 1)) == 0
@@ -773,7 +779,7 @@ def _ms_chk(r, cond):
     o = r.get("options", []) if isinstance(r, dict) else []
     t = [u for u in o if u.get("is_correct") is True]
     f = [u for u in o if u.get("is_correct") is False]
-    return len(o) == 4 and len(t) == 2 == len(f) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
+    return len(o) == 5 and len(t) in (2, 3) and len(f) in (2, 3) and cond(t, f) and all(u.get("distractor_id") in RATS and len(u.get("error_rationale", "")) >= 20 for u in f)
 def ver_3(r):
     v = r.get("vars", {}); sm = v.get("a", 0) + v.get("k", 0)
     return v.get("a", 0) > 0 and v.get("k", 0) > 0 and _ms_chk(

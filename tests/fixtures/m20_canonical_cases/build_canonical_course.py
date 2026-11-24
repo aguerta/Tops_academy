@@ -1269,11 +1269,13 @@ def gen_c02_cm1(rng):
             {"id": "M_roy", "content": r"Identidad de Roy para demanda ordinaria $x_{@idx_b@}^d(p,m)$"},
             {"id": "M_shep", "content": r"Lema de Shephard para demanda compensada $x_{@idx_b@}^h(p,u)$"},
             {"id": "M_dual", "content": r"Relación inversa entre gasto mínimo y utilidad indirecta"},
+            {"id": "M_hom", "content": r"Homogeneidad de grado cero de $v(p,m)$ para el bien $x_{@idx_b@}$"},
         ],
         "targets": [
             {"id": "R_roy", "content": r"$-\frac{\partial v/\partial p_{@idx_b@}}{\partial v/\partial m}$"},
             {"id": "R_shep", "content": r"$\frac{\partial e(p,u)}{\partial p_{@idx_b@}}$"},
             {"id": "R_dual", "content": r"$e(p, v(p,m)) \equiv m$"},
+            {"id": "R_hom", "content": r"$v(\lambda p, \lambda m) \equiv v(p,m)$ para $\lambda > 0$"},
             {
                 "id": "R_dist_roy",
                 "content": r"$+\frac{\partial v/\partial p_{@idx_b@}}{\partial v/\partial m}$ sin signo negativo",
@@ -1289,14 +1291,14 @@ def gen_c02_cm1(rng):
                 "error_rationale": "La demanda hicksiana deriva de la función de gasto $e(p,u)$ por Lema de Shephard, no de $\\partial v/\\partial m$.",
             },
         ],
-        "correct_pairs": {"M_roy": "R_roy", "M_shep": "R_shep", "M_dual": "R_dual"},
+        "correct_pairs": {"M_roy": "R_roy", "M_shep": "R_shep", "M_dual": "R_dual", "M_hom": "R_hom"},
     }
     return {"vars": {"idx_b": idx_b}, "concept_matching": cm}
 
 
 def ver_c02_cm1(res):
     cm = res.get("concept_matching") if isinstance(res, dict) else None
-    return isinstance(cm, dict) and cm.get("correct_pairs") == {"M_roy": "R_roy", "M_shep": "R_shep", "M_dual": "R_dual"}
+    return isinstance(cm, dict) and cm.get("correct_pairs") == {"M_roy": "R_roy", "M_shep": "R_shep", "M_dual": "R_dual", "M_hom": "R_hom"}
 
 
 def gen_c02_cm2(rng):
@@ -1308,11 +1310,13 @@ def gen_c02_cm2(rng):
             {"id": "E_umu", "content": r"Suponer $\partial e/\partial u = 1$ sin diferenciar $m \equiv e(p,v(p,m))$ respecto a $m$"},
             {"id": "E_shep", "content": r"Sustituir $\partial e/\partial p_{@idx_d@}$ sin invocar el Lema de Shephard"},
             {"id": "E_hom", "content": r"Afirmar que $e(p, v(p,m)) = u$ para el bien $x_{@idx_d@}$"},
+            {"id": "E_conc", "content": r"Suponer convexidad de $e(p,u)$ en precios para el bien $x_{@idx_d@}$"},
         ],
         "targets": [
             {"id": "C_umu", "content": r"Omite el factor $(\partial v/\partial m)^{-1}$ en la regla de la cadena"},
             {"id": "C_shep", "content": r"Rompe el puente $\partial e/\partial p_{@idx_d@} = x_{@idx_d@}^h(p,u)$"},
             {"id": "C_hom", "content": r"Confunde la identidad de gasto mínimo $m$ con nivel ordinal $u$"},
+            {"id": "C_conc", "content": r"Viola la matriz de Slutsky negativa semidefinida en $x_{@idx_d@}^h$"},
             {
                 "id": "C_dist1",
                 "content": r"Garantiza que $v(p,m)$ es homogénea de grado uno en precios",
@@ -1328,14 +1332,14 @@ def gen_c02_cm2(rng):
                 "error_rationale": r"Invertir derivadas en $x_{@idx_d@}$ altera las unidades monetarias de la demanda marshalliana.",
             },
         ],
-        "correct_pairs": {"E_umu": "C_umu", "E_shep": "C_shep", "E_hom": "C_hom"},
+        "correct_pairs": {"E_umu": "C_umu", "E_shep": "C_shep", "E_hom": "C_hom", "E_conc": "C_conc"},
     }
     return {"vars": {"idx_d": idx_d}, "concept_matching": cm}
 
 
 def ver_c02_cm2(res):
     cm = res.get("concept_matching") if isinstance(res, dict) else None
-    return isinstance(cm, dict) and cm.get("correct_pairs") == {"E_umu": "C_umu", "E_shep": "C_shep", "E_hom": "C_hom"}
+    return isinstance(cm, dict) and cm.get("correct_pairs") == {"E_umu": "C_umu", "E_shep": "C_shep", "E_hom": "C_hom", "E_conc": "C_conc"}
 
 
 def gen_c02_mc7(rng):
@@ -1408,8 +1412,8 @@ stems_hab01_fib1 = [
 stems_hab01_fib2 = [
     r"Para la empresa competitiva con $p = @p@$ y costo $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$), despeje numéricamente la escala estacionaria $x_{\text{stat}}$ donde $\pi'(x) = 0$:",
     r"Iguale el precio $p = @p@$ al costo marginal de $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$) y halle el punto crítico $x_{\text{stat}}$:",
-    r"¿En qué nivel productivo $x_{\text{stat}}$ se anula la derivada del beneficio si $p = @p@$ y $c'(x) = @k@/\sqrt{x}$ ($a = @a@$)?" ,
-    r"Resuelva la ecuación $p = @k@/\sqrt{x}$ para $p = @p@$ ($a = @a@$) reportando el valor entero exacto de $x_{\text{stat}}$:",
+    r"¿En qué nivel productivo $x_{\text{stat}}$ se anula la derivada del beneficio si $p = @p@$ y $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$) con costo marginal $c'(x)$?",
+    r"Dada la función $c(x) = @a@\sqrt{x} + 10$ ($k = @k@$), resuelva la ecuación $p = @k@/\sqrt{x}$ para $p = @p@$ reportando el valor entero exacto de $x_{\text{stat}}$:",
 ]
 
 stems_hab01_adv_ff = [
