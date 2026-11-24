@@ -5508,5 +5508,90 @@
       "usd_per_page": 0.2
     },
     "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261124_040409_solow_v17_m20_fe128073",
+    "timestamp": "2026-11-24T09:04:09.495209+00:00",
+    "course_id": "solow_v17_m20",
+    "course_title": "Solow V17 M20",
+    "conversation_id": "fe128073-2686-48a8-9545-048d7ebcd52c",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 19,
+      "questions": 606,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 831.0,
+      "agent_compute_seconds": 4592.0,
+      "speedup": 5.53,
+      "total_tokens": 7482982,
+      "total_active_tokens": 2758126,
+      "input_tokens": 2054198,
+      "output_tokens": 626586,
+      "total_input_tokens": 2129064,
+      "total_output_tokens": 629062,
+      "cache_read_tokens": 4724856,
+      "pricing_model": "gemini-4-hydrogen",
+      "total_cost_usd": 8.27,
+      "cost_breakdown_usd": {
+        "input_usd": 3.19,
+        "output_usd": 4.72,
+        "cache_read_usd": 0.35,
+        "total_usd": 8.27
+      },
+      "stage_costs_usd": {
+        "stage_1a_vision": 0.0,
+        "stage_1b_cta": 0.54,
+        "stage_3_authors": 5.4,
+        "stage_3b_repairs": 0.4,
+        "stage_5_judges": 1.78,
+        "orchestrator": 0.14,
+        "other_subagents": 0.0,
+        "total_usd": 8.27
+      },
+      "total_turns": 192,
+      "subagents_count": 38,
+      "tool_errors": 11,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 132.0,
+      "stage_3_max_wall": 206.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "⚠️ NO PASÓ AL PRIMER INTENTO — APROBADO POST-REJUDGE (143/143 REACTIVOS)",
+        "batch_items_count": 143,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "La Ronda 1 de Blind Judges registró 3 discrepancia(s), por lo que no hubo acuerdo limpio al primer intento. Tras correcciones y Rejudge, el resultado final alcanzó 100.0% de acuerdo (0 discrepancias).",
+        "actions_taken": [
+          "1. **Ronda 1 (`judge_report_round_1.json` / `rounds_history`)**: 3 discrepancia(s) detectada(s).",
+          "2. **Bucle de Auto-Reparación / Rejudge**: 2 ola(s) de jueces ejecutada(s) (0 intervenciones de supervisor).",
+          "3. **Resultado Final Post-Rejudge (`judge_report.json`)**: ✅ Aprobado (`100.0% agreement rate`, `0 discrepancias` sobre 143 reactivos)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 207860.6,
+      "active_tokens_per_page": 76614.6,
+      "tokens_per_input_kb": 4913.7,
+      "tokens_per_competency": 393841.2,
+      "active_tokens_per_competency": 145164.5,
+      "author_tokens_per_competency": 92804.2,
+      "tokens_per_question": 12348.2,
+      "active_tokens_per_question": 4551.4,
+      "seconds_per_page": 23.08,
+      "seconds_per_question": 1.37,
+      "questions_per_minute": 43.75,
+      "agent_seconds_per_question": 7.58,
+      "output_tokens_per_question": 1038.1,
+      "usd_per_question": 0.01,
+      "usd_per_competency": 0.44,
+      "usd_per_page": 0.23
+    },
+    "bottlenecks_count": 0
   }
 ]
