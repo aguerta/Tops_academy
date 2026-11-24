@@ -53,6 +53,7 @@ interface PracticeSessionProps {
   competencyId?: string | null;
   unitIndex?: number | null;
   initialSnapshot?: ActiveSessionSnapshot | null;
+  isColdTransferProbe?: boolean;
 }
 
 interface QuestionResult {
@@ -83,7 +84,14 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   competencyId,
   unitIndex,
   initialSnapshot,
+  isColdTransferProbe = false,
 }) => {
+  const effectiveColdTransferProbe = Boolean(
+    isColdTransferProbe || sessionType === 'cold_transfer_probe'
+  );
+  const displaySessionTitle = effectiveColdTransferProbe
+    ? 'Sonda de Transferencia Fría (Sin Etiqueta)'
+    : sessionTitle;
   const [currentIndex, setCurrentIndex] = useState(() => initialSnapshot?.currentIndex ?? 0);
   const [selectedOption, setSelectedOption] = useState<string | null>(() => initialSnapshot?.selectedOption ?? null);
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>(() => initialSnapshot?.selectedMultiOptions ?? []);
@@ -911,7 +919,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           <span aria-hidden="true">✕</span>
         </button>
         <div className="text-sm font-bold text-ka-text-primary text-center truncate px-2 min-w-0">
-          <MathText text={sessionTitle} inline />
+          <MathText text={displaySessionTitle} inline />
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -1005,14 +1013,19 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
             onToggleMultiOption={handleToggleMultiOption}
             onChangeFillBlank={handleChangeFillBlank}
             onChangeStructuredAnswer={handleChangeStructuredAnswer}
-            hintsRevealed={hintsRevealed}
-            onRevealHint={() => setHintsRevealed((prev) => prev + 1)}
+            hintsRevealed={effectiveColdTransferProbe ? 0 : hintsRevealed}
+            onRevealHint={() => {
+              if (!effectiveColdTransferProbe) {
+                setHintsRevealed((prev) => prev + 1);
+              }
+            }}
             blankFirstEnabled={blankFirstEnabled}
             isCurtainLifted={isCurtainLifted}
             onLiftCurtain={() => setIsCurtainLifted(true)}
-            courseTitle={sessionTitle}
+            courseTitle={displaySessionTitle}
             wrongAttemptsCount={wrongAttemptsCount}
             isPracticeMode={true}
+            ironMode={effectiveColdTransferProbe}
           />
         </main>
         <ScratchpadOverlay

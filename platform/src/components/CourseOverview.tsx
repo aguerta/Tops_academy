@@ -23,6 +23,7 @@ interface CourseOverviewProps {
   onStartCourseChallenge: () => void;
   onStartMasteryChallenge: () => void;
   onStartMisconceptionDrill: () => void;
+  onStartColdTransferProbe?: () => void;
   onOpenProgressLog: () => void;
   focusCompetencyId?: string | null;
 }
@@ -36,6 +37,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   onStartCourseChallenge,
   onStartMasteryChallenge,
   onStartMisconceptionDrill,
+  onStartColdTransferProbe,
   onOpenProgressLog,
   focusCompetencyId,
 }) => {
@@ -134,6 +136,16 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
     [course, mastery]
   );
   const activeTraps = useMemo(() => getActiveMisconceptions(mastery), [mastery]);
+  const hasColdProbeQuestions = useMemo(
+    () =>
+      course.questions.some(
+        (q) =>
+          q.type === 'open_symbolic' ||
+          q.type === 'fill_in_the_blank' ||
+          (q.type === 'adversarial_break' && q.adversarial_break?.mode === 'counterexample')
+      ),
+    [course.questions]
+  );
 
   return (
     <div ref={rootRef} className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-20 sm:pb-[88px]">
@@ -569,6 +581,22 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
               className="px-3.5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer"
             >
               🎯 Practicar mis Trampas ({activeTraps.length})
+            </button>
+          )}
+          {onStartColdTransferProbe && (
+            <button
+              type="button"
+              data-testid="overview-cold-transfer-probe-btn"
+              disabled={!hasColdProbeQuestions}
+              onClick={onStartColdTransferProbe}
+              title={
+                hasColdProbeQuestions
+                  ? 'Sonda de Transferencia Fría sin etiquetas ni pistas (M22)'
+                  : 'No hay preguntas elegibles (open_symbolic, fill_in_the_blank o counterexample)'
+              }
+              className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed"
+            >
+              🧪 Sonda Fría (M22)
             </button>
           )}
           <button

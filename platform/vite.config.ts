@@ -431,7 +431,7 @@ function courseApiPlugin(): Plugin {
   };
 }
 
-const basePath = process.env.VITE_BASE_PATH || './';
+const basePath = process.env.VITE_BASE_PATH || '/';
 
 export default defineConfig({
   base: basePath,
@@ -483,6 +483,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico}', 'api/courses.json'],
         globIgnores: ['courses/**', 'api/courses/**'],
+        navigateFallback: `${basePath}index.html`,
+        navigateFallbackDenylist: [/^\/api\//, /\/courses\//],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {

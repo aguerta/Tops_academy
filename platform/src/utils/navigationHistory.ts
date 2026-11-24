@@ -18,7 +18,106 @@ export interface NavigationState {
   viewMode: AppViewMode;
   courseId?: string;
   competencyId?: string;
+  sessionType?: string;
   timestamp?: number;
+}
+
+/**
+ * Returns the normalized app base path without trailing slash (e.g. '' for '/', '/Tops_academy' for '/Tops_academy/').
+ */
+export function getBasePath(): string {
+  const raw =
+    (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || '/';
+  if (raw === './' || raw === '/') return '';
+  const withLeading = raw.startsWith('/') ? raw : `/${raw}`;
+  return withLeading.endsWith('/') ? withLeading.slice(0, -1) : withLeading;
+}
+
+/**
+ * Serializes a NavigationState into a clean subpage URL under the app base path.
+ */
+export function buildUrlFromState(state: NavigationState): string {
+  const base = getBasePath();
+  if (!state.courseId || state.viewMode === 'library') {
+    return `${base}/`;
+  }
+  const cId = encodeURIComponent(state.courseId);
+  if (state.viewMode === 'overview') {
+    return `${base}/curso/${cId}`;
+  }
+  if (state.viewMode === 'progress_log') {
+    return `${base}/curso/${cId}/bitacora`;
+  }
+  if (state.viewMode === 'challenge') {
+    return `${base}/curso/${cId}/challenge`;
+  }
+  if (state.viewMode === 'pre_exercise' || state.viewMode === 'practice' || state.viewMode === 'completed') {
+    if (state.competencyId && state.sessionType) {
+      return `${base}/curso/${cId}/unidad/${encodeURIComponent(state.competencyId)}/${encodeURIComponent(state.sessionType)}`;
+    }
+    if (state.sessionType) {
+      return `${base}/curso/${cId}/sesion/${encodeURIComponent(state.sessionType)}`;
+    }
+    return `${base}/curso/${cId}`;
+  }
+  return `${base}/`;
+}
+
+/**
+ * Parses a browser pathname (relative to basePath) into a NavigationState.
+ */
+export function parseUrlToState(pathname?: string): NavigationState {
+  const rawPath =
+    pathname ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const base = getBasePath();
+  let rel = rawPath;
+  if (base && rel.startsWith(base)) {
+    rel = rel.slice(base.length);
+  }
+  const segments = rel
+    .split('/')
+    .filter(Boolean)
+    .map((s) => {
+      try {
+        return decodeURIComponent(s);
+      } catch {
+        return s;
+      }
+    });
+
+  if (segments[0] !== 'curso' || !segments[1]) {
+    return { viewMode: 'library' };
+  }
+
+  const courseId = segments[1];
+  const sub = segments[2];
+
+  if (!sub) {
+    return { viewMode: 'overview', courseId };
+  }
+  if (sub === 'bitacora') {
+    return { viewMode: 'progress_log', courseId };
+  }
+  if (sub === 'challenge') {
+    return { viewMode: 'challenge', courseId };
+  }
+  if (sub === 'unidad' && segments[3]) {
+    return {
+      viewMode: 'pre_exercise',
+      courseId,
+      competencyId: segments[3],
+      sessionType: segments[4] || 'practice',
+    };
+  }
+  if (sub === 'sesion' && segments[3]) {
+    return {
+      viewMode: 'pre_exercise',
+      courseId,
+      sessionType: segments[3],
+    };
+  }
+
+  return { viewMode: 'overview', courseId };
 }
 
 type BackInterceptor = () => boolean; // Devuelve true si interceptó y manejó el retroceso
@@ -45,7 +144,8 @@ export function pushNavState(state: NavigationState): void {
   if (typeof window === 'undefined') return;
   const payload: NavigationState = { ...state, timestamp: Date.now() };
   try {
-    window.history.pushState(payload, '', window.location.href);
+    const targetUrl = buildUrlFromState(payload);
+    window.history.pushState(payload, '', targetUrl);
   } catch (err) {
     console.warn('[NavigationHistory] Failed to push state:', err);
   }
@@ -58,7 +158,8 @@ export function replaceNavState(state: NavigationState): void {
   if (typeof window === 'undefined') return;
   const payload: NavigationState = { ...state, timestamp: Date.now() };
   try {
-    window.history.replaceState(payload, '', window.location.href);
+    const targetUrl = buildUrlFromState(payload);
+    window.history.replaceState(payload, '', targetUrl);
   } catch (err) {
     console.warn('[NavigationHistory] Failed to replace state:', err);
   }
@@ -76,10 +177,9 @@ export interface SetupNavigationOptions {
 export function setupNavigationHistory(options: SetupNavigationOptions): () => void {
   if (typeof window === 'undefined') return () => {};
 
-  // Asegurar que el estado inicial tenga viewMode: 'library'
-  const currentState = options.getCurrentState();
+  // Asegurar que el estado inicial refleje la URL actual sin sobrescribir subrutas al recargar
   if (!window.history.state || !window.history.state.viewMode) {
-    replaceNavState(currentState);
+    replaceNavState(parseUrlToState());
   }
 
   const handlePopState = (event: PopStateEvent) => {
@@ -119,8 +219,15 @@ export function setupNavigationHistory(options: SetupNavigationOptions): () => v
     }
 
     // 3. REGLA INVIOLABLE: Desde 'overview', retroceder NUNCA debe ingresar a un quiz, test, modal o completed.
-    // El único destino hacia atrás desde la vista de un curso es la biblioteca general ('library').
+    // Permitir avanzar (Forward) a 'progress_log' o 'challenge' si el historial apunta a ellos.
     if (currentView === 'overview') {
+      if (
+        previousState &&
+        (previousState.viewMode === 'progress_log' || previousState.viewMode === 'challenge')
+      ) {
+        options.onNavigate(previousState);
+        return;
+      }
       options.onNavigate({ viewMode: 'library' });
       replaceNavState({ viewMode: 'library' });
       return;

@@ -14,6 +14,11 @@ import {
   formatCooldownRemaining,
   getCooldownRemainingMs,
 } from '../utils/fsrsEngine';
+import {
+  computeM22HypothesisSummary,
+  exportM22EventsAsJson,
+  loadM22Events,
+} from '../utils/m22Telemetry';
 import { MathText } from './MathText';
 
 interface ProgressLogViewProps {
@@ -22,6 +27,7 @@ interface ProgressLogViewProps {
   onBackToCourse: () => void;
   onStartMasteryChallenge: () => void;
   onStartMisconceptionDrill: () => void;
+  onStartColdTransferProbe?: () => void;
   now?: Date;
 }
 
@@ -49,6 +55,7 @@ export const ProgressLogView: React.FC<ProgressLogViewProps> = ({
   onBackToCourse,
   onStartMasteryChallenge,
   onStartMisconceptionDrill,
+  onStartColdTransferProbe,
   now = new Date(),
 }) => {
   const [ledgerTab, setLedgerTab] = useState<'active' | 'resolved'>('active');
@@ -70,6 +77,37 @@ export const ProgressLogView: React.FC<ProgressLogViewProps> = ({
     () => computeCalibrationMetrics(mastery.srs_telemetry),
     [mastery.srs_telemetry]
   );
+
+  const m22Events = useMemo(() => loadM22Events(course.course_id), [course.course_id]);
+  const m22Summary = useMemo(() => computeM22HypothesisSummary(m22Events), [m22Events]);
+  const hasColdProbeQuestions = useMemo(
+    () =>
+      course.questions.some(
+        (q) =>
+          q.type === 'open_symbolic' ||
+          q.type === 'fill_in_the_blank' ||
+          (q.type === 'adversarial_break' && q.adversarial_break?.mode === 'counterexample')
+      ),
+    [course.questions]
+  );
+
+  const formatPct = (val: number | null) =>
+    val === null ? '--' : `${Math.round(val * 100)}%`;
+  const formatSignedPp = (val: number | null) =>
+    val === null ? '--' : `${val >= 0 ? '+' : ''}${Math.round(val * 100)} pp`;
+
+  const handleExportM22Json = () => {
+    const json = exportM22EventsAsJson(course.course_id);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `m22_telemetry_${course.course_id}_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const retentionRows = useMemo(() => {
     const rows = course.competencies.map((comp, idx) => {
@@ -606,6 +644,120 @@ export const ProgressLogView: React.FC<ProgressLogViewProps> = ({
               {calibration.meanActual !== null
                 ? `${Math.round(calibration.meanActual * 100)}%`
                 : '--'}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Block 5: Telemetría M22 (Fase 0 · H1–H4) */}
+      <section
+        data-testid="m22-telemetry-card"
+        className="bg-white rounded-xl border border-ka-border-card shadow-sm p-4 sm:p-5 space-y-3"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold text-ka-text-primary">
+                Telemetría M22 (Fase 0 · H1–H4)
+              </h2>
+              <span
+                data-testid="m22-total-events-badge"
+                className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200"
+              >
+                {m22Summary.total_events} {m22Summary.total_events === 1 ? 'evento' : 'eventos'}
+              </span>
+            </div>
+            <p className="text-xs text-ka-text-secondary">
+              Diagnóstico empírico N=1 sin mutar FSRS ni niveles de maestría.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {onStartColdTransferProbe && (
+              <button
+                type="button"
+                data-testid="progress-log-cold-transfer-probe-btn"
+                disabled={!hasColdProbeQuestions}
+                onClick={onStartColdTransferProbe}
+                title={
+                  hasColdProbeQuestions
+                    ? 'Iniciar Sonda de Transferencia Fría (sin etiquetas ni pistas)'
+                    : 'No hay preguntas elegibles para la Sonda Fría'
+                }
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 disabled:bg-slate-200 disabled:text-slate-400 text-white text-xs font-bold shadow-sm transition-colors cursor-pointer disabled:cursor-not-allowed"
+              >
+                🧪 Sonda Fría (M22)
+              </button>
+            )}
+            <button
+              type="button"
+              data-testid="export-m22-json-btn"
+              onClick={handleExportM22Json}
+              className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition-colors cursor-pointer"
+            >
+              ⬇️ Exportar JSON (M22)
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-slate-800">H1 · Calibración de Nivel</span>
+              <span className="font-mono font-extrabold text-indigo-700">
+                {formatSignedPp(m22Summary.h1_tier_calibration.accuracy_gap)}
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-600 mt-1">
+              Not started ({m22Summary.h1_tier_calibration.not_started.n}):{' '}
+              {formatPct(m22Summary.h1_tier_calibration.not_started.first_attempt_accuracy)} ·
+              Familiar+ ({m22Summary.h1_tier_calibration.familiar_plus.n}):{' '}
+              {formatPct(m22Summary.h1_tier_calibration.familiar_plus.first_attempt_accuracy)}
+            </div>
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-slate-800">H2 · Recurrencia de Trampa</span>
+              <span className="font-mono font-extrabold text-rose-700">
+                {formatPct(m22Summary.h2_trap_recurrence.recurrence_rate)}
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-600 mt-1">
+              4-strikes: {m22Summary.h2_trap_recurrence.total_4_strike_events} · Repeticiones:{' '}
+              {m22Summary.h2_trap_recurrence.recurrences}/
+              {m22Summary.h2_trap_recurrence.followed_exposures}
+            </div>
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-slate-800">H3 · Transferencia Sin Etiqueta</span>
+              <span className="font-mono font-extrabold text-amber-700">
+                {formatSignedPp(m22Summary.h3_unlabeled_transfer.accuracy_delta)}
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-600 mt-1">
+              Etiquetada ({m22Summary.h3_unlabeled_transfer.labeled.n}):{' '}
+              {formatPct(m22Summary.h3_unlabeled_transfer.labeled.first_attempt_accuracy)} ·
+              Sonda ({m22Summary.h3_unlabeled_transfer.unlabeled_probe.n}):{' '}
+              {formatPct(m22Summary.h3_unlabeled_transfer.unlabeled_probe.first_attempt_accuracy)}
+            </div>
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-bold text-slate-800">H4 · Dependencia de Pistas</span>
+              <span className="font-mono font-extrabold text-emerald-700">
+                {formatPct(m22Summary.h4_hint_dependence.hint_assisted_share)}
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-600 mt-1">
+              Sin pista ({m22Summary.h4_hint_dependence.proficient_mastered_cold.n}):{' '}
+              {formatPct(m22Summary.h4_hint_dependence.proficient_mastered_cold.first_attempt_accuracy)}{' '}
+              · Con pista ({m22Summary.h4_hint_dependence.proficient_mastered_hint_assisted.n}):{' '}
+              {formatPct(
+                m22Summary.h4_hint_dependence.proficient_mastered_hint_assisted.first_attempt_accuracy
+              )}
             </div>
           </div>
         </div>

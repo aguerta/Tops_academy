@@ -9,6 +9,7 @@ import {
   CourseMasteryRecord,
   QuestionTelemetry,
   ChallengeExecutionSummary,
+  M22AttemptEvent,
   MasteryTier,
   MetacognitiveAudit,
   SessionType,
@@ -28,11 +29,13 @@ import {
 import {
   buildAdaptiveModule1,
   buildAdaptiveModule2,
+  buildColdTransferProbeQuestions,
   buildInterleavedSessionQuestions,
   buildMasteryChallengeQuestions,
   buildMisconceptionSession,
   computeAdaptiveExamSummary,
 } from './utils/sessionShuffler';
+import { appendM22Events } from './utils/m22Telemetry';
 import { normalizeQuestion } from './utils/questionUtils';
 import {
   loadManifest,
@@ -58,6 +61,7 @@ import { ProgressLogView } from './components/ProgressLogView';
 import {
   AppViewMode as ViewMode,
   NavigationState,
+  parseUrlToState,
   pushNavState,
   replaceNavState,
   setupNavigationHistory,
@@ -160,13 +164,14 @@ export const App: React.FC = () => {
   // Navigation helper synchronized with History API
   const navigateView = (
     newMode: ViewMode,
-    options?: { replace?: boolean; competencyId?: string; courseId?: string }
+    options?: { replace?: boolean; competencyId?: string; courseId?: string; sessionType?: string }
   ) => {
     setViewMode(newMode);
     const navState: NavigationState = {
       viewMode: newMode,
       courseId: options?.courseId || activeCourse?.course_id,
       competencyId: options?.competencyId || sessionCompetency?.id,
+      sessionType: options?.sessionType || sessionType,
     };
     if (options?.replace) {
       replaceNavState(navState);
@@ -192,6 +197,25 @@ export const App: React.FC = () => {
     return () => window.removeEventListener(PROGRESS_SYNCED_EVENT, handleSynced);
   }, [activeCourse]);
 
+  // Sync document.title with the active subpage so browser history, tabs, and screen readers distinguish entries
+  useEffect(() => {
+    const courseTitle = activeCourse?.title;
+    if (viewMode === 'library' || !courseTitle) {
+      document.title = "Top's Academy";
+      return;
+    }
+    if (viewMode === 'progress_log') {
+      document.title = `Bitácora · ${courseTitle} | Top's Academy`;
+    } else if (viewMode === 'challenge') {
+      document.title = `Course Challenge · ${courseTitle} | Top's Academy`;
+    } else if (viewMode === 'practice' || viewMode === 'pre_exercise' || viewMode === 'completed') {
+      const label = sessionCompetency?.name || sessionType;
+      document.title = `${label} · ${courseTitle} | Top's Academy`;
+    } else {
+      document.title = `${courseTitle} | Top's Academy`;
+    }
+  }, [viewMode, activeCourse, sessionCompetency, sessionType]);
+
   // Setup browser popstate listener for native mobile back gesture
   useEffect(() => {
     const unregister = setupNavigationHistory({
@@ -204,12 +228,32 @@ export const App: React.FC = () => {
         if (target.viewMode === 'library') {
           setActiveCourse(null);
           setViewMode('library');
-        } else {
-          if (target.viewMode === 'overview' && sessionCompetency) {
-            setFocusCompetencyId(sessionCompetency.id);
-          }
-          setViewMode(target.viewMode);
+          return;
         }
+        if (target.courseId && (!activeCourse || activeCourse.course_id !== target.courseId)) {
+          const summary = resolveCourseSummary(target.courseId);
+          loadCourse(summary)
+            .then((fullCourse) => {
+              if (!fullCourse) return;
+              const normalizedCourse: Course = {
+                ...fullCourse,
+                questions: (fullCourse.questions || []).map(normalizeQuestion),
+              };
+              setActiveCourse(normalizedCourse);
+              setMastery(loadCourseMastery(normalizedCourse));
+              setViewMode(target.viewMode);
+            })
+            .catch((err) => {
+              console.warn('[App] Failed to load course on popstate:', err);
+              setActiveCourse(null);
+              setViewMode('library');
+            });
+          return;
+        }
+        if (target.viewMode === 'overview' && sessionCompetency) {
+          setFocusCompetencyId(sessionCompetency.id);
+        }
+        setViewMode(target.viewMode);
       },
       onDoubleBackToast: () => {
         setShowExitToast(true);
@@ -298,14 +342,19 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  // Esc on the course overview returns to the course library
+  // Esc on the course overview returns to the course library;
+  // Esc on the progress log returns to the course overview.
   useEffect(() => {
-    if (viewMode !== 'overview') return;
+    if (viewMode !== 'overview' && viewMode !== 'progress_log') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.isComposing || e.repeat || e.defaultPrevented) return;
       // Let open dialogs / the mobile sidebar consume Esc first
       if (document.querySelector('dialog[open], [role="dialog"]') || document.body.style.overflow === 'hidden') return;
       e.preventDefault();
+      if (viewMode === 'progress_log') {
+        navigateView('overview');
+        return;
+      }
       setActiveCourse(null);
       navigateView('library');
     };
@@ -342,15 +391,55 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Milestone 12: Hydrate active practice session on mount if active session snapshot exists in sessionStorage
+  // Milestone 12 + Subpage Routing: Hydrate active session snapshot OR current URL route on mount
   useEffect(() => {
     const snapshot = loadActiveSession();
-    if (!snapshot || !snapshot.courseId || !snapshot.questions || snapshot.questions.length === 0) {
+    if (snapshot && snapshot.courseId && snapshot.questions && snapshot.questions.length > 0) {
+      let isMounted = true;
+      const summary = resolveCourseSummary(snapshot.courseId);
+
+      loadCourse(summary)
+        .then((fullCourse) => {
+          if (!isMounted || !fullCourse) return;
+          const normalizedCourse: Course = {
+            ...fullCourse,
+            questions: (fullCourse.questions || []).map(normalizeQuestion),
+          };
+          setActiveCourse(normalizedCourse);
+          const m = loadCourseMastery(normalizedCourse);
+          setMastery(m);
+          setSessionType(snapshot.sessionType);
+          const comp = snapshot.competencyId
+            ? normalizedCourse.competencies.find((c) => c.id === snapshot.competencyId) || null
+            : null;
+          setSessionCompetency(comp);
+          setSelectedUnitIndex(snapshot.unitIndex ?? 0);
+          setSessionQuestions(snapshot.questions.map(normalizeQuestion));
+          setRestoredSnapshot(snapshot);
+          setViewMode('practice');
+          replaceNavState({
+            viewMode: 'practice',
+            courseId: normalizedCourse.course_id,
+            competencyId: comp?.id,
+            sessionType: snapshot.sessionType,
+          });
+        })
+        .catch((err) => {
+          console.warn('[App] Failed to hydrate active session from snapshot:', err);
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const initialRoute = parseUrlToState();
+    if (initialRoute.viewMode === 'library' || !initialRoute.courseId) {
       return;
     }
 
     let isMounted = true;
-    const summary = resolveCourseSummary(snapshot.courseId);
+    const summary = resolveCourseSummary(initialRoute.courseId);
 
     loadCourse(summary)
       .then((fullCourse) => {
@@ -362,23 +451,70 @@ export const App: React.FC = () => {
         setActiveCourse(normalizedCourse);
         const m = loadCourseMastery(normalizedCourse);
         setMastery(m);
-        setSessionType(snapshot.sessionType);
-        const comp = snapshot.competencyId
-          ? normalizedCourse.competencies.find((c) => c.id === snapshot.competencyId) || null
-          : null;
-        setSessionCompetency(comp);
-        setSelectedUnitIndex(snapshot.unitIndex ?? 0);
-        setSessionQuestions(snapshot.questions.map(normalizeQuestion));
-        setRestoredSnapshot(snapshot);
-        setViewMode('practice');
-        replaceNavState({
-          viewMode: 'practice',
-          courseId: normalizedCourse.course_id,
-          competencyId: comp?.id,
-        });
+
+        if (initialRoute.viewMode === 'pre_exercise' && initialRoute.sessionType) {
+          const validType = initialRoute.sessionType as SessionType;
+          const targetComp = initialRoute.competencyId
+            ? normalizedCourse.competencies.find((c) => c.id === initialRoute.competencyId) || null
+            : null;
+          if (targetComp) {
+            const idx = normalizedCourse.competencies.findIndex((c) => c.id === targetComp.id);
+            if (idx >= 0) setSelectedUnitIndex(idx);
+          }
+          setSessionCompetency(targetComp);
+          setSessionType(validType);
+
+          if (validType === 'mastery_challenge') {
+            const chosen = buildMasteryChallengeQuestions(normalizedCourse, m, new Date(), 6);
+            if (chosen.length > 0) {
+              setSessionQuestions(chosen);
+              setViewMode('practice');
+              replaceNavState({ ...initialRoute, viewMode: 'practice' });
+              return;
+            }
+          } else if (validType === 'misconception_drill') {
+            const activeIds = getActiveMisconceptions(m).map((e) => e.distractor_id);
+            const chosen = buildMisconceptionSession(normalizedCourse, activeIds, 6);
+            if (chosen.length > 0) {
+              setSessionQuestions(chosen);
+              setViewMode('practice');
+              replaceNavState({ ...initialRoute, viewMode: 'practice' });
+              return;
+            }
+          } else if (validType === 'challenge' || targetComp) {
+            const currentTier =
+              targetComp && m?.competencies?.[targetComp.id]
+                ? m.competencies[targetComp.id].status
+                : undefined;
+            const chosen = buildInterleavedSessionQuestions(
+              normalizedCourse.questions,
+              normalizedCourse.competencies,
+              validType,
+              targetComp,
+              currentTier
+            );
+            if (chosen.length > 0) {
+              setSessionQuestions(chosen);
+              setViewMode('pre_exercise');
+              replaceNavState(initialRoute);
+              return;
+            }
+          }
+          setViewMode('overview');
+          replaceNavState({ viewMode: 'overview', courseId: normalizedCourse.course_id });
+          return;
+        }
+
+        setViewMode(initialRoute.viewMode);
+        replaceNavState(initialRoute);
       })
       .catch((err) => {
-        console.warn('[App] Failed to hydrate active session from snapshot:', err);
+        console.warn('[App] Failed to hydrate route from URL:', err);
+        if (isMounted) {
+          setActiveCourse(null);
+          setViewMode('library');
+          replaceNavState({ viewMode: 'library' });
+        }
       });
 
     return () => {
@@ -456,9 +592,9 @@ export const App: React.FC = () => {
       if (chosen.length === 0) return;
       const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
       if (directToPractice) {
-        navigateView('practice', { replace: shouldReplace });
+        navigateView('practice', { replace: shouldReplace, sessionType: 'mastery_challenge' });
       } else {
-        navigateView('pre_exercise');
+        navigateView('pre_exercise', { sessionType: 'mastery_challenge' });
       }
       return;
     }
@@ -475,9 +611,26 @@ export const App: React.FC = () => {
       if (chosen.length === 0) return;
       const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
       if (directToPractice) {
-        navigateView('practice', { replace: shouldReplace });
+        navigateView('practice', { replace: shouldReplace, sessionType: 'misconception_drill' });
       } else {
-        navigateView('pre_exercise');
+        navigateView('pre_exercise', { sessionType: 'misconception_drill' });
+      }
+      return;
+    }
+
+    if (type === 'cold_transfer_probe') {
+      const chosen = buildColdTransferProbeQuestions(activeCourse.questions, 8);
+      setSessionCompetency(null);
+      setFocusCompetencyId(null);
+      setSessionType('cold_transfer_probe');
+      setSessionQuestions(chosen);
+      setSessionKey((prev) => prev + 1);
+      if (chosen.length === 0) return;
+      const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
+      if (directToPractice) {
+        navigateView('practice', { replace: shouldReplace, sessionType: 'cold_transfer_probe' });
+      } else {
+        navigateView('pre_exercise', { sessionType: 'cold_transfer_probe' });
       }
       return;
     }
@@ -528,9 +681,9 @@ export const App: React.FC = () => {
 
     if (directToPractice) {
       const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
-      navigateView('practice', { competencyId: targetComp?.id, replace: shouldReplace });
+      navigateView('practice', { competencyId: targetComp?.id, replace: shouldReplace, sessionType: type });
     } else {
-      navigateView('pre_exercise', { competencyId: targetComp?.id });
+      navigateView('pre_exercise', { competencyId: targetComp?.id, sessionType: type });
     }
   };
 
@@ -540,6 +693,10 @@ export const App: React.FC = () => {
 
   const handleStartMisconceptionDrill = () => {
     launchSession('misconception_drill', null, true);
+  };
+
+  const handleStartColdTransferProbe = () => {
+    launchSession('cold_transfer_probe', null, true);
   };
 
   const handleOpenProgressLog = () => {
@@ -625,6 +782,47 @@ export const App: React.FC = () => {
     });
   };
 
+  const buildM22AttemptEvents = (
+    course: Course,
+    telemetryList: QuestionTelemetry[],
+    questionsList: Question[],
+    tierSnapshotBefore: Record<string, MasteryTier>,
+    mode: SessionType | 'iron_exam'
+  ): M22AttemptEvent[] => {
+    const qById = new Map<string, Question>();
+    for (const q of course.questions) qById.set(q.id, q);
+    for (const q of questionsList) qById.set(q.id, q);
+    const nowIso = new Date().toISOString();
+    const isProbe = mode === 'cold_transfer_probe';
+
+    return telemetryList.map((t, idx) => {
+      const q = qById.get(t.question_id);
+      const cid = t.competency_id || q?.competency_id || 'unknown';
+      const wrongAttempts = Math.max(0, t.wrong_attempts ?? (t.is_correct ? 0 : 1));
+      const hintsUsed = Math.max(0, t.hints_used ?? 0);
+      return {
+        id: `m22_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: nowIso,
+        course_id: course.course_id,
+        competency_id: cid,
+        question_id: t.question_id,
+        ...(q?.archetype ? { archetype: q.archetype } : {}),
+        modality: t.question_type || q?.type || 'multiple_choice_7_options',
+        ...(q?.difficulty ? { difficulty: q.difficulty } : {}),
+        mastery_tier_before: tierSnapshotBefore[cid] ?? 'Not started',
+        session_mode: mode,
+        is_unlabeled_probe: isProbe,
+        first_attempt_correct: Boolean(t.is_correct) && wrongAttempts === 0,
+        final_correct: Boolean(t.is_correct),
+        wrong_attempts: wrongAttempts,
+        exhausted_4_strikes: wrongAttempts >= 4,
+        hints_used: hintsUsed,
+        triggered_distractor_ids: Array.from(new Set(t.matched_distractor_ids || [])),
+        seconds_spent: Math.max(0, t.seconds_spent ?? 0),
+      };
+    });
+  };
+
   // Handle Practice / Iron Exam Session Completion with Milestone 14, 14-B & 20 Telemetry
   const handleCompleteSession = (
     score: number,
@@ -636,6 +834,14 @@ export const App: React.FC = () => {
     clearActiveSession();
     setRestoredSnapshot(null);
     const sec = totalSeconds ?? 0;
+
+    // M22 Phase 0: Snapshot mastery_tier_before BEFORE any masteryStorage mutation
+    const tierSnapshotBefore: Record<string, MasteryTier> = {};
+    if (activeCourse) {
+      for (const comp of activeCourse.competencies) {
+        tierSnapshotBefore[comp.id] = mastery?.competencies?.[comp.id]?.status ?? 'Not started';
+      }
+    }
 
     // M14-B Module 1 -> Routing Gate -> Module 2
     if (sessionType === 'challenge' && activeCourse && adaptiveExamState?.phase === 'module1') {
@@ -730,6 +936,18 @@ export const App: React.FC = () => {
       const combinedTotal = adaptiveExamState.mod1Result.total + total;
       const combinedSeconds = adaptiveExamState.mod1Result.elapsedSeconds + sec;
 
+      if (combinedTelemetry.length > 0) {
+        appendM22Events(
+          buildM22AttemptEvents(
+            activeCourse,
+            combinedTelemetry,
+            combinedQuestions,
+            tierSnapshotBefore,
+            'iron_exam'
+          )
+        );
+      }
+
       const summary = updateCourseChallengeWithSkillCalibration(
         activeCourse,
         combinedTelemetry,
@@ -767,6 +985,18 @@ export const App: React.FC = () => {
     setSessionTotal(total);
 
     if (activeCourse) {
+      if (telemetryData && telemetryData.length > 0) {
+        appendM22Events(
+          buildM22AttemptEvents(
+            activeCourse,
+            telemetryData,
+            sessionQuestions,
+            tierSnapshotBefore,
+            sessionType === 'challenge' ? 'iron_exam' : sessionType
+          )
+        );
+      }
+
       if (
         (sessionType === 'challenge' ||
           sessionType === 'mastery_challenge' ||
@@ -837,6 +1067,13 @@ export const App: React.FC = () => {
           });
           setLatestMisconceptions([]);
         }
+      } else if (sessionType === 'cold_transfer_probe') {
+        setChallengeSummary(null);
+        setLatestTimingData({
+          totalSeconds: sec,
+          avgSeconds: total > 0 ? sec / total : 0,
+        });
+        setLatestMisconceptions([]);
       }
     }
 
@@ -851,7 +1088,11 @@ export const App: React.FC = () => {
       handleBeginAdaptiveChallenge();
       return;
     }
-    if (sessionType === 'mastery_challenge' || sessionType === 'misconception_drill') {
+    if (
+      sessionType === 'mastery_challenge' ||
+      sessionType === 'misconception_drill' ||
+      sessionType === 'cold_transfer_probe'
+    ) {
       launchSession(sessionType, null, true);
       return;
     }
@@ -870,6 +1111,7 @@ export const App: React.FC = () => {
       !sessionCompetency ||
       sessionType === 'mastery_challenge' ||
       sessionType === 'misconception_drill' ||
+      sessionType === 'cold_transfer_probe' ||
       sessionType === 'challenge'
     ) {
       navigateView('overview');
@@ -937,6 +1179,7 @@ export const App: React.FC = () => {
               onStartCourseChallenge={handleOpenCourseChallenge}
               onStartMasteryChallenge={handleStartMasteryChallenge}
               onStartMisconceptionDrill={handleStartMisconceptionDrill}
+              onStartColdTransferProbe={handleStartColdTransferProbe}
               onOpenProgressLog={handleOpenProgressLog}
             />
           </main>
@@ -971,6 +1214,7 @@ export const App: React.FC = () => {
               onBackToCourse={() => navigateView('overview')}
               onStartMasteryChallenge={handleStartMasteryChallenge}
               onStartMisconceptionDrill={handleStartMisconceptionDrill}
+              onStartColdTransferProbe={handleStartColdTransferProbe}
             />
           </main>
         </div>
@@ -1102,7 +1346,9 @@ export const App: React.FC = () => {
           key={sessionKey}
           sessionTitle={
             restoredSnapshot?.sessionTitle ||
-            (sessionType === 'mastery_challenge'
+            (sessionType === 'cold_transfer_probe'
+              ? 'Sonda de Transferencia Fría (Sin Etiqueta)'
+              : sessionType === 'mastery_challenge'
               ? `Mastery Challenge • ${activeCourse?.title || 'Curso'}`
               : sessionType === 'misconception_drill'
               ? `Practicar mis Trampas • ${activeCourse?.title || 'Curso'}`
@@ -1113,6 +1359,7 @@ export const App: React.FC = () => {
               : sessionCompetency?.name || 'Practice')
           }
           sessionType={sessionType}
+          isColdTransferProbe={sessionType === 'cold_transfer_probe'}
           questions={sessionQuestions}
           courseId={activeCourse?.course_id}
           competencyId={sessionCompetency?.id ?? null}

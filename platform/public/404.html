@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Top's Academy</title>
+    <script>
+      (function () {
+        var l = window.location;
+        var pathSegmentsToKeep = l.pathname.indexOf('/Tops_academy/') === 0 || l.pathname === '/Tops_academy' ? 1 : 0;
+        var base = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+        var rest = l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~');
+        var query = l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '';
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          base + '/?p=/' + rest + query + l.hash
+        );
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

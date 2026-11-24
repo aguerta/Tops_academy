@@ -483,6 +483,8 @@ export interface Question {
   type: QuestionType;
   interaction_type?: QuestionType;
   difficulty?: 'easy' | 'medium' | 'hard';
+  archetype?: 'direct' | 'inverse' | 'perturbation' | 'boundary_or_edge_case' | string;
+  assumption_id?: string;
   stem: string;
   graph?: GraphSpec;
   options: QuestionOption[];
@@ -537,7 +539,8 @@ export type SessionType =
   | 'test'
   | 'challenge'
   | 'mastery_challenge'
-  | 'misconception_drill';
+  | 'misconception_drill'
+  | 'cold_transfer_probe';
 
 export type FsrsRating = 1 | 2 | 3 | 4; // 1=Again, 2=Hard, 3=Good, 4=Easy
 
@@ -791,4 +794,25 @@ export interface AdaptiveExamSummary {
   projectedGrade20: number;
   avgSecondsPerQuestion: number;
   unitBreakdown: AdaptiveUnitBreakdownItem[];
+}
+
+export interface M22AttemptEvent {
+  id: string;
+  timestamp: string;
+  course_id: string;
+  competency_id: string;
+  question_id: string;
+  archetype?: 'direct' | 'inverse' | 'perturbation' | 'boundary_or_edge_case' | string;
+  modality: QuestionType;
+  difficulty?: 'easy' | 'medium' | 'hard' | string;
+  mastery_tier_before: MasteryTier;
+  session_mode: SessionType | 'iron_exam';
+  is_unlabeled_probe: boolean;
+  first_attempt_correct: boolean;
+  final_correct: boolean;
+  wrong_attempts: number;
+  exhausted_4_strikes: boolean;
+  hints_used: number;
+  triggered_distractor_ids: string[];
+  seconds_spent: number;
 }

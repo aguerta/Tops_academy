@@ -157,10 +157,14 @@ export function prepareSessionQuestions(
 export function buildInterleavedSessionQuestions(
   allQuestions: Question[],
   competencies: Competency[],
-  sessionType: 'practice' | 'quiz' | 'test' | 'challenge',
+  sessionType: 'practice' | 'quiz' | 'test' | 'challenge' | 'cold_transfer_probe',
   targetComp: Competency | null,
   masteryTier?: MasteryTier
 ): Question[] {
+  if (sessionType === 'cold_transfer_probe') {
+    return buildColdTransferProbeQuestions(allQuestions);
+  }
+
   if (sessionType === 'challenge') {
     const shuffled = prepareSessionQuestions(allQuestions, true, undefined, masteryTier);
     return shuffled.slice(0, Math.min(30, shuffled.length));
@@ -678,4 +682,63 @@ export function buildMisconceptionSession(
   }
 
   return prepareSessionQuestions(shuffleArray(selected), false);
+}
+
+/**
+ * M22 Phase 0: Builds an unlabeled Cold Transfer Probe session filtering strictly to
+ * free-response / construction items (`open_symbolic`, `fill_in_the_blank`, and
+ * `adversarial_break` with `mode === 'counterexample'`), maximizing cross-competency
+ * spread before repeating any competency, shuffling via Fisher-Yates, and normalizing.
+ */
+export function buildColdTransferProbeQuestions(
+  allQuestions: Question[],
+  maxItems: number = 8
+): Question[] {
+  if (!Array.isArray(allQuestions) || allQuestions.length === 0 || maxItems <= 0) {
+    return [];
+  }
+
+  const eligible = allQuestions.filter((q) => {
+    if (!q) return false;
+    if (q.type === 'open_symbolic' || q.type === 'fill_in_the_blank') {
+      return true;
+    }
+    if (q.type === 'adversarial_break' && q.adversarial_break?.mode === 'counterexample') {
+      return true;
+    }
+    return false;
+  });
+
+  if (eligible.length === 0) {
+    return [];
+  }
+
+  const byComp = new Map<string, Question[]>();
+  for (const q of shuffleArray(eligible)) {
+    const compKey = (q.competency_id || '__unassigned__').trim().toLowerCase() || '__unassigned__';
+    const bucket = byComp.get(compKey) || [];
+    bucket.push(q);
+    byComp.set(compKey, bucket);
+  }
+
+  const compKeys = shuffleArray(Array.from(byComp.keys()));
+  const selected: Question[] = [];
+  const usedIds = new Set<string>();
+  let madeProgress = true;
+
+  while (selected.length < maxItems && madeProgress) {
+    madeProgress = false;
+    for (const key of compKeys) {
+      if (selected.length >= maxItems) break;
+      const pool = byComp.get(key) || [];
+      const nextQ = pool.find((q) => !usedIds.has(q.id));
+      if (nextQ) {
+        usedIds.add(nextQ.id);
+        selected.push(nextQ);
+        madeProgress = true;
+      }
+    }
+  }
+
+  return shuffleArray(selected).map((q) => normalizeQuestion(q));
 }
