@@ -1,10 +1,100 @@
 import * as math from 'mathjs';
 import { FillBlankAnswer } from '../types';
 
+export const MATH_BUILTINS = new Set([
+  'sin', 'cos', 'tan', 'sec', 'csc', 'cot',
+  'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
+  'exp', 'log', 'ln', 'sqrt', 'abs',
+  'floor', 'ceil', 'round', 'min', 'max', 'pow',
+  'pi', 'e', 'Math',
+]);
+
+const MATH_FUNCS = new Set([
+  'sin', 'cos', 'tan', 'sec', 'csc', 'cot',
+  'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
+  'exp', 'log', 'ln', 'sqrt', 'abs',
+  'floor', 'ceil', 'round', 'min', 'max', 'pow', 'Math',
+]);
+
+const POWER_FUNCS_RE = /(?<![a-zA-Z_])(sin|cos|tan|sec|csc|cot|asin|acos|atan|sinh|cosh|tanh|log|ln)\s*\^\s*(\([^()]+\)|-?\d+)\s*\(/g;
+
+function normalizeFunctionPowers(expr: string): string {
+  let s = expr;
+  let safety = 0;
+  while (safety < 20) {
+    safety++;
+    POWER_FUNCS_RE.lastIndex = 0;
+    const match = POWER_FUNCS_RE.exec(s);
+    if (!match) break;
+
+    const fnName = match[1] === 'ln' ? 'log' : match[1];
+    const expStr = match[2];
+    const openParenIdx = match.index + match[0].length - 1;
+    let depth = 1;
+    let i = openParenIdx + 1;
+    while (i < s.length && depth > 0) {
+      if (s[i] === '(') depth++;
+      else if (s[i] === ')') depth--;
+      i++;
+    }
+    if (depth !== 0) break;
+
+    const arg = s.slice(openParenIdx + 1, i - 1);
+    const replacement = `(${fnName}(${arg}))^${expStr}`;
+    s = s.slice(0, match.index) + replacement + s.slice(i);
+  }
+  return s;
+}
+
+function splitConcatenatedIdentifiers(expr: string, allowedVariables?: string[]): string {
+  if (!allowedVariables || allowedVariables.length === 0) return expr;
+
+  const allowedSet = new Set(allowedVariables.map((v) => v.trim()).filter(Boolean));
+  const dictTokens = Array.from(new Set([...allowedSet, ...MATH_BUILTINS]))
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+
+  if (dictTokens.length === 0) return expr;
+
+  return expr.replace(/(?<![a-zA-Z_])[a-zA-Z_][a-zA-Z0-9_]*\b/g, (ident) => {
+    if (allowedSet.has(ident) || MATH_BUILTINS.has(ident)) {
+      return ident;
+    }
+
+    const n = ident.length;
+    const dp: Array<string[] | null> = new Array(n + 1).fill(null);
+    dp[0] = [];
+
+    for (let i = 0; i < n; i++) {
+      if (dp[i] === null) continue;
+      for (const tok of dictTokens) {
+        if (ident.startsWith(tok, i)) {
+          const nextIdx = i + tok.length;
+          const candidate = [...dp[i]!, tok === 'ln' ? 'log' : tok];
+          if (dp[nextIdx] === null || candidate.length < dp[nextIdx]!.length) {
+            dp[nextIdx] = candidate;
+          }
+        }
+      }
+    }
+
+    const segmented = dp[n];
+    if (segmented && segmented.length >= 2) {
+      return segmented.join(' * ');
+    }
+    return ident;
+  });
+}
+
+function extractMathVariables(normExpr: string): string[] {
+  const matches = normExpr.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+  return Array.from(new Set(matches.filter((v) => !MATH_BUILTINS.has(v))));
+}
+
 /**
  * Normalizes a LaTeX or math expression string into clean mathematical syntax.
  */
-export function normalizeMathExpression(raw: string): string {
+export function normalizeMathExpression(raw: string, allowedVariables?: string[]): string {
   if (!raw) return '';
 
   let s = raw.trim();
@@ -13,6 +103,12 @@ export function normalizeMathExpression(raw: string): string {
   if (/\+\+|\/\//.test(s)) {
     return 'SYNTAX_ERROR';
   }
+
+  // Normalize Python power, LaTeX/natural log, and braced exponents centrally
+  s = s.replace(/\*\*/g, '^');
+  s = s.replace(/\\ln\b/g, 'log');
+  s = s.replace(/(?<![a-zA-Z_])ln\s*\(/g, 'log(');
+  s = s.replace(/\^\{([^{}]+)\}/g, '^($1)');
 
   // Replace unicode minus, multiplication/division, and Unicode Greek / sqrt symbols
   s = s.replace(/[\u2212\u2013\u2014]/g, '-');
@@ -71,12 +167,19 @@ export function normalizeMathExpression(raw: string): string {
   s = s.replace(/(?<=\d),(?=\d)/g, '.');
   s = s.replace(/(^|[^0-9a-zA-Z_]),(?=\d+)/g, '$10.');
 
-  // Handle implicit multiplication cleanly:
-  const mathFuncs = new Set([
-    'sin', 'cos', 'tan', 'sec', 'csc', 'cot',
-    'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
-    'exp', 'log', 'ln', 'sqrt', 'abs', 'Math'
-  ]);
+  // Normalize trig/log power notation like sin^2(x) -> (sin(x))^2
+  s = normalizeFunctionPowers(s);
+
+  // Domain-aware splitting of concatenated identifiers (e.g. 2xy -> 2 * x * y, xln(x) -> x * log(x))
+  s = splitConcatenatedIdentifiers(s, allowedVariables);
+
+  // Mask scientific notation literals (e.g. 1e-5, 2.5E+3) before implicit-mul digit*letter rule
+  const sciLiterals: string[] = [];
+  s = s.replace(/\b\d+(?:\.\d+)?[eE][+-]?\d+\b/g, (m) => {
+    const idx = sciLiterals.length;
+    sciLiterals.push(m);
+    return `\uE000${idx}\uE001`;
+  });
 
   // 1. Juxtaposed parentheses: ) ( -> ) * (
   s = s.replace(/\)\s*\(/g, ') * (');
@@ -90,7 +193,7 @@ export function normalizeMathExpression(raw: string): string {
   // 4. Identifier followed by opening paren, EXCEPT if identifier is a math function:
   // e.g. x(x+1) -> x * (x+1), but sin(x) -> sin(x)
   s = s.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, (match, id) => {
-    if (mathFuncs.has(id)) return match;
+    if (MATH_FUNCS.has(id)) return match;
     return `${id} * (`;
   });
 
@@ -107,10 +210,13 @@ export function normalizeMathExpression(raw: string): string {
   while (prev !== s) {
     prev = s;
     s = s.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b/g, (match, id1, id2) => {
-      if (mathFuncs.has(id1)) return match;
+      if (MATH_FUNCS.has(id1)) return match;
       return `${id1} * ${id2}`;
     });
   }
+
+  // Restore scientific notation literals
+  s = s.replace(/\uE000(\d+)\uE001/g, (_, idx) => sciLiterals[Number(idx)] ?? '');
 
   // Remove remaining spaces
   s = s.replace(/\s+/g, '');
@@ -180,8 +286,9 @@ export function checkMathEquivalence(
     : defaultTolerance;
 
   const rawStudent = studentInput.trim();
-  const normStudent = normalizeMathExpression(rawStudent);
   const normTarget = normalizeMathExpression(targetExpr);
+  const targetVars = extractMathVariables(normTarget);
+  const normStudent = normalizeMathExpression(rawStudent, targetVars);
 
   // 1. Direct match with target or any accepted equivalent
   if (normStudent === normTarget) {
@@ -250,15 +357,7 @@ export function checkMathEquivalence(
 
   // 4. Monte Carlo Numerical Sampling
   // Extract all alphabetic variable names (e.g., alpha, sigma, n, x)
-  const extractVars = (expr: string): string[] => {
-    const matches = expr.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
-    // Exclude mathematical constants and built-ins
-    const mathBuiltins = new Set(['sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', 'pi', 'e', 'Math']);
-    return Array.from(new Set(matches.filter((v) => !mathBuiltins.has(v))));
-  };
-
-  const studentVars = extractVars(normStudent);
-  const targetVars = extractVars(normTarget);
+  const studentVars = extractMathVariables(normStudent);
   const allVars = Array.from(new Set([...studentVars, ...targetVars]));
 
   if (allVars.length > 0) {

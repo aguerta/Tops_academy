@@ -89,21 +89,23 @@ const MATH_BUILTINS = new Set([
  * Normalizes student symbolic input (Unicode Greek, natural log `ln(...)`, `**` power,
  * implicit multiplication via `normalizeMathExpression`) into clean `mathjs` syntax.
  */
-export function normalizeSymbolicInput(raw: string): string {
+export function normalizeSymbolicInput(raw: string, allowedVariables?: string[]): string {
   if (!raw) return '';
   let s = raw.trim();
   for (const [pat, repl] of UNICODE_TO_IDENT) {
     s = s.replace(pat, repl);
   }
-  s = s.replace(/\*\*/g, '^');
-  s = s.replace(/\\ln\b/g, 'log');
-  s = s.replace(/\bln\s*\(/g, 'log(');
-  s = s.replace(/\^\{([^{}]+)\}/g, '^($1)');
-  s = normalizeMathExpression(s);
+  s = normalizeMathExpression(s, allowedVariables);
   // Restore log(...) after normalizeMathExpression just in case
   s = s.replace(/\bln\(/g, 'log(');
   return s;
 }
+
+const FUNCTION_ONLY_BUILTINS = new Set([
+  'sin', 'cos', 'tan', 'sec', 'csc', 'cot',
+  'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
+  'exp', 'log', 'sqrt', 'abs', 'floor', 'ceil', 'round', 'min', 'max', 'pow',
+]);
 
 /**
  * Validates symbolic syntax without eval/Function and generates a live KaTeX preview string.
@@ -116,31 +118,48 @@ export function checkSymbolicSyntax(
   if (!trimmed) {
     return { valid: false, normalized: '', latexPreview: '', error: 'Expresión vacía.' };
   }
-  const normalized = normalizeSymbolicInput(trimmed);
+  const normalized = normalizeSymbolicInput(trimmed, allowedVariables);
   if (!normalized || normalized === 'SYNTAX_ERROR') {
     return { valid: false, normalized: '', latexPreview: '', error: 'Operador o sintaxis matemática inválida.' };
   }
   try {
     const ast = math.parse(normalized);
-    if (allowedVariables && allowedVariables.length > 0) {
-      const allowedSet = new Set(allowedVariables.map((v) => v.trim()));
-      const unknownVars: string[] = [];
-      ast.traverse((node: math.MathNode) => {
-        if (node.type === 'SymbolNode') {
-          const sym = (node as math.SymbolNode).name;
-          if (!MATH_BUILTINS.has(sym) && !allowedSet.has(sym)) {
-            unknownVars.push(sym);
-          }
+    const bareFunctions: string[] = [];
+    const unknownVars: string[] = [];
+    const allowedSet = allowedVariables && allowedVariables.length > 0
+      ? new Set(allowedVariables.map((v) => v.trim()))
+      : null;
+
+    ast.traverse((node: math.MathNode, _path: string, parent: math.MathNode | null) => {
+      if (node.type === 'SymbolNode') {
+        const isFnHead = Boolean(parent && parent.type === 'FunctionNode' && (parent as math.FunctionNode).fn === node);
+        const sym = (node as math.SymbolNode).name;
+        if (!isFnHead && FUNCTION_ONLY_BUILTINS.has(sym)) {
+          bareFunctions.push(sym);
+          return;
         }
-      });
-      if (unknownVars.length > 0) {
-        return {
-          valid: false,
-          normalized,
-          latexPreview: ast.toTex(),
-          error: `Variable no declarada en el dominio: ${Array.from(new Set(unknownVars)).join(', ')}`,
-        };
+        if (allowedSet && !MATH_BUILTINS.has(sym) && !allowedSet.has(sym)) {
+          unknownVars.push(sym);
+        }
       }
+    });
+
+    if (bareFunctions.length > 0) {
+      return {
+        valid: false,
+        normalized,
+        latexPreview: ast.toTex(),
+        error: `Uso inválido de función sin argumento: ${Array.from(new Set(bareFunctions)).join(', ')}`,
+      };
+    }
+
+    if (unknownVars.length > 0) {
+      return {
+        valid: false,
+        normalized,
+        latexPreview: ast.toTex(),
+        error: `Variable no declarada en el dominio: ${Array.from(new Set(unknownVars)).join(', ')}`,
+      };
     }
     return { valid: true, normalized, latexPreview: ast.toTex() };
   } catch (err) {
@@ -184,28 +203,42 @@ export function areSymbolicExpressionsEquivalent(
   targetAnswer: FillBlankAnswer | string | number,
   allowedVariables?: string[]
 ): boolean {
-  const normStudent = normalizeSymbolicInput(studentRaw);
-  if (!normStudent || normStudent === 'SYNTAX_ERROR') {
-    return false;
-  }
-
   let normalizedTarget: FillBlankAnswer | string | number = targetAnswer;
   if (typeof targetAnswer === 'string') {
-    normalizedTarget = normalizeSymbolicInput(targetAnswer);
+    normalizedTarget = normalizeSymbolicInput(targetAnswer, allowedVariables);
   } else if (typeof targetAnswer === 'object' && targetAnswer !== null) {
     const rawMain =
       targetAnswer.expression ?? targetAnswer.canonical_algebraic ?? targetAnswer.value ?? '';
     const eqs = Array.isArray(targetAnswer.accepted_equivalents)
-      ? targetAnswer.accepted_equivalents.map((e) => normalizeSymbolicInput(String(e)))
+      ? targetAnswer.accepted_equivalents.map((e) => normalizeSymbolicInput(String(e), allowedVariables))
       : undefined;
     normalizedTarget = {
       ...targetAnswer,
-      expression: normalizeSymbolicInput(String(rawMain)),
+      expression: normalizeSymbolicInput(String(rawMain), allowedVariables),
       ...(targetAnswer.canonical_algebraic !== undefined
-        ? { canonical_algebraic: normalizeSymbolicInput(String(targetAnswer.canonical_algebraic)) }
+        ? { canonical_algebraic: normalizeSymbolicInput(String(targetAnswer.canonical_algebraic), allowedVariables) }
         : {}),
       ...(eqs ? { accepted_equivalents: eqs } : {}),
     };
+  }
+
+  const targetMainStr =
+    typeof normalizedTarget === 'string'
+      ? normalizedTarget
+      : typeof normalizedTarget === 'number'
+        ? String(normalizedTarget)
+        : String(
+            normalizedTarget.expression ||
+              normalizedTarget.canonical_algebraic ||
+              normalizedTarget.value ||
+              ''
+          );
+  const targetExtractedVars = extractExprVariables(targetMainStr);
+  const effectiveVars = Array.from(new Set([...(allowedVariables || []), ...targetExtractedVars]));
+
+  const normStudent = normalizeSymbolicInput(studentRaw, effectiveVars);
+  if (!normStudent || normStudent === 'SYNTAX_ERROR') {
+    return false;
   }
 
   if (checkMathEquivalence(normStudent, normalizedTarget)) {
@@ -344,7 +377,7 @@ export function validateSymbolicAnswer(
 
   // Check diagnostic distractors to diagnose specific algebraic/conceptual traps
   if (Array.isArray(diagnosticDistractors) && diagnosticDistractors.length > 0) {
-    const normInput = normalizeSymbolicInput(trimmed);
+    const normInput = normalizeSymbolicInput(trimmed, symbolicConfig?.variables);
     for (const dd of diagnosticDistractors) {
       if (!dd) continue;
       if (dd.match_type === 'regex' && typeof dd.expression === 'string') {
@@ -370,8 +403,9 @@ export function validateSymbolicAnswer(
       };
       const trapTargetExpr = dd.expression ?? dd.value ?? '';
       if (
-        (typeof trapTargetExpr === 'string' && normalizeSymbolicInput(trapTargetExpr) === normInput) ||
-        areSymbolicExpressionsEquivalent(trimmed, trapObj)
+        (typeof trapTargetExpr === 'string' &&
+          normalizeSymbolicInput(trapTargetExpr, symbolicConfig?.variables) === normInput) ||
+        areSymbolicExpressionsEquivalent(trimmed, trapObj, symbolicConfig?.variables)
       ) {
         return {
           isCorrect: false,

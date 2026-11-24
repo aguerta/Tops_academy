@@ -14,6 +14,7 @@ fs.writeFileSync(
   entryFile,
   `
 export * from '${repoPlatformSrc}/services/symbolicValidator.ts';
+export * from '${repoPlatformSrc}/utils/mathEquivalence.ts';
 export * from '${repoPlatformSrc}/components/canvas/TopologyValidator.ts';
 export * from '${repoPlatformSrc}/utils/questionUtils.ts';
 export * from '${repoPlatformSrc}/utils/socraticPrompt.ts';
@@ -81,6 +82,37 @@ try {
 
   // Natural log alias
   assert.equal(m.validateSymbolicAnswer('ln(x)', { expression: 'log(x)' }).isCorrect, true);
+
+  // Additional implicit/symbolic edge cases (open_symbolic + fill_in_the_blank)
+  const polyTarget = { expression: '3*x + 5*v**2', tolerance: 0.001 };
+  const polyCfg = { variables: ['x', 'v'] };
+  assert.equal(m.validateSymbolicAnswer('3x+5v^2', polyTarget, undefined, polyCfg).isCorrect, true);
+  assert.equal(m.validateSymbolicAnswer('3x+5(v^2)', polyTarget, undefined, polyCfg).isCorrect, true);
+  assert.equal(m.validateSymbolicAnswer('3x+5(v)^2', polyTarget, undefined, polyCfg).isCorrect, true);
+  assert.equal(m.validateSymbolicAnswer('(3)x+5v^(2)', polyTarget, undefined, polyCfg).isCorrect, true);
+  assert.equal(m.validateSymbolicAnswer('5v^2+3x', polyTarget, undefined, polyCfg).isCorrect, true);
+
+  // fill_in_the_blank checkMathEquivalence directly
+  assert.equal(m.checkMathEquivalence('3x+5v^2', '3*x + 5*v**2'), true);
+  assert.equal(m.checkMathEquivalence('3x+5(v^2)', '3*x + 5*v**2'), true);
+  assert.equal(m.checkMathEquivalence('ln(x)', 'log(x)'), true);
+  assert.equal(m.checkMathEquivalence('2ln(x)', '2*log(x)'), true);
+  assert.equal(m.checkMathEquivalence('2xy', '2*x*y'), true);
+  assert.equal(m.checkMathEquivalence('12tv', '12*t*v'), true);
+  assert.equal(m.checkMathEquivalence('xln(x)', 'x*log(x)'), true);
+  assert.equal(m.checkMathEquivalence('xe^x', 'x*exp(x)'), true);
+  assert.equal(m.checkMathEquivalence('xsin(x)', 'x*sin(x)'), true);
+  assert.equal(m.checkMathEquivalence('sin^2(x)', 'sin(x)^2'), true);
+  assert.equal(m.checkMathEquivalence('ln^2(x)', 'log(x)^2'), true);
+  assert.equal(m.checkMathEquivalence('1e-5', 0.00001), true);
+
+  // Domain-aware checkSymbolicSyntax: splits valid concatenated vars, preserves multi-char declared vars, rejects undeclared
+  assert.equal(m.checkSymbolicSyntax('2xy', ['x', 'y']).valid, true);
+  assert.equal(m.checkSymbolicSyntax('xln(x)', ['x']).valid, true);
+  assert.equal(m.checkSymbolicSyntax('sin^2(x)', ['x']).valid, true);
+  assert.equal(m.checkSymbolicSyntax('xy + x_1', ['xy', 'x_1']).valid, true);
+  assert.equal(m.checkSymbolicSyntax('2xz', ['x', 'y']).valid, false);
+  assert.equal(m.checkSymbolicSyntax('sin + 1', ['x']).valid, false);
 
   // 2. FIB with diagnostic_distractors
   const fibTrap = m.validateSymbolicAnswer(
