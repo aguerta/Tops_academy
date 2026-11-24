@@ -239,7 +239,7 @@ def _check_m20_rigor_for_instance(
     """Enforce M2.0 structural rigor on the first assembled instance of a template."""
     if interaction_type == "multiple_select":
         opts = assembled_q.get("options") or []
-        if strict and isinstance(opts, list) and not (5 <= len(opts) <= 6):
+        if strict and isinstance(opts, list) and len(opts) != 7:
             errors.append(format_diagnostic_error(
                 "MS-MIN-OPTIONS: OPCIONES INSUFICIENTES EN MULTIPLE_SELECT",
                 competency_id,
@@ -247,12 +247,27 @@ def _check_m20_rigor_for_instance(
                 tpl_id,
                 "options",
                 f"len(options)={len(opts)}",
-                f"[-] [MS-MIN-OPTIONS] En '{tpl_id}': multiple_select en modo estricto exige 5 a 6 opciones (encontradas {len(opts)}).",
+                f"[-] [MS-MIN-OPTIONS] En '{tpl_id}': multiple_select en modo estricto exige exactamente 7 opciones (encontradas {len(opts)}).",
                 [
-                    "Ampliar la lista 'options' a 5 o 6 opciones diagnósticas (variando cuántas son verdaderas).",
-                    "Añadir al menos un distractor adicional con 'distractor_id' y 'error_rationale' dinámico.",
+                    "Ajustar la lista 'options' a exactamente 7 opciones diagnósticas (2 a 5 verdaderas y 2 a 5 falsas).",
+                    "Añadir los distractores faltantes con 'distractor_id' y 'error_rationale' dinámico.",
                 ],
             ))
+        if strict and isinstance(opts, list) and opts:
+            k_corr = sum(1 for o in opts if isinstance(o, dict) and o.get("is_correct") is True)
+            if not (2 <= k_corr <= 5):
+                errors.append(format_diagnostic_error(
+                    "MS-CORRECT-RANGE: CANTIDAD DE CORRECTAS FUERA DE RANGO EN MULTIPLE_SELECT",
+                    competency_id,
+                    tpl_id,
+                    tpl_id,
+                    "options",
+                    f"correct_count={k_corr}",
+                    f"[-] [MS-CORRECT-RANGE] En '{tpl_id}': multiple_select en modo estricto exige entre 2 y 5 opciones correctas (encontradas {k_corr}).",
+                    [
+                        "Ajustar el número de opciones con 'is_correct': True al rango [2..5] sobre las 7 opciones.",
+                    ],
+                ))
         if isinstance(opts, list) and opts:
             t_opts = [str(o.get("content") or o.get("text") or "") for o in opts if isinstance(o, dict) and o.get("is_correct") is True]
             f_opts = [str(o.get("content") or o.get("text") or "") for o in opts if isinstance(o, dict) and not o.get("is_correct")]
@@ -267,36 +282,6 @@ def _check_m20_rigor_for_instance(
                     _logger.warning(w_msg)
                     if warnings_out is not None:
                         warnings_out.append(w_msg)
-
-    elif interaction_type == "invariant_canvas":
-        ic = assembled_q.get("invariant_canvas")
-        if strict and isinstance(ic, dict) and str(ic.get("mode") or "cartesian").strip().lower() == "cartesian":
-            fixed_c = ic.get("fixed_curves") or []
-            inter_c = ic.get("interactive_curves") or []
-            sliders = ic.get("sliders") or []
-            ineq = ic.get("inequality")
-            invs = ic.get("invariants") or []
-            if (
-                len(fixed_c) > 0
-                and len(inter_c) == 0
-                and len(sliders) == 0
-                and not ineq
-                and len(invs) == 1
-                and isinstance(invs[0], dict)
-                and str(invs[0].get("kind") or "").strip() == "point_coords"
-            ):
-                errors.append(format_diagnostic_error(
-                    "CANVAS-TRIVIAL-1PT: LIENZO TRIVIAL DE 1 PUNTO SOBRE CURVA FIJA",
-                    competency_id,
-                    tpl_id,
-                    tpl_id,
-                    "invariant_canvas",
-                    "fixed_curves>0, interactive_curves=0, sliders=0, 1x point_coords",
-                    f"[-] [CANVAS-TRIVIAL-1PT] En '{tpl_id}': la curva solución ya está dibujada en 'fixed_curves' y solo pide ubicar 1 punto P1.",
-                    [
-                        "Usa 'interactive_curves' o 'sliders' para que el estudiante construya/ajuste la curva, o exige >= 2 invariantes no triviales.",
-                    ],
-                ))
 
     elif interaction_type == "concept_matching":
         cm = assembled_q.get("concept_matching")
@@ -373,17 +358,18 @@ def _check_competency_rigor_diversity(
 
     if strict and len(ms_by_tpl) >= 2:
         all_counts = {c for cnts in ms_by_tpl.values() for c in cnts}
-        if all_counts == {2}:
+        if len(all_counts) == 1:
+            only_c = next(iter(all_counts))
             errs.append(format_diagnostic_error(
-                "MS-CORRECT-COUNT-DIVERSITY: TODAS LAS PLANTILLAS MS TIENEN 2 CORRECTAS",
+                "MS-CORRECT-COUNT-DIVERSITY: TODAS LAS PLANTILLAS MS TIENEN LA MISMA CANTIDAD DE CORRECTAS",
                 cid,
                 ", ".join(sorted(ms_by_tpl)),
                 cid,
                 "multiple_select.options",
-                "correct_count == 2 en 100% de plantillas MS",
-                f"[-] [MS-CORRECT-COUNT-DIVERSITY] En '{cid}': todas las plantillas multiple_select ({len(ms_by_tpl)}) tienen exactamente 2 opciones correctas.",
+                f"correct_count == {only_c} en 100% de plantillas MS",
+                f"[-] [MS-CORRECT-COUNT-DIVERSITY] En '{cid}': todas las plantillas multiple_select ({len(ms_by_tpl)}) tienen exactamente {only_c} opciones correctas.",
                 [
-                    "Varía el número de opciones correctas entre plantillas MS (p. ej. 3 correctas en una plantilla y 1 o 2 en otra).",
+                    "Varía el número de opciones correctas entre plantillas MS dentro de 2..5 (p. ej. 2 correctas en una plantilla y 3 o 4 en otra).",
                 ],
             ))
 
@@ -834,16 +820,6 @@ def _extract_instance_distractor_ids(instance: Any) -> Set[str]:
             for dd in p3.get("diagnostic_distractors") or []:
                 if isinstance(dd, dict):
                     _add(dd.get("distractor_id") or dd.get("did"))
-    ic = instance.get("invariant_canvas")
-    if isinstance(ic, dict):
-        for inv in ic.get("invariants") or []:
-            if isinstance(inv, dict):
-                _add(inv.get("distractor_id") or inv.get("did"))
-        ti = ic.get("tree_invariants") or {}
-        if isinstance(ti, dict):
-            _add(ti.get("distractor_id") or ti.get("did"))
-            for tdid in ti.get("distractor_ids") or []:
-                _add(tdid)
     cm = instance.get("concept_matching")
     if isinstance(cm, dict):
         for tg in cm.get("targets") or []:
@@ -906,20 +882,6 @@ def _canonical_answer_signature(q: Dict[str, Any], q_type: str) -> Any:
                     str((o.get("id"), o.get("content")))
                     for o in (_p3.get("options") or []) if isinstance(o, dict)
                 )
-            elif q_type == "invariant_canvas":
-                sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
-                sig_obj["invariants"] = payload.get("invariants")
-                sig_obj["inequality"] = payload.get("inequality")
-                sig_obj["geometry"] = {
-                    "fixed_points": payload.get("fixed_points"),
-                    "interactive_points": payload.get("interactive_points"),
-                    "segments": payload.get("segments"),
-                    "polygons": payload.get("polygons"),
-                    "shaded_regions": payload.get("shaded_regions"),
-                    "sliders": payload.get("sliders"),
-                }
-                sig_obj["target_state"] = payload.get("target_state")
-                sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
             elif q_type == "concept_matching":
                 sig_obj["premises"] = sorted(
                     ((p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)),

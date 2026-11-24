@@ -227,7 +227,6 @@ MODALITY_BLOOM_WEIGHTS: Dict[str, float] = {
     "multiple_choice_7_options": 2.20,
     "concept_matching": 2.80,
     "fill_in_the_blank": 3.25,
-    "invariant_canvas": 3.45,
     "open_symbolic": 3.65,
     "multiple_select": 3.70,
     "proof_dag": 4.25,
@@ -257,7 +256,6 @@ MODALITY_BLOOM_BOUNDS: Dict[str, Tuple[int, int]] = {
     "concept_matching": (1, 4),           # Remember..Analyze
     "fill_in_the_blank": (2, 4),          # Understand..Analyze (direct capped a Apply)
     "open_symbolic": (2, 5),              # Understand..Evaluate
-    "invariant_canvas": (2, 5),           # Understand..Evaluate
     "multiple_select": (2, 5),            # Understand..Evaluate
     "proof_dag": (3, 5),                  # Apply..Evaluate
     "adversarial_break": (4, 5),          # Analyze..Evaluate

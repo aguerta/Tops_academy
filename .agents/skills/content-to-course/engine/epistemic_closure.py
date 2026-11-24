@@ -287,13 +287,6 @@ def _iter_context_texts(instance: Dict[str, Any], norm_type: str) -> Iterable[st
             p1 = um.get("phase1_variables")
             if isinstance(p1, dict) and isinstance(p1.get("prompt"), str):
                 yield p1["prompt"]
-    elif norm_type == "invariant_canvas":
-        ic = instance.get("invariant_canvas")
-        if isinstance(ic, dict):
-            for k in ("x_label", "y_label"):
-                lbl = ic.get(k)
-                if isinstance(lbl, str) and lbl.strip():
-                    yield f"${lbl}$"
 
 
 def check_epistemic_closure(
@@ -307,13 +300,7 @@ def check_epistemic_closure(
     norm_type = str(interaction_type or instance.get("interaction_type") or "").strip().lower()
     stem_syms: Set[str] = set()
     for ctx_txt in _iter_context_texts(instance, norm_type):
-        treat_raw = norm_type == "invariant_canvas" and not ctx_txt.startswith("$")
-        stem_syms.update(extract_symbols_from_text(ctx_txt, treat_raw_as_math=treat_raw, strip_bound=False))
-
-    if norm_type == "invariant_canvas":
-        ic = instance.get("invariant_canvas")
-        if isinstance(ic, dict) and ic.get("mode") == "cartesian":
-            stem_syms.update({"x", "y"})
+        stem_syms.update(extract_symbols_from_text(ctx_txt, treat_raw_as_math=False, strip_bound=False))
 
     sol_syms: Set[str] = set()
     for sol_key in ("detailed_solution", "solution"):

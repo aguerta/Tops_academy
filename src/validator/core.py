@@ -58,7 +58,7 @@ def validate_course_content(
 
     # Pass 2: Schema, Structural, Pedagogical, Psychometric, and Quality validation
     schema_errors = validate_schema(parsed_data)
-    semantic_errors = check_semantic_rules(parsed_data)
+    semantic_errors = check_semantic_rules(parsed_data, strict=strict)
     psychometric_errors = check_psychometrics(parsed_data)
     quality_errors = check_extended_quality_rules(parsed_data)
 

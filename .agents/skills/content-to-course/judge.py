@@ -47,7 +47,6 @@ _HIGH_RISK_INTERACTION_TYPES: Set[str] = {
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
 }
 _DOUBLE_READ_PRIORITY_TYPES: Set[str] = {
     "multiple_choice_7_options",
@@ -268,7 +267,6 @@ _M20_INTERACTION_TYPES = (
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
     "concept_matching",
 )
 
@@ -451,25 +449,6 @@ def _sanitize_m20_judge_item(
             "phase3_formulation": blind_p3,
         }
         gt_record["correct_answer"] = assembled.get("correct_answer") or {}
-        return
-
-    if itype == "invariant_canvas":
-        ic = assembled.get("invariant_canvas") if isinstance(assembled.get("invariant_canvas"), dict) else {}
-        c_mode = str(ic.get("mode") or "cartesian")
-        if c_mode == "tree":
-            blind_keys = ("mode", "width", "height", "interaction_mode", "nodes", "edges")
-        else:
-            blind_keys = (
-                "mode", "x_range", "y_range", "step", "x_label", "y_label", "snap", "sliders",
-                "fixed_curves", "fixed_points", "segments", "polygons", "shaded_regions",
-                "inequality", "interactive_curves", "interactive_points",
-            )
-        judge_item["invariant_canvas"] = {k: ic[k] for k in blind_keys if k in ic}
-        gt_record["correct_answer"] = assembled.get("correct_answer") or {}
-        if c_mode == "cartesian" and isinstance(ic.get("invariants"), list):
-            gt_record["invariants"] = ic["invariants"]
-        elif c_mode == "tree" and isinstance(ic.get("edges"), list):
-            gt_record["edges"] = ic["edges"]
         return
 
     if itype == "concept_matching":
@@ -1518,7 +1497,7 @@ def _validate_ground_truth_item(gt: Dict[str, Any], itype: str) -> None:
                 raise ValueError(
                     f"Ground truth schema violation for '{eff_type}': 'correct_value' must be a non-empty expression"
                 )
-    elif eff_type in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+    elif eff_type in ("proof_dag", "adversarial_break", "unstructured_model", "concept_matching"):
         ca = gt.get("correct_answer")
         if not (isinstance(ca, dict) and len(ca) > 0):
             raise ValueError(
@@ -1768,128 +1747,6 @@ def _check_m20_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tu
         if _normalize_str(u_p3) == _normalize_str(gt_p3):
             return True, ""
         return False, f"unstructured_model phase3 mismatch: got {u_p3!r}, expected {gt_p3!r}"
-
-    if itype == "invariant_canvas":
-        c_mode = str(ca.get("mode") or ans.get("mode") or "cartesian")
-        if c_mode == "tree":
-            edge_id_map: Dict[str, Tuple[str, str]] = {}
-            for ed in (gt.get("edges") or []):
-                if isinstance(ed, dict) and ed.get("id") and ed.get("from") is not None and ed.get("to") is not None:
-                    edge_id_map[str(ed["id"])] = (str(ed["from"]), str(ed["to"]))
-
-            def _norm_tree_edge(e: Any) -> Any:
-                if isinstance(e, (list, tuple)) and len(e) == 2:
-                    return (str(e[0]), str(e[1]))
-                s_e = str(e)
-                return edge_id_map.get(s_e, s_e)
-
-            gt_edges = {_norm_tree_edge(e) for e in (ca.get("required_edges") or [])}
-            u_edges = {_norm_tree_edge(e) for e in (ans.get("required_edges") or [])}
-            if u_edges != gt_edges:
-                return False, f"invariant_canvas tree required_edges mismatch: got {sorted(map(str, u_edges))}"
-            gt_sets = {frozenset(str(x) for x in grp) for grp in (ca.get("required_info_sets") or [])}
-            u_sets = {frozenset(str(x) for x in grp) for grp in (ans.get("required_info_sets") or [])}
-            if u_sets != gt_sets:
-                return False, "invariant_canvas tree required_info_sets mismatch"
-            return True, ""
-        def _norm_cart_state(d_raw: Dict[str, Any]) -> Dict[str, Any]:
-            d_obj = dict(d_raw)
-            if "style" in d_obj and "inequalityStyle" not in d_obj:
-                d_obj["inequalityStyle"] = d_obj["style"]
-            elif "inequalityStyle" in d_obj and "style" not in d_obj:
-                d_obj["style"] = d_obj["inequalityStyle"]
-            if "shade" in d_obj and "inequalityShade" not in d_obj:
-                d_obj["inequalityShade"] = d_obj["shade"]
-            elif "inequalityShade" in d_obj and "shade" not in d_obj:
-                d_obj["shade"] = d_obj["inequalityShade"]
-            reserved = {
-                "points",
-                "sliders",
-                "inequalityStyle",
-                "inequalityShade",
-                "style",
-                "shade",
-                "mode",
-                "invariants_count",
-            }
-            pts = dict(d_obj["points"]) if isinstance(d_obj.get("points"), dict) else {}
-            flat_keys = [
-                k for k, v in d_obj.items()
-                if k not in reserved and isinstance(v, dict) and ("x" in v or "y" in v)
-            ]
-            if flat_keys or "points" in d_obj:
-                for fk in flat_keys:
-                    pts[fk] = d_obj.pop(fk)
-                d_obj["points"] = pts
-            return d_obj
-
-        u_ts = _norm_cart_state(ans.get("target_state") if isinstance(ans.get("target_state"), dict) else ans)
-        gt_ts = _norm_cart_state(ca.get("target_state") if isinstance(ca.get("target_state"), dict) else {})
-        invs = gt.get("invariants") if isinstance(gt.get("invariants"), list) else []
-        if gt_ts and "invariants_count" not in gt_ts:
-            if _values_approx_equal(u_ts, gt_ts, tol=0.05):
-                return True, ""
-            if not invs:
-                return False, f"invariant_canvas target_state mismatch: got {u_ts}, expected {gt_ts}"
-        # Fallback check against extracted cartesian invariants when explicit target_state was omitted or differed
-        for inv in invs:
-            if not isinstance(inv, dict):
-                continue
-            kind = str(inv.get("kind") or "")
-            tol_inv = float(inv.get("tolerance", 0.05) or 0.05)
-            if kind == "inequality_state":
-                if inv.get("expected_style") and _normalize_str(u_ts.get("inequalityStyle")) != _normalize_str(inv["expected_style"]):
-                    return False, f"Expected inequalityStyle={inv['expected_style']}"
-                if inv.get("expected_shade") and _normalize_str(u_ts.get("inequalityShade")) != _normalize_str(inv["expected_shade"]):
-                    return False, f"Expected inequalityShade={inv['expected_shade']}"
-            elif kind == "point_coords":
-                pid = str(inv.get("point_id") or inv.get("target") or "")
-                tx = inv.get("target_x") if inv.get("target_x") is not None else inv.get("x")
-                ty = inv.get("target_y") if inv.get("target_y") is not None else inv.get("y")
-                pts_map = u_ts.get("points") if isinstance(u_ts.get("points"), dict) else {}
-                u_pt = pts_map.get(pid) if pid in pts_map else (next(iter(pts_map.values())) if len(pts_map) == 1 else None)
-                if not isinstance(u_pt, dict):
-                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
-                if tx is not None and not _values_approx_equal(u_pt.get("x"), tx, tol=tol_inv):
-                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
-                if ty is not None and not _values_approx_equal(u_pt.get("y"), ty, tol=tol_inv):
-                    return False, f"Expected point '{pid}' at ({tx}, {ty})"
-            elif kind == "kink_at":
-                pts_map = u_ts.get("points") if isinstance(u_ts.get("points"), dict) else {}
-                raw_pid = inv.get("point_id")
-                if not raw_pid and isinstance(inv.get("target"), str) and inv["target"] in pts_map:
-                    raw_pid = inv["target"]
-                if raw_pid:
-                    pid = str(raw_pid)
-                    tx = inv.get("target_x") if inv.get("target_x") is not None else inv.get("x")
-                    ty = inv.get("target_y") if inv.get("target_y") is not None else inv.get("y")
-                    u_pt = pts_map.get(pid) if pid in pts_map else (next(iter(pts_map.values())) if len(pts_map) == 1 else None)
-                    if not isinstance(u_pt, dict):
-                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
-                    if tx is not None and not _values_approx_equal(u_pt.get("x"), tx, tol=tol_inv):
-                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
-                    if ty is not None and not _values_approx_equal(u_pt.get("y"), ty, tol=tol_inv):
-                        return False, f"Expected kink point '{pid}' at ({tx}, {ty})"
-            elif kind == "slider_eq":
-                sid = str(inv.get("slider_id") or "")
-                t_val = inv.get("target") if inv.get("target") is not None else (inv.get("target_value") if inv.get("target_value") is not None else inv.get("expected"))
-                s_map = u_ts.get("sliders") if isinstance(u_ts.get("sliders"), dict) else {}
-                u_sval = s_map.get(sid) if sid in s_map else u_ts.get(sid)
-                if not _values_approx_equal(u_sval, t_val, tol=tol_inv):
-                    return False, f"Expected slider '{sid}' == {t_val}, got {u_sval}"
-            elif kind == "slider_range":
-                sid = str(inv.get("slider_id") or "")
-                s_map = u_ts.get("sliders") if isinstance(u_ts.get("sliders"), dict) else {}
-                u_sval = s_map.get(sid) if sid in s_map else u_ts.get(sid)
-                try:
-                    u_f = float(u_sval)
-                    if inv.get("min") is not None and u_f < float(inv["min"]) - tol_inv:
-                        return False, f"Slider '{sid}'={u_f} < min {inv['min']}"
-                    if inv.get("max") is not None and u_f > float(inv["max"]) + tol_inv:
-                        return False, f"Slider '{sid}'={u_f} > max {inv['max']}"
-                except (TypeError, ValueError):
-                    return False, f"Slider '{sid}' missing or non-numeric: {u_sval}"
-        return (True, "") if u_ts else (False, "Empty cartesian target_state")
 
     if itype == "concept_matching":
         gt_pairs = {str(k): _normalize_str(v) for k, v in (ca.get("pairs") or {}).items()}

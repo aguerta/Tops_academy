@@ -72,7 +72,6 @@ ACTIVE_INTERACTION_TYPES: Set[str] = {
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
     "concept_matching",
 }
 
@@ -82,14 +81,12 @@ PURE_PRODUCTION_TYPES: Set[str] = {
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
 }
 
 STRUCTURED_M20_TYPES: Set[str] = {
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
     "concept_matching",
 }
 
@@ -100,8 +97,6 @@ _STRUCTURED_PAYLOAD_KEYS = (
     "adversarial",
     "unstructured_model",
     "stage0",
-    "invariant_canvas",
-    "canvas",
     "concept_matching",
     "matching",
     "symbolic_config",
@@ -137,15 +132,6 @@ def _extract_m20_structured_dids(interaction_type: str, compiled: Any) -> List[s
             _add_did(opt)
         for dd in p3.get("diagnostic_distractors") or []:
             _add_did(dd)
-    elif interaction_type == "invariant_canvas":
-        for inv in compiled.get("invariants") or []:
-            _add_did(inv)
-        ti = compiled.get("tree_invariants") or {}
-        if isinstance(ti, dict):
-            _add_did(ti)
-            for tdid in ti.get("distractor_ids") or []:
-                if isinstance(tdid, str) and tdid.strip():
-                    raw_dids.append(tdid.strip().replace("_", "-"))
     elif interaction_type == "concept_matching":
         for tg in compiled.get("targets") or []:
             _add_did(tg)
@@ -1306,15 +1292,6 @@ cross_check=verify
                             rng=_make_sandbox_rng(42),
                             rats_map=combined_rats,
                         )
-                    elif interaction_type == "invariant_canvas":
-                        from engine.assemble import _assemble_invariant_canvas
-                        raw_p = sample_dict.get("invariant_canvas") or sample_dict.get("canvas") or (t.get("invariant_canvas") if is_form_c else None)
-                        compiled_m20, _ = _assemble_invariant_canvas(
-                            raw_p,
-                            variables=sample_vars,
-                            cta_distractors_map=cta_dmap,
-                            rats_map=combined_rats,
-                        )
                     elif interaction_type == "concept_matching":
                         from engine.assemble import _assemble_concept_matching
                         raw_p = sample_dict.get("concept_matching") or sample_dict.get("matching") or (t.get("concept_matching") if is_form_c else None)
@@ -1331,7 +1308,6 @@ cross_check=verify
                         "proof_dag": "TPL-M20-PROOF-DAG",
                         "adversarial_break": "TPL-M20-ADVERSARIAL",
                         "unstructured_model": "TPL-M20-UNSTRUCTURED-MODEL",
-                        "invariant_canvas": "TPL-M20-INVARIANT-CANVAS",
                         "concept_matching": "TPL-M20-CONCEPT-MATCHING",
                     }[interaction_type]
                     err_msg = f"FAIL: [{err_tag}] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {m20_err}"

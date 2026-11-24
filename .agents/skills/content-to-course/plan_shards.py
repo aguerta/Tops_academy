@@ -48,7 +48,7 @@ from engine.stage_contract import (  # noqa: E402
 DEFAULT_COMPS_PER_SHARD: int = 2
 MAX_SKILLS_PER_SHARD: int = 1
 DEFAULT_MAX_WAVE_SIZE: int = 100
-HEAVY_M20_MODALITIES: frozenset = frozenset({"invariant_canvas", "unstructured_model", "open_symbolic"})
+HEAVY_M20_MODALITIES: frozenset = frozenset({"unstructured_model", "open_symbolic"})
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
@@ -93,7 +93,6 @@ DSL_REFERENCE: Dict[str, Any] = {
         "proof_dag",
         "adversarial_break",
         "unstructured_model",
-        "invariant_canvas",
         "concept_matching",
     ],
     "distractor_rules": {
@@ -132,7 +131,7 @@ DSL_REFERENCE: Dict[str, Any] = {
             f"los 4 arquetipos Form-C 'direct', 'inverse', 'perturbation', 'boundary_or_edge_case', las 3 bandas easy/medium/hard y >= 2 niveles Bloom). "
             f"Las modalidades concretas se rigen por las 'recommended_modalities' decididas por el CTA Architect para cada competencia "
             f"(catálogo activo: FIB con 'ds', open_symbolic, MS, MC7, proof_dag, adversarial_break, unstructured_model, "
-            f"invariant_canvas, concept_matching; sin cuotas fijas rígidas por tipo). "
+            f"concept_matching; sin cuotas fijas rígidas por tipo). "
             f"Si una competencia declara en cta.json más distractores de los que caben en una sola plantilla, "
             f"cubre 100% de distractor_ids mediante 'ds' diagnósticos en FIB/open_symbolic, MS, modalidades Bloom Superior "
             f"o MC7 si forma parte del plan del CTA Architect."
@@ -657,7 +656,7 @@ def partition_competencies_weighted(
 
     1. Heavy Isolation Rule:
        Skill competencies ('Hab-*' or type == 'skill') and Concept/Fact competencies with
-       >= 2 heavy M20 modalities (invariant_canvas, unstructured_model, open_symbolic)
+       >= 2 heavy M20 modalities (unstructured_model, open_symbolic)
        are isolated in blocks of up to max_skills (default: MAX_SKILLS_PER_SHARD = 1) per shard.
 
     2. Contiguous Light Grouping:

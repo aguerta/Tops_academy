@@ -37,7 +37,7 @@ from .models import ValidationError
 
 
 
-def check_semantic_rules(data: dict[str, Any]) -> list[ValidationError]:
+def check_semantic_rules(data: dict[str, Any], strict: bool = False) -> list[ValidationError]:
     """Validates structural and pedagogical rules on parsed course data."""
     errors: list[ValidationError] = []
 
@@ -180,20 +180,38 @@ def check_semantic_rules(data: dict[str, Any]) -> list[ValidationError]:
                     item_id=q_id
                 ))
 
-        # R-12 & R-13: Multiple Select (4 to 6 options, 1 to n-1 correct)
+        # R-12 & R-13: Multiple Select
+        # strict=True: exactly 7 options, 2 to 5 correct
+        # strict=False: legacy compatibility (4 to 7 options, 1 to n-1 correct)
         elif itype == "multiple_select":
             if isinstance(options, list):
                 n_opts = len(options)
-                if n_opts < 4 or n_opts > 6:
+                if strict:
+                    if n_opts != 7:
+                        errors.append(ValidationError(
+                            rule_id="R-12",
+                            code="ERR_MS_COUNT",
+                            message=f"Question '{q_id}' has {n_opts} options; multiple-select items must have exactly 7 options",
+                            item_id=q_id
+                        ))
+                elif n_opts < 4 or n_opts > 7:
                     errors.append(ValidationError(
                         rule_id="R-12",
                         code="ERR_MS_COUNT",
-                        message=f"Question '{q_id}' has {n_opts} options; multiple-select items must have between 4 and 6 options",
+                        message=f"Question '{q_id}' has {n_opts} options; multiple-select items must have between 4 and 7 options",
                         item_id=q_id
                     ))
                 if n_opts > 0:
                     k_correct = sum(1 for opt in options if isinstance(opt, dict) and opt.get("is_correct") is True)
-                    if k_correct < 1 or k_correct >= n_opts:
+                    if strict:
+                        if k_correct < 2 or k_correct > 5:
+                            errors.append(ValidationError(
+                                rule_id="R-13",
+                                code="ERR_MS_CORRECT",
+                                message=f"Question '{q_id}' has {k_correct} correct options out of {n_opts}; multiple-select items must have between 2 and 5 correct options",
+                                item_id=q_id
+                            ))
+                    elif k_correct < 1 or k_correct >= n_opts:
                         errors.append(ValidationError(
                             rule_id="R-13",
                             code="ERR_MS_CORRECT",
@@ -204,7 +222,7 @@ def check_semantic_rules(data: dict[str, Any]) -> list[ValidationError]:
                 errors.append(ValidationError(
                     rule_id="R-12",
                     code="ERR_MS_COUNT",
-                    message=f"Question '{q_id}' has 0 options; multiple-select items must have between 4 and 6 options",
+                    message=f"Question '{q_id}' has 0 options; multiple-select items must have {'exactly 7' if strict else 'between 4 and 7'} options",
                     item_id=q_id
                 ))
 

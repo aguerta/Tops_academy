@@ -165,7 +165,7 @@ def _answer_key_signature(q: Dict[str, Any]) -> str:
             for opt in q.get("options", [])
         )
         return json.dumps(pairs, default=str)
-    if q_type in ("proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas", "concept_matching"):
+    if q_type in ("proof_dag", "adversarial_break", "unstructured_model", "concept_matching"):
         sig_obj: Dict[str, Any] = {"correct_answer": q.get("correct_answer")}
         payload = q.get(q_type)
         if isinstance(payload, dict):
@@ -201,12 +201,6 @@ def _answer_key_signature(q: Dict[str, Any]) -> str:
                     str((o.get("id"), o.get("content")))
                     for o in (_p3.get("options") or []) if isinstance(o, dict)
                 )
-            elif q_type == "invariant_canvas":
-                sig_obj["curves"] = (payload.get("fixed_curves"), payload.get("interactive_curves"))
-                sig_obj["invariants"] = payload.get("invariants")
-                sig_obj["inequality"] = payload.get("inequality")
-                sig_obj["target_state"] = payload.get("target_state")
-                sig_obj["tree"] = (payload.get("nodes"), payload.get("edges"), payload.get("tree_invariants"))
             elif q_type == "concept_matching":
                 sig_obj["premises"] = sorted(
                     ((p.get("id"), p.get("content")) for p in (payload.get("premises") or []) if isinstance(p, dict)),

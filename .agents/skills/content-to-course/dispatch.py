@@ -1588,7 +1588,7 @@ def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: 
         clean_cid = re.sub(r"[^A-Za-z0-9]", "", cid) or "COMP"
         aid_idx = 0
         ms_slot_idx = 0
-        ms_corr_cycle = (3, 2, 1, 4)
+        ms_corr_cycle = (3, 2, 4, 5)
         adv_slot_idx = 0
         adv_pos_cycle = ("S2", "S4", "S3")
         uniq_note = "; >=10 claves unicas en 50 seeds" if is_skill else ""
@@ -1611,7 +1611,7 @@ def _build_author_skeleton(comp_entries: List[Dict[str, Any]], eff_tpl_per_mod: 
                 exp_cnt = ms_corr_cycle[ms_slot_idx % len(ms_corr_cycle)]
                 ms_slot_idx += 1
                 fn_lines.append(f"def gen_{g_idx}(rng): raise NotImplementedError('TODO')  # Balance MS: len(true)~=len(false) (0.85x-1.15x); cada distractor con @var@ en rationale")
-                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'MS', expected_correct_count={exp_cnt})  # 5..6 opciones"
+                ver_hint = f"# return c2c_ver.m20_guard(r, RATS, 'MS', expected_correct_count={exp_cnt})  # 7 opciones, 2..5 correctas"
                 fn_lines.append(f"def ver_{g_idx}(r): raise NotImplementedError('TODO')  {ver_hint}")
             elif qt == "adversarial_break":
                 adv_pos = adv_pos_cycle[adv_slot_idx % len(adv_pos_cycle)]
@@ -2505,7 +2505,6 @@ def dispatch_judges(
                         "proof_dag",
                         "adversarial_break",
                         "unstructured_model",
-                        "invariant_canvas",
                         "concept_matching",
                         "judge_instructions",
                         "response_schema",

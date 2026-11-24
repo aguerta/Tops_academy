@@ -726,7 +726,6 @@ _VALID_RECOMMENDED_MODALITIES = frozenset({
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
     "concept_matching",
 })
 

@@ -38,9 +38,6 @@ _QTYPE_TO_INTERACTION: Dict[str, str] = {
     "stage0": "unstructured_model",
     "stage_0": "unstructured_model",
     "modeling": "unstructured_model",
-    "invariant_canvas": "invariant_canvas",
-    "graph_manipulator": "invariant_canvas",
-    "canvas": "invariant_canvas",
     "concept_matching": "concept_matching",
     "matching": "concept_matching",
 }

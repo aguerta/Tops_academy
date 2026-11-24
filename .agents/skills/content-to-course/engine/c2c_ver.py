@@ -10,7 +10,50 @@ from __future__ import annotations
 
 import functools
 import math
+import re
 from typing import Any, Dict, Iterable, Optional, Tuple
+
+_SYMPY_BUILTINS = frozenset({
+    "ln", "log", "sin", "cos", "tan", "cot", "sec", "csc",
+    "asin", "acos", "atan", "sinh", "cosh", "tanh",
+    "exp", "sqrt", "abs", "pi", "e",
+})
+_SYMPY_BUILTIN_RE = "|".join(sorted(_SYMPY_BUILTINS - {"e", "pi"}, key=len, reverse=True))
+
+
+def _normalize_sympy_expr(expr: str, var_names: Tuple[str, ...]) -> str:
+    """Split adjacent variable+builtin (e.g. xln(x)) and adjacent declared vars (e.g. 12tv)."""
+    out = expr
+    if var_names:
+        # Split <var><builtin>( -> <var>*<builtin>(
+        for v in sorted(var_names, key=len, reverse=True):
+            if v in _SYMPY_BUILTINS or not v.isalpha():
+                continue
+            out = re.sub(
+                rf"(?<![a-zA-Z_])({re.escape(v)})({_SYMPY_BUILTIN_RE})(?=\s*\()",
+                r"\1*\2",
+                out,
+            )
+            # Also split <var>e^ -> <var>*e^
+            if v != "e":
+                out = re.sub(
+                    rf"(?<![a-zA-Z_])({re.escape(v)})(e)(?=\s*[\^*])",
+                    r"\1*\2",
+                    out,
+                )
+        # Split adjacent single-char declared vars inside unknown identifiers (e.g., tv -> t*v, xy -> x*y)
+        single_vars = {v for v in var_names if len(v) == 1 and v.isalpha()}
+        multi_vars = set(var_names) - single_vars
+        if len(single_vars) >= 2:
+            def _split_tok(m: re.Match[str]) -> str:
+                tok = m.group(0)
+                if tok in var_names or tok in _SYMPY_BUILTINS or tok in multi_vars:
+                    return tok
+                if all(ch in single_vars for ch in tok):
+                    return "*".join(tok)
+                return tok
+            out = re.sub(r"(?<![a-zA-Z_])[a-zA-Z_][a-zA-Z0-9_]*\b", _split_tok, out)
+    return out
 
 from engine.template_healing import parse_katex_number
 
@@ -68,12 +111,24 @@ def _ver_equiv_cached(
     tol_f: float,
 ) -> bool:
     import sympy
+    from sympy.parsing.sympy_parser import (
+        convert_xor,
+        implicit_multiplication_application,
+        parse_expr,
+        standard_transformations,
+    )
 
     sym_locals: Dict[str, Any] = {vn: sympy.Symbol(vn) for vn in var_names}
+    sym_locals.setdefault("ln", sympy.log)
+    sym_locals.setdefault("e", sympy.E)
+    sym_locals.setdefault("pi", sympy.pi)
+    transforms = standard_transformations + (implicit_multiplication_application, convert_xor)
 
+    norm_cand = _normalize_sympy_expr(cand_s, var_names)
+    norm_exp = _normalize_sympy_expr(exp_s, var_names)
     try:
-        c_expr = sympy.sympify(cand_s.replace("^", "**"), locals=sym_locals)
-        e_expr = sympy.sympify(exp_s.replace("^", "**"), locals=sym_locals)
+        c_expr = parse_expr(norm_cand, local_dict=sym_locals, transformations=transforms)
+        e_expr = parse_expr(norm_exp, local_dict=sym_locals, transformations=transforms)
     except Exception:
         return False
 
@@ -241,7 +296,6 @@ def _ver_m20_guard(
                 "adversarial_break",
                 "unstructured_model",
                 "concept_matching",
-                "invariant_canvas",
             ):
                 if isinstance(r.get(key), dict):
                     norm_qt = key
@@ -249,7 +303,7 @@ def _ver_m20_guard(
 
     if norm_qt in ("ms", "multiple_select"):
         opts = r.get("options")
-        if not isinstance(opts, list) or not (4 <= len(opts) <= 6):
+        if not isinstance(opts, list) or len(opts) != 7:
             return False
         true_opts = []
         false_opts = []
@@ -270,7 +324,7 @@ def _ver_m20_guard(
                 if not _check_distractor_entry(opt, rats, require_inline_rationale=True):
                     return False
                 false_opts.append(opt)
-        if not true_opts or not false_opts:
+        if not (2 <= len(true_opts) <= 5) or not false_opts:
             return False
         if expected_correct_count is not None and len(true_opts) != int(expected_correct_count):
             return False
@@ -458,28 +512,6 @@ def _ver_m20_guard(
             is_dist = (tg.get("is_distractor") is True) or (tid not in matched_tids)
             if is_dist:
                 if not _check_distractor_entry(tg, rats):
-                    return False
-        return True
-
-    if norm_qt == "invariant_canvas":
-        ic = r.get("invariant_canvas") or r.get("canvas")
-        if not isinstance(ic, dict):
-            return False
-        mode = str(ic.get("mode") or "").strip().lower()
-        if mode not in ("cartesian", "tree"):
-            return False
-        inv_key = "invariants" if mode == "cartesian" else "tree_invariants"
-        invs = ic.get(inv_key)
-        if not isinstance(invs, list) or not invs:
-            return False
-        for inv in invs:
-            if not isinstance(inv, dict):
-                return False
-            for field in ("target_x", "target_y", "expression", "target"):
-                if _has_bad_sentinel(inv.get(field)):
-                    return False
-            if inv.get("distractor_id") or inv.get("did") or inv.get("error_rationale"):
-                if not _check_distractor_entry(inv, rats):
                     return False
         return True
 

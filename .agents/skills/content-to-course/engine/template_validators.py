@@ -29,7 +29,6 @@ _M20_STRUCTURED_TYPES: Set[str] = {
     "proof_dag",
     "adversarial_break",
     "unstructured_model",
-    "invariant_canvas",
     "concept_matching",
 }
 
@@ -514,7 +513,6 @@ def check_multimodal_tpl_d3_coverage(
             "proof_dag",
             "adversarial_break",
             "unstructured_model",
-            "invariant_canvas",
             "concept_matching",
         }
         comp_map_d3 = {c.get("id"): c for c in (cta_data or {}).get("competencies", []) if isinstance(c, dict)}
@@ -581,7 +579,7 @@ def check_multimodal_tpl_d3_coverage(
                     snippet=snippet_msg,
                     cause=cause_msg,
                     actions=[
-                        f"Cubrir los distractores faltantes de '{cid}' usando trampas diagnósticas ('ds') en FIB / open_symbolic, pasos falaces en proof_dag / adversarial_break, opciones de Phase 1-3 en unstructured_model o pares distractores en concept_matching / invariant_canvas.",
+                        f"Cubrir los distractores faltantes de '{cid}' usando trampas diagnósticas ('ds') en FIB / open_symbolic, pasos falaces en proof_dag / adversarial_break, opciones de Phase 1-3 en unstructured_model o pares distractores en concept_matching.",
                         f"O declarar los distractor_ids faltantes en la semilla representativa de las plantillas de '{cid}' manteniendo fidelidad al plan de modalidades del CTA Architect.",
                         "Asegurar la cobertura diagnóstica completa de distractores requerida por el contrato psicométrico M20.",
                     ],

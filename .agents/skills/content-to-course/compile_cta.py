@@ -1176,9 +1176,6 @@ _MODALITY_ALIASES: Dict[str, str] = {
     "stage_0": "unstructured_model",
     "modeling": "unstructured_model",
     "unstructured_model": "unstructured_model",
-    "canvas": "invariant_canvas",
-    "graph_manipulator": "invariant_canvas",
-    "invariant_canvas": "invariant_canvas",
     "matching": "concept_matching",
     "concept_matching": "concept_matching",
 }
