@@ -887,6 +887,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     selectedOption,
     selectedMultiOptions,
     fillBlankValue,
+    structuredAnswer,
+    stage0Phase,
     results,
     currentIndex,
     total,
