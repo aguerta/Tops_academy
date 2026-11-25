@@ -7219,7 +7219,7 @@
       "interaction_type": "adversarial_break",
       "type": "adversarial_break",
       "context_application": "Evaluación conceptual y procedimental para C-03",
-      "stem": "Al analizar la condición de Legendre en $F(t,x,\\dot{x})=4x^2-6\\dot{x}^2+6x$ ($2a=8$, $2b=12$), identifique dónde aparece el primer error:",
+      "stem": "Al analizar la condición de Legendre en $F(t,x,\\dot{x})=4x^2-6\\dot{x}^2+6x$, identifique dónde aparece el primer error:",
       "hints": [
         "Verifique respecto a qué variable toma la segunda derivada la condición de Legendre en $F(t,x,\\dot{x})$.",
         "Compare el signo de $F_{xx}=8$ frente al término cuadrático en la velocidad $-6\\dot{x}^2$.",
@@ -7930,7 +7930,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para C-03",
-      "stem": "Considere $F(t,x,\\dot{x})=-10\\dot{x}^2+8x^2+9t$ ($2a=20$, $2b=16$) sobre una curva que no es extremal de Euler. Indique qué enunciados son válidos:",
+      "stem": "Considere $F(t,x,\\dot{x})=-10\\dot{x}^2+8x^2+9t$ sobre una curva que no es extremal de Euler. Indique qué enunciados son válidos:",
       "hints": [
         "Verifique primero si se cumple el supuesto previo de que la trayectoria satisface la ecuación de Euler.",
         "Distinga entre el papel de $F_{\\dot{x}\\dot{x}}=-20$ y el término en estado $8x^2$.",
@@ -7999,7 +7999,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para C-03",
-      "stem": "Sea $F(t,x,\\dot{x})=-8\\dot{x}^2+5x^2+8t$ ($2a=16$, $2b=10$) evaluado en una trayectoria que NO satisface la ecuación de Euler. Marque las proposiciones verdaderas:",
+      "stem": "Sea $F(t,x,\\dot{x})=-8\\dot{x}^2+5x^2+8t$ evaluado en una trayectoria que NO satisface la ecuación de Euler. Marque las proposiciones verdaderas:",
       "hints": [
         "Verifique primero si se cumple el supuesto previo de que la trayectoria satisface la ecuación de Euler.",
         "Distinga entre el papel de $F_{\\dot{x}\\dot{x}}=-16$ y el término en estado $5x^2$.",
