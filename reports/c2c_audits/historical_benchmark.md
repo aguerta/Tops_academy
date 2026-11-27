@@ -1,12 +1,17 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-24 16:49:24`. Total de ejecuciones auditadas: **86**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-27 03:05:34`. Total de ejecuciones auditadas: **91**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Costo (USD) | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-27 08:05` | **solow_test_k4** (`4e3ad1c7`) | 36 pág (1.49 MB) | 19 comp / 768 preg | 20.2 min (1211.0s) | **4.3x** | 8,836,319 | **`$9.76`** | **11,505.6** | **1.58s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
+| `2026-11-27 08:03` | **estadistica_3_rincon_only_k3** (`d860e465`) | 22 pág (0.66 MB) | 11 comp / 333 preg | 11.2 min (672.0s) | **3.83x** | 4,419,572 | **`$4.82`** | **13,272.0** | **2.02s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
+| `2026-11-27 07:42` | **solow_test_k3** (`e269baaf`) | 36 pág (1.49 MB) | 21 comp / 648 preg | 22.8 min (1366.0s) | **3.98x** | 8,526,263 | **`$9.83`** | **13,157.8** | **2.11s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
+| `2026-11-27 07:42` | **mateco_4_test_k3** (`f0d103e6`) | 71 pág (3.61 MB) | 27 comp / 975 preg | 21.8 min (1306.0s) | **4.73x** | 10,504,907 | **`$11.50`** | **10,774.3** | **1.34s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
+| `2026-11-27 07:34` | **estadistica_3_test_k3** (`cc90e1bd`) | 43 pág (1.56 MB) | 22 comp / 666 preg | 15.1 min (905.0s) | **4.94x** | 8,275,775 | **`$8.35`** | **12,426.1** | **1.36s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-24 21:49` | **estadistica_3_pre_cl_k3** (`e7d34485`) | 43 pág (1.56 MB) | 18 comp / 558 preg | 71.0 min (4260.0s) | **1.65x** | 6,275,442 | **`$6.67`** | **11,246.3** | **7.63s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
 | `2026-11-24 19:24` | **mateco_4_optimizacion_k4_v2** (`753e4e81`) | 71 pág (3.61 MB) | 32 comp / 1472 preg | 26.3 min (1579.0s) | **5.88x** | 16,516,609 | **`$17.23`** | **11,220.5** | **1.07s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-24 18:19` | **mateco_4_optimizacion_k3_v2_m20** (`36fdd76d`) | 71 pág (3.61 MB) | 27 comp / 903 preg | 19.9 min (1194.0s) | **5.22x** | 10,987,590 | **`$11.97`** | **12,167.9** | **1.32s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
@@ -98,11 +103,11 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.02x`
-- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.47 USD`
-- **Densidad de Tokens Promedio por Pregunta**: `45,155.3 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `5.01 s/pregunta`
-- **Rendimiento Promedio de Generación**: `26.77 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `4.98x`
+- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.11 USD`
+- **Densidad de Tokens Promedio por Pregunta**: `42,989.0 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `4.79 s/pregunta`
+- **Rendimiento Promedio de Generación**: `27.45 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*
