@@ -1,5 +1,10 @@
 # Reporte de Re-Auditoría Exhaustiva (Agéntica + Determinista) — `solow_test_k4`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-28 05:27:43**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:43  
 **Curso:** Solow Test K4 (`courses/solow_test_k4.json`)  
 **Objetivo detectado:** Dominio y aplicación analítica integral del modelo neoclásico de crecimiento de Solow (forma per cápita, estabilidad de fase, linealización de Bernoulli, proporciones fijas Harrod-Domar, precios factoriales, cambio tecnológico neutral y extensiones endógenas).  
 **Competencias:** 19 (1 Hechos `[H]`, 11 Conceptos `[C]`, 7 Habilidades `[Hab]`)  

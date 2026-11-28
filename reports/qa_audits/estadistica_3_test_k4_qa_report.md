@@ -1,5 +1,10 @@
 # Reporte de Re-Auditoría Agéntica Exhaustiva — `estadistica_3_test_k4`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-28 05:27:41**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:41  
 **Curso:** Estadistica 3 Test K4 (`estadistica_3_test_k4`)  
 **Archivo auditado:** `courses/estadistica_3_test_k4.json` (83,801 líneas; inspección directa de muestras amplias)  
 **Objetivo detectado:** Dominio y aplicación analítica integral de Estadistica 3 Test K4 (Teoría de la Medida, $\sigma$-álgebras, Esperanza Condicional, Procesos Estocásticos, Martingalas, Caminatas Aleatorias y Ruina del Jugador)  

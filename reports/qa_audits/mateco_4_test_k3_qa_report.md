@@ -1,5 +1,10 @@
 # Auditoría Agéntica Exhaustiva de Calidad Pedagógica, Psicométrica y Path-to-Mastery: `mateco_4_test_k3`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-28 05:27:41**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:41  
 **Fecha de Auditoría:** 2026-11-27 (Re-auditoría agéntica profunda sobre `courses/mateco_4_test_k3.json`)  
 **Curso:** Mateco 4 Test K3 (`mateco_4_test_k3`)  
 **Archivo Fuente:** `courses/mateco_4_test_k3.json` (975 reactivos, 27 competencias)  

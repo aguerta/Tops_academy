@@ -1,5 +1,10 @@
 # Reporte de Auditoría Agéntica Exhaustiva — `estadistica_3_rincon_only_k3`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-28 05:27:40**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:40  
 > **Veredicto Ejecutivo**: **16.90 / 20.00** — **ACEPTABLE (14.0 - 16.9 pts)** *(Recalibrado desde `19.80` tras inspección directa de reactivos en `courses/estadistica_3_rincon_only_k3.json`)*  
 > **Mastery Path Readiness Index (MPRI)**: **89.50 / 100.00** — *GOLD MASTERY PATH (85-100): Certificado con Reservas Menores*  
 > **Penalizaciones Duras**: **0.00 pts** (`[]`)  

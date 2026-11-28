@@ -3,7 +3,8 @@
 
 - **Fecha de Evaluación:** 2026-11-27
 - **Evaluador:** Course QA Auditor — Top's Academy (Auditoría Agéntica Híbrida: Telemetría Determinista + Verificación Semántica Directa)
-- **Estado en Plataforma:** ACTIVO
+- **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:42  
 - **Calificación Final Certificada:** **18.39 / 20.0 pts** *(ajustada desde `19.59` determinista tras inspección semántica directa)*
 - **Quality Tier:** **EXCELENTE (17.0 - 20.0 pts)**
 - **Mastery Path Readiness Index (MPRI):** **93.52 / 100.0** (`GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo`, ajustado desde `98.22`)

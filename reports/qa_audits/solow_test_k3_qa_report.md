@@ -1,5 +1,10 @@
 # Auditoría Técnica, Psicométrica y Pedagógica (Re-Auditoría Exhaustiva) — `solow_test_k3`
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-28 05:27:42**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:42  
 **Curso:** Solow Test K3 (`solow_test_k3`)  
 **Archivo fuente:** `courses/solow_test_k3.json`  
 **Estándar:** Quality Matters (QM) · OSCQR · Bloom's 2-Sigma Mastery Learning · ZPD · Path-to-Mastery v2.0  

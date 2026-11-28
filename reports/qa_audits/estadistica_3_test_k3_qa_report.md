@@ -1,5 +1,10 @@
 # Auditoría Agéntica Exhaustiva de Calidad Pedagógica, Psicométrica y Path-to-Mastery v2.0
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-28 05:27:40**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-28 05:27:40  
 **Curso:** `estadistica_3_test_k3` — *Estadistica 3 Test K3*  
 **Fecha de Auditoría:** 2026-11-27 (Re-auditoría agéntica profunda sobre `courses/estadistica_3_test_k3.json`)  
 **Calificación Final QM-OSCQR:** **17.70 / 20.00**  
