@@ -1,0 +1,2307 @@
+{
+  "conversation_id": "f0d103e6-5131-4e8b-a21b-b0d67ab06984",
+  "global_timings": {
+    "wall_clock_seconds": 1353.0,
+    "wall_clock_minutes": 22.55,
+    "total_turns": 243,
+    "total_errors": 18,
+    "avg_inference_pct": 89.74,
+    "avg_tool_pct": 10.26
+  },
+  "stage_telemetry_v3": {
+    "work_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\mateco_4_test_k3\\work",
+    "telemetry_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\mateco_4_test_k3\\work\\telemetry\\by_conversation\\f0d103e6-5131-4e8b-a21b-b0d67ab06984",
+    "conversation_id_verified": true,
+    "snapshots_count": 9,
+    "stages": [
+      {
+        "stage_key": "00_prepare",
+        "stage_index": "00",
+        "stage_name": "prepare",
+        "timestamp": "2026-11-27T07:20:39.888411+00:00",
+        "duration_seconds": 0.21,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.2086498737335205
+        }
+      },
+      {
+        "stage_key": "00b_bootstrap",
+        "stage_index": "00b",
+        "stage_name": "bootstrap",
+        "timestamp": "2026-11-27T07:20:39.945493+00:00",
+        "duration_seconds": 0.27,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.26623988151550293,
+          "lock_file": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\mateco_4_test_k3\\work\\.c2c_subagent_lock.json"
+        }
+      },
+      {
+        "stage_key": "01_cta",
+        "stage_index": "01",
+        "stage_name": "cta",
+        "timestamp": "2026-11-27T07:24:22.196359+00:00",
+        "duration_seconds": 2.13,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 2.132138252258301,
+          "competencies": 27
+        }
+      },
+      {
+        "stage_key": "02_shard",
+        "stage_index": "02",
+        "stage_name": "shard",
+        "timestamp": "2026-11-27T07:24:23.805360+00:00",
+        "duration_seconds": 0.05,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.05374336242675781,
+          "shards": 27
+        }
+      },
+      {
+        "stage_key": "03_templates",
+        "stage_index": "03",
+        "stage_name": "templates",
+        "timestamp": "2026-11-27T07:42:04.869557+00:00",
+        "duration_seconds": 0.59,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.5927739143371582,
+          "count": 27
+        }
+      },
+      {
+        "stage_key": "04_build",
+        "stage_index": "04",
+        "stage_name": "build",
+        "timestamp": "2026-11-27T07:42:14.137968+00:00",
+        "duration_seconds": 9.18,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 9.17907190322876,
+          "total_questions": 975
+        }
+      },
+      {
+        "stage_key": "05_verify",
+        "stage_index": "05",
+        "stage_name": "verify",
+        "timestamp": "2026-11-27T07:42:16.345568+00:00",
+        "duration_seconds": 2.14,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 2.138610601425171,
+          "verified_course_path": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\mateco_4_test_k3\\work\\course_verified.json"
+        }
+      },
+      {
+        "stage_key": "05b_judge_compare",
+        "stage_index": "05b",
+        "stage_name": "judge_compare",
+        "timestamp": "2026-11-27T07:35:32.449487+00:00",
+        "duration_seconds": 0.12,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.11721682548522949,
+          "passed": false
+        }
+      },
+      {
+        "stage_key": "06_publish",
+        "stage_index": "06",
+        "stage_name": "publish",
+        "timestamp": "2026-11-27T07:42:29.491633+00:00",
+        "duration_seconds": 5.66,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 5.659769296646118,
+          "published_json": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\mateco_4_test_k3.json"
+        }
+      }
+    ]
+  },
+  "thinking_traces": {
+    "total_thinking_turns": 86,
+    "total_thinking_chars": 233475,
+    "agents": {
+      "Orchestrator": {
+        "thinking_turns_count": 4,
+        "total_thinking_chars": 925,
+        "traces": [
+          {
+            "step_index": 4,
+            "created_at": "2026-11-27T07:20:31Z",
+            "thinking_chars": 184,
+            "thinking_snippet": "Target course parameters require mapping the title to the required format via bootstrap normalization. Identifying the specific source path and generation flags needed for execution."
+          },
+          {
+            "step_index": 6,
+            "created_at": "2026-11-27T07:20:40Z",
+            "thinking_chars": 234,
+            "thinking_snippet": "Bootstrap phase completed rapidly. Verification confirms all five designated subagents are preloaded and available. Parameter configuration requires passing specific modality and shard composition values into the argument structure."
+          },
+          {
+            "step_index": 11,
+            "created_at": "2026-11-27T07:35:44Z",
+            "thinking_chars": 319,
+            "thinking_snippet": "Pipeline execution completed through the validation gates, revealing specific competencies requiring repair across multiple shards. Initial review of documentation indicates fallback procedures for handling external validation failures, poi"
+          },
+          {
+            "step_index": 15,
+            "created_at": "2026-11-27T07:41:56Z",
+            "thinking_chars": 188,
+            "thinking_snippet": "Validation gates successfully cleared. Transitioning to the certification phase via execution pipeline, planning to follow immediately with publication depending on verification results."
+          }
+        ]
+      },
+      "Repair Engineer Hab-14 (260e92)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 2110,
+        "traces": [
+          {
+            "step_index": 8,
+            "created_at": "2026-11-27T07:35:59Z",
+            "thinking_chars": 2110,
+            "thinking_snippet": "The initial error points to an epistemic flaw flagged by a judge on the final template. Scanning across all template variants reveals a potential contradiction in the parameters provided within the problem statement. Re-evaluating the confl"
+          }
+        ]
+      },
+      "Repair Engineer Hab-19 (07eeac)": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 3497,
+        "traces": [
+          {
+            "step_index": 6,
+            "created_at": "2026-11-27T07:35:58Z",
+            "thinking_chars": 3037,
+            "thinking_snippet": "Auditing template `T-Hab19-04` against the mandated epistemic sweep. The blind judge flags missing cost functions, undefined inventory dynamics, and degenerate mathematical expressions, requiring a thorough revision of the template paramete"
+          },
+          {
+            "step_index": 8,
+            "created_at": "2026-11-27T07:36:34Z",
+            "thinking_chars": 245,
+            "thinking_snippet": "Target variants require explicit notation updates regarding variable freedom during transversality tests. Parallel edits on the same source module risk corruption, necessitating sequential modifications starting with the initial variant blo"
+          },
+          {
+            "step_index": 10,
+            "created_at": "2026-11-27T07:36:49Z",
+            "thinking_chars": 215,
+            "thinking_snippet": "Target shard compilation command identified with strict archetype requirements and validation flags. Executing script to transform raw data shard into structured course JSON while monitoring threshold constraints."
+          }
+        ]
+      },
+      "Judge 01": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6175,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:40:38Z",
+            "thinking_chars": 6175,
+            "thinking_snippet": "Parsing the structural parameters for Item 1 yields a security derivation problem requiring a fallacy check under specific weight, flow, and horizon conditions. Initial inspection of the problem stem shows an incomplete constraint definitio"
+          }
+        ]
+      },
+      "Judge 02": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 7011,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:40:40Z",
+            "thinking_chars": 7011,
+            "thinking_snippet": "Reviewing the 18 items loaded from the evaluation dataset reveals a mix of question formats, including fill-in-the-blank, unstructured models, open symbolic, and adversarial breaks. Initial assumption assumes a uniform evaluation structure,"
+          }
+        ]
+      },
+      "CTA Architect (part_01)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2906,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:50Z",
+            "thinking_chars": 2736,
+            "thinking_snippet": "Reviewing the initial pages of the dynamic optimization document covering the table of contents and foundational problem characterizations in discrete and continuous time. Initial assumption was purely introductory, but rigorous verificatio"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:21:54Z",
+            "thinking_chars": 170,
+            "thinking_snippet": "Validation confirms the initial data artifact satisfies structural and empirical constraints. Mapping across early curriculum pages verifies target competency coverage."
+          }
+        ]
+      },
+      "CTA Architect (part_05)": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 3483,
+        "traces": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-27T07:20:47Z",
+            "thinking_chars": 282,
+            "thinking_snippet": "Target document contains seventeen pages requiring extraction. Initial plan targets raw PDF ingestion followed by script generation, but layout density might obscure mathematical formulations. Verifying parser fidelity across multi-column s"
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:50Z",
+            "thinking_chars": 2958,
+            "thinking_snippet": "Targeting 6 to 11 competencies across the 17-page text to match the specified granularity density. Mathematical derivations require rigorous verification against first principles before finalizing the competency graph topology.\n\nTargeting s"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:22:04Z",
+            "thinking_chars": 243,
+            "thinking_snippet": "Schema validation passes for part_05.json alongside all competence and distractor constraints. Execution completed under half a second, ensuring all designated source topics and pages translate accurately into the finalized output structure"
+          }
+        ]
+      },
+      "CTA Architect (part_02)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 3090,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:50Z",
+            "thinking_chars": 3090,
+            "thinking_snippet": "Evaluating second-order necessary conditions via the Legendre condition on the first slice page. Potential sign errors might exist in the partial derivatives of the Hamiltonian; verifying against first principles to ensure algebraic consist"
+          }
+        ]
+      },
+      "CTA Architect (part_04)": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 2714,
+        "traces": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-27T07:20:47Z",
+            "thinking_chars": 171,
+            "thinking_snippet": "Target document selected for initial extraction across the opening page range. Slice mode active, bypassing auxiliary manifest files to parse document contents directly."
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:50Z",
+            "thinking_chars": 2231,
+            "thinking_snippet": "Source material spans seven pages on optimal control theory, requiring a curriculum graph adhering to specific granularity constraints. Initial approach targets structuring the extracted mathematical content into a verified topological fram"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:21:40Z",
+            "thinking_chars": 312,
+            "thinking_snippet": "Schema validation passes successfully alongside evidence constraints for the generated assessment segment. Compilation output confirms competencies and distractors generated within expected temporal limits. Range verification indicates opti"
+          }
+        ]
+      },
+      "CTA Architect (part_06)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 1833,
+        "traces": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-27T07:20:47Z",
+            "thinking_chars": 204,
+            "thinking_snippet": "Target path targets a data module generation from specific academic notes spanning pages one through seven. Execution requires parsing the source document range before triggering the compilation script."
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:51Z",
+            "thinking_chars": 1629,
+            "thinking_snippet": "Deriving the partial derivative with respect to the capital stock from the objective functional. The utility discount factor and capital depreciation terms require careful sign tracking in the marginal product expansion.\n\nEuler equation exp"
+          }
+        ]
+      },
+      "CTA Architect (part_03)": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 3022,
+        "traces": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-27T07:20:48Z",
+            "thinking_chars": 209,
+            "thinking_snippet": "Reading input documents covering calculus of variations problems across the specified page range. Determining structure and extraction requirements for coursework generation within the target directory path."
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:51Z",
+            "thinking_chars": 2584,
+            "thinking_snippet": "The source document spans six pages containing five distinct calculus of variations problems applied to economics alongside general instructions. Mapping this content requires designing a curricular graph targeting a balanced component-to-p"
+          },
+          {
+            "step_index": 12,
+            "created_at": "2026-11-27T07:21:55Z",
+            "thinking_chars": 229,
+            "thinking_snippet": "Target component validation succeeds across all schema and evidence constraints, compiling competencies efficiently. File persistence confirmed for the generated segment, with range coverage fully verified against source pages."
+          }
+        ]
+      },
+      "CTA Architect (part_07)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2552,
+        "traces": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-27T07:20:48Z",
+            "thinking_chars": 169,
+            "thinking_snippet": "Target document content is inaccessible through direct reading tools. Switching approach to inspect directory contents for alternative text versions or metadata files."
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:20:52Z",
+            "thinking_chars": 2383,
+            "thinking_snippet": "Document inspection reveals an economic optimal control problem set spanning two pages, requiring formulation and solution via Pontryagin's Maximum Principle. Granularity targets suggest structuring the breakdown into balanced components ma"
+          }
+        ]
+      },
+      "CTA Harmonizer": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 8057,
+        "traces": [
+          {
+            "step_index": 8,
+            "created_at": "2026-11-27T07:22:24Z",
+            "thinking_chars": 7130,
+            "thinking_snippet": "Competency draft count sits at 43 against a maximum budget of 29, requiring significant consolidation. Merging targets must reduce inventory by up to 21 items while preserving distinct technical regimes and respecting the strict absorption"
+          },
+          {
+            "step_index": 12,
+            "created_at": "2026-11-27T07:23:34Z",
+            "thinking_chars": 687,
+            "thinking_snippet": "Severe curricular overlap detected between Hab-03 and Hab-04 based on high name similarity and Jaccard metrics. Initial instinct suggests merging the skills directly, but distinct terminal conditions warrant renaming Hab-03 to specify varia"
+          },
+          {
+            "step_index": 18,
+            "created_at": "2026-11-27T07:23:58Z",
+            "thinking_chars": 240,
+            "thinking_snippet": "Low name similarity is overridden by high description overlap, triggering overlap flags between specific habitat records. Merging the flagged entries into the primary identifier resolves the redundancy while adhering to absorption limits."
+          }
+        ]
+      },
+      "Author Shard 01": {
+        "thinking_turns_count": 4,
+        "total_thinking_chars": 7791,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:28Z",
+            "thinking_chars": 6540,
+            "thinking_snippet": "Target competence requires quota alignment across twelve templates spanning open symbolic types. Initial template difficulty mapping runs into Bloom coherence limits regarding upper-bound cognitive levels. Re-evaluating the evaluation tiers"
+          },
+          {
+            "step_index": 5,
+            "created_at": "2026-11-27T07:26:43Z",
+            "thinking_chars": 208,
+            "thinking_snippet": "Executing the specific build command from documentation to process the target content shard. Verifying strict flag enforcement, minimum archetype constraints, and template configurations during compilation."
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:26:55Z",
+            "thinking_chars": 692,
+            "thinking_snippet": "Initial error assessment reveals four isolated issues requiring targeted corrections. The first target in the data module involves fixing an erroneous terminal condition statement where the costate variable condition was incorrectly conflat"
+          },
+          {
+            "step_index": 13,
+            "created_at": "2026-11-27T07:27:09Z",
+            "thinking_chars": 351,
+            "thinking_snippet": "Discrepancies appear in the mathematical expressions across lines where integral boundaries and terminal time definitions fluctuate. Suspecting a parsing inconsistency in variable subscripts versus standalone parameters. Re-evaluating text"
+          }
+        ]
+      },
+      "Author Shard 02": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 3807,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:28Z",
+            "thinking_chars": 3807,
+            "thinking_snippet": "Specification successfully loaded from local documentation without requiring external reads. Requirements, behavioral contracts, and anti-clone rules now direct the structural design of the target data module.\n\nCompiling the competency modu"
+          }
+        ]
+      },
+      "Author Shard 03": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 6145,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:28Z",
+            "thinking_chars": 5878,
+            "thinking_snippet": "Target file `shard_03_data.py` requires precise alignment with specifications in `author_03_data.md`. Initial inspection focuses on mapping competence `Hab-16` to all twelve designated templates, ensuring exact parameter pairs for complexit"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:26:43Z",
+            "thinking_chars": 267,
+            "thinking_snippet": "Encountered a syntax warning regarding raw string escape sequences alongside multiple surgical validation errors. Initial approach targets adding raw string prefixes for regex patterns and adjusting structural boundaries simultaneously to r"
+          }
+        ]
+      },
+      "Author Shard 04": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 3929,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:28Z",
+            "thinking_chars": 3929,
+            "thinking_snippet": "Evaluating competency Hab-19 metrics reveals 12 required templates distributed across open symbolic, fill-in-the-blank, adversarial break, and unstructured model types. Stem variant constraints demand at least three to four iterations per t"
+          }
+        ]
+      },
+      "Author Shard 05": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 7517,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:28Z",
+            "thinking_chars": 7517,
+            "thinking_snippet": "Target data points indicate expected file structures and paths for the current shard generation. Initial assumption assumes standard compilation parameters apply, though environment-specific paths require verifying the command execution con"
+          }
+        ]
+      },
+      "Author Shard 06": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 5282,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:28Z",
+            "thinking_chars": 5013,
+            "thinking_snippet": "Examining module requirements and contract definitions for data shard generation. Target paths point to specific script and json outputs, requiring adherence to the specified compilation command structure.\n\nCompetency Hab-09 requires twelve"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:26:21Z",
+            "thinking_chars": 269,
+            "thinking_snippet": "Initial evaluation points to three parity errors driven by missing equality symbols in specific template stem variants. Testing the hypothesis that validation routines incorrectly flag certain variable assignments despite the presence of in"
+          }
+        ]
+      },
+      "Author Shard 07": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 6952,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:29Z",
+            "thinking_chars": 6625,
+            "thinking_snippet": "Target output paths point to a specific module containing the Hamiltonian and RCK model parameters. Verification of the configuration reveals three templates per modality required for data generation. Testing compilation parameters next to"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:26:48Z",
+            "thinking_chars": 327,
+            "thinking_snippet": "Targeted failure isolation reveals issues exclusively within `T-Hab10-06`. The primary violation stems from an explicit derivative giveaway in the steady-state definition. Removing the redundant derivative expression and replacing it with t"
+          }
+        ]
+      },
+      "Author Shard 08": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4839,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:29Z",
+            "thinking_chars": 4839,
+            "thinking_snippet": "Linear-quadratic optimal control framework requires coupling state dynamics with costate equations via Hamiltonian stationarity. Initial approach assumes direct substitution of optimal control inputs, yet fixed endpoint boundary conditions"
+          }
+        ]
+      },
+      "Author Shard 09": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6099,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:24:29Z",
+            "thinking_chars": 6099,
+            "thinking_snippet": "Initial distribution constraints mandate nine templates spanning three distinct modalities, alongside six specific distractors. Initial assumption placed distractors uniformly across modalities, but closer inspection requires ensuring every"
+          }
+        ]
+      },
+      "Author Shard 13": {
+        "thinking_turns_count": 4,
+        "total_thinking_chars": 3644,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:39Z",
+            "thinking_chars": 2954,
+            "thinking_snippet": "Evaluating template distribution for the target shard, requiring three distinct modalities across nine total variants. Balancing archetype allocations against the specified quota constraints while verifying template identifiers.\n\nInitial as"
+          },
+          {
+            "step_index": 5,
+            "created_at": "2026-11-27T07:28:47Z",
+            "thinking_chars": 170,
+            "thinking_snippet": "Executing compilation script on shard data with strict validation flags and minimum archetype constraints. Monitoring output for schema conformity and rendering errors."
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:28:57Z",
+            "thinking_chars": 275,
+            "thinking_snippet": "Initial evaluation suggested standard raw string formatting for diagnostics, but compiler requirements dictate specific token syntax inside rationale and step structures. Rules point toward updating specific entries like the missing variabl"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-27T07:29:02Z",
+            "thinking_chars": 245,
+            "thinking_snippet": "All 23 errors stem from two distinct pattern mismatches. Raw string formatting syntax is incorrectly applied where substitution tags are required. Specific stem variants across test sets lack necessary defining equations and target paramete"
+          }
+        ]
+      },
+      "Author Shard 14": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5961,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:39Z",
+            "thinking_chars": 5961,
+            "thinking_snippet": "Evaluating competence constraints for the target skill level requires setting up nine distinct templates across three modalities. Initial assumption assumes standard distribution, but anti-clone constraints demand stricter structural variat"
+          }
+        ]
+      },
+      "Author Shard 15": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 5894,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:39Z",
+            "thinking_chars": 5672,
+            "thinking_snippet": "Formulating the optimization problem for emission permit allocation with a terminal goal. The objective is to maximize quadratic utility over a time horizon subject to a linear inventory constraint, initial state, and terminal state boundar"
+          },
+          {
+            "step_index": 5,
+            "created_at": "2026-11-27T07:29:22Z",
+            "thinking_chars": 222,
+            "thinking_snippet": "Execution parameters require running the build script with strict validation flags against the target shard data. Target constraints enforce minimum archetypes and modality template thresholds to ensure output integrity."
+          }
+        ]
+      },
+      "Author Shard 16": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 5825,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:39Z",
+            "thinking_chars": 4406,
+            "thinking_snippet": "Designing assessment shard components according to author specifications requires exact distribution mapping. Initial check reveals a mismatch in targeted question type counts, necessitating a strict realignment with the mandated quantities"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:29:30Z",
+            "thinking_chars": 620,
+            "thinking_snippet": "Equation parity check reveals only two isolated errors across stem variants. Evaluation of the warning flags on the target set indicates missing variable interpolations, but since those are non-fatal warnings rather than strict validation f"
+          },
+          {
+            "step_index": 12,
+            "created_at": "2026-11-27T07:29:40Z",
+            "thinking_chars": 799,
+            "thinking_snippet": "Inspection of `S2[2]` and `S3[2]` reveals conflicting patterns regarding equality assignments within the stem variants. Initial assumption assumed a uniform structure across all indices, but validation rules reject specific variants missing"
+          }
+        ]
+      },
+      "Author Shard 17": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5462,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:40Z",
+            "thinking_chars": 5462,
+            "thinking_snippet": "Target shard parameters demand exact alignment with specified quotas, templates, and cognitive tiers. Initial mapping confirms three modalities spanning concept matching across varied difficulty levels. Verification of anti-clone and psycho"
+          }
+        ]
+      },
+      "Author Shard 18": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4588,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:40Z",
+            "thinking_chars": 4588,
+            "thinking_snippet": "Targeting specific module parameters for Euler's particular cases and the Beltrami identity. Initial directory mapping points toward the correct workspace paths, but destination output structures require validation against the defined schem"
+          }
+        ]
+      },
+      "Author Shard 10": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 6472,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:40Z",
+            "thinking_chars": 6096,
+            "thinking_snippet": "Analyzing configuration metadata and working directory parameters for the target skill segment. Path structures and compilation commands point toward a localized testing environment setup. Verifying output target destinations for generated"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:29:38Z",
+            "thinking_chars": 376,
+            "thinking_snippet": "Validation catches an equation parity error alongside dynamic rationale warnings across multiple templates. Variable arrays differ slightly by template structure—most define variables `a`, `b`, `c`, while subset templates require adjusted p"
+          }
+        ]
+      },
+      "Author Shard 11": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 4948,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:40Z",
+            "thinking_chars": 4610,
+            "thinking_snippet": "Specification details are extracted from the source text, identifying skill Hab-05 with a quota of 36. Configuration requires $M=3$ and $K=3$ across three template types: open_symbolic, unstructured_model, and adversarial_break, totaling 9"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:29:04Z",
+            "thinking_chars": 338,
+            "thinking_snippet": "Compilation check reveals minor variable mapping issues, specifically missing scope returns and unused identifiers. Remediation requires updating generation blocks to ensure downstream expressions correctly capture all referenced variables."
+          }
+        ]
+      },
+      "Author Shard 12": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 7061,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:27:40Z",
+            "thinking_chars": 6743,
+            "thinking_snippet": "Specifications extracted from the source text define the optimal control problem parameters, including the quadratic cost functional and discount rate. Mathematical formulation requires setting up the Hamiltonian for capital accumulation un"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-27T07:29:36Z",
+            "thinking_chars": 318,
+            "thinking_snippet": "Initial analysis indicates two distinct formatting and generation failures: raw unescaped math expressions across specific identifier sets, and a distractor collision bug where `q` overlaps with `c*kstar`. Adding a retry loop with bounded a"
+          }
+        ]
+      },
+      "Author Shard 25": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 3918,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 3136,
+            "thinking_snippet": "Targeting dynamic monopoly formulation parameters under competency specifications. Initial path routing requires generating structured outputs across designated modalities using local workspace compilation parameters. Validating target path"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:32:25Z",
+            "thinking_chars": 567,
+            "thinking_snippet": "Identified missing raw string prefixes on LaTeX-heavy strings causing parsing errors. Updating string literals on lines 193 and 272 to use raw formatting to safely handle backslashes.\n\nTemplate string warnings indicate degenerate literal co"
+          },
+          {
+            "step_index": 21,
+            "created_at": "2026-11-27T07:33:14Z",
+            "thinking_chars": 215,
+            "thinking_snippet": "Degenerate literal condition warnings trace back to literal strings within options 2 and 5. Replacing those literal conditions with dynamic terminology like \"suppresses the term\" resolves the constraint violation."
+          }
+        ]
+      },
+      "Author Shard 26": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 3173,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 2965,
+            "thinking_snippet": "Targeting competence `C-11` under variational reduction for linear dynamics systems. Reviewing the data store reveals a quota requirement of twenty-seven items distributed evenly across unstructured, adversarial, and multi-step templates, a"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:32:13Z",
+            "thinking_chars": 208,
+            "thinking_snippet": "Template expansion errors stem from digit-placeholder concatenation across hints and solutions. Inserting explicit multiplication operators or precomputing composite factors resolves the rendering failures."
+          }
+        ]
+      },
+      "Author Shard 27": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1435,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 1435,
+            "thinking_snippet": "Targeting competence category `C-14` under quota 27 requires constructing nine specific templates. Initial mapping outlines three templates dedicated to adversarial breaks spanning direct, inverse, and perturbation styles across varying dif"
+          }
+        ]
+      },
+      "Author Shard 19": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 3775,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 3451,
+            "thinking_snippet": "Analyzing specifications within the source data and target contracts for shard generation. Initial assumption pointed toward direct mapping of fields, but strict validation schemas require structuring output formats into both Python and JSO"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:32:18Z",
+            "thinking_chars": 324,
+            "thinking_snippet": "Two formatting errors detected regarding digit-placeholder concatenation. Initial approach assumes direct replacement works, but algebraic expansions like `4@b@` and `-2@a@` require explicit precomputation to prevent malformed text generati"
+          }
+        ]
+      },
+      "Author Shard 20": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 3276,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 3276,
+            "thinking_snippet": "Examining structural parameters and compile targets for the target shard. Initial configuration points toward distinct output paths for python and json artifacts, but validating the compilation command syntax is necessary to ensure executio"
+          }
+        ]
+      },
+      "Author Shard 21": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1604,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:47Z",
+            "thinking_chars": 1604,
+            "thinking_snippet": "Targeting competence `C-01` for `shard_21` requires constructing twenty-seven knowledge items across three modalities with a minimum of nine templates. Ensuring four archetypes and at least fourteen unique stems after masking numbers demand"
+          }
+        ]
+      },
+      "Author Shard 22": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1764,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 1764,
+            "thinking_snippet": "Target shard configuration specifies a knowledge type with a quota of twenty-seven items across three modalities. Initial assumption points toward setting up nine templates evenly split among standard, adversarial, and conceptual match form"
+          }
+        ]
+      },
+      "Author Shard 23": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 5435,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:46Z",
+            "thinking_chars": 5014,
+            "thinking_snippet": "Mapping quota and modality counts for competence C-03 yields nine required templates across proof, adversarial, and multiple-select formats. Target bloom levels for evaluation align correctly with the existing skeleton configuration, confir"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:32:29Z",
+            "thinking_chars": 421,
+            "thinking_snippet": "Error traces pinpoint three identical validation failures caused by degenerate numeric literal conditions during template expansion. Initial assumption pointed to syntax corruption, but tracing reveals variable interpolation transforms math"
+          }
+        ]
+      },
+      "Author Shard 24": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 3303,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:30:47Z",
+            "thinking_chars": 3002,
+            "thinking_snippet": "Targeting competence `C-04` under the Legendre necessary condition with a Bloom level of Evaluate. Assumption `A-C04-01` dictates that evaluating the second derivative $F_{\\dot{x}\\dot{x}}$ outside an Euler extremal fails to identify optimiz"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-27T07:32:10Z",
+            "thinking_chars": 301,
+            "thinking_snippet": "Mathematical formulation discrepancies identified across sequence variants. Initial review suggests inconsistent integral bounds in the first set and misplaced assignment operators in the perturbation definitions. Verifying exact string con"
+          }
+        ]
+      },
+      "Judge 01 (941d4f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 7155,
+        "traces": [
+          {
+            "step_index": 5,
+            "created_at": "2026-11-27T07:34:25Z",
+            "thinking_chars": 7155,
+            "thinking_snippet": "Current-value costate definition requires scaling the costate variable by the discount exponent. Evaluating this at the given parameters yields the specific magnitude, though verifying the exact sign convention for the costate equation is n"
+          }
+        ]
+      },
+      "Judge 02 (be772f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5687,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:11Z",
+            "thinking_chars": 5687,
+            "thinking_snippet": "Evaluating the sufficiency conclusion for the specified quadratic problem with Lagrangian constraints. Initial check of the second-order conditions for the first item reveals a potential sign error in the Hessian matrix components that requ"
+          }
+        ]
+      },
+      "Judge 03": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6799,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:11Z",
+            "thinking_chars": 6799,
+            "thinking_snippet": "Counting the items to verify the complete set reveals an initial total of 17 entries, but enumeration cuts off prematurely at item 7. Re-evaluating the collection to ensure no trailing records are missed before proceeding with evaluation."
+          }
+        ]
+      },
+      "Judge 04": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5778,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:11Z",
+            "thinking_chars": 5778,
+            "thinking_snippet": "Evaluating the dynamic economic model parameters where the derivative coefficient is non-zero, confirming the system requires boundary price conditions. The presence of the time derivative classifies the model as dynamic, validating the spe"
+          }
+        ]
+      },
+      "Judge 05": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6421,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:11Z",
+            "thinking_chars": 6421,
+            "thinking_snippet": "Evaluating the eighteen dataset entries individually to isolate potential ambiguities, logical flaws, or insufficient data. Initial review of the first five identifiers reveals a mix of open symbolic and unstructured model formats requiring"
+          }
+        ]
+      },
+      "Judge 06": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5189,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:12Z",
+            "thinking_chars": 5189,
+            "thinking_snippet": "Targeting the calculus of variations counterexample for the given integrand. Initial evaluation of the boundary condition predicate `x0 != 4 or x1 != 4` suggests testing integer pairs within the specified domain to identify a contradiction."
+          }
+        ]
+      },
+      "Judge 07": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6769,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:12Z",
+            "thinking_chars": 6769,
+            "thinking_snippet": "Processing the eighteen entries sequentially to identify potential flaws or ambiguities. Initial focus targets the first batch containing fallacy detection tasks and multi-select formats, verifying parameters before proceeding deeper into t"
+          }
+        ]
+      },
+      "Judge 08": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5475,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:11Z",
+            "thinking_chars": 5475,
+            "thinking_snippet": "Initial cataloging of the items identifies eight distinct structural types within the dataset, ranging from open symbolic to unstructured models. Verifying if the remaining items match these established categories or introduce new evaluatio"
+          }
+        ]
+      },
+      "Judge 09": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6928,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-27T07:34:12Z",
+            "thinking_chars": 6928,
+            "thinking_snippet": "Enumerating the eighteen entries within the evaluation dataset reveals a mix of multiple-select formats, unstructured models, adversarial breaks, and proof directed acyclic graphs. Initial impression suggests a homogeneous structure, but cl"
+          }
+        ]
+      }
+    }
+  },
+  "cta_architect": {
+    "CTA Architect (part_01)": {
+      "timings": {
+        "wall_time_seconds": 78.0,
+        "wall_time_minutes": 1.3,
+        "inference_seconds": 73.0,
+        "tool_seconds": 5.0,
+        "inference_pct": 93.6,
+        "tool_pct": 6.4,
+        "turns_count": 4,
+        "input_tokens": 71512,
+        "output_tokens": 10439,
+        "cache_tokens": 37569,
+        "active_tokens": 81951
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_02)": {
+      "timings": {
+        "wall_time_seconds": 61.0,
+        "wall_time_minutes": 1.02,
+        "inference_seconds": 57.0,
+        "tool_seconds": 4.0,
+        "inference_pct": 93.4,
+        "tool_pct": 6.6,
+        "turns_count": 4,
+        "input_tokens": 39823,
+        "output_tokens": 11982,
+        "cache_tokens": 72887,
+        "active_tokens": 51805
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_03)": {
+      "timings": {
+        "wall_time_seconds": 77.0,
+        "wall_time_minutes": 1.28,
+        "inference_seconds": 67.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 87.0,
+        "tool_pct": 11.7,
+        "turns_count": 6,
+        "input_tokens": 35395,
+        "output_tokens": 10847,
+        "cache_tokens": 107841,
+        "active_tokens": 46242
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_04)": {
+      "timings": {
+        "wall_time_seconds": 59.0,
+        "wall_time_minutes": 0.98,
+        "inference_seconds": 54.0,
+        "tool_seconds": 5.0,
+        "inference_pct": 91.5,
+        "tool_pct": 8.5,
+        "turns_count": 4,
+        "input_tokens": 30875,
+        "output_tokens": 8938,
+        "cache_tokens": 58341,
+        "active_tokens": 39813
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_05)": {
+      "timings": {
+        "wall_time_seconds": 88.0,
+        "wall_time_minutes": 1.47,
+        "inference_seconds": 84.0,
+        "tool_seconds": 4.0,
+        "inference_pct": 95.5,
+        "tool_pct": 4.5,
+        "turns_count": 4,
+        "input_tokens": 40967,
+        "output_tokens": 13020,
+        "cache_tokens": 74571,
+        "active_tokens": 53987
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_06)": {
+      "timings": {
+        "wall_time_seconds": 51.0,
+        "wall_time_minutes": 0.85,
+        "inference_seconds": 46.0,
+        "tool_seconds": 5.0,
+        "inference_pct": 90.2,
+        "tool_pct": 9.8,
+        "turns_count": 4,
+        "input_tokens": 31818,
+        "output_tokens": 8981,
+        "cache_tokens": 60052,
+        "active_tokens": 40799
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Architect (part_07)": {
+      "timings": {
+        "wall_time_seconds": 58.0,
+        "wall_time_minutes": 0.97,
+        "inference_seconds": 53.0,
+        "tool_seconds": 5.0,
+        "inference_pct": 91.4,
+        "tool_pct": 8.6,
+        "turns_count": 4,
+        "input_tokens": 25327,
+        "output_tokens": 9200,
+        "cache_tokens": 46905,
+        "active_tokens": 34527
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    },
+    "CTA Harmonizer": {
+      "timings": {
+        "wall_time_seconds": 121.0,
+        "wall_time_minutes": 2.02,
+        "inference_seconds": 92.0,
+        "tool_seconds": 24.0,
+        "inference_pct": 76.0,
+        "tool_pct": 19.8,
+        "turns_count": 9,
+        "input_tokens": 87735,
+        "output_tokens": 19047,
+        "cache_tokens": 480831,
+        "active_tokens": 106782
+      },
+      "cutoff_detected": false,
+      "cutoff_step": null,
+      "pivot_step": null,
+      "pivot_script": ""
+    }
+  },
+  "shards": {
+    "Author Shard 01": {
+      "shard_name": "Author Shard 01",
+      "timings": {
+        "wall_time_seconds": 191.0,
+        "wall_time_minutes": 3.18,
+        "inference_seconds": 168.0,
+        "tool_seconds": 21.0,
+        "inference_pct": 88.0,
+        "tool_pct": 11.0,
+        "turns_count": 8,
+        "input_tokens": 84695,
+        "output_tokens": 35076,
+        "cache_tokens": 400636,
+        "active_tokens": 119771
+      },
+      "writes_count": 1,
+      "edits_count": 4,
+      "unique_scripts_written": [
+        "shard_01_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 02": {
+      "shard_name": "Author Shard 02",
+      "timings": {
+        "wall_time_seconds": 119.0,
+        "wall_time_minutes": 1.98,
+        "inference_seconds": 109.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 91.6,
+        "tool_pct": 8.4,
+        "turns_count": 4,
+        "input_tokens": 56703,
+        "output_tokens": 23447,
+        "cache_tokens": 107464,
+        "active_tokens": 80150
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_02_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 03": {
+      "shard_name": "Author Shard 03",
+      "timings": {
+        "wall_time_seconds": 171.0,
+        "wall_time_minutes": 2.85,
+        "inference_seconds": 146.0,
+        "tool_seconds": 20.0,
+        "inference_pct": 85.4,
+        "tool_pct": 11.7,
+        "turns_count": 6,
+        "input_tokens": 67884,
+        "output_tokens": 32094,
+        "cache_tokens": 240766,
+        "active_tokens": 99978
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_03_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 04": {
+      "shard_name": "Author Shard 04",
+      "timings": {
+        "wall_time_seconds": 119.0,
+        "wall_time_minutes": 1.98,
+        "inference_seconds": 110.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 92.4,
+        "tool_pct": 7.6,
+        "turns_count": 4,
+        "input_tokens": 54850,
+        "output_tokens": 21726,
+        "cache_tokens": 105671,
+        "active_tokens": 76576
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_04_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 05": {
+      "shard_name": "Author Shard 05",
+      "timings": {
+        "wall_time_seconds": 148.0,
+        "wall_time_minutes": 2.47,
+        "inference_seconds": 138.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 93.2,
+        "tool_pct": 6.8,
+        "turns_count": 4,
+        "input_tokens": 66101,
+        "output_tokens": 32141,
+        "cache_tokens": 118235,
+        "active_tokens": 98242
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_05_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 06": {
+      "shard_name": "Author Shard 06",
+      "timings": {
+        "wall_time_seconds": 144.0,
+        "wall_time_minutes": 2.4,
+        "inference_seconds": 124.0,
+        "tool_seconds": 18.0,
+        "inference_pct": 86.1,
+        "tool_pct": 12.5,
+        "turns_count": 8,
+        "input_tokens": 68793,
+        "output_tokens": 25820,
+        "cache_tokens": 335250,
+        "active_tokens": 94613
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_06_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 07": {
+      "shard_name": "Author Shard 07",
+      "timings": {
+        "wall_time_seconds": 166.0,
+        "wall_time_minutes": 2.77,
+        "inference_seconds": 142.0,
+        "tool_seconds": 21.0,
+        "inference_pct": 85.5,
+        "tool_pct": 12.7,
+        "turns_count": 6,
+        "input_tokens": 68953,
+        "output_tokens": 31485,
+        "cache_tokens": 236443,
+        "active_tokens": 100438
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_07_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 08": {
+      "shard_name": "Author Shard 08",
+      "timings": {
+        "wall_time_seconds": 101.0,
+        "wall_time_minutes": 1.68,
+        "inference_seconds": 93.0,
+        "tool_seconds": 8.0,
+        "inference_pct": 92.1,
+        "tool_pct": 7.9,
+        "turns_count": 4,
+        "input_tokens": 52754,
+        "output_tokens": 20589,
+        "cache_tokens": 102767,
+        "active_tokens": 73343
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_08_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 09": {
+      "shard_name": "Author Shard 09",
+      "timings": {
+        "wall_time_seconds": 126.0,
+        "wall_time_minutes": 2.1,
+        "inference_seconds": 116.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 92.1,
+        "tool_pct": 7.9,
+        "turns_count": 4,
+        "input_tokens": 56620,
+        "output_tokens": 24786,
+        "cache_tokens": 105839,
+        "active_tokens": 81406
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_09_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 10": {
+      "shard_name": "Author Shard 10",
+      "timings": {
+        "wall_time_seconds": 156.0,
+        "wall_time_minutes": 2.6,
+        "inference_seconds": 130.0,
+        "tool_seconds": 20.0,
+        "inference_pct": 83.3,
+        "tool_pct": 12.8,
+        "turns_count": 6,
+        "input_tokens": 63954,
+        "output_tokens": 28893,
+        "cache_tokens": 219210,
+        "active_tokens": 92847
+      },
+      "writes_count": 1,
+      "edits_count": 5,
+      "unique_scripts_written": [
+        "shard_10_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 11": {
+      "shard_name": "Author Shard 11",
+      "timings": {
+        "wall_time_seconds": 108.0,
+        "wall_time_minutes": 1.8,
+        "inference_seconds": 87.0,
+        "tool_seconds": 18.0,
+        "inference_pct": 80.6,
+        "tool_pct": 16.7,
+        "turns_count": 6,
+        "input_tokens": 59490,
+        "output_tokens": 22502,
+        "cache_tokens": 204729,
+        "active_tokens": 81992
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_11_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 12": {
+      "shard_name": "Author Shard 12",
+      "timings": {
+        "wall_time_seconds": 184.0,
+        "wall_time_minutes": 3.07,
+        "inference_seconds": 170.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 92.4,
+        "tool_pct": 7.6,
+        "turns_count": 7,
+        "input_tokens": 81217,
+        "output_tokens": 35662,
+        "cache_tokens": 305389,
+        "active_tokens": 116879
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_12_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 13": {
+      "shard_name": "Author Shard 13",
+      "timings": {
+        "wall_time_seconds": 143.0,
+        "wall_time_minutes": 2.38,
+        "inference_seconds": 127.0,
+        "tool_seconds": 16.0,
+        "inference_pct": 88.8,
+        "tool_pct": 11.2,
+        "turns_count": 7,
+        "input_tokens": 72468,
+        "output_tokens": 29994,
+        "cache_tokens": 276705,
+        "active_tokens": 102462
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_13_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 14": {
+      "shard_name": "Author Shard 14",
+      "timings": {
+        "wall_time_seconds": 102.0,
+        "wall_time_minutes": 1.7,
+        "inference_seconds": 91.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 89.2,
+        "tool_pct": 9.8,
+        "turns_count": 5,
+        "input_tokens": 58182,
+        "output_tokens": 23817,
+        "cache_tokens": 155550,
+        "active_tokens": 81999
+      },
+      "writes_count": 1,
+      "edits_count": 1,
+      "unique_scripts_written": [
+        "shard_14_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 15": {
+      "shard_name": "Author Shard 15",
+      "timings": {
+        "wall_time_seconds": 125.0,
+        "wall_time_minutes": 2.08,
+        "inference_seconds": 116.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 92.8,
+        "tool_pct": 7.2,
+        "turns_count": 4,
+        "input_tokens": 86555,
+        "output_tokens": 25322,
+        "cache_tokens": 78661,
+        "active_tokens": 111877
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_15_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 16": {
+      "shard_name": "Author Shard 16",
+      "timings": {
+        "wall_time_seconds": 149.0,
+        "wall_time_minutes": 2.48,
+        "inference_seconds": 128.0,
+        "tool_seconds": 20.0,
+        "inference_pct": 85.9,
+        "tool_pct": 13.4,
+        "turns_count": 8,
+        "input_tokens": 69429,
+        "output_tokens": 27936,
+        "cache_tokens": 345613,
+        "active_tokens": 97365
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_16_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 17": {
+      "shard_name": "Author Shard 17",
+      "timings": {
+        "wall_time_seconds": 116.0,
+        "wall_time_minutes": 1.93,
+        "inference_seconds": 106.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 91.4,
+        "tool_pct": 8.6,
+        "turns_count": 4,
+        "input_tokens": 61123,
+        "output_tokens": 28340,
+        "cache_tokens": 110925,
+        "active_tokens": 89463
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_17_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 18": {
+      "shard_name": "Author Shard 18",
+      "timings": {
+        "wall_time_seconds": 112.0,
+        "wall_time_minutes": 1.87,
+        "inference_seconds": 103.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 92.0,
+        "tool_pct": 8.0,
+        "turns_count": 4,
+        "input_tokens": 106281,
+        "output_tokens": 23002,
+        "cache_tokens": 54797,
+        "active_tokens": 129283
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_18_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 19": {
+      "shard_name": "Author Shard 19",
+      "timings": {
+        "wall_time_seconds": 123.0,
+        "wall_time_minutes": 2.05,
+        "inference_seconds": 104.0,
+        "tool_seconds": 18.0,
+        "inference_pct": 84.6,
+        "tool_pct": 14.6,
+        "turns_count": 6,
+        "input_tokens": 55611,
+        "output_tokens": 20660,
+        "cache_tokens": 198181,
+        "active_tokens": 76271
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_19_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 20": {
+      "shard_name": "Author Shard 20",
+      "timings": {
+        "wall_time_seconds": 90.0,
+        "wall_time_minutes": 1.5,
+        "inference_seconds": 83.0,
+        "tool_seconds": 7.0,
+        "inference_pct": 92.2,
+        "tool_pct": 7.8,
+        "turns_count": 4,
+        "input_tokens": 48085,
+        "output_tokens": 16475,
+        "cache_tokens": 97526,
+        "active_tokens": 64560
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_20_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 21": {
+      "shard_name": "Author Shard 21",
+      "timings": {
+        "wall_time_seconds": 85.0,
+        "wall_time_minutes": 1.42,
+        "inference_seconds": 77.0,
+        "tool_seconds": 8.0,
+        "inference_pct": 90.6,
+        "tool_pct": 9.4,
+        "turns_count": 4,
+        "input_tokens": 45848,
+        "output_tokens": 15021,
+        "cache_tokens": 94332,
+        "active_tokens": 60869
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_21_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 22": {
+      "shard_name": "Author Shard 22",
+      "timings": {
+        "wall_time_seconds": 79.0,
+        "wall_time_minutes": 1.32,
+        "inference_seconds": 72.0,
+        "tool_seconds": 7.0,
+        "inference_pct": 91.1,
+        "tool_pct": 8.9,
+        "turns_count": 4,
+        "input_tokens": 44905,
+        "output_tokens": 14005,
+        "cache_tokens": 93184,
+        "active_tokens": 58910
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_22_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 23": {
+      "shard_name": "Author Shard 23",
+      "timings": {
+        "wall_time_seconds": 137.0,
+        "wall_time_minutes": 2.28,
+        "inference_seconds": 109.0,
+        "tool_seconds": 26.0,
+        "inference_pct": 79.6,
+        "tool_pct": 19.0,
+        "turns_count": 6,
+        "input_tokens": 60006,
+        "output_tokens": 22896,
+        "cache_tokens": 202643,
+        "active_tokens": 82902
+      },
+      "writes_count": 1,
+      "edits_count": 4,
+      "unique_scripts_written": [
+        "shard_23_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 24": {
+      "shard_name": "Author Shard 24",
+      "timings": {
+        "wall_time_seconds": 110.0,
+        "wall_time_minutes": 1.83,
+        "inference_seconds": 93.0,
+        "tool_seconds": 16.0,
+        "inference_pct": 84.5,
+        "tool_pct": 14.5,
+        "turns_count": 6,
+        "input_tokens": 52824,
+        "output_tokens": 17657,
+        "cache_tokens": 186522,
+        "active_tokens": 70481
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_24_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 25": {
+      "shard_name": "Author Shard 25",
+      "timings": {
+        "wall_time_seconds": 172.0,
+        "wall_time_minutes": 2.87,
+        "inference_seconds": 132.0,
+        "tool_seconds": 31.0,
+        "inference_pct": 76.7,
+        "tool_pct": 18.0,
+        "turns_count": 10,
+        "input_tokens": 72876,
+        "output_tokens": 24171,
+        "cache_tokens": 463375,
+        "active_tokens": 97047
+      },
+      "writes_count": 1,
+      "edits_count": 8,
+      "unique_scripts_written": [
+        "shard_25_data.py"
+      ],
+      "check_runs_total": 3,
+      "check_runs_failed": 2,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 26": {
+      "shard_name": "Author Shard 26",
+      "timings": {
+        "wall_time_seconds": 156.0,
+        "wall_time_minutes": 2.6,
+        "inference_seconds": 139.0,
+        "tool_seconds": 17.0,
+        "inference_pct": 89.1,
+        "tool_pct": 10.9,
+        "turns_count": 6,
+        "input_tokens": 66979,
+        "output_tokens": 32788,
+        "cache_tokens": 212927,
+        "active_tokens": 99767
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_26_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 27": {
+      "shard_name": "Author Shard 27",
+      "timings": {
+        "wall_time_seconds": 72.0,
+        "wall_time_minutes": 1.2,
+        "inference_seconds": 66.0,
+        "tool_seconds": 6.0,
+        "inference_pct": 91.7,
+        "tool_pct": 8.3,
+        "turns_count": 4,
+        "input_tokens": 43695,
+        "output_tokens": 12763,
+        "cache_tokens": 92548,
+        "active_tokens": 56458
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_27_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-14 (260e92)": {
+      "shard_name": "Repair Engineer Hab-14 (260e92)",
+      "timings": {
+        "wall_time_seconds": 55.0,
+        "wall_time_minutes": 0.92,
+        "inference_seconds": 30.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 54.5,
+        "tool_pct": 25.5,
+        "turns_count": 5,
+        "input_tokens": 46974,
+        "output_tokens": 8026,
+        "cache_tokens": 117221,
+        "active_tokens": 55000
+      },
+      "writes_count": 0,
+      "edits_count": 5,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-19 (07eeac)": {
+      "shard_name": "Repair Engineer Hab-19 (07eeac)",
+      "timings": {
+        "wall_time_seconds": 69.0,
+        "wall_time_minutes": 1.15,
+        "inference_seconds": 59.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 85.5,
+        "tool_pct": 14.5,
+        "turns_count": 6,
+        "input_tokens": 49585,
+        "output_tokens": 11397,
+        "cache_tokens": 152809,
+        "active_tokens": 60982
+      },
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    }
+  },
+  "repairs": {
+    "Repair Engineer Hab-14 (260e92)": {
+      "shard_name": "Repair Engineer Hab-14 (260e92)",
+      "timings": {
+        "wall_time_seconds": 55.0,
+        "wall_time_minutes": 0.92,
+        "inference_seconds": 30.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 54.5,
+        "tool_pct": 25.5,
+        "turns_count": 5,
+        "input_tokens": 46974,
+        "output_tokens": 8026,
+        "cache_tokens": 117221,
+        "active_tokens": 55000
+      },
+      "writes_count": 0,
+      "edits_count": 5,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-19 (07eeac)": {
+      "shard_name": "Repair Engineer Hab-19 (07eeac)",
+      "timings": {
+        "wall_time_seconds": 69.0,
+        "wall_time_minutes": 1.15,
+        "inference_seconds": 59.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 85.5,
+        "tool_pct": 14.5,
+        "turns_count": 6,
+        "input_tokens": 49585,
+        "output_tokens": 11397,
+        "cache_tokens": 152809,
+        "active_tokens": 60982
+      },
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    }
+  },
+  "judges": {
+    "Judge 01": {
+      "timings": {
+        "wall_time_seconds": 55.0,
+        "wall_time_minutes": 0.92,
+        "inference_seconds": 54.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.2,
+        "tool_pct": 1.8,
+        "turns_count": 3,
+        "input_tokens": 32960,
+        "output_tokens": 14635,
+        "cache_tokens": 29288,
+        "active_tokens": 47595
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 02": {
+      "timings": {
+        "wall_time_seconds": 63.0,
+        "wall_time_minutes": 1.05,
+        "inference_seconds": 61.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 96.8,
+        "tool_pct": 3.2,
+        "turns_count": 3,
+        "input_tokens": 34383,
+        "output_tokens": 13731,
+        "cache_tokens": 31681,
+        "active_tokens": 48114
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 01 (941d4f)": {
+      "timings": {
+        "wall_time_seconds": 83.0,
+        "wall_time_minutes": 1.38,
+        "inference_seconds": 79.0,
+        "tool_seconds": 4.0,
+        "inference_pct": 95.2,
+        "tool_pct": 4.8,
+        "turns_count": 4,
+        "input_tokens": 41479,
+        "output_tokens": 15381,
+        "cache_tokens": 56857,
+        "active_tokens": 56860
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 02 (be772f)": {
+      "timings": {
+        "wall_time_seconds": 47.0,
+        "wall_time_minutes": 0.78,
+        "inference_seconds": 46.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 97.9,
+        "tool_pct": 2.1,
+        "turns_count": 3,
+        "input_tokens": 44791,
+        "output_tokens": 11349,
+        "cache_tokens": 22828,
+        "active_tokens": 56140
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 03": {
+      "timings": {
+        "wall_time_seconds": 60.0,
+        "wall_time_minutes": 1.0,
+        "inference_seconds": 57.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 95.0,
+        "tool_pct": 5.0,
+        "turns_count": 3,
+        "input_tokens": 35300,
+        "output_tokens": 13345,
+        "cache_tokens": 32936,
+        "active_tokens": 48645
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 04": {
+      "timings": {
+        "wall_time_seconds": 58.0,
+        "wall_time_minutes": 0.97,
+        "inference_seconds": 57.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.3,
+        "tool_pct": 1.7,
+        "turns_count": 3,
+        "input_tokens": 35070,
+        "output_tokens": 13254,
+        "cache_tokens": 32876,
+        "active_tokens": 48324
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 05": {
+      "timings": {
+        "wall_time_seconds": 63.0,
+        "wall_time_minutes": 1.05,
+        "inference_seconds": 61.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 96.8,
+        "tool_pct": 3.2,
+        "turns_count": 3,
+        "input_tokens": 36462,
+        "output_tokens": 13897,
+        "cache_tokens": 33610,
+        "active_tokens": 50359
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 06": {
+      "timings": {
+        "wall_time_seconds": 54.0,
+        "wall_time_minutes": 0.9,
+        "inference_seconds": 51.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 94.4,
+        "tool_pct": 5.6,
+        "turns_count": 3,
+        "input_tokens": 34288,
+        "output_tokens": 11912,
+        "cache_tokens": 33504,
+        "active_tokens": 46200
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 07": {
+      "timings": {
+        "wall_time_seconds": 69.0,
+        "wall_time_minutes": 1.15,
+        "inference_seconds": 68.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.6,
+        "tool_pct": 1.4,
+        "turns_count": 3,
+        "input_tokens": 35607,
+        "output_tokens": 14345,
+        "cache_tokens": 32305,
+        "active_tokens": 49952
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 08": {
+      "timings": {
+        "wall_time_seconds": 46.0,
+        "wall_time_minutes": 0.77,
+        "inference_seconds": 45.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 97.8,
+        "tool_pct": 2.2,
+        "turns_count": 3,
+        "input_tokens": 34154,
+        "output_tokens": 11248,
+        "cache_tokens": 33946,
+        "active_tokens": 45402
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 09": {
+      "timings": {
+        "wall_time_seconds": 58.0,
+        "wall_time_minutes": 0.97,
+        "inference_seconds": 56.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 96.6,
+        "tool_pct": 3.4,
+        "turns_count": 3,
+        "input_tokens": 36379,
+        "output_tokens": 13183,
+        "cache_tokens": 34199,
+        "active_tokens": 49562
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    }
+  },
+  "error_taxonomy": {
+    "CTA Compilation & Schema Errors (CTA-SCHEMA / CTA-EV / DAG Cycle)": [
+      {
+        "agent": "CTA Architect (part_03)",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [CONSOLIDATED ERROR PACK] CTA compilation failed (1 errors) [part_03_data.py]: | Emitting AL",
+        "thinking": ""
+      },
+      {
+        "agent": "CTA Harmonizer",
+        "step_index": 11,
+        "snippet": "Command exited with code 1. | Command output: | FAIL: apply_harmonize failed: [CONSOLIDATED ERROR PACK] apply_harmonize failed (2 errors): |",
+        "thinking": ""
+      },
+      {
+        "agent": "CTA Harmonizer",
+        "step_index": 17,
+        "snippet": "Command exited with code 1. | Command output: | FAIL: apply_harmonize failed: [CONSOLIDATED ERROR PACK] apply_harmonize failed (1 errors): |",
+        "thinking": ""
+      }
+    ],
+    "Shard Compilation & Template Validator Failure (compile_shard / check_templates)": [
+      {
+        "agent": "Author Shard 01",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_01'... | Hab-03 (T-Hab03-01, seed=100): [EPISTEMIC-CL",
+        "thinking": "Executing the specific build command from documentation to process the target content shard. Verifying strict flag enforcement, minimum archetype constraints, and template configur"
+      },
+      {
+        "agent": "Author Shard 06",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_06'... | Hab-09 (T-Hab09-10, seed=100): [EPISTEMIC-CL",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 16",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_16'... | [PRECHECK] 9 hallazgo(s) estaticos (adverten",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 11",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_11'... | [!] Warning: [TPL-ORPHAN-VARS] En 'T-Hab05-0",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 12",
+        "step_index": 6,
+        "snippet": "The tool's output was truncated due to being too long. You can find the full output in a file at file:///C:/Users/augus/.gemini/antigravity/",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 25",
+        "step_index": 20,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 2/10] Compilando shard 'shard_25'... | [-] FAIL: 2 errores detectados (2 errores co",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 26",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_26'... | [!] Warning: Se detectó rf\"...\" conteniendo ",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 19",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_19'... | C-05 (T-C05-08, seed=100): [EPISTEMIC-CLOSUR",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 23",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_23'... | [-] FAIL: 3 errores detectados (3 errores co",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 24",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_24'... | WARNING: [BLOOM-SUPERIOR-TARGET] Cuota Analy",
+        "thinking": ""
+      }
+    ],
+    "LaTeX Control Character / Raw-String Corruption (R-03 / SyntaxWarning)": [
+      {
+        "agent": "Author Shard 03",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_03'... | <unknown>:153: SyntaxWarning: invalid escape",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 25",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_25'... | <unknown>:193: SyntaxWarning: invalid escape",
+        "thinking": ""
+      }
+    ],
+    "Anti-Giveaway & Psychometric Parity Violations (R-14..R-19)": [
+      {
+        "agent": "Author Shard 07",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_07'... | Hab-10 (T-Hab10-07, seed=100): [EPISTEMIC-CL",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 13",
+        "step_index": 6,
+        "snippet": "The tool's output was truncated due to being too long. You can find the full output in a file at file:///C:/Users/augus/.gemini/antigravity/",
+        "thinking": "Executing compilation script on shard data with strict validation flags and minimum archetype constraints. Monitoring output for schema conformity and rendering errors."
+      },
+      {
+        "agent": "Author Shard 10",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_10'... | [PRECHECK] 7 hallazgo(s) estaticos (adverten",
+        "thinking": ""
+      }
+    ]
+  }
+}

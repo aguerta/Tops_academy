@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Base Course (`math_base`)
 
-- **Fecha de Evaluación:** 2026-11-24
+- **Fecha de Evaluación:** 2026-11-27
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** RECHAZADO
 - **Calificación Final Certificada:** **13.1 / 20.0 pts**
@@ -90,7 +90,7 @@ El curso **Base Course** ha sido **RECHAZADO** para despliegue en plataforma con
     },
     "platform_status": "RECHAZADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-24"
+    "evaluation_date": "2026-11-27"
   },
   "dimension_scores": {
     "architecture_granularity": {

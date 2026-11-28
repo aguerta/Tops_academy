@@ -1,0 +1,2846 @@
+{
+  "conversation_id": "48b77db8-b730-4b12-bb92-7239637c959e",
+  "global_timings": {
+    "wall_clock_seconds": 3513.0,
+    "wall_clock_minutes": 58.55,
+    "total_turns": 332,
+    "total_errors": 28,
+    "avg_inference_pct": 86.59,
+    "avg_tool_pct": 13.41
+  },
+  "stage_telemetry_v3": {
+    "work_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\est3_exp_arm_d\\work",
+    "telemetry_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\est3_exp_arm_d\\work\\telemetry\\by_conversation\\48b77db8-b730-4b12-bb92-7239637c959e",
+    "conversation_id_verified": true,
+    "snapshots_count": 4,
+    "stages": [
+      {
+        "stage_key": "03_templates",
+        "stage_index": "03",
+        "stage_name": "templates",
+        "timestamp": "2026-11-28T09:47:38.513562+00:00",
+        "duration_seconds": 0.58,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 0.5824830532073975,
+          "count": 23
+        }
+      },
+      {
+        "stage_key": "04_build",
+        "stage_index": "04",
+        "stage_name": "build",
+        "timestamp": "2026-11-28T09:47:52.616501+00:00",
+        "duration_seconds": 14.03,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 14.028247833251953,
+          "total_questions": 831
+        }
+      },
+      {
+        "stage_key": "05_verify",
+        "stage_index": "05",
+        "stage_name": "verify",
+        "timestamp": "2026-11-28T09:47:54.890977+00:00",
+        "duration_seconds": 2.19,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 2.1861517429351807,
+          "verified_course_path": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\est3_exp_arm_d\\work\\course_verified.json"
+        }
+      },
+      {
+        "stage_key": "06_publish",
+        "stage_index": "06",
+        "stage_name": "publish",
+        "timestamp": "2026-11-28T09:48:08.611110+00:00",
+        "duration_seconds": 4.8,
+        "stage_total_tokens": 0,
+        "stage_active_tokens": 0,
+        "subagents_captured_count": 0,
+        "metadata": {
+          "duration_seconds": 4.800511598587036,
+          "published_json": "D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\est3_exp_arm_d.json"
+        }
+      }
+    ]
+  },
+  "thinking_traces": {
+    "total_thinking_turns": 108,
+    "total_thinking_chars": 266373,
+    "agents": {
+      "Orchestrator": {
+        "thinking_turns_count": 19,
+        "total_thinking_chars": 5893,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:15Z",
+            "thinking_chars": 272,
+            "thinking_snippet": "Current timestamp confirms the quota reset window has passed, yet execution bounds require careful verification. Examining the experiment workspace structure and test suite behavior before inspecting target execution logic around line 1097"
+          },
+          {
+            "step_index": 10,
+            "created_at": "2026-11-28T08:49:38Z",
+            "thinking_chars": 466,
+            "thinking_snippet": "Test suite execution succeeded, revealing six unauthored verification shards remaining in the target directory. Script analysis points to potential duplicate template generation or partial file collision risks in the execution pipeline.\n\nUn"
+          },
+          {
+            "step_index": 15,
+            "created_at": "2026-11-28T08:59:56Z",
+            "thinking_chars": 284,
+            "thinking_snippet": "Pipeline execution successfully completed authoring, merging, and repair rounds but ultimately halted due to persisting stage gate failures in `Hab-10` and `T-Hab10-02`. Examining the specific gate logs and repair matrices will reveal why t"
+          },
+          {
+            "step_index": 19,
+            "created_at": "2026-11-28T09:00:02Z",
+            "thinking_chars": 268,
+            "thinking_snippet": "Matrix output indicates a phase mismatch where unexpected items appeared alongside the expected evaluation targets. The evaluation run appears limited by a restrictive default repair round limit, obscuring whether subsequent iterations woul"
+          },
+          {
+            "step_index": 23,
+            "created_at": "2026-11-28T09:00:12Z",
+            "thinking_chars": 237,
+            "thinking_snippet": "The error traces to a template identifier incorrectly treated as a competency ID within the evaluation matrix. Inspecting the repair logic around stage execution to determine how unmapped template values leak into the failure manifest."
+          },
+          {
+            "step_index": 31,
+            "created_at": "2026-11-28T09:00:26Z",
+            "thinking_chars": 217,
+            "thinking_snippet": "Target IDs for the tenth habitat show a gap, missing the first six sequence segments entirely. Traces confirm that the initial batch completed ahead of schedule and already resides in the storage template directory."
+          },
+          {
+            "step_index": 34,
+            "created_at": "2026-11-28T09:00:34Z",
+            "thinking_chars": 284,
+            "thinking_snippet": "Discovered the source shard file remains intact on disk, prompting verification of all experiment arm split shards to ensure no overwrites occurred during previous repairs. Template counts per competency require direct verification across s"
+          },
+          {
+            "step_index": 36,
+            "created_at": "2026-11-28T09:00:39Z",
+            "thinking_chars": 365,
+            "thinking_snippet": "Template counts show an unexpected discrepancy where one subset contains only half its expected volume. Manifest configuration indicates file overwrites during compilation stages dropped the initial partition data. Tracing identifies missin"
+          },
+          {
+            "step_index": 39,
+            "created_at": "2026-11-28T09:00:46Z",
+            "thinking_chars": 771,
+            "thinking_snippet": "Targeted code inspection reveals conditional checks incorrectly bypassing shard compilation when fallback template files exist. Initial assumption pointed toward general caching faults, but traces confirm file timestamp comparisons are erro"
+          },
+          {
+            "step_index": 42,
+            "created_at": "2026-11-28T09:00:57Z",
+            "thinking_chars": 336,
+            "thinking_snippet": "Initial assumption suggested shard re-compilation safely overwrites consolidated targets. Closer inspection of the execution flow reveals that partial shard outputs overwrite the entire competency target, corrupting multi-part structures. M"
+          },
+          {
+            "step_index": 44,
+            "created_at": "2026-11-28T09:01:03Z",
+            "thinking_chars": 404,
+            "thinking_snippet": "Targeting the template execution logic where shard dependency checks fail to flag outdated composite structures. Initial approach assumed localized timestamp verification per shard, but trace analysis reveals partial partition files disrupt"
+          },
+          {
+            "step_index": 47,
+            "created_at": "2026-11-28T09:01:09Z",
+            "thinking_chars": 247,
+            "thinking_snippet": "Targeted modification logic requires checking file existence across split shards during template staging to prevent premature skipping of out-of-date parts. Repair matrix execution needs aligned updates to handle shard synchronization corre"
+          },
+          {
+            "step_index": 53,
+            "created_at": "2026-11-28T09:01:29Z",
+            "thinking_chars": 316,
+            "thinking_snippet": "Data parsing logic treats target identifiers as dictionaries when strings are present, corrupting failure tracking structures. Tracing initialization blocks reveals missing mappings for cluster IDs to shards. Rebuilding index references alo"
+          },
+          {
+            "step_index": 56,
+            "created_at": "2026-11-28T09:01:33Z",
+            "thinking_chars": 213,
+            "thinking_snippet": "Target logic needs template identifier resolution mapped directly from data files before processing failures. Adjusting traversal indexes around the target loop will ensure proper mapping of unknown identifiers."
+          },
+          {
+            "step_index": 59,
+            "created_at": "2026-11-28T09:01:44Z",
+            "thinking_chars": 202,
+            "thinking_snippet": "Executing the full test suite to validate recent control flow edits across core modules. Targeting specific workspace shards and dependent templates to force recompilation and confirm synchronization."
+          }
+        ]
+      },
+      "Repair Engineer Hab-10 (e2f389)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2068,
+        "traces": [
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:02:21Z",
+            "thinking_chars": 1908,
+            "thinking_snippet": "The test failure on the second habitat template stems from the blind judge unexpectedly selecting an extra assumption tag. Inspecting the generation logic reveals that the phase two assumptions list might be improperly expanding the expecte"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:02:39Z",
+            "thinking_chars": 160,
+            "thinking_snippet": "Executing the targeted compilation command for the shard data. Expecting strict archetype and modality constraints to validate output generation successfully."
+          }
+        ]
+      },
+      "Judge 01": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1251,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:03:27Z",
+            "thinking_chars": 1251,
+            "thinking_snippet": "Analyzing the target item variables for probability parameterization and boundary constraints. The structure requires mapping the success probability and upper barrier correctly to the expected duration formulation.\n\nInitial formulation map"
+          }
+        ]
+      },
+      "Author Shard 13": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4568,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:29Z",
+            "thinking_chars": 4568,
+            "thinking_snippet": "Examining dataset specifications and output paths for the target shard. Initial check assumes standard generation scripts will handle parsing, but compilation paths require specific virtual environment references. Verifying script execution"
+          }
+        ]
+      },
+      "Author Shard 10": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 5419,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:28Z",
+            "thinking_chars": 4455,
+            "thinking_snippet": "Examining the template quotas and band tuples across modalities reveals a structured mapping of cognitive levels and task types. Initial assumption of uniform difficulty across templates is contradicted by explicit band definitions designat"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:39:21Z",
+            "thinking_chars": 964,
+            "thinking_snippet": "Initial test output contains structural expansion bugs where target variables duplicate mathematical definitions, such as `k(14-k)=k(14-k)`. Solution strings require rewriting to avoid self-referential algebraic rendering. Proceeding to iso"
+          }
+        ]
+      },
+      "Author Shard 17": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 3555,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:29Z",
+            "thinking_chars": 3186,
+            "thinking_snippet": "Target shard configuration points to specific output paths and compilation commands. Verification confirms the necessary working directories and compilation scripts are correctly aligned for processing the target shard data.\n\nModality and a"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:38:58Z",
+            "thinking_chars": 369,
+            "thinking_snippet": "Error feedback points directly to missing variable tags within specific rationales inside the dataset module. Initial assumption was widespread formatting decay, but errors isolate cleanly to three distinct spots across two generations wher"
+          }
+        ]
+      },
+      "Author Shard 14": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 2377,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:29Z",
+            "thinking_chars": 1921,
+            "thinking_snippet": "Target workspace parameters point to specific directory structures for processing shard data outputs. Compilation relies on a dedicated script path tied to the environment interpreter, requiring exact execution mapping to generate the requi"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:39:13Z",
+            "thinking_chars": 285,
+            "thinking_snippet": "Variable substitution syntax conflicts with raw string formatting, exposing unnecessary nested braces. Line 336 contains a specific brace typo corrupting the expression rendering. File modification tools require targeted edits rather than f"
+          },
+          {
+            "step_index": 17,
+            "created_at": "2026-11-28T09:39:56Z",
+            "thinking_chars": 171,
+            "thinking_snippet": "Shard compilation completed successfully with verified templates and validated seeds. Halting tool execution per completion directive to trigger final output generation."
+          }
+        ]
+      },
+      "Author Shard 16": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 2550,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:29Z",
+            "thinking_chars": 1980,
+            "thinking_snippet": "Analyzing modality distribution and template requirements for the target competency. Initially assumed a uniform template count, but specifications dictate specific quotas across multiple-select and adversarial formats. Adjusting generation"
+          },
+          {
+            "step_index": 14,
+            "created_at": "2026-11-28T09:39:49Z",
+            "thinking_chars": 288,
+            "thinking_snippet": "Static template optimization in the problem generation step reveals that correct options relied solely on a static parameter, generating identical strings across all seeds. Varying the parameters within the correct templates ensures suffici"
+          },
+          {
+            "step_index": 24,
+            "created_at": "2026-11-28T09:40:23Z",
+            "thinking_chars": 282,
+            "thinking_snippet": "Shared dependency `RATS` propagates digit placeholder concatenation errors across twelve templates from a single origin on line four. Replacing the malformed expression directly on that line resolves every downstream failure simultaneously"
+          }
+        ]
+      },
+      "Author Shard 01": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6698,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:29Z",
+            "thinking_chars": 6698,
+            "thinking_snippet": "Targeting atom partitioning and event counting constraints from the reference specification. Initial assumption points to leveraging disjoint atom sigma-algebra cardinality formulas, but requires rigorous verification against contract param"
+          }
+        ]
+      },
+      "Author Shard 02": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 6313,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:30Z",
+            "thinking_chars": 5904,
+            "thinking_snippet": "Analyzing `Hab-02` competency requirements for `shard_02_data.py`, targeting twelve specific templates split evenly across open symbolic, fill-in-the-blank, and adversarial break formats. Initial assumption suggests standard measurability p"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:39:16Z",
+            "thinking_chars": 409,
+            "thinking_snippet": "Targeting four distinct validation errors in the source definitions. Initial thought suggests parallel file updates will clear the redundant positive-integer constraints across the stems and solutions. Closer inspection of the third error r"
+          }
+        ]
+      },
+      "Author Shard 03": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 4970,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:29Z",
+            "thinking_chars": 4337,
+            "thinking_snippet": "Target competency `Hab-03` requires exactly twelve templates distributed evenly across unstructured model, open symbolic, and adversarial break modalities. Initial review points to identifier `D-Hab03-01` as the mandatory tracking root for"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:39:13Z",
+            "thinking_chars": 633,
+            "thinking_snippet": "Equation parity check failed on variant index 3 because the equality sign was missing from the stem text. Initial inspection missed the missing assignment operator within the nested subset expression. Validating whether adding the required"
+          }
+        ]
+      },
+      "Author Shard 07": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 6029,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:37:30Z",
+            "thinking_chars": 5305,
+            "thinking_snippet": "Parsing the data reveals competence `Hab-07` requiring a quota of 48 across three difficulty tiers and 12 templates. The layout divides evenly into four modalities: fill-in-the-blank, open-symbolic, and remaining variants. Verifying whether"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:39:22Z",
+            "thinking_chars": 258,
+            "thinking_snippet": "Raw string prefix is unnecessary since no interpolation exists inside the pattern, yet the combination of raw and format prefixes creates syntax issues with literal tokens. Removing the format specifier from the string literal resolves the"
+          },
+          {
+            "step_index": 13,
+            "created_at": "2026-11-28T09:39:46Z",
+            "thinking_chars": 466,
+            "thinking_snippet": "High test success rate with only three isolated failures. Initial inspection of the tautology error in the probability generation task reveals an algebraic collision where a distractor expression numerically equals the correct answer under"
+          }
+        ]
+      },
+      "Author Shard 08": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 5875,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:39:45Z",
+            "thinking_chars": 5429,
+            "thinking_snippet": "Derivation requires establishing the generating function for first return probabilities in the random walk model. Initial assumption points to a standard binomial recurrence relation, but expansion via Lagrange inversion or direct combinato"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:41:52Z",
+            "thinking_chars": 232,
+            "thinking_snippet": "Isolation points to equation parity violations in specific shards. Symbol parity warnings in related variants require closer inspection of expression structures to ensure proper term alignment before applying targeted corrections."
+          },
+          {
+            "step_index": 13,
+            "created_at": "2026-11-28T09:42:00Z",
+            "thinking_chars": 214,
+            "thinking_snippet": "Mathematical expressions lack assignment operators in specific equation blocks, obscuring the functional equality. Inserting the missing equality signs corrects the mathematical notation across those definitions."
+          }
+        ]
+      },
+      "Author Shard 09": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 6203,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:39:48Z",
+            "thinking_chars": 5181,
+            "thinking_snippet": "Target specification defines competency Hab-09 with a quota of 48 across fill-in-the-blank, open symbolic, and unstructured model modalities, requiring four templates per modality. Evaluating the structure to ensure all anti-clone rules and"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T09:41:53Z",
+            "thinking_chars": 1022,
+            "thinking_snippet": "Evaluation points to generation phase failures concentrated in specific run cycles. Initial hypothesis assumes constraint validation rejects out-of-bounds outputs, but execution traces reveal fallback defaults trigger when iteration limits"
+          }
+        ]
+      },
+      "Judge 01 (469845)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4882,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:39Z",
+            "thinking_chars": 4882,
+            "thinking_snippet": "Enumerating the nineteen entries reveals a mix of adversarial breaks, multiple-select formats, unstructured models, and open-symbolic types. Verifying exact categorization parameters for each identifier to ensure structural consistency acro"
+          }
+        ]
+      },
+      "Judge 02": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5918,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:40Z",
+            "thinking_chars": 5918,
+            "thinking_snippet": "Evaluating the multiple-select items in the dataset, specifically the MSE optimality statements involving parameters 2, 8, and 6. Initial assumption targets linearity constraints, but option A requires verification against general orthogona"
+          }
+        ]
+      },
+      "Judge 03": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5578,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:40Z",
+            "thinking_chars": 5578,
+            "thinking_snippet": "Initial count yields 18 items to evaluate individually for flaws, missing parameters, and ambiguities. The first target is an adversarial fallacy detection task centered on a difference equation deduction with specific parameters, requiring"
+          }
+        ]
+      },
+      "Judge 04": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 7947,
+        "traces": [
+          {
+            "step_index": 1,
+            "created_at": "2026-11-28T09:43:38Z",
+            "thinking_chars": 232,
+            "thinking_snippet": "Operating configuration designates blind evaluation mode with restricted access parameters. Target assignment scope is limited to reading specified evaluation items and writing responses to the designated verification output file."
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:41Z",
+            "thinking_chars": 7715,
+            "thinking_snippet": "Evaluating the 17 items from the dataset sequentially. The initial phase requires validating each problem statement, verifying mathematical definitions, and computing exact solutions from first principles to detect potential ambiguities or"
+          }
+        ]
+      },
+      "Judge 05": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4475,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:40Z",
+            "thinking_chars": 4475,
+            "thinking_snippet": "Reviewing all sixteen dataset items reveals a mix of proof DAGs, multiple-select structures, adversarial breaks, and open symbolic tasks. Initial assumption pointed toward a uniform evaluation schema, but the varied item types require categ"
+          }
+        ]
+      },
+      "Judge 06": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4928,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:41Z",
+            "thinking_chars": 4928,
+            "thinking_snippet": "Enumerating the items reveals a mixture of structural types including adversarial breaks, multiple select, and proof dags. Initial count reaches eight items, but verifying the remaining batch requires careful parsing of each identifier to e"
+          }
+        ]
+      },
+      "Judge 07": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6324,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:40Z",
+            "thinking_chars": 6324,
+            "thinking_snippet": "Iterating through the items reveals a mix of open symbolic, multiple select, and adversarial formats. Initial review of item definitions requires rigorous first-principles derivation to catch potential ambiguities across each identifier.\n\nR"
+          }
+        ]
+      },
+      "Judge 08": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4052,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:40Z",
+            "thinking_chars": 4052,
+            "thinking_snippet": "Evaluating item structure for concept matching requires verifying independent increments across defined intervals. The premise setup implies verifying stochastic process properties, but potential truncation in the prompt text requires valid"
+          }
+        ]
+      },
+      "Judge 09": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4724,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:43:40Z",
+            "thinking_chars": 4724,
+            "thinking_snippet": "Initial approach targets the strict stationarity and increment independence properties for the given time indices. Option A implies increment independence from strict stationarity, but requires checking whether stationarity alone guarantees"
+          }
+        ]
+      },
+      "Repair Engineer Hab-09 (c81f6f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1643,
+        "traces": [
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:45:16Z",
+            "thinking_chars": 1643,
+            "thinking_snippet": "Judge evaluation flags an epistemic ambiguity in template twelve regarding ruin versus success probabilities. Initial assumption assumed standard definitions, but missing notation leads to distinct mathematical formulations requiring precis"
+          }
+        ]
+      },
+      "Judge 01 (d5f75f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1644,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:46:39Z",
+            "thinking_chars": 1644,
+            "thinking_snippet": "Initial modeling assumes a standard Gambler's Ruin setup across fourteen items. Boundary conditions dictate absorption at zero and upper limit $N$, framing the recurrence relation for the probability of ruin based on step probabilities.\n\nEs"
+          }
+        ]
+      },
+      "Author Shard 15": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1771,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:51Z",
+            "thinking_chars": 1771,
+            "thinking_snippet": "Specification details retrieved from source data, mapping out the twenty-four required templates across target structural shards. Initial assumption pointed to a uniform distribution, but competency C-09 requires twelve distinct templates s"
+          }
+        ]
+      },
+      "Author Shard 16 (20e11f)": {
+        "thinking_turns_count": 4,
+        "total_thinking_chars": 3527,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:52Z",
+            "thinking_chars": 2308,
+            "thinking_snippet": "Targeting `shard_16` contracts `C-11` and `C-12` across 24 templates. Simple random walk formulas require precise validation of variance and expectation parameters under symmetric and asymmetric conditions. Assumption `A-C11-01` needs stric"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:52:04Z",
+            "thinking_chars": 352,
+            "thinking_snippet": "Omission of sequence sets `21` through `24` identified across multiple generator blocks. Raw string formatting conflicts with literal braces require transitioning from interpolated prefixes to parameterized patterns. Variable naming mismatc"
+          },
+          {
+            "step_index": 31,
+            "created_at": "2026-11-28T08:53:36Z",
+            "thinking_chars": 542,
+            "thinking_snippet": "Error tracing reveals three validation failures in the dataset module. Initial review of the dynamic rationale formatter at line 927 shows a missing variable substitution. Injecting the required parameter tags (`@p@`, `@q@`, `@ret_p@`) into"
+          },
+          {
+            "step_index": 45,
+            "created_at": "2026-11-28T08:54:27Z",
+            "thinking_chars": 325,
+            "thinking_snippet": "Remaining failure stems from a mechanical punctuation error where an abbreviation period is followed by a lowercase word. The period in the abbreviation triggers the regex check because lowercase follows it. Replacing the abbreviated term w"
+          }
+        ]
+      },
+      "Author Shard 02 (ed8465)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 5372,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:51Z",
+            "thinking_chars": 5137,
+            "thinking_snippet": "Examining the metadata requirements and output paths defined in the target specification. Target directories require generated data exports in both script and structured data formats, but path structures need verification before executing c"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:51:11Z",
+            "thinking_chars": 235,
+            "thinking_snippet": "Initial scan identifies only a single structural error within the stem variants alongside minor formatting warnings. Targeting the specific identifier file to apply the missing equation definitions and correct the parity discrepancy."
+          }
+        ]
+      },
+      "Author Shard 06": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 7263,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:51Z",
+            "thinking_chars": 6573,
+            "thinking_snippet": "Examining the work order details reveals specific paths for the shard data, output targets, and compilation command. The target python and json outputs must align with the designated workspace directory structure for `shard_06b`.\n\nConflicti"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:51:37Z",
+            "thinking_chars": 690,
+            "thinking_snippet": "Literal numerical interpolation detected inside symbolic conditions across target templates, violating explicit negative constraints regarding parameter injection. Initial assumption relied on standard macro replacement, but conditional log"
+          }
+        ]
+      },
+      "Author Shard 10 (354953)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 4967,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:52Z",
+            "thinking_chars": 4560,
+            "thinking_snippet": "Line 17 mandates generating exactly 6 templates across 2 modalities using IDs `T-Hab-10-07` through `T-Hab-10-12`. Initial reading suggested a broader scope, but the specific archetype and distractor constraints require targeting perturbati"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:51:28Z",
+            "thinking_chars": 407,
+            "thinking_snippet": "Single template failure identified in the mathematical expression where substitution results in a tautological identity across the equality sign. The placeholder repeats the exact algebraic expansion on both sides, requiring an adjustment t"
+          }
+        ]
+      },
+      "Author Shard 17 (8d707f)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2800,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:49:52Z",
+            "thinking_chars": 2484,
+            "thinking_snippet": "Reviewing template distribution across the twelve variations for the difference equation problem. Each modality group—unstructured, adversarial, and multi-step—contains four templates ensuring complete archetype and band coverage.\n\nInspecti"
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:51:24Z",
+            "thinking_chars": 316,
+            "thinking_snippet": "Duplicate option content arises when probability coefficients evaluate equally, causing distinct formulations to collide. Probability values of 0.5 force symmetric weightings that trigger this collision. Adjusting parameter generation to pr"
+          }
+        ]
+      },
+      "Judge 01 (3a1288)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 7008,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:35Z",
+            "thinking_chars": 7008,
+            "thinking_snippet": "Initial inspection of the first item requires deriving the inverse function for the piecewise composition $7\\max(X-3,0) \\le x$. Translating the inequality to isolate $X$ yields the threshold function $t(x)$ for the specified domain.\n\nAnalyz"
+          }
+        ]
+      },
+      "Judge 02 (10708e)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4328,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:36Z",
+            "thinking_chars": 4328,
+            "thinking_snippet": "Parsing 19 dataset items sequentially. Initial focus centers on the unstructured model configuration for the first item, defining the process variables and sigma-algebra structures across time steps.\n\nTransitioning to evaluating filtration"
+          }
+        ]
+      },
+      "Judge 03 (f05ac6)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5332,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:36Z",
+            "thinking_chars": 5332,
+            "thinking_snippet": "Enumerating the target elements reveals eighteen distinct items requiring evaluation. Initial count stops short at ten, missing the remaining entries due to structural grouping. Re-evaluating the list confirms the full count encompasses eig"
+          }
+        ]
+      },
+      "Judge 04 (4614cf)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5280,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:35Z",
+            "thinking_chars": 5280,
+            "thinking_snippet": "Initial count verifies eighteen target items across mixed evaluation types. Need to verify completeness of the full identifier list before proceeding with individual evaluations.\n\nEnumeration confirms all eighteen identifiers, but prelimina"
+          }
+        ]
+      },
+      "Judge 05 (887919)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6720,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:36Z",
+            "thinking_chars": 6720,
+            "thinking_snippet": "Initial count indicates ten evaluation items present in the dataset, ranging across multiple-select, adversarial, open-symbolic, and unstructured formats. Reviewing the list reveals the tenth item is truncated, requiring verification of the"
+          }
+        ]
+      },
+      "Judge 06 (faa09f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5288,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:36Z",
+            "thinking_chars": 5288,
+            "thinking_snippet": "The ruin probability for a fair random walk satisfies a linear recurrence relation, yielding an initial probability of $8/13$. Increasing the upper absorbing barrier to $N=20$ shifts the capital ratio to $8/20$. Calculating the difference y"
+          }
+        ]
+      },
+      "Judge 07 (7787f3)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 6221,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:36Z",
+            "thinking_chars": 6221,
+            "thinking_snippet": "Parsing the first dataset item focusing on the finite partition and quadratic difference. The symbolic evaluation requires computing $R(x)$ over the specified atoms where $X_t(\\omega_1) = 11x^2+18$ and $X_t(\\omega_2) = 3x^2+4$. Subtracting"
+          }
+        ]
+      },
+      "Judge 08 (8f8ed1)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4453,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:37Z",
+            "thinking_chars": 4453,
+            "thinking_snippet": "Evaluating the eighteen items requires systematic verification of each proof structure. Initial approach assumes a straightforward step-by-step derivation for the convergence condition, but edge cases around the boundary values $|t| \\ge 1$"
+          }
+        ]
+      },
+      "Judge 09 (17465f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5180,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:55:36Z",
+            "thinking_chars": 5180,
+            "thinking_snippet": "Enumerating the target evaluation items reveals a mix of symbolic, unstructured, and categorical formats. Initial count stops short at eight items, requiring a complete sweep to verify the full set of eighteen before categorizing their spec"
+          }
+        ]
+      },
+      "Repair Engineer C-13 (c5e818)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2646,
+        "traces": [
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:56:52Z",
+            "thinking_chars": 2471,
+            "thinking_snippet": "The judicial critique highlights an ambiguity regarding probability assignments and ruin states across the templates. Reviewing template nine reveals missing definitions for the step probabilities and boundary conditions. Extending the audi"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T08:57:36Z",
+            "thinking_chars": 175,
+            "thinking_snippet": "Targeted compilation command identified for processing course data shards. Executing the script with strict archetype and modality constraints to validate output generation."
+          }
+        ]
+      },
+      "Repair Engineer Hab-08 (0f53f1)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2256,
+        "traces": [
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:56:52Z",
+            "thinking_chars": 2052,
+            "thinking_snippet": "Diagnostics reveal a proof dependency graph order mismatch in the judgment file, where steps arrived out of expected sequence. Re-examining the generation block shows node identifiers unordered, suggesting the topological sort logic failed"
+          },
+          {
+            "step_index": 10,
+            "created_at": "2026-11-28T08:57:16Z",
+            "thinking_chars": 204,
+            "thinking_snippet": "Target shard script execution requires specific strict archetypes and modality template thresholds. Running the compilation process against the source data file to generate the structured course output."
+          }
+        ]
+      },
+      "Repair Engineer Hab-10 (f58e75)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 1355,
+        "traces": [
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:56:53Z",
+            "thinking_chars": 276,
+            "thinking_snippet": "Target identifier `T-Hab10-02` missing from primary data module. Cross-referencing configuration templates and alternate shard definitions reveals scope constraints restrict access paths, forcing a shift to permitted repair data directories"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T08:56:56Z",
+            "thinking_chars": 1079,
+            "thinking_snippet": "Initial hypothesis assumed a standard diagnostic workflow, but scope-lock constraints restrict access strictly to the designated target files. Reviewing the boundary limits to ensure compliance before reading the specified data source.\n\nTem"
+          }
+        ]
+      },
+      "Repair Engineer Hab-10 (4bc029)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1515,
+        "traces": [
+          {
+            "step_index": 7,
+            "created_at": "2026-11-28T08:58:00Z",
+            "thinking_chars": 1515,
+            "thinking_snippet": "Diagnostics reveal a structural mismatch where unexpected identifiers appear in the evaluation output. Cross-referencing dataset definitions shows that these specific identifiers are absent from the current shard, suggesting they belong in"
+          }
+        ]
+      },
+      "Judge 01 (24c6ea)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4011,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:58:57Z",
+            "thinking_chars": 4011,
+            "thinking_snippet": "Enumerating the fourteen target items to verify alignment between input and output sizes. Initial inspection of identifier structures reveals distinct categorization tags across adversarial, multi-select, and validation structures requiring"
+          }
+        ]
+      },
+      "Judge 02 (061b28)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4831,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T08:58:57Z",
+            "thinking_chars": 4831,
+            "thinking_snippet": "Enumerating the fifteen target identifiers confirms the exact input volume required for processing. Initial review indicates a mix of adversarial breaks, unstructured models, open symbolic items, and multiple-select formats. Proceeding to e"
+          }
+        ]
+      },
+      "Author Shard 11": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4624,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:05Z",
+            "thinking_chars": 4624,
+            "thinking_snippet": "Examining the configuration parameters reveals specific directory paths and output file targets for the current data shard. Initial assumption suggests standard compilation execution, but verifying path dependencies ensures proper generatio"
+          }
+        ]
+      },
+      "Author Shard 04": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5896,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:05Z",
+            "thinking_chars": 5896,
+            "thinking_snippet": "Target competence `Hab-04` requires twelve templates divided equally across symbolic formulation, fill-in-the-blank, and proof-dag formats under the law of total expectation. Assumption `A-Hab04-01` enforces absolute convergence in $L^1$, w"
+          }
+        ]
+      },
+      "Author Shard 05": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4898,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:05Z",
+            "thinking_chars": 4898,
+            "thinking_snippet": "Targeting conditional variance and Eve's law under skill competency constraints. Validating structural distribution across the twelve required templates, mapping specific archetypes to open symbolic, proof DAG, and adversarial break modalit"
+          }
+        ]
+      },
+      "Author Shard 12": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 3074,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:06Z",
+            "thinking_chars": 2713,
+            "thinking_snippet": "Target structure defines nine templates across three distinct modalities for the measure theory competency. Bloom level targets evaluation capabilities, relying on the foundational generator lemma assumption over the set family.\n\nModality a"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:07:16Z",
+            "thinking_chars": 361,
+            "thinking_snippet": "Initial compilation succeeds broadly, exposing only two root formatting errors. The first error stems from a mismatched brace in a math macro parameter expansion. The second involves a static answer tuple due to omitted variables across tes"
+          }
+        ]
+      },
+      "Author Shard 06 (4a730c)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 6578,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:06Z",
+            "thinking_chars": 5947,
+            "thinking_snippet": "Analyzing the structural distribution for the competency quota, noting twelve templates evenly split between open symbolic, fill-in-the-blank, and unstructured formats. The core mathematical focus centers on unconditional moments in hierarc"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:07:15Z",
+            "thinking_chars": 631,
+            "thinking_snippet": "Initial assumption pointed toward a straightforward syntax issue, but the template validation reveals a degenerate numeric literal condition where variable interpolation forces a static comparison. Variant structure requires parameterizing"
+          }
+        ]
+      },
+      "Author Shard 13 (933d43)": {
+        "thinking_turns_count": 3,
+        "total_thinking_chars": 6853,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:06Z",
+            "thinking_chars": 5645,
+            "thinking_snippet": "Target configuration requires extracting specific metadata fields including work directory, shard identifier, and compilation commands. Verification confirms expected paths and targets match schema expectations for processing shard data.\n\nT"
+          },
+          {
+            "step_index": 5,
+            "created_at": "2026-11-28T09:07:06Z",
+            "thinking_chars": 253,
+            "thinking_snippet": "Reviewing the variant phrasing for potential rule conflicts against mechanical exclusion keywords. Target text uses terms requiring cross-referencing against hint restriction guidelines. Executing the compiler script to evaluate structural"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:07:24Z",
+            "thinking_chars": 955,
+            "thinking_snippet": "Diagnostics highlight two specific root causes. The sigma-algebra string formatting in the solution payload drops inner braces due to parsing artifacts, yielding malformed set notation. Inspecting the raw data definitions reveals where thes"
+          }
+        ]
+      },
+      "Author Shard 07 (3ffbff)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 4081,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:06Z",
+            "thinking_chars": 3768,
+            "thinking_snippet": "Analyzing competency requirements for `shard_07` targeting twelve templates across distinct modalities. Initial review shows evaluation Bloom levels are already met by specific template sets. Transitioning to examine the transition probabil"
+          },
+          {
+            "step_index": 11,
+            "created_at": "2026-11-28T09:07:02Z",
+            "thinking_chars": 313,
+            "thinking_snippet": "Template evaluation errors stem from using dynamic Python f-strings rather than raw variable tokens across generation datasets, coupled with rationales falling below length thresholds. Shifting all dataset rationales to utilize explicit tok"
+          }
+        ]
+      },
+      "Author Shard 14 (7d4d4a)": {
+        "thinking_turns_count": 2,
+        "total_thinking_chars": 2819,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:06Z",
+            "thinking_chars": 2148,
+            "thinking_snippet": "Target specification points to specific working directories and output paths for data processing. Initial assumption targets standard compilation scripts, though environment execution paths require verification against local virtual environ"
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-11-28T09:07:08Z",
+            "thinking_chars": 671,
+            "thinking_snippet": "Feedback pinpoints a single root cause behind multiple failures: a parity mismatch in template stem variants regarding subscripted variable notation. Variant entries diverge by explicitly including indexed temporal sets in some arrays while"
+          }
+        ]
+      },
+      "Author Shard 15 (457240)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 1800,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:05:06Z",
+            "thinking_chars": 1800,
+            "thinking_snippet": "Evaluating competencies and modalities for shard generation, specifically examining knowledge quotas and template distributions across difficulty tiers. Initial distribution counts suggest a mismatch in expected correct totals for the mediu"
+          }
+        ]
+      },
+      "Author Shard 08 (91efb7)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4355,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:07:01Z",
+            "thinking_chars": 4355,
+            "thinking_snippet": "Parsing problem specifications and parameters for the target shard to locate source data files and designated output paths. Initial assumption pointed to a generic compilation script, but path configuration requires strict adherence to the"
+          }
+        ]
+      },
+      "Author Shard 16 (e08f0f)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 3192,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:07:11Z",
+            "thinking_chars": 3192,
+            "thinking_snippet": "Target schema verification points to specific compilation scripts for structuring the course shard. Initial assumption suggests direct execution of the compiler module with strict flags, yet input paths require validation against the design"
+          }
+        ]
+      },
+      "Author Shard 09 (833d3b)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 4791,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:07:16Z",
+            "thinking_chars": 4791,
+            "thinking_snippet": "Examining the module requirements for calculating the gambler's ruin probability. Target files and directory structures require validation against the specified output format and template counts before executing the compilation pipeline.\n\nI"
+          }
+        ]
+      },
+      "Author Shard 01 (27e5cd)": {
+        "thinking_turns_count": 1,
+        "total_thinking_chars": 5404,
+        "traces": [
+          {
+            "step_index": 3,
+            "created_at": "2026-11-28T09:08:00Z",
+            "thinking_chars": 5404,
+            "thinking_snippet": "Target competency `Hab-01` dictates exact set cardinalities via Boolean intersections yielding $2^k$ disjoint atoms. Initial inspection assumes standard combinatorial bounds, yet verifying whether boundary conditions constrain the atomic pa"
+          }
+        ]
+      }
+    }
+  },
+  "cta_architect": {},
+  "shards": {
+    "Author Shard 01": {
+      "shard_name": "Author Shard 01",
+      "timings": {
+        "wall_time_seconds": 136.0,
+        "wall_time_minutes": 2.27,
+        "inference_seconds": 123.0,
+        "tool_seconds": 13.0,
+        "inference_pct": 90.4,
+        "tool_pct": 9.6,
+        "turns_count": 4,
+        "input_tokens": 60130,
+        "output_tokens": 27130,
+        "cache_tokens": 109667,
+        "active_tokens": 87260
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_01_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 01 (27e5cd)": {
+      "shard_name": "Author Shard 01 (27e5cd)",
+      "timings": {
+        "wall_time_seconds": 112.0,
+        "wall_time_minutes": 1.87,
+        "inference_seconds": 111.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 99.1,
+        "tool_pct": 0.9,
+        "turns_count": 2,
+        "input_tokens": 30128,
+        "output_tokens": 24236,
+        "cache_tokens": 24738,
+        "active_tokens": 54364
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_01_data.py"
+      ],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 02": {
+      "shard_name": "Author Shard 02",
+      "timings": {
+        "wall_time_seconds": 154.0,
+        "wall_time_minutes": 2.57,
+        "inference_seconds": 109.0,
+        "tool_seconds": 33.0,
+        "inference_pct": 70.8,
+        "tool_pct": 21.4,
+        "turns_count": 7,
+        "input_tokens": 65060,
+        "output_tokens": 27297,
+        "cache_tokens": 281212,
+        "active_tokens": 92357
+      },
+      "writes_count": 1,
+      "edits_count": 6,
+      "unique_scripts_written": [
+        "shard_02_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 02 (ed8465)": {
+      "shard_name": "Author Shard 02 (ed8465)",
+      "timings": {
+        "wall_time_seconds": 101.0,
+        "wall_time_minutes": 1.68,
+        "inference_seconds": 87.0,
+        "tool_seconds": 13.0,
+        "inference_pct": 86.1,
+        "tool_pct": 12.9,
+        "turns_count": 6,
+        "input_tokens": 53925,
+        "output_tokens": 17571,
+        "cache_tokens": 186698,
+        "active_tokens": 71496
+      },
+      "writes_count": 1,
+      "edits_count": 1,
+      "unique_scripts_written": [
+        "shard_02a_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 03": {
+      "shard_name": "Author Shard 03",
+      "timings": {
+        "wall_time_seconds": 138.0,
+        "wall_time_minutes": 2.3,
+        "inference_seconds": 103.0,
+        "tool_seconds": 31.0,
+        "inference_pct": 74.6,
+        "tool_pct": 22.5,
+        "turns_count": 7,
+        "input_tokens": 66405,
+        "output_tokens": 26975,
+        "cache_tokens": 275443,
+        "active_tokens": 93380
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_03_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 04": {
+      "shard_name": "Author Shard 04",
+      "timings": {
+        "wall_time_seconds": 130.0,
+        "wall_time_minutes": 2.17,
+        "inference_seconds": 113.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 86.9,
+        "tool_pct": 10.8,
+        "turns_count": 5,
+        "input_tokens": 59127,
+        "output_tokens": 24246,
+        "cache_tokens": 159573,
+        "active_tokens": 83373
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_04_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 05": {
+      "shard_name": "Author Shard 05",
+      "timings": {
+        "wall_time_seconds": 125.0,
+        "wall_time_minutes": 2.08,
+        "inference_seconds": 107.0,
+        "tool_seconds": 13.0,
+        "inference_pct": 85.6,
+        "tool_pct": 10.4,
+        "turns_count": 5,
+        "input_tokens": 61450,
+        "output_tokens": 26512,
+        "cache_tokens": 164247,
+        "active_tokens": 87962
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_05_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 06": {
+      "shard_name": "Author Shard 06",
+      "timings": {
+        "wall_time_seconds": 149.0,
+        "wall_time_minutes": 2.48,
+        "inference_seconds": 113.0,
+        "tool_seconds": 26.0,
+        "inference_pct": 75.8,
+        "tool_pct": 17.4,
+        "turns_count": 6,
+        "input_tokens": 62278,
+        "output_tokens": 27180,
+        "cache_tokens": 211694,
+        "active_tokens": 89458
+      },
+      "writes_count": 1,
+      "edits_count": 8,
+      "unique_scripts_written": [
+        "shard_06b_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 06 (4a730c)": {
+      "shard_name": "Author Shard 06 (4a730c)",
+      "timings": {
+        "wall_time_seconds": 173.0,
+        "wall_time_minutes": 2.88,
+        "inference_seconds": 138.0,
+        "tool_seconds": 30.0,
+        "inference_pct": 79.8,
+        "tool_pct": 17.3,
+        "turns_count": 9,
+        "input_tokens": 76044,
+        "output_tokens": 31459,
+        "cache_tokens": 425152,
+        "active_tokens": 107503
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_06_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 07": {
+      "shard_name": "Author Shard 07",
+      "timings": {
+        "wall_time_seconds": 176.0,
+        "wall_time_minutes": 2.93,
+        "inference_seconds": 135.0,
+        "tool_seconds": 37.0,
+        "inference_pct": 76.7,
+        "tool_pct": 21.0,
+        "turns_count": 12,
+        "input_tokens": 83144,
+        "output_tokens": 28553,
+        "cache_tokens": 598221,
+        "active_tokens": 111697
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_07_data.py"
+      ],
+      "check_runs_total": 3,
+      "check_runs_failed": 2,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 07 (3ffbff)": {
+      "shard_name": "Author Shard 07 (3ffbff)",
+      "timings": {
+        "wall_time_seconds": 181.0,
+        "wall_time_minutes": 3.02,
+        "inference_seconds": 161.0,
+        "tool_seconds": 17.0,
+        "inference_pct": 89.0,
+        "tool_pct": 9.4,
+        "turns_count": 6,
+        "input_tokens": 68773,
+        "output_tokens": 39185,
+        "cache_tokens": 218211,
+        "active_tokens": 107958
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_07_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 1,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 08": {
+      "shard_name": "Author Shard 08",
+      "timings": {
+        "wall_time_seconds": 176.0,
+        "wall_time_minutes": 2.93,
+        "inference_seconds": 130.0,
+        "tool_seconds": 30.0,
+        "inference_pct": 73.9,
+        "tool_pct": 17.0,
+        "turns_count": 10,
+        "input_tokens": 75864,
+        "output_tokens": 27123,
+        "cache_tokens": 462684,
+        "active_tokens": 102987
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_08_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 08 (91efb7)": {
+      "shard_name": "Author Shard 08 (91efb7)",
+      "timings": {
+        "wall_time_seconds": 107.0,
+        "wall_time_minutes": 1.78,
+        "inference_seconds": 107.0,
+        "tool_seconds": 0.0,
+        "inference_pct": 100.0,
+        "tool_pct": 0.0,
+        "turns_count": 2,
+        "input_tokens": 30516,
+        "output_tokens": 26056,
+        "cache_tokens": 24738,
+        "active_tokens": 56572
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_08_data.py"
+      ],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 09": {
+      "shard_name": "Author Shard 09",
+      "timings": {
+        "wall_time_seconds": 177.0,
+        "wall_time_minutes": 2.95,
+        "inference_seconds": 133.0,
+        "tool_seconds": 32.0,
+        "inference_pct": 75.1,
+        "tool_pct": 18.1,
+        "turns_count": 6,
+        "input_tokens": 68282,
+        "output_tokens": 30573,
+        "cache_tokens": 226248,
+        "active_tokens": 98855
+      },
+      "writes_count": 1,
+      "edits_count": 6,
+      "unique_scripts_written": [
+        "shard_09_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 09 (833d3b)": {
+      "shard_name": "Author Shard 09 (833d3b)",
+      "timings": {
+        "wall_time_seconds": 103.0,
+        "wall_time_minutes": 1.72,
+        "inference_seconds": 102.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 99.0,
+        "tool_pct": 1.0,
+        "turns_count": 2,
+        "input_tokens": 30610,
+        "output_tokens": 24238,
+        "cache_tokens": 24736,
+        "active_tokens": 54848
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_09_data.py"
+      ],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 10": {
+      "shard_name": "Author Shard 10",
+      "timings": {
+        "wall_time_seconds": 162.0,
+        "wall_time_minutes": 2.7,
+        "inference_seconds": 119.0,
+        "tool_seconds": 32.0,
+        "inference_pct": 73.5,
+        "tool_pct": 19.8,
+        "turns_count": 7,
+        "input_tokens": 125211,
+        "output_tokens": 27469,
+        "cache_tokens": 219745,
+        "active_tokens": 152680
+      },
+      "writes_count": 1,
+      "edits_count": 5,
+      "unique_scripts_written": [
+        "shard_10_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 10 (354953)": {
+      "shard_name": "Author Shard 10 (354953)",
+      "timings": {
+        "wall_time_seconds": 122.0,
+        "wall_time_minutes": 2.03,
+        "inference_seconds": 105.0,
+        "tool_seconds": 16.0,
+        "inference_pct": 86.1,
+        "tool_pct": 13.1,
+        "turns_count": 6,
+        "input_tokens": 54664,
+        "output_tokens": 19717,
+        "cache_tokens": 192717,
+        "active_tokens": 74381
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_10b_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 10 (46ef6e)": {
+      "shard_name": "Author Shard 10 (46ef6e)",
+      "timings": {
+        "wall_time_seconds": 0.0,
+        "wall_time_minutes": 0.0,
+        "inference_seconds": 0.0,
+        "tool_seconds": 0.0,
+        "inference_pct": 100.0,
+        "tool_pct": 0.0,
+        "turns_count": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_tokens": 0,
+        "active_tokens": 0
+      },
+      "writes_count": 0,
+      "edits_count": 0,
+      "unique_scripts_written": [],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 11": {
+      "shard_name": "Author Shard 11",
+      "timings": {
+        "wall_time_seconds": 183.0,
+        "wall_time_minutes": 3.05,
+        "inference_seconds": 141.0,
+        "tool_seconds": 29.0,
+        "inference_pct": 77.0,
+        "tool_pct": 15.8,
+        "turns_count": 10,
+        "input_tokens": 81991,
+        "output_tokens": 32183,
+        "cache_tokens": 505525,
+        "active_tokens": 114174
+      },
+      "writes_count": 1,
+      "edits_count": 1,
+      "unique_scripts_written": [
+        "shard_11_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 12": {
+      "shard_name": "Author Shard 12",
+      "timings": {
+        "wall_time_seconds": 185.0,
+        "wall_time_minutes": 3.08,
+        "inference_seconds": 127.0,
+        "tool_seconds": 30.0,
+        "inference_pct": 68.6,
+        "tool_pct": 16.2,
+        "turns_count": 9,
+        "input_tokens": 76365,
+        "output_tokens": 28305,
+        "cache_tokens": 417141,
+        "active_tokens": 104670
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_12_data.py"
+      ],
+      "check_runs_total": 3,
+      "check_runs_failed": 2,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 13": {
+      "shard_name": "Author Shard 13",
+      "timings": {
+        "wall_time_seconds": 149.0,
+        "wall_time_minutes": 2.48,
+        "inference_seconds": 125.0,
+        "tool_seconds": 15.0,
+        "inference_pct": 83.9,
+        "tool_pct": 10.1,
+        "turns_count": 5,
+        "input_tokens": 67937,
+        "output_tokens": 30997,
+        "cache_tokens": 177915,
+        "active_tokens": 98934
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_13_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 13 (933d43)": {
+      "shard_name": "Author Shard 13 (933d43)",
+      "timings": {
+        "wall_time_seconds": 219.0,
+        "wall_time_minutes": 3.65,
+        "inference_seconds": 203.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 92.7,
+        "tool_pct": 6.4,
+        "turns_count": 5,
+        "input_tokens": 66915,
+        "output_tokens": 52346,
+        "cache_tokens": 179206,
+        "active_tokens": 119261
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_13_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 1,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 14": {
+      "shard_name": "Author Shard 14",
+      "timings": {
+        "wall_time_seconds": 154.0,
+        "wall_time_minutes": 2.57,
+        "inference_seconds": 120.0,
+        "tool_seconds": 25.0,
+        "inference_pct": 77.9,
+        "tool_pct": 16.2,
+        "turns_count": 9,
+        "input_tokens": 73814,
+        "output_tokens": 24977,
+        "cache_tokens": 411729,
+        "active_tokens": 98791
+      },
+      "writes_count": 1,
+      "edits_count": 2,
+      "unique_scripts_written": [
+        "shard_14_data.py"
+      ],
+      "check_runs_total": 3,
+      "check_runs_failed": 2,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 14 (7d4d4a)": {
+      "shard_name": "Author Shard 14 (7d4d4a)",
+      "timings": {
+        "wall_time_seconds": 200.0,
+        "wall_time_minutes": 3.33,
+        "inference_seconds": 176.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 88.0,
+        "tool_pct": 7.0,
+        "turns_count": 5,
+        "input_tokens": 62796,
+        "output_tokens": 47910,
+        "cache_tokens": 168780,
+        "active_tokens": 110706
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_14_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 1,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 15": {
+      "shard_name": "Author Shard 15",
+      "timings": {
+        "wall_time_seconds": 150.0,
+        "wall_time_minutes": 2.5,
+        "inference_seconds": 128.0,
+        "tool_seconds": 16.0,
+        "inference_pct": 85.3,
+        "tool_pct": 10.7,
+        "turns_count": 5,
+        "input_tokens": 68355,
+        "output_tokens": 29662,
+        "cache_tokens": 180184,
+        "active_tokens": 98017
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_15_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 15 (457240)": {
+      "shard_name": "Author Shard 15 (457240)",
+      "timings": {
+        "wall_time_seconds": 114.0,
+        "wall_time_minutes": 1.9,
+        "inference_seconds": 95.0,
+        "tool_seconds": 14.0,
+        "inference_pct": 83.3,
+        "tool_pct": 12.3,
+        "turns_count": 5,
+        "input_tokens": 60227,
+        "output_tokens": 23303,
+        "cache_tokens": 162684,
+        "active_tokens": 83530
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_15_data.py"
+      ],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 16": {
+      "shard_name": "Author Shard 16",
+      "timings": {
+        "wall_time_seconds": 205.0,
+        "wall_time_minutes": 3.42,
+        "inference_seconds": 136.0,
+        "tool_seconds": 44.0,
+        "inference_pct": 66.3,
+        "tool_pct": 21.5,
+        "turns_count": 14,
+        "input_tokens": 91873,
+        "output_tokens": 30900,
+        "cache_tokens": 805404,
+        "active_tokens": 122773
+      },
+      "writes_count": 1,
+      "edits_count": 4,
+      "unique_scripts_written": [
+        "shard_16_data.py"
+      ],
+      "check_runs_total": 3,
+      "check_runs_failed": 2,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 16 (20e11f)": {
+      "shard_name": "Author Shard 16 (20e11f)",
+      "timings": {
+        "wall_time_seconds": 306.0,
+        "wall_time_minutes": 5.1,
+        "inference_seconds": 194.0,
+        "tool_seconds": 70.0,
+        "inference_pct": 63.4,
+        "tool_pct": 22.9,
+        "turns_count": 18,
+        "input_tokens": 197897,
+        "output_tokens": 45422,
+        "cache_tokens": 1220905,
+        "active_tokens": 243319
+      },
+      "writes_count": 1,
+      "edits_count": 19,
+      "unique_scripts_written": [
+        "shard_16_data.py"
+      ],
+      "check_runs_total": 4,
+      "check_runs_failed": 3,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 16 (e08f0f)": {
+      "shard_name": "Author Shard 16 (e08f0f)",
+      "timings": {
+        "wall_time_seconds": 113.0,
+        "wall_time_minutes": 1.88,
+        "inference_seconds": 113.0,
+        "tool_seconds": 0.0,
+        "inference_pct": 100.0,
+        "tool_pct": 0.0,
+        "turns_count": 2,
+        "input_tokens": 32124,
+        "output_tokens": 27114,
+        "cache_tokens": 24741,
+        "active_tokens": 59238
+      },
+      "writes_count": 1,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_16_data.py"
+      ],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 17": {
+      "shard_name": "Author Shard 17",
+      "timings": {
+        "wall_time_seconds": 161.0,
+        "wall_time_minutes": 2.68,
+        "inference_seconds": 139.0,
+        "tool_seconds": 22.0,
+        "inference_pct": 86.3,
+        "tool_pct": 13.7,
+        "turns_count": 6,
+        "input_tokens": 66213,
+        "output_tokens": 33403,
+        "cache_tokens": 211789,
+        "active_tokens": 99616
+      },
+      "writes_count": 2,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "shard_17_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Author Shard 17 (8d707f)": {
+      "shard_name": "Author Shard 17 (8d707f)",
+      "timings": {
+        "wall_time_seconds": 120.0,
+        "wall_time_minutes": 2.0,
+        "inference_seconds": 95.0,
+        "tool_seconds": 23.0,
+        "inference_pct": 79.2,
+        "tool_pct": 19.2,
+        "turns_count": 6,
+        "input_tokens": 59017,
+        "output_tokens": 24013,
+        "cache_tokens": 207381,
+        "active_tokens": 83030
+      },
+      "writes_count": 1,
+      "edits_count": 3,
+      "unique_scripts_written": [
+        "shard_17_data.py"
+      ],
+      "check_runs_total": 2,
+      "check_runs_failed": 1,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer C-13 (c5e818)": {
+      "shard_name": "Repair Engineer C-13 (c5e818)",
+      "timings": {
+        "wall_time_seconds": 66.0,
+        "wall_time_minutes": 1.1,
+        "inference_seconds": 55.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 83.3,
+        "tool_pct": 15.2,
+        "turns_count": 5,
+        "input_tokens": 54751,
+        "output_tokens": 11266,
+        "cache_tokens": 127189,
+        "active_tokens": 66017
+      },
+      "writes_count": 0,
+      "edits_count": 1,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-08 (0f53f1)": {
+      "shard_name": "Repair Engineer Hab-08 (0f53f1)",
+      "timings": {
+        "wall_time_seconds": 40.0,
+        "wall_time_minutes": 0.67,
+        "inference_seconds": 30.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 75.0,
+        "tool_pct": 22.5,
+        "turns_count": 5,
+        "input_tokens": 39748,
+        "output_tokens": 5747,
+        "cache_tokens": 107763,
+        "active_tokens": 45495
+      },
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-09 (c81f6f)": {
+      "shard_name": "Repair Engineer Hab-09 (c81f6f)",
+      "timings": {
+        "wall_time_seconds": 61.0,
+        "wall_time_minutes": 1.02,
+        "inference_seconds": 33.0,
+        "tool_seconds": 18.0,
+        "inference_pct": 54.1,
+        "tool_pct": 29.5,
+        "turns_count": 6,
+        "input_tokens": 48638,
+        "output_tokens": 7897,
+        "cache_tokens": 143974,
+        "active_tokens": 56535
+      },
+      "writes_count": 0,
+      "edits_count": 5,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-10 (4bc029)": {
+      "shard_name": "Repair Engineer Hab-10 (4bc029)",
+      "timings": {
+        "wall_time_seconds": 33.0,
+        "wall_time_minutes": 0.55,
+        "inference_seconds": 22.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 66.7,
+        "tool_pct": 30.3,
+        "turns_count": 5,
+        "input_tokens": 35463,
+        "output_tokens": 3717,
+        "cache_tokens": 100710,
+        "active_tokens": 39180
+      },
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-10 (e2f389)": {
+      "shard_name": "Repair Engineer Hab-10 (e2f389)",
+      "timings": {
+        "wall_time_seconds": 41.0,
+        "wall_time_minutes": 0.68,
+        "inference_seconds": 31.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 75.6,
+        "tool_pct": 22.0,
+        "turns_count": 5,
+        "input_tokens": 35794,
+        "output_tokens": 4609,
+        "cache_tokens": 101104,
+        "active_tokens": 40403
+      },
+      "writes_count": 0,
+      "edits_count": 1,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-10 (f58e75)": {
+      "shard_name": "Repair Engineer Hab-10 (f58e75)",
+      "timings": {
+        "wall_time_seconds": 19.0,
+        "wall_time_minutes": 0.32,
+        "inference_seconds": 18.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 94.7,
+        "tool_pct": 5.3,
+        "turns_count": 4,
+        "input_tokens": 45951,
+        "output_tokens": 3000,
+        "cache_tokens": 69809,
+        "active_tokens": 48951
+      },
+      "writes_count": 0,
+      "edits_count": 0,
+      "unique_scripts_written": [],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    }
+  },
+  "repairs": {
+    "Repair Engineer C-13 (c5e818)": {
+      "shard_name": "Repair Engineer C-13 (c5e818)",
+      "timings": {
+        "wall_time_seconds": 66.0,
+        "wall_time_minutes": 1.1,
+        "inference_seconds": 55.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 83.3,
+        "tool_pct": 15.2,
+        "turns_count": 5,
+        "input_tokens": 54751,
+        "output_tokens": 11266,
+        "cache_tokens": 127189,
+        "active_tokens": 66017
+      },
+      "writes_count": 0,
+      "edits_count": 1,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-08 (0f53f1)": {
+      "shard_name": "Repair Engineer Hab-08 (0f53f1)",
+      "timings": {
+        "wall_time_seconds": 40.0,
+        "wall_time_minutes": 0.67,
+        "inference_seconds": 30.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 75.0,
+        "tool_pct": 22.5,
+        "turns_count": 5,
+        "input_tokens": 39748,
+        "output_tokens": 5747,
+        "cache_tokens": 107763,
+        "active_tokens": 45495
+      },
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-09 (c81f6f)": {
+      "shard_name": "Repair Engineer Hab-09 (c81f6f)",
+      "timings": {
+        "wall_time_seconds": 61.0,
+        "wall_time_minutes": 1.02,
+        "inference_seconds": 33.0,
+        "tool_seconds": 18.0,
+        "inference_pct": 54.1,
+        "tool_pct": 29.5,
+        "turns_count": 6,
+        "input_tokens": 48638,
+        "output_tokens": 7897,
+        "cache_tokens": 143974,
+        "active_tokens": 56535
+      },
+      "writes_count": 0,
+      "edits_count": 5,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-10 (4bc029)": {
+      "shard_name": "Repair Engineer Hab-10 (4bc029)",
+      "timings": {
+        "wall_time_seconds": 33.0,
+        "wall_time_minutes": 0.55,
+        "inference_seconds": 22.0,
+        "tool_seconds": 10.0,
+        "inference_pct": 66.7,
+        "tool_pct": 30.3,
+        "turns_count": 5,
+        "input_tokens": 35463,
+        "output_tokens": 3717,
+        "cache_tokens": 100710,
+        "active_tokens": 39180
+      },
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-10 (e2f389)": {
+      "shard_name": "Repair Engineer Hab-10 (e2f389)",
+      "timings": {
+        "wall_time_seconds": 41.0,
+        "wall_time_minutes": 0.68,
+        "inference_seconds": 31.0,
+        "tool_seconds": 9.0,
+        "inference_pct": 75.6,
+        "tool_pct": 22.0,
+        "turns_count": 5,
+        "input_tokens": 35794,
+        "output_tokens": 4609,
+        "cache_tokens": 101104,
+        "active_tokens": 40403
+      },
+      "writes_count": 0,
+      "edits_count": 1,
+      "unique_scripts_written": [],
+      "check_runs_total": 1,
+      "check_runs_failed": 0,
+      "check_runs_passed": 1,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    },
+    "Repair Engineer Hab-10 (f58e75)": {
+      "shard_name": "Repair Engineer Hab-10 (f58e75)",
+      "timings": {
+        "wall_time_seconds": 19.0,
+        "wall_time_minutes": 0.32,
+        "inference_seconds": 18.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 94.7,
+        "tool_pct": 5.3,
+        "turns_count": 4,
+        "input_tokens": 45951,
+        "output_tokens": 3000,
+        "cache_tokens": 69809,
+        "active_tokens": 48951
+      },
+      "writes_count": 0,
+      "edits_count": 0,
+      "unique_scripts_written": [],
+      "check_runs_total": 0,
+      "check_runs_failed": 0,
+      "check_runs_passed": 0,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false,
+      "micro_loop_reason": "NO"
+    }
+  },
+  "judges": {
+    "Judge 01": {
+      "timings": {
+        "wall_time_seconds": 20.0,
+        "wall_time_minutes": 0.33,
+        "inference_seconds": 18.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 90.0,
+        "tool_pct": 10.0,
+        "turns_count": 3,
+        "input_tokens": 17111,
+        "output_tokens": 3196,
+        "cache_tokens": 20918,
+        "active_tokens": 20307
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 01 (469845)": {
+      "timings": {
+        "wall_time_seconds": 44.0,
+        "wall_time_minutes": 0.73,
+        "inference_seconds": 42.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 95.5,
+        "tool_pct": 4.5,
+        "turns_count": 3,
+        "input_tokens": 34328,
+        "output_tokens": 10966,
+        "cache_tokens": 34489,
+        "active_tokens": 45294
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 02": {
+      "timings": {
+        "wall_time_seconds": 54.0,
+        "wall_time_minutes": 0.9,
+        "inference_seconds": 51.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 94.4,
+        "tool_pct": 5.6,
+        "turns_count": 3,
+        "input_tokens": 36428,
+        "output_tokens": 13854,
+        "cache_tokens": 33722,
+        "active_tokens": 50282
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 03": {
+      "timings": {
+        "wall_time_seconds": 44.0,
+        "wall_time_minutes": 0.73,
+        "inference_seconds": 42.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 95.5,
+        "tool_pct": 4.5,
+        "turns_count": 3,
+        "input_tokens": 34476,
+        "output_tokens": 10904,
+        "cache_tokens": 34794,
+        "active_tokens": 45380
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 04": {
+      "timings": {
+        "wall_time_seconds": 61.0,
+        "wall_time_minutes": 1.02,
+        "inference_seconds": 57.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 93.4,
+        "tool_pct": 4.9,
+        "turns_count": 3,
+        "input_tokens": 38652,
+        "output_tokens": 15321,
+        "cache_tokens": 34659,
+        "active_tokens": 53973
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 05": {
+      "timings": {
+        "wall_time_seconds": 46.0,
+        "wall_time_minutes": 0.77,
+        "inference_seconds": 43.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 93.5,
+        "tool_pct": 4.3,
+        "turns_count": 3,
+        "input_tokens": 33965,
+        "output_tokens": 11413,
+        "cache_tokens": 33778,
+        "active_tokens": 45378
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 06": {
+      "timings": {
+        "wall_time_seconds": 43.0,
+        "wall_time_minutes": 0.72,
+        "inference_seconds": 40.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 93.0,
+        "tool_pct": 7.0,
+        "turns_count": 3,
+        "input_tokens": 33834,
+        "output_tokens": 10921,
+        "cache_tokens": 34151,
+        "active_tokens": 44755
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 07": {
+      "timings": {
+        "wall_time_seconds": 49.0,
+        "wall_time_minutes": 0.82,
+        "inference_seconds": 48.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.0,
+        "tool_pct": 2.0,
+        "turns_count": 3,
+        "input_tokens": 34988,
+        "output_tokens": 12290,
+        "cache_tokens": 33920,
+        "active_tokens": 47278
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 08": {
+      "timings": {
+        "wall_time_seconds": 35.0,
+        "wall_time_minutes": 0.58,
+        "inference_seconds": 33.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 94.3,
+        "tool_pct": 5.7,
+        "turns_count": 3,
+        "input_tokens": 30747,
+        "output_tokens": 8531,
+        "cache_tokens": 33289,
+        "active_tokens": 39278
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 09": {
+      "timings": {
+        "wall_time_seconds": 43.0,
+        "wall_time_minutes": 0.72,
+        "inference_seconds": 41.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 95.3,
+        "tool_pct": 4.7,
+        "turns_count": 3,
+        "input_tokens": 33406,
+        "output_tokens": 10779,
+        "cache_tokens": 33728,
+        "active_tokens": 44185
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 01 (d5f75f)": {
+      "timings": {
+        "wall_time_seconds": 26.0,
+        "wall_time_minutes": 0.43,
+        "inference_seconds": 23.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 88.5,
+        "tool_pct": 11.5,
+        "turns_count": 3,
+        "input_tokens": 23599,
+        "output_tokens": 5833,
+        "cache_tokens": 28888,
+        "active_tokens": 29432
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 01 (3a1288)": {
+      "timings": {
+        "wall_time_seconds": 51.0,
+        "wall_time_minutes": 0.85,
+        "inference_seconds": 48.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 94.1,
+        "tool_pct": 3.9,
+        "turns_count": 3,
+        "input_tokens": 35846,
+        "output_tokens": 12656,
+        "cache_tokens": 34353,
+        "active_tokens": 48502
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 02 (10708e)": {
+      "timings": {
+        "wall_time_seconds": 46.0,
+        "wall_time_minutes": 0.77,
+        "inference_seconds": 44.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 95.7,
+        "tool_pct": 4.3,
+        "turns_count": 3,
+        "input_tokens": 32747,
+        "output_tokens": 9750,
+        "cache_tokens": 34195,
+        "active_tokens": 42497
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 03 (f05ac6)": {
+      "timings": {
+        "wall_time_seconds": 50.0,
+        "wall_time_minutes": 0.83,
+        "inference_seconds": 47.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 94.0,
+        "tool_pct": 6.0,
+        "turns_count": 3,
+        "input_tokens": 35554,
+        "output_tokens": 12279,
+        "cache_tokens": 34402,
+        "active_tokens": 47833
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 04 (4614cf)": {
+      "timings": {
+        "wall_time_seconds": 52.0,
+        "wall_time_minutes": 0.87,
+        "inference_seconds": 51.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.1,
+        "tool_pct": 1.9,
+        "turns_count": 3,
+        "input_tokens": 34932,
+        "output_tokens": 12342,
+        "cache_tokens": 33726,
+        "active_tokens": 47274
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 05 (887919)": {
+      "timings": {
+        "wall_time_seconds": 54.0,
+        "wall_time_minutes": 0.9,
+        "inference_seconds": 53.0,
+        "tool_seconds": 1.0,
+        "inference_pct": 98.1,
+        "tool_pct": 1.9,
+        "turns_count": 3,
+        "input_tokens": 35481,
+        "output_tokens": 13276,
+        "cache_tokens": 33307,
+        "active_tokens": 48757
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 06 (faa09f)": {
+      "timings": {
+        "wall_time_seconds": 46.0,
+        "wall_time_minutes": 0.77,
+        "inference_seconds": 43.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 93.5,
+        "tool_pct": 6.5,
+        "turns_count": 3,
+        "input_tokens": 30910,
+        "output_tokens": 10197,
+        "cache_tokens": 31802,
+        "active_tokens": 41107
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 07 (7787f3)": {
+      "timings": {
+        "wall_time_seconds": 48.0,
+        "wall_time_minutes": 0.8,
+        "inference_seconds": 46.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 95.8,
+        "tool_pct": 4.2,
+        "turns_count": 3,
+        "input_tokens": 31448,
+        "output_tokens": 10884,
+        "cache_tokens": 31670,
+        "active_tokens": 42332
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 08 (8f8ed1)": {
+      "timings": {
+        "wall_time_seconds": 42.0,
+        "wall_time_minutes": 0.7,
+        "inference_seconds": 39.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 92.9,
+        "tool_pct": 7.1,
+        "turns_count": 3,
+        "input_tokens": 31750,
+        "output_tokens": 9585,
+        "cache_tokens": 33237,
+        "active_tokens": 41335
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 09 (17465f)": {
+      "timings": {
+        "wall_time_seconds": 52.0,
+        "wall_time_minutes": 0.87,
+        "inference_seconds": 49.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 94.2,
+        "tool_pct": 3.8,
+        "turns_count": 3,
+        "input_tokens": 34106,
+        "output_tokens": 11738,
+        "cache_tokens": 33457,
+        "active_tokens": 45844
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 01 (24c6ea)": {
+      "timings": {
+        "wall_time_seconds": 45.0,
+        "wall_time_minutes": 0.75,
+        "inference_seconds": 43.0,
+        "tool_seconds": 2.0,
+        "inference_pct": 95.6,
+        "tool_pct": 4.4,
+        "turns_count": 3,
+        "input_tokens": 35006,
+        "output_tokens": 11290,
+        "cache_tokens": 34874,
+        "active_tokens": 46296
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    },
+    "Judge 02 (061b28)": {
+      "timings": {
+        "wall_time_seconds": 40.0,
+        "wall_time_minutes": 0.67,
+        "inference_seconds": 37.0,
+        "tool_seconds": 3.0,
+        "inference_pct": 92.5,
+        "tool_pct": 7.5,
+        "turns_count": 3,
+        "input_tokens": 32198,
+        "output_tokens": 9598,
+        "cache_tokens": 33681,
+        "active_tokens": 41796
+      },
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
+    }
+  },
+  "error_taxonomy": {
+    "Exploratory Python One-Liner / Script Exceptions (Syntax/Key/Type/ValueError)": [
+      {
+        "agent": "Orchestrator",
+        "step_index": 24,
+        "snippet": "Command exited with code 1. | Command output: | File \"<string>\", line 1 | import pathlib, json; w=pathlib.Path('courses/est3_exp_arm_c/work'",
+        "thinking": "The error traces to a template identifier incorrectly treated as a competency ID within the evaluation matrix. Inspecting the repair logic around stage execution to determine how u"
+      }
+    ],
+    "API Rate Limit (429 RESOURCE_EXHAUSTED)": [
+      {
+        "agent": "Orchestrator",
+        "step_index": 77,
+        "snippet": "Encountered error in tool execution: workflow execution failed (line 426): QuotaPausedError: PAUSED_QUOTA: exception: failed to run agent \"4",
+        "thinking": ""
+      }
+    ],
+    "Anti-Giveaway & Psychometric Parity Violations (R-14..R-19)": [
+      {
+        "agent": "Author Shard 10",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_10'... | WARNING: [TPL-STEM-SYMBOL-PARITY] Inconsiste",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 17",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_17'... | WARNING: [TPL-STEM-SYMBOL-PARITY] Inconsiste",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 16",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 12",
+        "step_index": 15,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 13 (933d43)",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 07 (3ffbff)",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      }
+    ],
+    "Shard Compilation & Template Validator Failure (compile_shard / check_templates)": [
+      {
+        "agent": "Author Shard 14",
+        "step_index": 6,
+        "snippet": "The tool's output was truncated due to being too long. You can find the full output in a file at file:///C:/Users/augus/.gemini/antigravity/",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 14",
+        "step_index": 10,
+        "snippet": "The tool's output was truncated due to being too long. You can find the full output in a file at file:///C:/Users/augus/.gemini/antigravity/",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 16",
+        "step_index": 23,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 02",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_02'... | [!] Warning: Se detectó rf\"...\" conteniendo ",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 03",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_03'... | WARNING: [TPL-STEM-SYMBOL-PARITY] Inconsiste",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 07",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 2/10] Compilando shard 'shard_07'... | [!] Warning: Se detectó rf\"...\" conteniendo ",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 08",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 16 (20e11f)",
+        "step_index": 30,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 16 (20e11f)",
+        "step_index": 44,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 02 (ed8465)",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_02a'... | [!] Warning: Se detectó rf\"...\" conteniendo",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 06",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_06b'... | [!] Warning: Se detectó rf\"...\" conteniendo",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 10 (354953)",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 3/10] Compilando shard 'shard_10b'... | [!] Warning: Se detectó rf\"...\" conteniendo",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 11",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 12",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 14 (7d4d4a)",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      }
+    ],
+    "LaTeX Control Character / Raw-String Corruption (R-03 / SyntaxWarning)": [
+      {
+        "agent": "Author Shard 07",
+        "step_index": 12,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      }
+    ],
+    "Parameter Diversity & Option Collapse (TPL-VAR / TPL-COLLAPSE)": [
+      {
+        "agent": "Author Shard 09",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_09'... | [!] Warning: Se detectó rf\"...\" conteniendo ",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 17 (8d707f)",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 1/10] Compilando shard 'shard_17'... | C-13 (T-C13-04, seed=100): [EPISTEMIC-CLOSUR",
+        "thinking": ""
+      },
+      {
+        "agent": "Author Shard 06 (4a730c)",
+        "step_index": 8,
+        "snippet": "The following is a <SYSTEM_MESSAGE> not actually sent by the user. It is provided by the system as important information to pay attention to",
+        "thinking": ""
+      }
+    ],
+    "PowerShell Command / Quoting / $Variable Expansion Friction": [
+      {
+        "agent": "Author Shard 16 (20e11f)",
+        "step_index": 6,
+        "snippet": "Command exited with code 1. | Command output: | [COMPILE 2/10] Compilando shard 'shard_16'... | [!] Warning: Se detectó rf\"...\" conteniendo ",
+        "thinking": ""
+      }
+    ]
+  }
+}

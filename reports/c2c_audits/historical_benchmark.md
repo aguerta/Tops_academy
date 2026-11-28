@@ -1,12 +1,21 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-24 16:49:24`. Total de ejecuciones auditadas: **86**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-28 04:48:09`. Total de ejecuciones auditadas: **95**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Costo (USD) | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-28 09:48` | **est3_exp_arm_d** (`48b77db8`) | 43 pág (1.56 MB) | 23 comp / 0 preg | 58.5 min (3513.0s) | **2.69x** | 15,723,537 | **`$14.64`** | **0.0** | **0.0s** | ❌ Falló | 🛠️ 4 | ⚠️ 3 |
+| `2026-11-27 18:47` | **est3_exp_arm_a** (`08e90bb9`) | 43 pág (1.56 MB) | 23 comp / 0 preg | 86.0 min (5158.0s) | **2.05x** | 41,939,576 | **`$19.40`** | **0.0** | **0.0s** | ❌ Falló | 🛠️ 71 | ⚠️ 2 |
+| `2026-11-27 17:15` | **mateco_4_test_k4** (`d54e978c`) | 71 pág (3.61 MB) | 57 comp / 2452 preg | 540.1 min (32407.0s) | **1.34x** | 23,639,669 | **`$24.34`** | **9,641.0** | **13.22s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
+| `2026-11-27 08:17` | **estadistica_3_test_k4** (`62c2b2ab`) | 43 pág (1.56 MB) | 23 comp / 948 preg | 27.6 min (1659.0s) | **3.74x** | 11,614,620 | **`$10.67`** | **12,251.7** | **1.75s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
+| `2026-11-27 08:17` | **estadistica_3_test_k3** (`cc90e1bd`) | 43 pág (1.56 MB) | 22 comp / 666 preg | 15.3 min (921.0s) | **4.87x** | 8,369,212 | **`$8.39`** | **12,566.4** | **1.38s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
+| `2026-11-27 08:17` | **mateco_4_test_k3** (`f0d103e6`) | 71 pág (3.61 MB) | 27 comp / 975 preg | 22.6 min (1353.0s) | **4.6x** | 10,596,056 | **`$11.60`** | **10,867.7** | **1.39s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
+| `2026-11-27 08:17` | **solow_test_k3** (`e269baaf`) | 36 pág (1.49 MB) | 21 comp / 648 preg | 23.9 min (1434.0s) | **3.84x** | 8,619,136 | **`$9.93`** | **13,301.1** | **2.21s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
+| `2026-11-27 08:16` | **solow_test_k4** (`4e3ad1c7`) | 36 pág (1.49 MB) | 19 comp / 768 preg | 20.4 min (1226.0s) | **4.26x** | 8,937,646 | **`$9.80`** | **11,637.6** | **1.6s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
+| `2026-11-27 08:16` | **estadistica_3_rincon_only_k3** (`d860e465`) | 22 pág (0.66 MB) | 11 comp / 333 preg | 15.9 min (952.0s) | **3.0x** | 5,008,508 | **`$4.98`** | **15,040.6** | **2.86s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-24 21:49` | **estadistica_3_pre_cl_k3** (`e7d34485`) | 43 pág (1.56 MB) | 18 comp / 558 preg | 71.0 min (4260.0s) | **1.65x** | 6,275,442 | **`$6.67`** | **11,246.3** | **7.63s** | ❌ Falló | 🛠️ 0 | ✅ 0 |
 | `2026-11-24 19:24` | **mateco_4_optimizacion_k4_v2** (`753e4e81`) | 71 pág (3.61 MB) | 32 comp / 1472 preg | 26.3 min (1579.0s) | **5.88x** | 16,516,609 | **`$17.23`** | **11,220.5** | **1.07s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
 | `2026-11-24 18:19` | **mateco_4_optimizacion_k3_v2_m20** (`36fdd76d`) | 71 pág (3.61 MB) | 27 comp / 903 preg | 19.9 min (1194.0s) | **5.22x** | 10,987,590 | **`$11.97`** | **12,167.9** | **1.32s** | ❌ Falló | 🛠️ 0 | ⚠️ 1 |
@@ -98,11 +107,11 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.02x`
-- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.47 USD`
-- **Densidad de Tokens Promedio por Pregunta**: `45,155.3 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `5.01 s/pregunta`
-- **Rendimiento Promedio de Generación**: `26.77 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `4.86x`
+- **Costo Estimado Promedio (Gemini 4 Hydrogen)**: `$15.20 USD`
+- **Densidad de Tokens Promedio por Pregunta**: `42,196.6 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `4.87 s/pregunta`
+- **Rendimiento Promedio de Generación**: `27.08 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*

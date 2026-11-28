@@ -1867,3 +1867,8 @@
 {"timestamp": "2026-11-24T23:46:10.439484+00:00", "course_id": "greene_append_v3", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
 {"timestamp": "2026-11-24T23:46:15.063552+00:00", "course_id": "test_canonical", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
 {"timestamp": "2026-11-24T23:46:15.160414+00:00", "course_id": "test_cta_no_autoheal_omitted_s0", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-25T04:35:19.510208+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-25T04:35:19.584449+00:00", "course_id": "l5_test", "total_patches": 1, "healed": 0, "snapped": 0, "degraded": 1, "degraded_pct": 2.56, "alert": false, "by_rule": {"DEGRADE_MATH": 1}}
+{"timestamp": "2026-11-27T17:56:18.132350+00:00", "course_id": "macro_base", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
+{"timestamp": "2026-11-27T17:56:26.444356+00:00", "course_id": "micro_course", "total_patches": 2, "healed": 2, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 2}}
+{"timestamp": "2026-11-27T17:56:35.568115+00:00", "course_id": "macro_solow", "total_patches": 13, "healed": 13, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 13}}
