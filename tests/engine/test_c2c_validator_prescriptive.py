@@ -471,3 +471,59 @@ class TestCoursePublisherQualityGateStrict:
         assert "PROHIBIDO ajustar multiplicadores decimales" in rendered
         assert "fórmula algebraica del error conceptual" in rendered
 
+    def test_r15_ms_diagnostic_preserves_template_id(self):
+        """Verifies that [R-15-MS] diagnostics include the exact template_id so authors do not edit the wrong template."""
+        from engine.template_diagnostics import format_invariant_error_diagnostic
+
+        err = format_invariant_error_diagnostic(
+            cid="C-06",
+            tpl_id="T-C06-11",
+            q_id="seed=100",
+            inv_err="MS length anti-giveaway violation: correct options too short on average (avg_true=111.5 vs avg_false=139.7, ratio=0.80x < 0.80x).",
+        )
+        rendered = render_compact_aggregated_errors([err])
+        assert "R-15-MS" in rendered
+        assert "T-C06-11" in rendered
+
+    def test_heal_katex_display_wraps_unbraced_placeholders(self):
+        """Verifies heal_katex_display_str wraps ^@var@ and _@var@ inside $...$ without touching non-math text."""
+        from engine.template_healing import heal_katex_display_str
+
+        raw = r"Valor $X_@n@ + k^@al@ + k^{@b@}$ y fuera X_@n@"
+        healed = heal_katex_display_str(raw)
+        assert r"$X_{@n@} + k^{@al@} + k^{@b@}$" in healed
+        assert healed.endswith("y fuera X_@n@")
+
+    def test_stem_equation_parity_includes_reference_excerpt(self):
+        """Verifies [TPL-STEM-EQUATION-PARITY] includes the reference equation excerpt from sibling variants."""
+        import check_templates
+
+        tpl = {
+            "id": "T-C01-02",
+            "competency_id": "C-01",
+            "interaction_type": "fill_in_the_blank",
+            "stem_variants": [
+                r"Dada la función de producción $Y(t) = K^{@a@}L^{1-@a@}$, calcule $Y$:",
+                r"Con $Y(t) = K^{@a@}L^{1-@a@}$ y parámetros dados, halle $Y$:",
+                r"Para los parámetros $@a@$ dados, determine el producto total:",
+            ],
+            "hints": [
+                "Evalúe el exponente del capital antes de multiplicar.",
+                "Combine los términos en potencias fraccionarias.",
+                "Verifique el resultado numérico final.",
+            ],
+            "solution": r"Sustituyendo $@a@$, se obtiene el producto total $Y$.",
+            "generate_py": "def gen(r):\n    a = r.randint(2, 5)\n    return {'vars': {'a': a}, 'correct': str(a)}",
+            "cross_check_py": "def ver(c, v): return float(c) == float(v['a'])",
+        }
+        errs = check_templates.check_single_template(
+            tpl,
+            competency_id="C-01",
+            declared_distractor_ids=set(),
+            num_dry_run_seeds=1,
+            strict=False,
+        )
+        eq_errs = [str(e) for e in errs if "TPL-STEM-EQUATION-PARITY" in str(e)]
+        assert eq_errs, f"Expected TPL-STEM-EQUATION-PARITY error, got: {errs}"
+        assert "Y(t) = K^{@a@}L^{1-@a@}" in eq_errs[0]
+

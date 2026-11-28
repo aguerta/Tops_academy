@@ -538,11 +538,11 @@ def test_find_pending_shards_idempotent_on_resume(tmp_path: Path):
         json.dumps({"shards": [{"shard_id": "shard_01"}, {"shard_id": "shard_02"}]}),
         encoding="utf-8",
     )
-    (shards_dir / "shard_01.json").write_text('{"ok": true}', encoding="utf-8")
+    (shards_dir / "shard_01.cert.json").write_text('{"ok": true}', encoding="utf-8")
     assert find_pending(tmp_path) == ["shard_02"]
 
     # 3. Both compiled and non-empty -> [] (skip Stage 2 & 3)
-    (shards_dir / "shard_02.json").write_text('{"ok": true}', encoding="utf-8")
+    (shards_dir / "shard_02.cert.json").write_text('{"ok": true}', encoding="utf-8")
     assert find_pending(tmp_path) == []
 
 
@@ -566,6 +566,7 @@ def test_qa_dag_overlap_excludes_concept_to_skill_prerequisite_pair():
     spec = importlib.util.spec_from_file_location("standardized_audit_engine", qa_path)
     mod = importlib.util.module_from_spec(spec)
     assert spec and spec.loader
+    sys.modules["standardized_audit_engine"] = mod
     spec.loader.exec_module(mod)
     linter = mod.ArchitectureDAGLinter
 
@@ -696,4 +697,6 @@ def test_check_cta_flags_static_example_in_remediation_hint():
 def test_c2c_wave_workflow_batches_stage3_authors_to_9():
     wf_txt = (ROOT_DIR / ".agents" / "skills" / "content-to-course" / "workflows" / "c2c_wave_workflow.py").read_text(encoding="utf-8")
     assert "max_concurrent_batch: int = 0" in wf_txt
-    assert 'int(_WF_ARGS.get("author_wave_size") or 9)' in wf_txt
+    assert 'int(_WF_ARGS.get("author_concurrency") or _WF_ARGS.get("author_wave_size") or 9)' in wf_txt
+    assert "max_concurrency=author_conc" in wf_txt
+    assert "max_concurrent_batch=0" in wf_txt

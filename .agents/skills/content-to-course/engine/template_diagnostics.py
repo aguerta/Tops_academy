@@ -656,11 +656,16 @@ def build_compact_diagnostic_groups(
             target_locator = locators_by_path[sp_key]
 
         if target_locator:
-            lookup_key = cid_val or rec.get("template") or ""
-            t_info = target_locator.get_tuple_info(lookup_key) if lookup_key else None
-            if not t_info and rec.get("template"):
-                t_cand = rec["template"].replace("T-", "")
-                t_info = target_locator.get_tuple_info(t_cand)
+            tpl_val = rec.get("template") or ""
+            t_info = None
+            if tpl_val and hasattr(target_locator, "find_tuple_for_question"):
+                t_info = target_locator.find_tuple_for_question(cid_val or "", template_id=tpl_val)
+                if not t_info:
+                    t_info = target_locator.find_tuple_for_question(cid_val or "", template_id=tpl_val.replace("T-", ""))
+            if not t_info and cid_val:
+                t_info = target_locator.get_tuple_info(cid_val)
+            if not t_info and tpl_val:
+                t_info = target_locator.get_tuple_info(tpl_val)
             if not t_info and len(target_locator.tuples) == 1:
                 t_info = target_locator.tuples[0]
             if t_info:
@@ -1146,8 +1151,9 @@ def format_invariant_error_diagnostic(
         return format_diagnostic_error("TPL-D4: TPL-D4 violation: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", cid, tpl_id, q_id, "options", snippet, cause, actions)
 
     # Case H: Length anti-giveaway violation (R-15 / R-15-MS)
+    tpl_prefix = f"[{tpl_id}] " if tpl_id else ""
     if "Length anti-giveaway violation" in inv_clean:
-        cause = f"La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x): {inv_clean}"
+        cause = f"{tpl_prefix}La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x): {inv_clean}"
         actions = [
             f"Detalles observados: {inv_clean}",
             "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
@@ -1157,7 +1163,7 @@ def format_invariant_error_diagnostic(
         return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
 
     if "MS length anti-giveaway violation" in inv_clean:
-        cause = f"La longitud promedio de las opciones verdaderas difiere de las falsas en multiple_select (fuera de 0.80x - 1.20x): {inv_clean}"
+        cause = f"{tpl_prefix}La longitud promedio de las opciones verdaderas difiere de las falsas en multiple_select (fuera de 0.80x - 1.20x): {inv_clean}"
         actions = [
             f"Detalles observados: {inv_clean}",
             "Equilibrar la extensión y nivel de detalle entre las afirmaciones verdaderas y falsas del ítem multiple_select.",

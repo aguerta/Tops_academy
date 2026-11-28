@@ -972,10 +972,14 @@ class PipelineRunner:
             pre_shard_manifest_p = self.work_dir / "pre_shard_manifest.json"
 
         shard_to_cids: Dict[str, List[str]] = {}
+        shard_to_k: Dict[str, int] = {}
+        shard_to_split_part: Dict[str, int] = {}
+        manifest_adaptive_k: bool = False
         manifest_k: Optional[int] = None
         if pre_shard_manifest_p.is_file():
             try:
                 sm_data = json.loads(pre_shard_manifest_p.read_text(encoding="utf-8"))
+                manifest_adaptive_k = bool(sm_data.get("adaptive_k"))
                 raw_mk = (sm_data.get("stage4_contract") or {}).get("templates_per_modality") or sm_data.get("templates_per_modality")
                 if raw_mk is not None:
                     manifest_k = max(1, int(raw_mk))
@@ -983,6 +987,12 @@ class PipelineRunner:
                 if isinstance(shards_info, list):
                     for s in shards_info:
                         s_id = s.get("shard_id") or "shard_01"
+                        if s.get("templates_per_modality") is not None:
+                            shard_to_k[s_id] = max(1, int(s["templates_per_modality"]))
+                        if s.get("split_part"):
+                            shard_to_split_part[s_id] = int(s["split_part"])
+                            if s.get("split_k") is not None:
+                                shard_to_k[s_id] = max(1, int(s["split_k"]))
                         c_ids = s.get("competency_ids") or []
                         if not c_ids and "competencies" in s:
                             c_ids = [c.get("id") for c in s["competencies"] if isinstance(c, dict) and "id" in c]
@@ -1018,46 +1028,60 @@ class PipelineRunner:
         if shard_data_files and (compile_shard_mod or compile_shard_script.is_file()):
             print(f"  [*] Compiling {len(shard_data_files)} pending shard data files...")
             cta_mtime = cta_file.stat().st_mtime if cta_file.is_file() else 0.0
+
+            def _is_shard_up_to_date(s_data_p: Path, shard_id: str) -> bool:
+                cids = shard_to_cids.get(shard_id, [])
+                if not cids:
+                    return False
+                s_mtime = s_data_p.stat().st_mtime
+                for cid in cids:
+                    sp = shard_to_split_part.get(shard_id, 0)
+                    cid_json = templates_dir / (f"{cid}__part{sp}.json" if sp else f"{cid}.json")
+                    if sp and not cid_json.is_file() and (templates_dir / f"{cid}.json").is_file():
+                        cid_json = templates_dir / f"{cid}.json"
+                    if not cid_json.is_file() or cid_json.stat().st_size == 0:
+                        return False
+                    cid_mtime = cid_json.stat().st_mtime
+                    if cid_mtime < s_mtime or cid_mtime < cta_mtime:
+                        return False
+                    shard_fixes_candidates = [
+                        shards_dir / "shard_fixes" / shard_id / f"{cid}.py",
+                        shards_dir / "shard_fixes" / shard_id / f"{cid.lower()}.py",
+                        shards_dir / "shard_fixes" / f"{cid}.py",
+                        self.work_dir / "shard_fixes" / f"{cid}.py",
+                        shards_dir / "shard_fixes" / f"{cid.lower()}.py",
+                        self.work_dir / "shard_fixes" / f"{cid.lower()}.py",
+                    ]
+                    for fix_p in shard_fixes_candidates:
+                        if fix_p.is_file() and cid_mtime < fix_p.stat().st_mtime:
+                            return False
+                return True
+
+            dirty_split_cids: Set[str] = set()
+            for s_data_p in shard_data_files:
+                s_id = re.sub(r"_data$", "", s_data_p.stem)
+                if s_id in shard_to_split_part:
+                    for cid in shard_to_cids.get(s_id, []):
+                        if list(templates_dir.glob(f"{cid}__part*.json")) or not _is_shard_up_to_date(s_data_p, s_id):
+                            dirty_split_cids.add(cid)
+
             for s_data_p in shard_data_files:
                 shard_id = re.sub(r"_data$", "", s_data_p.stem)
                 cids = shard_to_cids.get(shard_id, [])
                 if cids:
-                    all_up_to_date = True
-                    s_mtime = s_data_p.stat().st_mtime
-                    for cid in cids:
-                        cid_json = templates_dir / f"{cid}.json"
-                        if not cid_json.is_file() or cid_json.stat().st_size == 0:
-                            all_up_to_date = False
-                            break
-                        cid_mtime = cid_json.stat().st_mtime
-                        if cid_mtime < s_mtime or cid_mtime < cta_mtime:
-                            all_up_to_date = False
-                            break
-                        shard_fixes_candidates = [
-                            shards_dir / "shard_fixes" / shard_id / f"{cid}.py",
-                            shards_dir / "shard_fixes" / shard_id / f"{cid.lower()}.py",
-                            shards_dir / "shard_fixes" / f"{cid}.py",
-                            self.work_dir / "shard_fixes" / f"{cid}.py",
-                            shards_dir / "shard_fixes" / f"{cid.lower()}.py",
-                            self.work_dir / "shard_fixes" / f"{cid.lower()}.py",
-                        ]
-                        has_newer_fix = False
-                        for fix_p in shard_fixes_candidates:
-                            if fix_p.is_file() and cid_mtime < fix_p.stat().st_mtime:
-                                has_newer_fix = True
-                                break
-                        if has_newer_fix:
-                            all_up_to_date = False
-                            break
-                    if all_up_to_date:
+                    has_dirty_split = any(cid in dirty_split_cids for cid in cids)
+                    if not has_dirty_split and _is_shard_up_to_date(s_data_p, shard_id):
                         print(f"  [i] Skipping compilation for {s_data_p.name} (templates up-to-date).")
                         continue
 
-                eff_k = (
-                    max(1, int(self.templates_per_modality))
-                    if self.templates_per_modality is not None
-                    else (manifest_k if manifest_k is not None else DEFAULT_TEMPLATES_PER_MODALITY)
-                )
+                if shard_id in shard_to_split_part or (manifest_adaptive_k and shard_id in shard_to_k):
+                    eff_k = shard_to_k.get(shard_id, manifest_k or DEFAULT_TEMPLATES_PER_MODALITY)
+                else:
+                    eff_k = (
+                        max(1, int(self.templates_per_modality))
+                        if self.templates_per_modality is not None
+                        else (manifest_k if manifest_k is not None else DEFAULT_TEMPLATES_PER_MODALITY)
+                    )
                 if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
                     ok, errs = compile_shard_mod.compile_shard(
                         self.work_dir,
@@ -1077,6 +1101,43 @@ class PipelineRunner:
                     )
                     if proc_res.returncode != 0:
                         compile_errors.append(f"[{shard_id}] compile_shard exited with code {proc_res.returncode}")
+
+        # Merge split-shard template parts (e.g. Hab-01__part1.json + Hab-01__part2.json -> Hab-01.json)
+        if templates_dir.is_dir():
+            part_groups: Dict[str, List[Path]] = {}
+            for pf in sorted(templates_dir.glob("*__part*.json")):
+                base_cid = re.sub(r"__part\d+$", "", pf.stem)
+                part_groups.setdefault(base_cid, []).append(pf)
+            for base_cid, pfiles in part_groups.items():
+                merged_tpls: List[Dict[str, Any]] = []
+                for pf in pfiles:
+                    pdata = json.loads(pf.read_text(encoding="utf-8"))
+                    if isinstance(pdata, dict) and isinstance(pdata.get("templates"), list):
+                        merged_tpls.extend(pdata["templates"])
+                    elif isinstance(pdata, dict):
+                        merged_tpls.append(pdata)
+                seen_ids: Set[str] = set()
+                for idx_t, tpl_obj in enumerate(merged_tpls, start=1):
+                    tpl_obj["competency_id"] = base_cid
+                    tid = str(tpl_obj.get("id") or tpl_obj.get("template_id") or "")
+                    if not tid or tid in seen_ids:
+                        tid = f"T-{base_cid}-{idx_t:02d}"
+                        while tid in seen_ids:
+                            idx_t += 1
+                            tid = f"T-{base_cid}-{idx_t:02d}"
+                    tpl_obj["id"] = tid
+                    tpl_obj["template_id"] = tid
+                    seen_ids.add(tid)
+                merged_out = templates_dir / f"{base_cid}.json"
+                merged_out.write_text(
+                    json.dumps({"competency_id": base_cid, "templates": merged_tpls}, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                for pf in pfiles:
+                    try:
+                        pf.unlink()
+                    except OSError:
+                        pass
 
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
             if compile_errors:
@@ -2676,11 +2737,14 @@ class PipelineRunner:
         if jr_p.is_file():
             try:
                 jr = json.loads(jr_p.read_text(encoding="utf-8"))
+                tpl_to_cid: Dict[str, str] = {}
                 for d in (jr.get("disagreements") or jr.get("discordances") or []):
                     if isinstance(d, dict):
+                        d_cid = d.get("cid") or d.get("competency_id")
                         reason = d.get("reason") or d.get("error") or d.get("feedback") or "Discordancia evaluador ciego"
-                        _add(d.get("cid") or d.get("competency_id"), "judge", f"[JUDGE] {d.get('item_id', '')}: {reason}"[:400])
-                tpl_to_cid: Dict[str, str] = {}
+                        _add(d_cid, "judge", f"[JUDGE] {d.get('item_id', '')}: {reason}"[:400])
+                        if d_cid and d.get("template_id"):
+                            tpl_to_cid[str(d["template_id"])] = str(d_cid)
                 for tp in (self.work_dir / "templates").glob("*.json"):
                     try:
                         td = json.loads(tp.read_text(encoding="utf-8"))

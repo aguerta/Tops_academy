@@ -15,6 +15,7 @@ from judge import (  # noqa: E402
     MC7_STEM_SOLUBILITY_INSTRUCTIONS,
     _build_mc7_judge_contract,
     compare_judge_responses,
+    compute_proportional_judge_budget,
     generate_judge_batch,
     resolve_neuro_symbolic_verdict,
 )
@@ -345,3 +346,31 @@ class TestRoundsHistoryAndRound1Preservation:
         final_report = json.loads((work_dir / "judge_report.json").read_text(encoding="utf-8"))
         assert len(final_report["rounds_history"]) == 2
         assert final_report["rounds_history"][1]["rejudged_shards"] == ["shard_01"]
+
+    @pytest.mark.parametrize("m20_type", ["proof_dag", "unstructured_model", "adversarial_break", "concept_matching"])
+    @pytest.mark.parametrize("cat", ["", "math_error"])
+    def test_guard_d_structured_m20_blocks_kernel_override(self, m20_type: str, cat: str):
+        res = resolve_neuro_symbolic_verdict(
+            kernel_verified=True,
+            kernel_refuted=False,
+            llm_verdict="FAIL",
+            failure_category=cat,
+            failure_reasons=["Disagreement on structured M20 item"],
+            interaction_type=m20_type,
+        )
+        assert res["verdict"] == "FAIL"
+        assert res["passed"] is False
+        assert res["kernel_override"] is False
+
+    @pytest.mark.parametrize(
+        "total_templates,expected",
+        [
+            (276, (143, 165, 10)),
+            (320, (143, 165, 10)),
+            (321, (145, 167, 10)),
+            (400, (180, 207, 11)),
+            (600, (220, 253, 13)),
+        ],
+    )
+    def test_p2_3_compute_proportional_judge_budget(self, total_templates: int, expected: tuple):
+        assert compute_proportional_judge_budget(total_templates) == expected

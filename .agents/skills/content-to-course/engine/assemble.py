@@ -11,6 +11,7 @@ Builds standardized question JSON objects complying with the practice platform s
 - Zero domain keywords!
 """
 
+import functools
 import json
 import random
 import re
@@ -66,6 +67,80 @@ _GIVEAWAY_PREFIX_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Precompiled hot-path regexes for format_template_string & sanitize_katex_syntax
+_TRAILING_SIMPLE_MACRO_RE = re.compile(r"\\([a-zA-Z]+)\s*$")
+_TRAILING_MACRO_RE = re.compile(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$")
+_TRAILING_BASE_MACRO_RE = re.compile(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?(?:\{[^{}]*\})?\s*$")
+_MATH_SPAN_UNESCAPED_RE = re.compile(r"(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|(?<!\\)\$[^\$]+?(?<!\\)\$")
+_BARE_CODE_VAR_RE = re.compile(r"^[a-zA-Z0-9]+_(?:val|num|str|res)$")
+
+_OVERESCAPED_SLASHES_RE = re.compile(r"(\\+)([a-zA-Z]+)")
+_CENTERNOT_RULES: Tuple[Tuple[re.Pattern, str], ...] = (
+    (re.compile(r"\\centernot\s*\\(?:Rightarrow|implies)\b"), r"\\nRightarrow"),
+    (re.compile(r"\\centernot\s*\\(?:Leftarrow|impliedby)\b"), r"\\nLeftarrow"),
+    (re.compile(r"\\centernot\s*\\(?:Leftrightarrow|iff)\b"), r"\\nLeftrightarrow"),
+    (re.compile(r"\\centernot\s*\\(?:rightarrow|to)\b"), r"\\nrightarrow"),
+    (re.compile(r"\\centernot\s*\\(?:leftarrow|gets)\b"), r"\\nleftarrow"),
+    (re.compile(r"\\centernot\s*\\leftrightarrow\b"), r"\\nleftrightarrow"),
+    (re.compile(r"\\centernot\b"), r"\\not"),
+)
+_TEXT_CONTAM_RE = re.compile(
+    r"\\text\s*\{\s*text(Var|Cov|Corr|E)\s*\[\s*bar([a-zA-Z0-9]+)_([a-zA-Z0-9]+)\s*\]\s*=\s*([^{}]+?)\s*\}"
+)
+_UNESCAPED_UNDERSCORE_RE = re.compile(r"(?<!\\)_")
+_TEXT_MACRO_BLOCK_RE = re.compile(r"\\text\s*\{([^{}$]*)\}")
+_ALG_SIGN_RULES: Tuple[Tuple[re.Pattern, str], ...] = (
+    (re.compile(r"(?<!\\)\+\s*-\s*(?=[0-9a-zA-Z\\({])"), "- "),
+    (re.compile(r"(?<!\\)-\s*-\s*(?=[0-9a-zA-Z\\({])"), "+ "),
+    (re.compile(r"(?<!\\)\+\s*\+\s*(?=[0-9a-zA-Z\\({])"), "+ "),
+    (re.compile(r"(?<!\\)-\s*\+\s*(?=[0-9a-zA-Z\\({])"), "- "),
+)
+_MATH_BLOCK_ANY_RE = re.compile(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$")
+_SYMPY_POW_RE = re.compile(r"([A-Za-z0-9_)\]])\*\*([A-Za-z0-9_]+)")
+_SYMPY_MUL_RE = re.compile(r"(?<![A-Za-z0-9_\\])(\d+)\*([A-Za-z(])")
+_SYMPY_SQRT_RE = re.compile(r"(?<![\\a-zA-Z])sqrt\(\s*([^()]+?)\s*\)")
+_SYMPY_MATH_BLOCK_RE = re.compile(r"\$\$[^$]+\$\$|\$(?!\s)[^$\n]+?(?<!\s)\$")
+
+_SANITIZE_OUTER_MACROS = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|widecheck|overline|underline|sqrt)"
+_SANITIZE_INNER_MACROS = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathbb|mathcal|text|textbf|symbf|hat|bar|tilde|vec|dot|ddot)"
+_NESTED_FIX_RE = re.compile(
+    rf"(\\(?:{_SANITIZE_OUTER_MACROS})\s*\{{\s*\\(?:{_SANITIZE_INNER_MACROS})\s*\{{[^{{}}]*\}})(?!\s*\}})"
+)
+_FRAC_INNER_FIX_RE = re.compile(
+    r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\}[^{}\\_^]*)\{"
+)
+_FRAC_SIMPLE_FIX_RE = re.compile(
+    r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}\\^_]+)\{([^{}]+\})"
+)
+_FRAC_DEN_FIX_RE = re.compile(
+    r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\}\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\})"
+    r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
+)
+_SCRIPT_OUTER_FIX_RE = re.compile(
+    r"([_^]\s*\{[^{}]*\\[a-zA-Z]+(?:\s*\{[^{}]*\})+)"
+    r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
+)
+_FRAC_UNBRACED_DEN_RE = re.compile(
+    r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\})\s*([0-9]+(?:\.[0-9]+)?)"
+)
+
+_DEFAULT_CANONICALIZE_ALGEBRAIC_KATEX = canonicalize_algebraic_katex
+
+
+@functools.lru_cache(maxsize=2048)
+def _get_brace_var_pattern(k: str) -> re.Pattern:
+    return re.compile(rf"\{{{re.escape(k)}(?::([^{{}}]+))?\}}")
+
+
+@functools.lru_cache(maxsize=1024)
+def _get_bare_var_pattern(k: str) -> re.Pattern:
+    return re.compile(rf"\b{re.escape(k)}\b")
+
+
+@functools.lru_cache(maxsize=1024)
+def _get_symbolic_key_pattern(sym_key: str) -> re.Pattern:
+    return re.compile(rf"\\[a-zA-Z]+\s*\{{{re.escape(sym_key)}\}}")
+
 
 def _safe_format_value(val: Any, fmt_spec: Optional[str]) -> str:
     """Safely format value with format specifier, coercing types without runtime crashes."""
@@ -120,10 +195,10 @@ def _inspect_second_arg_of_value_macro(prefix_stripped: str, key: str) -> Tuple[
     if depth == 0 and idx >= 0:
         first_arg_body = prefix_stripped[idx + 1 : -1]
         before_first_arg = prefix_stripped[:idx].rstrip()
-        m = re.search(r"\\([a-zA-Z]+)\s*$", before_first_arg)
+        m = _TRAILING_SIMPLE_MACRO_RE.search(before_first_arg)
         if m and m.group(1) in _LATEX_VALUE_MACROS_2ARG:
             sym_key = key[1:] if len(key) > 1 and key.startswith("d") else key
-            has_symbolic = bool(re.search(rf"\\[a-zA-Z]+\s*\{{{re.escape(sym_key)}\}}", first_arg_body))
+            has_symbolic = bool(_get_symbolic_key_pattern(sym_key).search(first_arg_body))
             return True, has_symbolic
     return False, False
 
@@ -146,22 +221,23 @@ def format_template_string(
         return template_str
 
     result = template_str
-    has_pl_tokens = bool(_PL_TOKEN_PATTERN.search(template_str))
+    has_pl_tokens = ("@" in template_str) and bool(_PL_TOKEN_PATTERN.search(template_str))
 
     # Phase 0 priority pass: Orthogonal PrairieLearn @var@ / @var:fmt@ token interpolation
-    def _pl_replacer(m: re.Match) -> str:
-        key = m.group(1)
-        fmt_spec = m.group(2)
-        if key in variables:
-            val = variables[key]
-            return _safe_format_value(val, fmt_spec)
-        return m.group(0)
+    if has_pl_tokens:
+        def _pl_replacer(m: re.Match) -> str:
+            key = m.group(1)
+            fmt_spec = m.group(2)
+            if key in variables:
+                val = variables[key]
+                return _safe_format_value(val, fmt_spec)
+            return m.group(0)
 
-    for _ in range(2):
-        _next_result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
-        if _next_result == result:
-            break
-        result = _next_result
+        for _ in range(2):
+            _next_result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
+            if _next_result == result:
+                break
+            result = _next_result
     sentinel_values: Dict[str, str] = {}
 
     def _stash_sentinel(val_s: str) -> str:
@@ -172,82 +248,84 @@ def format_template_string(
     for k, v in variables.items():
         if is_cta and not (len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))):
             continue
-        pattern = re.compile(rf"\{{{re.escape(k)}(?::([^{{}}]+))?\}}")
-        math_spans = [
-            m_s.span()
-            for m_s in re.finditer(r"(?<!\\)\$\$[\s\S]*?(?<!\\)\$\$|(?<!\\)\$[^\$]+?(?<!\\)\$", result)
-        ]
-        def is_in_math_span(pos: int) -> bool:
-            return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
+        if "{" in result and f"{{{k}" in result:
+            pattern = _get_brace_var_pattern(k)
+            math_spans = (
+                [m_s.span() for m_s in _MATH_SPAN_UNESCAPED_RE.finditer(result)]
+                if "$" in result
+                else []
+            )
+            def is_in_math_span(pos: int) -> bool:
+                return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
 
-        def _replacer(m: re.Match, key: str = k, val: Any = v) -> str:
-            fmt_spec = m.group(1)
-            val_str = _safe_format_value(val, fmt_spec)
+            def _replacer(m: re.Match, key: str = k, val: Any = v) -> str:
+                fmt_spec = m.group(1)
+                val_str = _safe_format_value(val, fmt_spec)
 
-            start = m.start()
-            end = m.end()
-            prefix = result[:start]
-            suffix = result[end:]
+                start = m.start()
+                end = m.end()
+                prefix = result[:start]
+                suffix = result[end:]
 
-            is_escaped_open = prefix.endswith("{") and suffix.startswith("}")
+                is_escaped_open = prefix.endswith("{") and suffix.startswith("}")
 
-            # Course-agnostic short variable / sub-superscript base protection inside math blocks:
-            # e.g. ${k}^*$, ${r}_t$, or escaped $\{k\}$ (odd number of backslashes before {)
-            prefix_stripped = prefix.rstrip()
-            num_trailing_slashes = len(prefix_stripped) - len(prefix_stripped.rstrip("\\"))
-            is_escaped_literal_brace = (num_trailing_slashes % 2 == 1)
+                # Course-agnostic short variable / sub-superscript base protection inside math blocks:
+                # e.g. ${k}^*$, ${r}_t$, or escaped $\{k\}$ (odd number of backslashes before {)
+                prefix_stripped = prefix.rstrip()
+                num_trailing_slashes = len(prefix_stripped) - len(prefix_stripped.rstrip("\\"))
+                is_escaped_literal_brace = (num_trailing_slashes % 2 == 1)
 
-            if not is_escaped_open and not fmt_spec and is_in_math_span(start):
-                if suffix.lstrip().startswith(("^", "_")) or is_escaped_literal_brace:
-                    return m.group(0)
+                if not is_escaped_open and not fmt_spec and is_in_math_span(start):
+                    if suffix.lstrip().startswith(("^", "_")) or is_escaped_literal_brace:
+                        return m.group(0)
 
-            # Case 1: Inside double braces {{k}}
-            if is_escaped_open:
-                outer_prefix = prefix[:-1].rstrip()
-                macro_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", outer_prefix)
-                if macro_m and macro_m.group(1) in _LATEX_SYMBOL_MACROS and not fmt_spec and "_" not in key:
-                    return m.group(0)
-                return _stash_sentinel(val_str)
+                # Case 1: Inside double braces {{k}}
+                if is_escaped_open:
+                    outer_prefix = prefix[:-1].rstrip()
+                    macro_m = _TRAILING_MACRO_RE.search(outer_prefix)
+                    if macro_m and macro_m.group(1) in _LATEX_SYMBOL_MACROS and not fmt_spec and "_" not in key:
+                        return m.group(0)
+                    return _stash_sentinel(val_str)
 
-            prefix_stripped = prefix.rstrip()
+                prefix_stripped = prefix.rstrip()
 
-            # Case 2: Preceded directly by a LaTeX macro \cmd or \cmd[...]
-            macro_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", prefix_stripped)
-            if macro_m:
-                macro_name = macro_m.group(1)
-                if macro_name in _LATEX_VALUE_MACROS_1ARG or macro_name in _LATEX_VALUE_MACROS_2ARG:
-                    if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                # Case 2: Preceded directly by a LaTeX macro \cmd or \cmd[...]
+                macro_m = _TRAILING_MACRO_RE.search(prefix_stripped)
+                if macro_m:
+                    macro_name = macro_m.group(1)
+                    if macro_name in _LATEX_VALUE_MACROS_1ARG or macro_name in _LATEX_VALUE_MACROS_2ARG:
+                        if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                            return m.group(0)
+                        return f"{{{_stash_sentinel(val_str)}}}"
+                    if not fmt_spec and "_" not in key:
                         return m.group(0)
                     return f"{{{_stash_sentinel(val_str)}}}"
-                if not fmt_spec and "_" not in key:
-                    return m.group(0)
-                return f"{{{_stash_sentinel(val_str)}}}"
 
-            # Case 3: Second argument of a 2-argument value macro e.g. \frac{...}{k}
-            is_second_arg, has_symbolic = _inspect_second_arg_of_value_macro(prefix_stripped, key)
-            if is_second_arg:
-                if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
-                    return m.group(0)
-                if has_symbolic and not fmt_spec and "_" not in key:
-                    return m.group(0)
-                return f"{{{_stash_sentinel(val_str)}}}"
+                # Case 3: Second argument of a 2-argument value macro e.g. \frac{...}{k}
+                is_second_arg, has_symbolic = _inspect_second_arg_of_value_macro(prefix_stripped, key)
+                if is_second_arg:
+                    if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                        return m.group(0)
+                    if has_symbolic and not fmt_spec and "_" not in key:
+                        return m.group(0)
+                    return f"{{{_stash_sentinel(val_str)}}}"
 
-            # Case 4: Superscript ^{k} or subscript _{k}
-            if prefix_stripped.endswith("^") or prefix_stripped.endswith("_"):
-                if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
-                    return m.group(0)
-                base_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?(?:\{[^{}]*\})?\s*$", prefix_stripped[:-1].rstrip())
-                if base_m and base_m.group(1) in _LATEX_SYMBOL_MACROS and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
-                    return m.group(0)
-                return f"{{{_stash_sentinel(val_str)}}}"
+                # Case 4: Superscript ^{k} or subscript _{k}
+                if prefix_stripped.endswith("^") or prefix_stripped.endswith("_"):
+                    if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                        return m.group(0)
+                    base_m = _TRAILING_BASE_MACRO_RE.search(prefix_stripped[:-1].rstrip())
+                    if base_m and base_m.group(1) in _LATEX_SYMBOL_MACROS and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                        return m.group(0)
+                    return f"{{{_stash_sentinel(val_str)}}}"
 
-            return _stash_sentinel(val_str)
+                return _stash_sentinel(val_str)
 
-        result = pattern.sub(_replacer, result)
+            result = pattern.sub(_replacer, result)
 
         # Fallback for bare code variables ending in _val, _num, _str, _res left unbraced by LLM
-        if re.match(r"^[a-zA-Z0-9]+_(?:val|num|str|res)$", k):
-            result = re.sub(rf"\b{re.escape(k)}\b", lambda _, val=str(v): _stash_sentinel(val), result)
+        if "_" in k and _BARE_CODE_VAR_RE.match(k) and k in result:
+            result = _get_bare_var_pattern(k).sub(lambda _, val=str(v): _stash_sentinel(val), result)
 
     for token, val_s in sentinel_values.items():
         result = result.replace(token, val_s)
@@ -258,6 +336,192 @@ def format_template_string(
 def render_template(template_str: str, variables: Dict[str, Any]) -> str:
     r"""Render template string with variables, supporting both PrairieLearn @var@ and legacy {var} syntax."""
     return format_template_string(template_str, variables)
+
+
+def _collapse_overescaped_slashes(match: re.Match) -> str:
+    slashes = match.group(1)
+    cmd = match.group(2)
+    n = len(slashes)
+    if n % 2 == 0:
+        if n == 2 and len(cmd) == 1:
+            return f"\\\\ {cmd}"
+        return f"\\{cmd}"
+    elif n >= 3:
+        return f"\\\\ \\{cmd}"
+    else:
+        return f"\\{cmd}"
+
+
+def _escape_text_underscores(match: re.Match) -> str:
+    inner = match.group(1)
+    if "_" not in inner:
+        return match.group(0)
+    fixed_inner = _UNESCAPED_UNDERSCORE_RE.sub(r"\\_", inner)
+    return f"\\text{{{fixed_inner}}}"
+
+
+def _collapse_algebraic_signs(math_body: str) -> str:
+    for _ in range(5):
+        orig_body = math_body
+        for pat, repl in _ALG_SIGN_RULES:
+            math_body = pat.sub(repl, math_body)
+        if math_body == orig_body:
+            break
+    return math_body
+
+
+def _canonicalize_math_signs(match: re.Match) -> str:
+    raw_span = match.group(0)
+    is_display = raw_span.startswith("$$")
+    delim = "$$" if is_display else "$"
+    inner = raw_span[len(delim):-len(delim)]
+    return f"{delim}{_collapse_algebraic_signs(inner)}{delim}"
+
+
+def _heal_sympy_math_block(match: re.Match) -> str:
+    raw_span = match.group(0)
+    delim = "$$" if raw_span.startswith("$$") else "$"
+    inner = raw_span[len(delim):-len(delim)]
+    if not inner:
+        return raw_span
+    if "**" in inner:
+        inner = _SYMPY_POW_RE.sub(r"\1^{\2}", inner)
+    if "*" in inner:
+        inner = _SYMPY_MUL_RE.sub(r"\1 \\cdot \2", inner)
+    if "sqrt(" in inner:
+        inner = _SYMPY_SQRT_RE.sub(r"\\sqrt{\1}", inner)
+    return f"{delim}{inner}{delim}"
+
+
+def _normalize_double_braces_step(s: str) -> str:
+    out = []
+    i = 0
+    n = len(s)
+    while i < n:
+        if s[i:i+2] == "{{":
+            j = i + 2
+            depth = 0
+            found = False
+            while j < n:
+                if s[j:j+2] == "}}" and depth == 0:
+                    found = True
+                    break
+                elif s[j] == "{":
+                    depth += 1
+                    j += 1
+                elif s[j] == "}":
+                    if depth > 0:
+                        depth -= 1
+                        j += 1
+                    else:
+                        break
+                else:
+                    j += 1
+
+            if found:
+                token = s[i+2:j]
+                out.append("{" + token + "}")
+                i = j + 2
+            else:
+                out.append(s[i])
+                i += 1
+        else:
+            out.append(s[i])
+            i += 1
+    return "".join(out)
+
+
+def _sanitize_katex_syntax_impl(
+    text: str,
+    canonicalize_coefficients: bool,
+    heal_sympy_in_math: bool,
+) -> str:
+    # 0a. Deterministic collapse of overescaped LaTeX commands (R-23)
+    if "\\\\" in text:
+        text = _OVERESCAPED_SLASHES_RE.sub(_collapse_overescaped_slashes, text)
+
+    # 0b. Deterministic mapping of unsupported external KaTeX macros (\centernot)
+    if "\\centernot" in text:
+        for pat, repl in _CENTERNOT_RULES:
+            text = pat.sub(repl, text)
+
+    # 0c. Deterministic repair of \text{..._...} contamination
+    if "\\text" in text:
+        text = _TEXT_CONTAM_RE.sub(r"\\text{\1}[\\bar{\2}_{\3}] = \4", text)
+        text = _TEXT_MACRO_BLOCK_RE.sub(_escape_text_underscores, text)
+
+    # 0d. Canonicalize algebraic double signs and unitary coefficients inside math blocks $...$ and $$...$$
+    if "$" in text:
+        if canonicalize_algebraic_katex is not None:
+            text = canonicalize_algebraic_katex(text, collapse_unit_coeffs=canonicalize_coefficients)
+        else:
+            text = _MATH_BLOCK_ANY_RE.sub(_canonicalize_math_signs, text)
+
+    # 0e. Post-render SymPy-to-KaTeX healing strictly inside $...$ / $$...$$ math blocks
+    if heal_sympy_in_math and "$" in text and ("*" in text or "sqrt(" in text):
+        text = _SYMPY_MATH_BLOCK_RE.sub(_heal_sympy_math_block, text)
+
+    # Replace '$$$' with '$$'
+    while "$$$" in text:
+        text = text.replace("$$$", "$$")
+
+    # Normalize residual paired double curly braces from f-strings {{var}} -> {var}
+    if "{{" in text:
+        prev = None
+        while prev != text:
+            prev = text
+            text = _normalize_double_braces_step(text)
+
+    # 1..4. Unbalanced brace auto-repairs (ONLY executed when opening braces exceed closing braces)
+    if "{" in text and text.count("{") > text.count("}"):
+        orig_text = text
+        cand_nested = _NESTED_FIX_RE.sub(r"\1}", text)
+        if cand_nested.count("{") < cand_nested.count("}"):
+            cand_nested = orig_text
+        text = cand_nested
+
+    if "{" in text and text.count("{") > text.count("}"):
+        orig_text = text
+        cand_inner = _FRAC_INNER_FIX_RE.sub(r"\1}{", text)
+        if "_}{" in cand_inner or "^}{" in cand_inner or cand_inner.count("{") < cand_inner.count("}"):
+            cand_inner = orig_text
+        text = cand_inner
+
+    if "{" in text and text.count("{") > text.count("}"):
+        orig_text = text
+        cand_simple = _FRAC_SIMPLE_FIX_RE.sub(r"\1}{\2", text)
+        if "_}{" in cand_simple or "^}{" in cand_simple or cand_simple.count("{") < cand_simple.count("}"):
+            cand_simple = orig_text
+        text = cand_simple
+
+    if "{" in text and text.count("{") > text.count("}"):
+        orig_text = text
+        cand_den = _FRAC_DEN_FIX_RE.sub(r"\1}", text)
+        if cand_den.count("{") < cand_den.count("}"):
+            cand_den = orig_text
+        text = cand_den
+
+    if "{" in text and text.count("{") > text.count("}"):
+        orig_text = text
+        cand_script = _SCRIPT_OUTER_FIX_RE.sub(r"\1}", text)
+        if cand_script.count("{") < cand_script.count("}"):
+            cand_script = orig_text
+        text = cand_script
+
+    # 5. Auto-repair unbraced numeric denominator after \frac{num}: \frac{s}3 -> \frac{s}{3}
+    if "frac" in text:
+        text = _FRAC_UNBRACED_DEN_RE.sub(r"\1{\2}", text)
+
+    return text
+
+
+@functools.lru_cache(maxsize=4096)
+def _sanitize_katex_syntax_cached(
+    text: str,
+    canonicalize_coefficients: bool,
+    heal_sympy_in_math: bool,
+) -> str:
+    return _sanitize_katex_syntax_impl(text, canonicalize_coefficients, heal_sympy_in_math)
 
 
 def sanitize_katex_syntax(
@@ -278,213 +542,9 @@ def sanitize_katex_syntax(
     """
     if not isinstance(text, str):
         return text
-
-    # 0a. Deterministic collapse of overescaped LaTeX commands (R-23)
-    # - Even number of slashes (2, 4, 6, ...) before a command name:
-    #   Overescaped command from JSON/f-string serialization -> collapse to single backslash \cmd.
-    # - Odd number of slashes >= 3 before a command name (e.g. \\\frac):
-    #   Matrix/cases row break (\\) immediately preceding a command (\frac) -> preserve row break
-    #   and command separated by space (\\ \frac) so KaTeX renders rows correctly and validator passes.
-    # - Single backslash (\cmd) is untouched.
-    # - Row breaks before non-letters (e.g. \\[4pt], \\ -1, \\ 3, \\\n) are untouched.
-    def _collapse_overescaped_slashes(match: re.Match) -> str:
-        slashes = match.group(1)
-        cmd = match.group(2)
-        n = len(slashes)
-        if n % 2 == 0:
-            if n == 2 and len(cmd) == 1:
-                return f"\\\\ {cmd}"
-            return f"\\{cmd}"
-        elif n >= 3:
-            return f"\\\\ \\{cmd}"
-        else:
-            return f"\\{cmd}"
-
-    text = re.sub(r"(\\+)([a-zA-Z]+)", _collapse_overescaped_slashes, text)
-
-    # 0b. Deterministic mapping of unsupported external KaTeX macros (\centernot)
-    text = re.sub(r"\\centernot\s*\\(?:Rightarrow|implies)\b", r"\\nRightarrow", text)
-    text = re.sub(r"\\centernot\s*\\(?:Leftarrow|impliedby)\b", r"\\nLeftarrow", text)
-    text = re.sub(r"\\centernot\s*\\(?:Leftrightarrow|iff)\b", r"\\nLeftrightarrow", text)
-    text = re.sub(r"\\centernot\s*\\(?:rightarrow|to)\b", r"\\nrightarrow", text)
-    text = re.sub(r"\\centernot\s*\\(?:leftarrow|gets)\b", r"\\nleftarrow", text)
-    text = re.sub(r"\\centernot\s*\\leftrightarrow\b", r"\\nleftrightarrow", text)
-    text = re.sub(r"\\centernot\b", r"\\not", text)
-
-    # 0c. Deterministic repair of \text{..._...} contamination
-    text = re.sub(
-        r"\\text\s*\{\s*text(Var|Cov|Corr|E)\s*\[\s*bar([a-zA-Z0-9]+)_([a-zA-Z0-9]+)\s*\]\s*=\s*([^{}]+?)\s*\}",
-        r"\\text{\1}[\\bar{\2}_{\3}] = \4",
-        text,
-    )
-
-    def _escape_text_underscores(match: re.Match) -> str:
-        inner = match.group(1)
-        # Escape any unescaped underscore (?<!\\)_ without duplicating already escaped \_
-        fixed_inner = re.sub(r"(?<!\\)_", r"\\_", inner)
-        return f"\\text{{{fixed_inner}}}"
-
-    text = re.sub(r"\\text\s*\{([^{}$]*)\}", _escape_text_underscores, text)
-
-    # 0d. Canonicalize algebraic double signs and unitary coefficients inside math blocks $...$ and $$...$$
-    if canonicalize_algebraic_katex is not None:
-        text = canonicalize_algebraic_katex(text, collapse_unit_coeffs=canonicalize_coefficients)
-    else:
-        def _collapse_algebraic_signs(math_body: str) -> str:
-            # Collapses double signs from template interpolation: + -5 -> - 5, p+-5 -> p - 5, - -5 -> + 5, etc.
-            for _ in range(5):
-                orig_body = math_body
-                math_body = re.sub(r"(?<!\\)\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
-                math_body = re.sub(r"(?<!\\)-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-                math_body = re.sub(r"(?<!\\)\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-                math_body = re.sub(r"(?<!\\)-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
-                if math_body == orig_body:
-                    break
-            return math_body
-
-        def _canonicalize_math_signs(match: re.Match) -> str:
-            raw_span = match.group(0)
-            is_display = raw_span.startswith("$$")
-            delim = "$$" if is_display else "$"
-            inner = raw_span[len(delim):-len(delim)]
-            return f"{delim}{_collapse_algebraic_signs(inner)}{delim}"
-
-        text = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _canonicalize_math_signs, text)
-
-    # 0e. Post-render SymPy-to-KaTeX healing strictly inside $...$ / $$...$$ math blocks
-    # Heals raw SymPy artifacts injected via @var@ at render time (e.g. '6*L' -> '6 \cdot L',
-    # 'x**2' -> 'x^{2}', 'sqrt(k)' -> '\sqrt{k}') without touching plain prose or bare symbolic answers.
-    if heal_sympy_in_math and "$" in text:
-        def _heal_sympy_math_block(match: re.Match) -> str:
-            raw_span = match.group(0)
-            delim = "$$" if raw_span.startswith("$$") else "$"
-            inner = raw_span[len(delim):-len(delim)]
-            if not inner:
-                return raw_span
-            inner = re.sub(r"([A-Za-z0-9_)\]])\*\*([A-Za-z0-9_]+)", r"\1^{\2}", inner)
-            inner = re.sub(r"(?<![A-Za-z0-9_\\])(\d+)\*([A-Za-z(])", r"\1 \\cdot \2", inner)
-            inner = re.sub(r"(?<![\\a-zA-Z])sqrt\(\s*([^()]+?)\s*\)", r"\\sqrt{\1}", inner)
-            return f"{delim}{inner}{delim}"
-
-        text = re.sub(r"\$\$[^$]+\$\$|\$(?!\s)[^$\n]+?(?<!\s)\$", _heal_sympy_math_block, text)
-
-    # Replace '$$$' with '$$'
-    while "$$$" in text:
-        text = text.replace("$$$", "$$")
-
-    # Normalize residual paired double curly braces from f-strings {{var}} -> {var}
-    # NEVER do a blind text.replace("}}", "}") as that destroys nested LaTeX groups!
-    def _normalize_double_braces_step(s: str) -> str:
-        out = []
-        i = 0
-        n = len(s)
-        while i < n:
-            if s[i:i+2] == "{{":
-                j = i + 2
-                depth = 0
-                found = False
-                while j < n:
-                    if s[j:j+2] == "}}" and depth == 0:
-                        found = True
-                        break
-                    elif s[j] == "{":
-                        depth += 1
-                        j += 1
-                    elif s[j] == "}":
-                        if depth > 0:
-                            depth -= 1
-                            j += 1
-                        else:
-                            break
-                    else:
-                        j += 1
-
-                if found:
-                    token = s[i+2:j]
-                    out.append("{" + token + "}")
-                    i = j + 2
-                else:
-                    out.append(s[i])
-                    i += 1
-            else:
-                out.append(s[i])
-                i += 1
-        return "".join(out)
-
-    prev = None
-    while prev != text:
-        prev = text
-        text = _normalize_double_braces_step(text)
-
-
-    # 1. Auto-close unclosed nested accent/style/sqrt macros: \hat{\boldsymbol{\beta} -> \hat{\boldsymbol{\beta}}
-    # ONLY executed when opening braces exceed closing braces, preventing corruption of balanced expressions.
-    if text.count("{") > text.count("}"):
-        orig_text = text
-        outer_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|widecheck|overline|underline|sqrt)"
-        inner_macros = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathbb|mathcal|text|textbf|symbf|hat|bar|tilde|vec|dot|ddot)"
-        nested_fix = re.compile(
-            rf"(\\(?:{outer_macros})\s*\{{\s*\\(?:{inner_macros})\s*\{{[^{{}}]*\}})(?!\s*\}})"
-        )
-        cand_nested = nested_fix.sub(r"\1}", text)
-        if cand_nested.count("{") < cand_nested.count("}"):
-            cand_nested = orig_text
-        text = cand_nested
-
-    # 2. Auto-repair \frac missing numerator closing brace when numerator has an inner 1-arg macro or script
-    # ONLY executed when opening braces exceed closing braces, preventing corruption of balanced expressions.
-    if text.count("{") > text.count("}"):
-        orig_text = text
-        frac_inner_fix = re.compile(
-            r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\}[^{}\\_^]*)\{"
-        )
-        cand_inner = frac_inner_fix.sub(r"\1}{", text)
-        if "_}{" in cand_inner or "^}{" in cand_inner or cand_inner.count("{") < cand_inner.count("}"):
-            cand_inner = orig_text
-        text = cand_inner
-
-    # Simple \frac{a{b} where numerator has no macros or scripts
-    if text.count("{") > text.count("}"):
-        orig_text = text
-        frac_simple_fix = re.compile(
-            r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}\\^_]+)\{([^{}]+\})"
-        )
-        cand_simple = frac_simple_fix.sub(r"\1}{\2", text)
-        if "_}{" in cand_simple or "^}{" in cand_simple or cand_simple.count("{") < cand_simple.count("}"):
-            cand_simple = orig_text
-        text = cand_simple
-
-    # 3. Auto-repair \frac missing denominator closing brace when denominator ends with an inner braced group
-    if text.count("{") > text.count("}"):
-        orig_text = text
-        frac_den_fix = re.compile(
-            r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\}\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\})"
-            r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
-        )
-        cand_den = frac_den_fix.sub(r"\1}", text)
-        if cand_den.count("{") < cand_den.count("}"):
-            cand_den = orig_text
-        text = cand_den
-
-    # 4. Auto-repair superscript/subscript missing outer closing brace after inner macro
-    if text.count("{") > text.count("}"):
-        orig_text = text
-        script_outer_fix = re.compile(
-            r"([_^]\s*\{[^{}]*\\[a-zA-Z]+(?:\s*\{[^{}]*\})+)"
-            r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
-        )
-        cand_script = script_outer_fix.sub(r"\1}", text)
-        if cand_script.count("{") < cand_script.count("}"):
-            cand_script = orig_text
-        text = cand_script
-
-    # 5. Auto-repair unbraced numeric denominator after \frac{num}: \frac{s}3 -> \frac{s}{3}
-    frac_unbraced_den = re.compile(
-        r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\})\s*([0-9]+(?:\.[0-9]+)?)"
-    )
-    text = frac_unbraced_den.sub(r"\1{\2}", text)
-
-    return text
+    if canonicalize_algebraic_katex is _DEFAULT_CANONICALIZE_ALGEBRAIC_KATEX:
+        return _sanitize_katex_syntax_cached(text, bool(canonicalize_coefficients), bool(heal_sympy_in_math))
+    return _sanitize_katex_syntax_impl(text, bool(canonicalize_coefficients), bool(heal_sympy_in_math))
 
 
 _GENERIC_RATIONALE_PATTERNS = re.compile(
@@ -903,7 +963,7 @@ def _assemble_unstructured_model(
             opt_lookup,
             did_norm,
             cta_distractors_map,
-            f"Verifica la validez analítica del supuesto {content}.",
+            f"Verifica la validez analítica del supuesto {content.rstrip('.')}.",
             variables=variables,
         )
         p2_entry: Dict[str, Any] = {

@@ -41,6 +41,23 @@ DEFAULT_TARGET_TOTAL_EVALUATIONS = 165
 DEFAULT_OVERLAP_RATIO = 0.15
 DEFAULT_MAX_SEED_RETRIES = 1
 
+
+def compute_proportional_judge_budget(
+    total_templates: int,
+    overlap_ratio: float = DEFAULT_OVERLAP_RATIO,
+    max_items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
+) -> Tuple[int, int, int]:
+    """Computes (target_unique, target_total_evals, needed_max_judges) scaling proportionally for >320 templates."""
+    if total_templates <= 320:
+        target_unique = int(round(DEFAULT_TARGET_TOTAL_EVALUATIONS / (1.0 + overlap_ratio)))
+        target_total_evals = DEFAULT_TARGET_TOTAL_EVALUATIONS
+        needed_max_judges = DEFAULT_MAX_JUDGES
+    else:
+        target_unique = min(220, max(145, math.ceil(0.45 * total_templates)))
+        target_total_evals = int(round(target_unique * (1.0 + overlap_ratio)))
+        needed_max_judges = max(DEFAULT_MAX_JUDGES, math.ceil(target_total_evals / max(1, max_items_per_judge)))
+    return (target_unique, target_total_evals, needed_max_judges)
+
 _HIGH_RISK_INTERACTION_TYPES: Set[str] = {
     "open_symbolic",
     "fill_in_the_blank",
@@ -674,7 +691,8 @@ def generate_judge_batch(
                     pass
 
         if target_unique_items is not None:
-            effective_unique_cap = min(max_total_items, max(1, int(target_unique_items)))
+            cap_ceil = max(max_total_items, int(target_unique_items)) if len(templates) > 320 else max_total_items
+            effective_unique_cap = min(cap_ceil, max(1, int(target_unique_items)))
         else:
             effective_unique_cap = max_total_items
 
@@ -1833,6 +1851,20 @@ def resolve_neuro_symbolic_verdict(
                         f"Blind judge selection {sorted(judge_letters)} disagrees with author-marked options {sorted(author_letters)}"
                     ],
                 }
+
+        # Anti-false-consensus Guard (d): structured M20 modalities must never be kernel-overridden
+        if eff_type in ("proof_dag", "unstructured_model", "adversarial_break", "concept_matching"):
+            return {
+                "verdict": "FAIL",
+                "passed": False,
+                "kernel_verified": True,
+                "kernel_refuted": False,
+                "kernel_override": False,
+                "failure_category": cat or f"{eff_type}_structural_mismatch",
+                "reasons": reasons or [
+                    f"Structured M20 modality '{eff_type}' cannot be kernel-overridden on blind judge disagreement"
+                ],
+            }
 
         # Anti-false-consensus Guard (a): integer rounding diff == 1.0 in FIB or numeric MC7
         if eff_type in ("fill_in_the_blank", "fib", "multiple_choice_7_options", "mc7", "multiple_choice", ""):

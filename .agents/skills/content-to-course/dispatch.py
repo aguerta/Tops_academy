@@ -1034,9 +1034,10 @@ def dispatch_cta(
                 "",
                 "## 3. DIRECTIVAS DE OPERACIÓN",
                 f"1. Lee `{doc_path}` con `read_file` y escribe `COMPETENCIES = [...]` (tuplas de 11 elementos —11.º obligatorio `recommended_modalities` con 2..4 modalidades canónicas—, `CTA_CONTRACT_VERSION = 2`) en `{out_py}`.",
-                f"2. Compila deterministamente: `{compile_cmd}`",
-                f"3. Con < 6 errores (1..5 errores), corrige con edit_file (replace_file_content) sobre `{out_py}` (PROHIBIDO write_file completo cuando hay < 6 errores); con >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
-                f"4. Cierre al aprobar: `{json_target}` (señal terminal DONE).",
+                f"2. **Control estricto de alcance ({min_c}–{max_c} competencias):** Mantén el número de competencias extraídas dentro de **{min_c}–{max_c}** para las {total_p} páginas de este slice, consolidando micro-temas afines dentro del mismo slice en lugar de emitir > {max_c} competencias granulares.",
+                f"3. Compila deterministamente: `{compile_cmd}`",
+                f"4. Con < 6 errores (1..5 errores), corrige con edit_file (replace_file_content) sobre `{out_py}` (PROHIBIDO write_file completo cuando hay < 6 errores); con >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
+                f"5. Cierre al aprobar: `{json_target}` (señal terminal DONE).",
             ])
             prompt_full = "\n".join(prompt_lines)
 
@@ -1906,7 +1907,11 @@ def dispatch_authors(
             norm_rec_mods = list(dict.fromkeys(str(m).strip().lower() for m in raw_rec_mods if str(m).strip()))
             num_mods = len(norm_rec_mods)
             has_mc7_comp = any(m in _MC7_MOD_ALIASES for m in norm_rec_mods) and not (is_skill_type(raw_type) or str(cid).startswith("Hab-"))
-            if templates_per_modality is not None:
+            is_split_shard = bool(s.get("split_part"))
+            is_adaptive_shard = bool(s.get("adaptive_k") or shard_manifest_data.get("adaptive_k"))
+            if (is_split_shard or is_adaptive_shard) and (s.get("stage4_contract") or {}).get(cid):
+                _s4c = (s.get("stage4_contract") or {}).get(cid)
+            elif templates_per_modality is not None:
                 _s4c = competency_contract(
                     raw_type,
                     num_modalities=num_mods,
@@ -2031,6 +2036,19 @@ def dispatch_authors(
                 f"coherencia `[M3-BLOOM-COHERENCE]`: `MC7<=Apply`, `concept_matching<=Analyze`, `FIB direct<=Apply`, "
                 f"`FIB<=Analyze`, `adversarial_break`/`unstructured_model>=Analyze`, `proof_dag>=Apply`)\n"
             )
+            split_notice = ""
+            if s.get("split_part"):
+                sp_num = int(s["split_part"])
+                sp_tot = int(s.get("split_total") or 2)
+                sp_archs = ", ".join(s.get("split_archetypes") or [])
+                sp_d_slice = "D-XX-01..03" if sp_num == 1 else "D-XX-04..06"
+                sp_t_slice = f"T-{cid}-01..06" if sp_num == 1 else f"T-{cid}-07..12"
+                split_notice = (
+                    f"\n- **[SPLIT-SHARD PART {sp_num}/{sp_tot}]**: Esta competencia pesada fue dividida en 2 sub-shards paralelos. "
+                    f"Autora ÚNICAMENTE **{min_tpls} plantillas** ({comp_k}/modalidad) usando los IDs `{sp_t_slice}`, "
+                    f"cubriendo los arquetipos **`{sp_archs}`** y priorizando los distractores `{sp_d_slice}`. "
+                    f"`compile_shard.py` compilará este sub-shard en `templates/{cid}__part{sp_num}.json`."
+                )
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
@@ -2039,7 +2057,7 @@ def dispatch_authors(
                 f"- **Umbrales Stage 4 (contrato exacto, se auditan al construir):** cuota **{quota}**; "
                 f"mínimo **{min_tpls} plantillas** ({tpl_distrib_note}, >= {_s4c['min_archetypes']} arquetipos); "
                 f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla); "
-                f"ratio de diversidad >= {_s4c['min_diversity_ratio']:.2f}\n"
+                f"ratio de diversidad >= {_s4c['min_diversity_ratio']:.2f}{split_notice}\n"
                 f"- **Nombre:** {c_name}\n"
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
                 f"{cb_line}"
@@ -2090,7 +2108,9 @@ def dispatch_authors(
             done_signal=disk_done_signal,
         )
 
-        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4 --templates-per-modality {eff_tpl_per_mod} --fail-total"
+        shard_cmd_k = int(s.get("split_k") or (s.get("templates_per_modality") if (s.get("adaptive_k") or shard_manifest_data.get("adaptive_k")) else eff_tpl_per_mod) or eff_tpl_per_mod)
+        shard_cmd_min_arch = int(s.get("split_min_archetypes") or 4)
+        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes {shard_cmd_min_arch} --templates-per-modality {shard_cmd_k} --fail-total"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -2306,6 +2326,7 @@ def dispatch_judges(
         from judge import (
             DEFAULT_OVERLAP_RATIO,
             DEFAULT_TARGET_TOTAL_EVALUATIONS,
+            compute_proportional_judge_budget,
             generate_judge_batch,
             split_judge_batch,
         )
@@ -2315,19 +2336,37 @@ def dispatch_judges(
             cta_file = work / "cta.json"
             eff_overlap = DEFAULT_OVERLAP_RATIO if overlap_ratio is None else overlap_ratio
             target_unique: Optional[int] = None
+            eff_max_judges = max_judges
+            eff_eval_cap: Optional[int] = None
+            total_templates = 0
             if (
                 samples_per_template is None
                 and ids is None
                 and max_judges == 10
                 and max_items_per_judge == 20
             ):
-                target_unique = int(round(DEFAULT_TARGET_TOTAL_EVALUATIONS / (1.0 + eff_overlap)))
+                for tp in templates_path.glob("*.json"):
+                    try:
+                        td = json.loads(tp.read_text(encoding="utf-8"))
+                        if isinstance(td, dict) and isinstance(td.get("templates"), list):
+                            total_templates += len(td["templates"])
+                        elif isinstance(td, list):
+                            total_templates += len(td)
+                        elif isinstance(td, dict):
+                            total_templates += 1
+                    except Exception:
+                        pass
+                target_unique, eff_eval_cap, eff_max_judges = compute_proportional_judge_budget(
+                    total_templates,
+                    overlap_ratio=eff_overlap,
+                    max_items_per_judge=max_items_per_judge,
+                )
             generate_judge_batch(
                 templates_path=templates_path,
                 work_dir=work,
                 cta_path=cta_file if cta_file.is_file() else None,
                 ready_only=ready_only,
-                max_judges=max_judges,
+                max_judges=eff_max_judges,
                 max_items_per_judge=max_items_per_judge,
                 ids=ids,
                 samples_per_template=samples_per_template,
@@ -2335,11 +2374,15 @@ def dispatch_judges(
                 stem_variant_offset=stem_variant_offset,
             )
             split_kwargs: Dict[str, Any] = {
-                "max_judges": max_judges,
+                "max_judges": eff_max_judges,
                 "items_per_judge": max_items_per_judge,
             }
             if overlap_ratio is not None:
                 split_kwargs["overlap_ratio"] = overlap_ratio
+            elif total_templates > 320:
+                split_kwargs["overlap_ratio"] = eff_overlap
+            if total_templates > 320 and eff_eval_cap is not None:
+                split_kwargs["max_total_evaluations"] = eff_eval_cap
             split_batches = split_judge_batch(work, **split_kwargs)
 
     # Native Batch Slicing: ensure batches are sliced at <= max_items_per_judge (default 20) and <= max_judges (default 10)
@@ -2929,10 +2972,24 @@ def build_dispatch(
                             t_entry.setdefault("errors", []).append(r_str)
 
                 # 2. Failed templates reported by judge evaluation
+                tpl_to_cid_j: Dict[str, str] = {}
+                for disc in (jr.get("disagreements", []) or jr.get("discordances", [])):
+                    if isinstance(disc, dict) and disc.get("template_id") and (disc.get("cid") or disc.get("competency_id")):
+                        tpl_to_cid_j[str(disc["template_id"])] = str(disc.get("cid") or disc.get("competency_id"))
+                for tp in templates_dir.glob("*.json"):
+                    try:
+                        td = json.loads(tp.read_text(encoding="utf-8"))
+                        for t_obj in (td if isinstance(td, list) else td.get("templates", [td]) if isinstance(td, dict) else []):
+                            if isinstance(t_obj, dict) and (t_obj.get("id") or t_obj.get("template_id")):
+                                tpl_to_cid_j[str(t_obj.get("id") or t_obj.get("template_id"))] = tp.stem
+                    except Exception:
+                        pass
+
                 ft_data = jr.get("failed_templates", [])
                 if isinstance(ft_data, dict):
                     for cid, f_info in ft_data.items():
-                        t_entry = failing_targets.setdefault(cid, {})
+                        res_cid = tpl_to_cid_j.get(cid, cid)
+                        t_entry = failing_targets.setdefault(res_cid, {})
                         err_items = f_info if isinstance(f_info, list) else [f_info]
                         for ei in err_items:
                             ei_str = str(ei)
@@ -2942,13 +2999,17 @@ def build_dispatch(
                     for item in ft_data:
                         if isinstance(item, dict):
                             cid = item.get("cid") or item.get("competency_id")
+                            if not cid and item.get("template_id"):
+                                cid = tpl_to_cid_j.get(str(item["template_id"]))
                             if cid:
                                 t_entry = failing_targets.setdefault(cid, {})
                                 reason = item.get("reason") or item.get("error") or str(item)
                                 t_entry.setdefault("errors", []).append(str(reason))
                                 t_entry.setdefault("template_errors", []).append(str(reason))
                         elif isinstance(item, str):
-                            failing_targets.setdefault(item, {})
+                            res_cid = tpl_to_cid_j.get(item, item)
+                            if res_cid in shard_map:
+                                failing_targets.setdefault(res_cid, {})
 
                 # 3. Failed competencies reported in judge report
                 fc_data = jr.get("failed_competencies", [])
@@ -3237,7 +3298,23 @@ def build_dispatch(
         per_cid_entries: List[Dict[str, Any]] = []
 
         for idx, (cid, diag) in enumerate(failing_targets.items(), start=1):
+            candidate_shards = [s_id for s_id, comps in shard_to_comps.items() if cid in comps]
             shard_id = shard_map.get(cid)
+            if len(candidate_shards) > 1:
+                search_tokens: List[str] = []
+                for disc in (diag.get("judge_disagreements") or []):
+                    if isinstance(disc, dict) and disc.get("template_id"):
+                        search_tokens.append(str(disc["template_id"]))
+                if isinstance(diag.get("judge_disagreement"), dict) and diag["judge_disagreement"].get("template_id"):
+                    search_tokens.append(str(diag["judge_disagreement"]["template_id"]))
+                if search_tokens:
+                    for cand_s in candidate_shards:
+                        s_data_f = work / "shards" / f"{cand_s}_data.py"
+                        if s_data_f.is_file():
+                            s_txt = s_data_f.read_text(encoding="utf-8")
+                            if any(tok in s_txt for tok in search_tokens):
+                                shard_id = cand_s
+                                break
             if not shard_id:
                 raise ValueError(
                     f"BLOCKER:: Competency '{cid}' is not mapped to any shard in pre_shard_manifest.json"
@@ -3340,10 +3417,42 @@ def build_dispatch(
                     "locations_count": len(spec_locs),
                 },
             }
+            sibling_stems: Dict[str, str] = {}
+            tpl_file_c = work / "templates" / f"{cid}.json"
+            if tpl_file_c.is_file():
+                try:
+                    t_raw = json.loads(tpl_file_c.read_text(encoding="utf-8"))
+                    t_list = t_raw if isinstance(t_raw, list) else (t_raw.get("templates") or [])
+                    for t_obj in t_list[:16]:
+                        if isinstance(t_obj, dict) and t_obj.get("id"):
+                            svs = t_obj.get("stem_variants") or ([t_obj.get("stem")] if t_obj.get("stem") else [])
+                            if svs and isinstance(svs[0], str):
+                                sibling_stems[str(t_obj["id"])] = svs[0][:140]
+                except Exception:
+                    pass
+            if sibling_stems:
+                slice_data["sibling_stems"] = sibling_stems
+
             slice_json_str = json.dumps(slice_data, indent=2, ensure_ascii=False)
             if len(slice_json_str.encode("utf-8")) > 2000:
                 slice_data["description"] = slice_data["description"][:80]
-                slice_json_str = json.dumps(slice_data, indent=2, ensure_ascii=False)
+                sibling_stems: Dict[str, str] = {}
+            tpl_file_c = work / "templates" / f"{cid}.json"
+            if tpl_file_c.is_file():
+                try:
+                    t_raw = json.loads(tpl_file_c.read_text(encoding="utf-8"))
+                    t_list = t_raw if isinstance(t_raw, list) else (t_raw.get("templates") or [])
+                    for t_obj in t_list[:16]:
+                        if isinstance(t_obj, dict) and t_obj.get("id"):
+                            svs = t_obj.get("stem_variants") or ([t_obj.get("stem")] if t_obj.get("stem") else [])
+                            if svs and isinstance(svs[0], str):
+                                sibling_stems[str(t_obj["id"])] = svs[0][:140]
+                except Exception:
+                    pass
+            if sibling_stems:
+                slice_data["sibling_stems"] = sibling_stems
+
+            slice_json_str = json.dumps(slice_data, indent=2, ensure_ascii=False)
 
             safe_cid = re.sub(r"[^\w-]", "_", str(cid))
             cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()

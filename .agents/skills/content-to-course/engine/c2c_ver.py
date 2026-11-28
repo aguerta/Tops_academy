@@ -103,6 +103,31 @@ def _ver_numeric(candidate: Any, exact: Any, tol: float = 0.005) -> bool:
     return abs(cand_f - exact_f) <= float(tol)
 
 
+_SYMPY_PARSER_CTX: Optional[Tuple[Any, Any, Any, Dict[str, Any]]] = None
+
+
+def _get_sympy_parser_ctx() -> Tuple[Any, Any, Any, Dict[str, Any]]:
+    """Lazily initialize sympy, parse_expr, transforms, and a reusable global_dict once.
+
+    Avoids sympy.parsing.sympy_parser.parse_expr executing `from sympy import *` on every call.
+    """
+    global _SYMPY_PARSER_CTX
+    if _SYMPY_PARSER_CTX is None:
+        import sympy
+        from sympy.parsing.sympy_parser import (
+            convert_xor,
+            implicit_multiplication_application,
+            parse_expr,
+            standard_transformations,
+        )
+
+        global_dict: Dict[str, Any] = {}
+        exec("from sympy import *", global_dict)
+        transforms = standard_transformations + (implicit_multiplication_application, convert_xor)
+        _SYMPY_PARSER_CTX = (sympy, parse_expr, transforms, global_dict)
+    return _SYMPY_PARSER_CTX
+
+
 @functools.lru_cache(maxsize=4096)
 def _ver_equiv_cached(
     cand_s: str,
@@ -110,25 +135,28 @@ def _ver_equiv_cached(
     var_names: Tuple[str, ...],
     tol_f: float,
 ) -> bool:
-    import sympy
-    from sympy.parsing.sympy_parser import (
-        convert_xor,
-        implicit_multiplication_application,
-        parse_expr,
-        standard_transformations,
-    )
+    sympy, parse_expr, transforms, base_globals = _get_sympy_parser_ctx()
 
     sym_locals: Dict[str, Any] = {vn: sympy.Symbol(vn) for vn in var_names}
     sym_locals.setdefault("ln", sympy.log)
     sym_locals.setdefault("e", sympy.E)
     sym_locals.setdefault("pi", sympy.pi)
-    transforms = standard_transformations + (implicit_multiplication_application, convert_xor)
 
     norm_cand = _normalize_sympy_expr(cand_s, var_names)
     norm_exp = _normalize_sympy_expr(exp_s, var_names)
     try:
-        c_expr = parse_expr(norm_cand, local_dict=sym_locals, transformations=transforms)
-        e_expr = parse_expr(norm_exp, local_dict=sym_locals, transformations=transforms)
+        c_expr = parse_expr(
+            norm_cand,
+            local_dict=sym_locals,
+            global_dict=base_globals.copy(),
+            transformations=transforms,
+        )
+        e_expr = parse_expr(
+            norm_exp,
+            local_dict=sym_locals,
+            global_dict=base_globals.copy(),
+            transformations=transforms,
+        )
     except Exception:
         return False
 

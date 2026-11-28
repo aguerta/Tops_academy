@@ -717,6 +717,8 @@ def plan_shards(
     isolate_skills: bool = True,
     max_skills: Optional[int] = None,
     templates_per_modality: Optional[int] = None,
+    split_heavy_skills: bool = False,
+    adaptive_k: bool = False,
 ) -> Dict[str, Any]:
     """Execute sharding on cta.json and write pre_shard_manifest.json (v3.3 canonical)."""
     eff_tpl_per_mod = (
@@ -834,11 +836,70 @@ def plan_shards(
         raw_shards.sort(
             key=lambda s: (0 if (s.get("is_skill") or s.get("is_heavy")) else 1, -s["weight"], s.get("min_curriculum_idx", 0))
         )
+        if split_heavy_skills:
+            expanded_raw: List[Dict[str, Any]] = []
+            for s in raw_shards:
+                s_comps = s.get("competencies") or []
+                if len(s_comps) == 1 and s.get("is_skill"):
+                    comp0 = s_comps[0]
+                    rec0 = list(dict.fromkeys(str(m).strip().lower() for m in (comp0.get("recommended_modalities") or []) if str(m).strip()))
+                    has_mc7_0 = any(m in {"mc7", "mc_7", "mc", "multiple_choice", "multiple-choice", "multiple_choice_7_options", "single_choice"} for m in rec0)
+                    req_n = required_templates_for_competency(len(rec0), eff_tpl_per_mod, has_mc7=has_mc7_0)
+                    if req_n >= 12:
+                        k_part1 = math.ceil(eff_tpl_per_mod / 2)
+                        k_part2 = max(1, eff_tpl_per_mod - k_part1)
+                        part1 = dict(s)
+                        part1["split_part"] = 1
+                        part1["split_total"] = 2
+                        part1["split_k"] = k_part1
+                        part1["split_min_archetypes"] = 2
+                        part1["split_archetypes"] = ["direct_recall", "multi_step_calc"]
+                        part1["weight"] = round(s["weight"] / 2.0, 2)
+                        part1["estimated_weight"] = part1["weight"]
+                        part2 = dict(s)
+                        part2["split_part"] = 2
+                        part2["split_total"] = 2
+                        part2["split_k"] = k_part2
+                        part2["split_min_archetypes"] = 2
+                        part2["split_archetypes"] = ["perturbation", "boundary_or_edge_case"]
+                        part2["weight"] = round(s["weight"] / 2.0, 2)
+                        part2["estimated_weight"] = part2["weight"]
+                        expanded_raw.extend([part1, part2])
+                        continue
+                expanded_raw.append(s)
+            raw_shards = expanded_raw
         total_shards = len(raw_shards)
         total_waves = math.ceil(total_shards / max_wave_size) if total_shards > 0 else 1
         shards = []
-        for idx, s in enumerate(raw_shards):
-            s_id = f"shard_{idx + 1:02d}"
+        base_idx = 0
+        idx = 0
+        while idx < len(raw_shards):
+            s = raw_shards[idx]
+            if s.get("split_part") == 1 and idx + 1 < len(raw_shards) and raw_shards[idx + 1].get("split_part") == 2:
+                base_idx += 1
+                for sub_offset, suffix in ((0, "a"), (1, "b")):
+                    sub = raw_shards[idx + sub_offset]
+                    s_id = f"shard_{base_idx:02d}{suffix}"
+                    shards.append({
+                        "shard_id": s_id,
+                        "shard_index": idx + sub_offset,
+                        "wave_index": ((idx + sub_offset) // max_wave_size) + 1,
+                        "total_shards": total_shards,
+                        "total_waves": total_waves,
+                        "weight": sub["weight"],
+                        "estimated_weight": sub["estimated_weight"],
+                        "competency_ids": sub["competency_ids"],
+                        "competencies": sub["competencies"],
+                        "split_part": sub["split_part"],
+                        "split_total": sub["split_total"],
+                        "split_k": sub["split_k"],
+                        "split_min_archetypes": sub["split_min_archetypes"],
+                        "split_archetypes": sub["split_archetypes"],
+                    })
+                idx += 2
+                continue
+            base_idx += 1
+            s_id = f"shard_{base_idx:02d}"
             shards.append({
                 "shard_id": s_id,
                 "shard_index": idx,
@@ -850,6 +911,7 @@ def plan_shards(
                 "competency_ids": s["competency_ids"],
                 "competencies": s["competencies"],
             })
+            idx += 1
 
     manifest_shards = []
     # Stage 4 authority: type is read exactly as run.py --stage build reads it (comp["type"]).
@@ -927,16 +989,33 @@ def plan_shards(
             ))
             num_mods_s4 = len(norm_mods_s4)
             has_mc7_s4 = "multiple_choice_7_options" in norm_mods_s4
-            s4_by_cid[cid_s4] = competency_contract(
-                cta_type_by_cid.get(cid_s4, "concept"),
+            c_type_s4 = cta_type_by_cid.get(cid_s4, "concept")
+            if shard.get("split_part"):
+                comp_k_s4 = int(shard.get("split_k") or eff_tpl_per_mod)
+            elif adaptive_k:
+                comp_k_s4 = eff_tpl_per_mod if c_type_s4 == "skill" else min(3, eff_tpl_per_mod)
+            else:
+                comp_k_s4 = eff_tpl_per_mod
+            s4_entry = competency_contract(
+                c_type_s4,
                 num_modalities=num_mods_s4,
-                templates_per_modality=eff_tpl_per_mod,
+                templates_per_modality=comp_k_s4,
                 has_mc7=has_mc7_s4,
                 target_bloom=cta_bloom_by_cid.get(cid_s4) or None,
             )
+            if shard.get("split_min_archetypes"):
+                s4_entry["min_archetypes"] = int(shard["split_min_archetypes"])
+            s4_by_cid[cid_s4] = s4_entry
+        shard_eff_k = max((int(v.get("templates_per_modality", eff_tpl_per_mod)) for v in s4_by_cid.values()), default=eff_tpl_per_mod)
+        expected_tpls = (
+            [f"templates/{cid}__part{shard['split_part']}.json" for cid in shard["competency_ids"]]
+            if shard.get("split_part")
+            else [f"templates/{cid}.json" for cid in shard["competency_ids"]]
+        )
         shard_entry = {
             "shard_id": s_id,
-            "templates_per_modality": eff_tpl_per_mod,
+            "templates_per_modality": shard_eff_k,
+            "adaptive_k": bool(adaptive_k),
             "stage4_contract": s4_by_cid,
             "shard_index": idx,
             "wave_index": wave_idx,
@@ -949,6 +1028,14 @@ def plan_shards(
             "weight": shard["weight"],
             "estimated_weight": shard.get("estimated_weight", shard["weight"]),
         }
+        if shard.get("split_part"):
+            shard_entry.update({
+                "split_part": shard["split_part"],
+                "split_total": shard["split_total"],
+                "split_k": shard["split_k"],
+                "split_min_archetypes": shard["split_min_archetypes"],
+                "split_archetypes": shard["split_archetypes"],
+            })
         manifest_shards.append(shard_entry)
 
         # Write self-contained shard json for backward compatibility & author isolation
@@ -961,20 +1048,29 @@ def plan_shards(
             "total_shards": len(shards),
             "total_waves": shard.get("total_waves", math.ceil(len(shards) / max_wave_size)),
             "max_wave_size": max_wave_size,
-            "templates_per_modality": eff_tpl_per_mod,
+            "templates_per_modality": shard_eff_k,
+            "adaptive_k": bool(adaptive_k),
             "weight": shard["weight"],
             "estimated_weight": shard.get("estimated_weight", shard["weight"]),
             "competency_ids": shard["competency_ids"],
             "course_id": cta_data.get("course_id", "course"),
             "course_title": cta_data.get("title", ""),
             "competencies": shard["competencies"],
-            "expected_templates": [f"templates/{cid}.json" for cid in shard["competency_ids"]],
+            "expected_templates": expected_tpls,
             "shard_data_path": shard_data_path_abs,
             "templates_dir": templates_dir_abs,
             "source_files": matched_sources,
-            "dsl_reference": _dsl_reference_for_k(eff_tpl_per_mod),
-            "stage4_contract": {"global": global_contract(templates_per_modality=eff_tpl_per_mod), "per_competency": s4_by_cid},
+            "dsl_reference": _dsl_reference_for_k(shard_eff_k),
+            "stage4_contract": {"global": global_contract(templates_per_modality=shard_eff_k), "per_competency": s4_by_cid},
         }
+        if shard.get("split_part"):
+            shard_payload.update({
+                "split_part": shard["split_part"],
+                "split_total": shard["split_total"],
+                "split_k": shard["split_k"],
+                "split_min_archetypes": shard["split_min_archetypes"],
+                "split_archetypes": shard["split_archetypes"],
+            })
         if distractor_guidance:
             shard_payload["distractor_guidance"] = distractor_guidance
         _atomic_write_json(shard_file, shard_payload)
@@ -997,6 +1093,8 @@ def plan_shards(
         "max_wave_size": max_wave_size,
         "min_archetypes": MIN_ARCHETYPES,
         "templates_per_modality": eff_tpl_per_mod,
+        "adaptive_k": bool(adaptive_k),
+        "split_heavy_skills": bool(split_heavy_skills),
         "max_skills_per_shard": eff_max_skills,
         "comps_per_shard": eff_max_comps,
         "stage4_contract": global_contract(templates_per_modality=eff_tpl_per_mod),
@@ -1029,6 +1127,8 @@ def main():
     parser.add_argument("--templates-per-modality", type=int, default=DEFAULT_TEMPLATES_PER_MODALITY, help=f"Minimum distinct templates per recommended modality (default: {DEFAULT_TEMPLATES_PER_MODALITY})")
     parser.add_argument("--max-wave-size", type=int, default=DEFAULT_MAX_WAVE_SIZE, help="Maximum number of author shards dispatched per wave (default: 100)")
     parser.add_argument("--no-isolate-skills", action="store_true", default=False, help="Disable 1-Skill-per-shard isolation rule")
+    parser.add_argument("--split-heavy-skills", action="store_true", default=False, help="Split heavy Skill shards (N>=12) into 2 parallel sub-shards")
+    parser.add_argument("--adaptive-k", action="store_true", default=False, help="Use K=templates_per_modality for Skill and min(3, K) for Concept/Fact")
     args = parser.parse_args()
 
     try:
@@ -1041,6 +1141,8 @@ def main():
             isolate_skills=not args.no_isolate_skills,
             max_skills=args.max_skills_per_shard,
             templates_per_modality=args.templates_per_modality,
+            split_heavy_skills=args.split_heavy_skills,
+            adaptive_k=args.adaptive_k,
         )
     except FileNotFoundError as ex:
         if "BLOCKER::" in str(ex):

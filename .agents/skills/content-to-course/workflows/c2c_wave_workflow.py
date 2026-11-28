@@ -33,12 +33,36 @@ DEFAULT_WORKER_RETRIES: int = 2
 DEFAULT_RETRY_BACKOFF_S: Tuple[float, ...] = (3.0, 8.0)
 DEFAULT_QUOTA_RETRIES: int = 4
 DEFAULT_QUOTA_BACKOFF_S: Tuple[float, ...] = (12.0, 25.0, 45.0, 60.0)
+DEFAULT_QUOTA_ABORT_RESET_S: float = 300.0
+
+
+class QuotaPausedError(RuntimeError):
+    """Raised when a wave aborts early due to a long HTTP 429 quota reset."""
 
 
 def _is_quota_error(reason: str) -> bool:
     """Return True when a worker collapse reason indicates an HTTP 429 / API quota error."""
     low = str(reason or "").lower()
     return any(tok in low for tok in ("429", "resource_exhausted", "ratelimiterror", "exhausted your capacity"))
+
+
+def _parse_quota_reset_seconds(reason: str) -> float:
+    """Parse 'Resets in XhYmZs' from a quota error string; returns 0.0 when absent."""
+    m = re.search(r"resets\s+in\s+((?:\d+\s*[hms]\s*)+)", str(reason or ""), re.IGNORECASE)
+    if not m:
+        return 0.0
+    span = m.group(1)
+    total_s = 0.0
+    for val_s, unit in re.findall(r"(\d+)\s*([hms])", span, re.IGNORECASE):
+        val = int(val_s)
+        u = unit.lower()
+        if u == "h":
+            total_s += val * 3600.0
+        elif u == "m":
+            total_s += val * 60.0
+        elif u == "s":
+            total_s += val
+    return total_s
 
 MANIFEST_BY_MODE: Dict[str, str] = {
     "cta": "cta.json",
@@ -179,6 +203,22 @@ async def run_cli(
         raise RuntimeError(f"CLI command failed ({summary}) with exit code {proc.returncode}:\n{out_str}")
     return f"Command exited with code 0.\n{out_str}"
 
+
+async def run_cli_status(
+    cmd: str,
+    summary: str,
+    env_extra: Optional[Dict[str, str]] = None,
+) -> Tuple[int, str]:
+    """Execute a C2C CLI stage via `run_cli`, returning `(returncode, output)` without raising on non-zero exit."""
+    try:
+        out = await run_cli(cmd, summary, env_extra=env_extra)
+        return 0, out
+    except RuntimeError as exc:
+        msg = str(exc)
+        m = re.search(r"with exit code (\d+)", msg)
+        rc = int(m.group(1)) if m else 1
+        return rc, msg
+
 _PLATFORM_FAILURE_MARKERS: Tuple[str, ...] = (
     "UNKNOWN",
     "WorkflowError",
@@ -276,6 +316,14 @@ async def run_wave_from_manifest(
     else:
         quota_backoffs = DEFAULT_QUOTA_BACKOFF_S
 
+    quota_abort_reset_s = float(
+        _WF_ARGS.get("quota_abort_reset_s")
+        if _WF_ARGS.get("quota_abort_reset_s") is not None
+        else DEFAULT_QUOTA_ABORT_RESET_S
+    )
+    quota_abort_event = asyncio.Event()
+    quota_abort_info: Dict[str, Any] = {"reason": "", "reset_s": 0.0, "completed": 0}
+
     log(f"Launching {total} workers for {phase_name} (max_concurrency={eff_conc}, max_retries={eff_retries}, quota_max_retries={eff_quota_retries})")
     sem = asyncio.Semaphore(eff_conc)
     slot_counter = {"next": 0}
@@ -286,16 +334,24 @@ async def run_wave_from_manifest(
         role_label = str(s.get("Role", "C2C Worker"))
         prompt_text = str(s["Prompt"])
 
+        if quota_abort_event.is_set():
+            return ""
+
         if total > 1 and slot > 0 and stagger_step > 0.0:
             delay = (slot % eff_conc) * stagger_step + random.uniform(0.0, stagger_step * 0.5)
             if delay > 0.0:
                 await asyncio.sleep(delay)
+
+        if quota_abort_event.is_set():
+            return ""
 
         async with sem:
             last_err: Optional[Exception] = None
             last_res: Any = ""
             attempt = 0
             while True:
+                if quota_abort_event.is_set():
+                    return ""
                 t0 = time.monotonic()
                 err_caught: Optional[Exception] = None
                 res: Any = ""
@@ -313,10 +369,23 @@ async def run_wave_from_manifest(
                 elapsed = time.monotonic() - t0
                 collapsed, reason = _is_worker_collapse(prompt_text, res, err_caught, elapsed)
                 if not collapsed:
+                    quota_abort_info["completed"] += 1
                     return str(res)
                 last_err = err_caught
                 last_res = res
                 is_quota = _is_quota_error(reason)
+                if is_quota:
+                    reset_s = _parse_quota_reset_seconds(reason)
+                    if reset_s > quota_abort_reset_s:
+                        if not quota_abort_event.is_set():
+                            quota_abort_info["reason"] = reason
+                            quota_abort_info["reset_s"] = reset_s
+                            quota_abort_event.set()
+                            log(
+                                f"[QUOTA-CIRCUIT-BREAKER] Long quota reset detected ({reset_s:.0f}s > {quota_abort_reset_s:.0f}s) "
+                                f"on {role_label}; aborting remaining wave spawns."
+                            )
+                        break
                 allowed_retries = eff_quota_retries if is_quota else eff_retries
                 if attempt < allowed_retries:
                     if is_quota:
@@ -336,6 +405,8 @@ async def run_wave_from_manifest(
                         f"[WORKER-EXHAUSTED] {role_label} failed after {attempt + 1} attempts ({reason})"
                     )
                     break
+            if quota_abort_event.is_set():
+                return ""
             if last_err is not None:
                 raise last_err
             return str(last_res or "")
@@ -344,11 +415,18 @@ async def run_wave_from_manifest(
         results: List[str] = []
         total_batches = (len(subagents) + max_concurrent_batch - 1) // max_concurrent_batch
         for batch_idx in range(0, len(subagents), max_concurrent_batch):
+            if quota_abort_event.is_set():
+                break
             batch = subagents[batch_idx : batch_idx + max_concurrent_batch]
             log(f"[WAVE-BATCH] {phase_name}: batch {batch_idx // max_concurrent_batch + 1}/{total_batches} ({len(batch)} workers)")
             results.extend(await parallel(batch, _run_worker))
     else:
         results = await parallel(subagents, _run_worker)
+    if quota_abort_event.is_set():
+        raise QuotaPausedError(
+            f"PAUSED_QUOTA: {quota_abort_info['reason']} "
+            f"(completed {quota_abort_info['completed']}/{total} workers before abort)"
+        )
     log(f"Completed {len(results)}/{total} workers for {phase_name}")
     return results
 
@@ -500,6 +578,7 @@ async def _execute_repair_and_rejudge_cycle(
     target_ids: List[str],
     repair_wave_label: str,
     rejudge_wave_label: str,
+    raise_on_gates_fail: bool = True,
 ) -> Tuple[List[str], List[str]]:
     """Execute one atomic repair -> templates -> build -> surgical rejudge -> rejudge-compare -> gates cycle."""
     dispatch_dir = work_path / "dispatch"
@@ -630,12 +709,46 @@ async def _execute_repair_and_rejudge_cycle(
                 "C2C stage rejudge-compare",
                 env_extra=cli_env,
             )
+            # Stage 5B LQAS inside rejudge cycle if rejudge triggered kernel_override
+            for jr_cand in (work_path / "judge_report_rejudge.json", work_path / "judge_report.json"):
+                if _is_fresh_file(jr_cand, rejudge_start):
+                    try:
+                        jr_data = json.loads(jr_cand.read_text(encoding="utf-8"))
+                    except Exception:
+                        jr_data = {}
+                    if bool(jr_data.get("lqas_followup_required")) and (jr_data.get("single_seed_override_templates") or []):
+                        phase("Stage 5B (Rejudge): Adaptive Two-Stage LQAS Confirmation")
+                        _unlink_if_exists(rejudge_manifest)
+                        lqas_start = time.time()
+                        await run_cli(
+                            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "lqas-rejudge", "--work-dir", work_dir_arg),
+                            "C2C stage lqas-rejudge",
+                            env_extra=cli_env,
+                        )
+                        if _is_fresh_file(rejudge_manifest, lqas_start):
+                            await run_wave_from_manifest(
+                                str(rejudge_manifest),
+                                "Stage 5B (Rejudge): Adaptive LQAS Confirmation Wave",
+                            )
+                            await run_cli(
+                                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "lqas-compare", "--work-dir", work_dir_arg),
+                                "C2C stage lqas-compare",
+                                env_extra=cli_env,
+                            )
+                    break
             _unlink_if_exists(rejudge_ckpt)
-        await run_cli(
-            _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
-            "C2C post-repair stage gates",
-            env_extra=cli_env,
-        )
+        if raise_on_gates_fail:
+            await run_cli(
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
+                "C2C post-repair stage gates",
+                env_extra=cli_env,
+            )
+        else:
+            await run_cli_status(
+                _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
+                "C2C post-repair stage gates",
+                env_extra=cli_env,
+            )
 
     return repair_results, rejudge_results
 
@@ -697,8 +810,17 @@ def _find_pending_shards(work_path: Path) -> Optional[List[str]]:
         sid = entry.get("shard_id") if isinstance(entry, dict) else str(entry)
         if not sid:
             continue
+        cert_json = work_path / "shards" / f"{sid}.cert.json"
+        if cert_json.is_file() and cert_json.stat().st_size > 0:
+            continue
         compiled_json = work_path / "shards" / f"{sid}.json"
-        if not compiled_json.is_file() or compiled_json.stat().st_size == 0:
+        is_mock_compiled = False
+        if compiled_json.is_file() and compiled_json.stat().st_size > 0:
+            try:
+                is_mock_compiled = "templates" in json.loads(compiled_json.read_text(encoding="utf-8"))
+            except Exception:
+                is_mock_compiled = False
+        if not is_mock_compiled:
             pending.append(str(sid))
     return pending
 
@@ -763,10 +885,12 @@ async def _run_post_cta_pipeline(
                     authors_manifest_path.write_text(json.dumps(m_data, indent=2, ensure_ascii=False), encoding="utf-8")
             except Exception:
                 pass
+        author_conc = int(_WF_ARGS.get("author_concurrency") or _WF_ARGS.get("author_wave_size") or 9)
         author_results = await run_wave_from_manifest(
             str(authors_manifest_path),
             "Stage 3: Shard Authors Wave",
-            max_concurrent_batch=int(_WF_ARGS.get("author_wave_size") or 9),
+            max_concurrency=author_conc,
+            max_concurrent_batch=0,
         )
     else:
         phase("Stage 2-3: Skipped (all shards already compiled)")
@@ -835,7 +959,7 @@ async def _run_post_cta_pipeline(
     _unlink_if_exists(work_path / "repair_matrix.json")
     _unlink_if_exists(dispatch_dir / "repair_matrix.json")
     gates_start = time.time()
-    gates_out = await run_cli(
+    gates_rc, gates_out = await run_cli_status(
         _build_run_py_cmd(python_exe, run_py, director_id, "--stage", "gates", "--work-dir", work_dir_arg),
         "C2C stage gates",
         env_extra=cli_env,
@@ -848,7 +972,7 @@ async def _run_post_cta_pipeline(
     )
     repair_results: List[str] = []
     repair_rounds_executed = 0
-    needs_repair = bool(failing_cids) or ("dispatch-repair" in (gates_out or ""))
+    needs_repair = (gates_rc != 0) or bool(failing_cids) or ("dispatch-repair" in (gates_out or ""))
 
     for round_idx in range(max(0, max_repair_rounds)):
         if not needs_repair:
@@ -869,6 +993,7 @@ async def _run_post_cta_pipeline(
         )
         if not round_targets:
             failing_cids = []
+            needs_repair = False
             break
         _unlink_if_exists(work_path / "repair_matrix.json")
         _unlink_if_exists(dispatch_dir / "repair_matrix.json")
@@ -884,6 +1009,7 @@ async def _run_post_cta_pipeline(
             target_ids=round_targets,
             repair_wave_label=f"Stage 6B: Consolidated Repair Wave (R{round_idx + 1})",
             rejudge_wave_label=f"Stage 6B: Surgical Rejudge Wave (R{round_idx + 1})",
+            raise_on_gates_fail=False,
         )
         repair_results.extend(round_repairs)
         repair_rounds_executed += 1
@@ -893,6 +1019,11 @@ async def _run_post_cta_pipeline(
             judge_min_mtime=cycle_start,
         )
         needs_repair = bool(failing_cids)
+
+    if needs_repair and failing_cids:
+        raise RuntimeError(
+            f"C2C stage gates still failing after {repair_rounds_executed} repair round(s): {failing_cids}"
+        )
 
     return {
         "authors_completed": len(author_results),
@@ -931,11 +1062,16 @@ async def run_c2c_workflow() -> Dict[str, Any]:
         manifest_path = dispatch_dir / manifest_file
         phase_label = f"C2C Wave: {mode.upper()}"
         wave_start = time.time()
-        wave_batch_size = int(_WF_ARGS.get("author_wave_size") or 9) if mode == "authors" else 0
+        wave_conc = (
+            int(_WF_ARGS.get("author_concurrency") or _WF_ARGS.get("author_wave_size") or 9)
+            if mode == "authors"
+            else None
+        )
         results = await run_wave_from_manifest(
             str(manifest_path),
             phase_label,
-            max_concurrent_batch=wave_batch_size,
+            max_concurrency=wave_conc,
+            max_concurrent_batch=0,
         )
         unfinished_cids: List[str] = []
         if mode == "repair":

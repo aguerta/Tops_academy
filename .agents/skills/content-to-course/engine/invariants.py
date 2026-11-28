@@ -38,6 +38,8 @@ try:
     from engine.katex_ast import _KATEX_LOCK
 except Exception:
     _KATEX_LOCK = threading.Lock()
+_DEFAULT_PYKATEX = pykatex
+_DEFAULT_PYKATEX_VALIDATE = pykatex_validate_with_column
 _KATEX_NUM_SKELETON_RE = re.compile(r"(?<![\\#'\"a-zA-Z0-9_])\d+(?:\.\d+)?")
 
 
@@ -514,21 +516,100 @@ def check_item_level_scaffolding_integrity(
     return errors
 
 
+_ELIMINATION_PATTERNS = (
+    re.compile(r"\b(?:descarte|elimine|descartar|eliminar|descarta|elimina)\b.{1,50}\b(?:respuestas|opciones|alternativas|las\s+que|aquellas)\b", re.IGNORECASE),
+    re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:las|cualquier|todas|los)\b", re.IGNORECASE),
+    re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:opciones|respuestas)\b", re.IGNORECASE),
+)
+
+# Precompiled hot-path regexes for check_unrendered_placeholders & validate_katex_syntax
+_ESC_DOLLAR_RE = re.compile(r"(?<!\\)(?:\\\\)*\\\$")
+_MATH_BLOCK_SPAN_RE = re.compile(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$")
+_MATH_BLOCK_DOTALL_RE = re.compile(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", flags=re.DOTALL)
+_BRACE_CANDIDATE_RE = re.compile(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}")
+_ASCII_LETTERS_RE = re.compile(r"[a-zA-Z]")
+_VALID_PLACEHOLDER_INNER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$")
+_TRAILING_LATEX_CMD_RE = re.compile(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$")
+_TRAILING_LATEX_CMD_TIGHT_RE = re.compile(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?$")
+
+_EMPTY_DOUBLE_BRACE_RE = re.compile(r"\{\{\s*\}\}")
+_RESIDUAL_DOUBLE_BRACE_VAR_RE = re.compile(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}")
+_UNESCAPED_DOUBLE_OPEN_BRACE_RE = re.compile(r"(?<!\\)\{\{")
+_TMPL_TOKEN_IN_MATH_RE = re.compile(r"@[A-Za-z0-9_]+@|(?<![\\_^}])\{[a-zA-Z_][a-zA-Z0-9_]*\}")
+_PL_PROBE_SUB_RE = re.compile(r"@[A-Za-z0-9_]+(?::[^@\s]*)?@")
+
+_ACCENT_MACROS_PAT = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline)"
+_STYLE_MACROS_PAT = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathcal|text|symbf)"
+_NESTED_ACCENT_RE = re.compile(
+    rf"\\({_ACCENT_MACROS_PAT})\s*\{{\s*\\({_STYLE_MACROS_PAT})\{{([^{{}}]*)\}}(?!\s*\}})"
+)
+_TWO_ARG_MACROS_RE = re.compile(r"\\(frac|dfrac|tfrac|cfrac|binom|overset|underset)\b")
+_LATEX_ENV_RE = re.compile(r"\\(begin|end)\{([a-zA-Z*]+)\}")
+
+_LEFT_PAREN_RE = re.compile(r"\\left\s*\(")
+_RIGHT_PAREN_RE = re.compile(r"\\right\s*\)")
+_LEFT_BRACKET_RE = re.compile(r"\\left\s*\[")
+_RIGHT_BRACKET_RE = re.compile(r"\\right\s*\]")
+_LEFT_BRACE_RE = re.compile(r"\\left\s*\\\{")
+_RIGHT_BRACE_RE = re.compile(r"\\right\s*\\\}")
+_LEFT_ANY_RE = re.compile(r"\\left\b")
+_RIGHT_ANY_RE = re.compile(r"\\right\b")
+
+_MATH_ACCENT_COMMANDS_PAT = (
+    r"dot|ddot|hat|bar|tilde|vec|breve|check|acute|grave|mathring|"
+    r"textbf|textit|textrm|textsf|texttt|mathrm|mathbf|mathit|mathsf|mathtt|"
+    r"mathcal|mathbb|mathfrak|mathscr|operatorname|sqrt|frac|dfrac|tfrac|"
+    r"binom|overset|underset|stackrel"
+)
+_UNESCAPED_MATH_CMD_RE = re.compile(rf"(?<!\\)\b({_MATH_ACCENT_COMMANDS_PAT})\s*\{{([^{{}}\n]+)\}}")
+_MATRIX_ENV_RE = re.compile(
+    r"\\begin\s*\{+\s*((?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?)\s*\}+"
+    r"[\s\S]*?"
+    r"\\end\s*\{+\s*\1\s*\}+"
+)
+_OVERESCAPED_CMD_RE = re.compile(r"(?<!\\)((?:\\\\)+)([a-zA-Z]+)")
+_DISP_MATH_RE = re.compile(r"\$\$[\s\S]*?\$\$")
+_ENV_CLEANER_RE = re.compile(
+    r"\\begin\s*\{+\s*((?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?)\s*\}+"
+    r"((?:(?!\\begin)[\s\S])*?)"
+    r"\\end\s*\{+\s*\1\s*\}+"
+)
+_INLINE_MATH_RE = re.compile(r"\$([^\$]+)\$")
+_INLINE_MATH_EMPTY_OK_RE = re.compile(r"\$[^\$]*?\$")
+_FORBIDDEN_LINEBREAK_RE = re.compile(r"\\\\(?![a-zA-Z])")
+_CENTERNOT_RE = re.compile(r"\\centernot\b")
+_PROSE_MACRO_RE = re.compile(r"\\(text|textrm|mathrm)\s*\{")
+_UNESCAPED_UNDERSCORE_RE = re.compile(r"(?<!\\)_")
+
+_EXPOSED_LATEX_CMD_PAT = (
+    r"operatorname|frac|dfrac|tfrac|cfrac|binom|sqrt|mathrm|mathbf|mathbb|mathcal|mathscr|mathfrak|"
+    r"bar|hat|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline|"
+    r"sum|prod|int|iint|iiint|oint|lim|limsup|liminf|infty|"
+    r"Rightarrow|rightarrow|Leftarrow|leftarrow|Leftrightarrow|leftrightarrow|xrightarrow|xleftarrow|"
+    r"le|ge|leq|geq|neq|approx|equiv|sim|simeq|subset|supset|subseteq|supseteq|notin|cap|cup|"
+    r"times|div|pm|mp|cdot|cdots|ldots|ddots|partial|nabla|begin|end"
+)
+_EXPOSED_LATEX_CMD_RE = re.compile(rf"(?<!\\)\\(?:{_EXPOSED_LATEX_CMD_PAT})\b")
+_VACUOUS_QUANT_RE = re.compile(r"\\(?:forall|exists)\s+[a-zA-Z\\]+\s*=\s*[-+]?\d")
+_DOT_DIGIT_RE = re.compile(r"\\dot\{\s*\d+\s*\}")
+_SYMPY_LEAK_RE = re.compile(r"(?:(?<![{^])\*\*|\d\s*\*\s*[a-zA-Z(\d]|(?<![\\a-zA-Z])sqrt\s*\()")
+_WHITESPACE_RE = re.compile(r"\s+")
+_CTX_SENTINEL = "\x00__C2C_KATEX_CTX__\x00"
+
+
+def _mask_esc_dollar(m: re.Match) -> str:
+    return m.group(0)[:-2] + "  "
+
+
 def check_scaffolding_answer_leaks(hints: List[Any]) -> List[str]:
     """Detects mechanical answer leaks in scaffolding hints (R-19)."""
     errors: List[str] = []
     if not hints or not isinstance(hints, list):
         return errors
 
-    elimination_patterns = [
-        re.compile(r"\b(?:descarte|elimine|descartar|eliminar|descarta|elimina)\b.{1,50}\b(?:respuestas|opciones|alternativas|las\s+que|aquellas)\b", re.IGNORECASE),
-        re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:las|cualquier|todas|los)\b", re.IGNORECASE),
-        re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:opciones|respuestas)\b", re.IGNORECASE),
-    ]
-
     for idx, h in enumerate(hints):
         text = h.get("text", "") if isinstance(h, dict) else str(h)
-        for pat in elimination_patterns:
+        for pat in _ELIMINATION_PATTERNS:
             m = pat.search(text)
             if m:
                 snippet = m.group(0)
@@ -538,6 +619,8 @@ def check_scaffolding_answer_leaks(hints: List[Any]) -> List[str]:
                 break
     return errors
 
+
+_TRAILING_MATH_ACCENT_RE = None
 
 
 def check_unrendered_placeholders(
@@ -553,6 +636,7 @@ def check_unrendered_placeholders(
        outside LaTeX macro arguments, avoiding false positives on legitimate LaTeX like
        \\frac{delta}{2}, \\frac{delta}{n}, \\text{delta}, x_{delta}, x^{delta}, \\begin{matrix}, \\operatorname{plim}.
     """
+    global _TRAILING_MATH_ACCENT_RE
     errors: List[str] = []
     if not isinstance(text, str):
         return errors
@@ -560,23 +644,34 @@ def check_unrendered_placeholders(
         return errors
 
     # 1. Detect unresolved PrairieLearn tokens: @var@ or @var:fmt@
-    for m in _PL_TOKEN_PATTERN.finditer(text):
-        token = m.group(1)
-        errors.append(f"Unresolved PrairieLearn template token '@{token}@' detected in {context}.")
+    if "@" in text:
+        for m in _PL_TOKEN_PATTERN.finditer(text):
+            token = m.group(1)
+            errors.append(f"Unresolved PrairieLearn template token '@{token}@' detected in {context}.")
+
+    if "{" not in text:
+        return errors
 
     # 2. Detect uninterpolated template variables: {var} or {var:fmt}
     # Preserve character offsets while masking escaped '\$' so math_spans stay aligned.
-    _esc_masked_text = re.sub(r"(?<!\\)(?:\\\\)*\\\$", lambda m: m.group(0)[:-2] + "  ", text)
-    math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _esc_masked_text)]
+    if "$" in text:
+        _esc_masked_text = _ESC_DOLLAR_RE.sub(_mask_esc_dollar, text) if "\\$" in text else text
+        math_spans = [m_s.span() for m_s in _MATH_BLOCK_SPAN_RE.finditer(_esc_masked_text)]
+    else:
+        math_spans = []
+
     def is_in_math_span(pos: int) -> bool:
         return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
 
-    for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
+    if _TRAILING_MATH_ACCENT_RE is None:
+        _TRAILING_MATH_ACCENT_RE = re.compile(rf"\b({MATH_ACCENT_COMMANDS})\s*$")
+
+    for m in _BRACE_CANDIDATE_RE.finditer(text):
         inner = m.group(1).strip()
-        letters = re.findall(r"[a-zA-Z]", inner)
+        letters = _ASCII_LETTERS_RE.findall(inner)
         if ":" not in inner and letters and all(c.isupper() for c in letters):
             continue
-        if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$", inner):
+        if not _VALID_PLACEHOLDER_INNER_RE.match(inner):
             continue
         var_name = inner
         var_key = inner.split(":")[0]
@@ -599,7 +694,7 @@ def check_unrendered_placeholders(
             continue
 
         # Legitimate LaTeX: argument of a valid LaTeX macro e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
-        m_cmd = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", prefix)
+        m_cmd = _TRAILING_LATEX_CMD_RE.search(prefix)
         if ":" not in inner and m_cmd and m_cmd.group(1) in _LATEX_ARG_MACROS:
             continue
 
@@ -620,7 +715,7 @@ def check_unrendered_placeholders(
                     idx -= 1
                 if depth == 0 and idx >= 0:
                     s = s[:idx].rstrip()
-                    m_sub = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?$", s)
+                    m_sub = _TRAILING_LATEX_CMD_TIGHT_RE.search(s)
                     if m_sub and m_sub.group(1) in _LATEX_ARG_MACROS:
                         is_subsequent_latex_arg = True
                         break
@@ -631,7 +726,7 @@ def check_unrendered_placeholders(
                 continue
 
             # Check if this was an unescaped LaTeX math command (already reported separately in validate_katex_syntax)
-            if re.search(rf"\b({MATH_ACCENT_COMMANDS})\s*$", prefix):
+            if _TRAILING_MATH_ACCENT_RE.search(prefix):
                 continue
 
         # If variable key is known in variables, it MUST NOT be left as {var_key}
@@ -645,356 +740,326 @@ def check_unrendered_placeholders(
     return errors
 
 
-def validate_katex_syntax(
+def _validate_katex_syntax_impl(
     text: str,
     context: str,
-    allow_template_vars: bool = False,
+    allow_template_vars: bool,
+    skip_placeholders: bool,
+    skip_exposed: bool,
+    check_tautology: bool,
     variables: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
-    """Validate KaTeX delimiter balance, absence of $$$, {{/}}, macro arity, environments, delimiters, and unsubstituted {var}."""
     errors: List[str] = []
-    if not isinstance(text, str):
-        return errors
-    if not text.strip():
-        return errors
+    has_dollar = "$" in text
+    has_backslash = "\\" in text
+    has_lbrace = "{" in text
 
     # 1. Triple dollar delimiters
-    if "$$$" in text:
+    if has_dollar and "$$$" in text:
         errors.append(f"Triple dollar delimiter '$$$' detected in {context}.")
 
     # 2. Residual double curly braces (paired template placeholders like {{var}} or empty/orphan {{...}})
-    if re.search(r"\{\{\s*\}\}", text):
-        errors.append(f"Empty double curly braces ('{{{{}}}}') detected in {context}.")
-    if not allow_template_vars:
-        if re.search(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}", text) or re.search(r"(?<!\\)\{\{", text):
-            errors.append(f"Residual double curly braces ('{{{{' or '}}}}') detected in {context}.")
+    if "{{" in text:
+        if _EMPTY_DOUBLE_BRACE_RE.search(text):
+            errors.append(f"Empty double curly braces ('{{{{}}}}') detected in {context}.")
+        if not allow_template_vars:
+            if _RESIDUAL_DOUBLE_BRACE_VAR_RE.search(text) or _UNESCAPED_DOUBLE_OPEN_BRACE_RE.search(text):
+                errors.append(f"Residual double curly braces ('{{{{' or '}}}}') detected in {context}.")
 
     # 3. Balanced '$' delimiters (stripping only odd-backslash escaped dollars \$)
-    clean_text = re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text)
-    if clean_text.count("$$") % 2 != 0:
-        errors.append(f"Unbalanced display math delimiter '$$' in {context}.")
+    if has_dollar:
+        clean_text = _ESC_DOLLAR_RE.sub("", text) if "\\$" in text else text
+        if clean_text.count("$$") % 2 != 0:
+            errors.append(f"Unbalanced display math delimiter '$$' in {context}.")
+        else:
+            inline_text = clean_text.replace("$$", "")
+            if inline_text.count("$") % 2 != 0:
+                errors.append(f"Unbalanced inline math delimiter '$' in {context}.")
+
+        # 4. Balanced curly braces and pykatex rendering check inside LaTeX math blocks
+        math_blocks: List[Tuple[bool, str]] = []
+        for mb in _MATH_BLOCK_DOTALL_RE.finditer(clean_text):
+            raw_match = mb.group(0)
+            is_disp = raw_match.startswith("$$")
+            block = mb.group(1) if is_disp else mb.group(2)
+            if not block:
+                continue
+            math_blocks.append((is_disp, block))
+            clean_block = block.replace(r"\{", "").replace(r"\}", "") if (r"\{" in block or r"\}" in block) else block
+            if clean_block.count("{") != clean_block.count("}"):
+                errors.append(f"Unbalanced curly braces in LaTeX math expression in {context}: '{clean_block[:60]}...'")
+
+            # PyKaTeX rendering verification with LRU cache
+            has_tmpl_token = bool(_TMPL_TOKEN_IN_MATH_RE.search(block)) if ("@" in block or "{" in block) else False
+            if not (allow_template_vars and has_tmpl_token):
+                stripped_b = block.strip()
+                render_probe = _PL_PROBE_SUB_RE.sub("1", stripped_b) if "@" in stripped_b else stripped_b
+                success, render_err = _render_katex_safe(render_probe, is_disp)
+                if not success and render_err:
+                    errors.append(f"KaTeX parse error in {context}: {render_err}")
     else:
-        inline_text = clean_text.replace("$$", "")
-        if inline_text.count("$") % 2 != 0:
-            errors.append(f"Unbalanced inline math delimiter '$' in {context}.")
-
-    # 4. Balanced curly braces and pykatex rendering check inside LaTeX math blocks
-    math_matches = re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL)
-    for mb in math_matches:
-        raw_match = mb.group(0)
-        is_disp = raw_match.startswith("$$")
-        block = mb.group(1) if is_disp else mb.group(2)
-        if not block:
-            continue
-        clean_block = block.replace(r"\{", "").replace(r"\}", "")
-        if clean_block.count("{") != clean_block.count("}"):
-            errors.append(f"Unbalanced curly braces in LaTeX math expression in {context}: '{clean_block[:60]}...'")
-
-        # PyKaTeX rendering verification with LRU cache
-        has_tmpl_token = bool(re.search(r"@[A-Za-z0-9_]+@|(?<![\\_^}])\{[a-zA-Z_][a-zA-Z0-9_]*\}", block))
-        if not (allow_template_vars and has_tmpl_token):
-            render_probe = re.sub(r"@[A-Za-z0-9_]+(?::[^@\s]*)?@", "1", block.strip())
-            success, render_err = _render_katex_safe(render_probe, is_disp)
-            if not success and render_err:
-                errors.append(f"KaTeX parse error in {context}: {render_err}")
+        clean_text = text
+        math_blocks = []
 
     # 5. Unclosed nested accent/style macros (e.g. \hat{\boldsymbol{\beta}} with missing outer brace)
-    accent_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline)"
-    style_macros = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathcal|text|symbf)"
-    nested_accent_pattern = re.compile(
-        rf"\\({accent_macros})\s*\{{\s*\\({style_macros})\{{([^{{}}]*)\}}(?!\s*\}})"
-    )
-    for m in nested_accent_pattern.finditer(text):
-        accent_name = m.group(1)
-        style_name = m.group(2)
-        inner_content = m.group(3)
-        errors.append(
-            f"Unclosed nested macro brace detected in {context}: '\\{accent_name}{{\\{style_name}{{{inner_content}}}}}' requires closing brace '}}'."
-        )
+    if has_backslash and has_lbrace:
+        for m in _NESTED_ACCENT_RE.finditer(text):
+            accent_name = m.group(1)
+            style_name = m.group(2)
+            inner_content = m.group(3)
+            errors.append(
+                f"Unclosed nested macro brace detected in {context}: '\\{accent_name}{{\\{style_name}{{{inner_content}}}}}' requires closing brace '}}'."
+            )
 
-    # 6. Macro arity validation (\frac, \binom, \overset, \underset, etc. require 2 arguments)
-    two_arg_macros = re.compile(r"\\(frac|dfrac|tfrac|cfrac|binom|overset|underset)\b")
-    for m in two_arg_macros.finditer(text):
-        macro_name = m.group(1)
-        pos = m.end()
-        # skip whitespace
-        while pos < len(text) and text[pos].isspace():
-            pos += 1
+        # 6. Macro arity validation (\frac, \binom, \overset, \underset, etc. require 2 arguments)
+        for m in _TWO_ARG_MACROS_RE.finditer(text):
+            macro_name = m.group(1)
+            pos = m.end()
+            while pos < len(text) and text[pos].isspace():
+                pos += 1
 
-        # Must start with '{'
-        if pos >= len(text) or text[pos] != "{":
-            errors.append(f"LaTeX macro '\\{macro_name}' missing argument brackets '{{...}}' in {context}.")
-            continue
-
-        # Parse first argument
-        depth1 = 1
-        pos += 1
-        while pos < len(text) and depth1 > 0:
-            ch = text[pos]
-            if ch == "$" and not (pos > 0 and text[pos - 1] == "\\"):
-                break
-            if ch == "\\" and pos + 1 < len(text):
-                pos += 2
+            if pos >= len(text) or text[pos] != "{":
+                errors.append(f"LaTeX macro '\\{macro_name}' missing argument brackets '{{...}}' in {context}.")
                 continue
-            if ch == "{":
-                depth1 += 1
-            elif ch == "}":
-                depth1 -= 1
+
+            depth1 = 1
             pos += 1
+            while pos < len(text) and depth1 > 0:
+                ch = text[pos]
+                if ch == "$" and not (pos > 0 and text[pos - 1] == "\\"):
+                    break
+                if ch == "\\" and pos + 1 < len(text):
+                    pos += 2
+                    continue
+                if ch == "{":
+                    depth1 += 1
+                elif ch == "}":
+                    depth1 -= 1
+                pos += 1
 
-        if depth1 != 0:
-            errors.append(f"LaTeX macro '\\{macro_name}' has unclosed first argument in {context}.")
-            continue
-
-        # Skip whitespace between arguments
-        while pos < len(text) and text[pos].isspace():
-            pos += 1
-
-        # Must start with '{' for second argument
-        if pos >= len(text) or text[pos] != "{":
-            errors.append(f"LaTeX macro '\\{macro_name}' requires 2 arguments, but second argument is missing in {context}.")
-            continue
-
-        # Parse second argument
-        depth2 = 1
-        pos += 1
-        while pos < len(text) and depth2 > 0:
-            ch = text[pos]
-            if ch == "$" and not (pos > 0 and text[pos - 1] == "\\"):
-                break
-            if ch == "\\" and pos + 1 < len(text):
-                pos += 2
+            if depth1 != 0:
+                errors.append(f"LaTeX macro '\\{macro_name}' has unclosed first argument in {context}.")
                 continue
-            if ch == "{":
-                depth2 += 1
-            elif ch == "}":
-                depth2 -= 1
-            pos += 1
 
-        if depth2 != 0:
-            errors.append(f"LaTeX macro '\\{macro_name}' has unclosed second argument in {context}.")
-            continue
+            while pos < len(text) and text[pos].isspace():
+                pos += 1
+
+            if pos >= len(text) or text[pos] != "{":
+                errors.append(f"LaTeX macro '\\{macro_name}' requires 2 arguments, but second argument is missing in {context}.")
+                continue
+
+            depth2 = 1
+            pos += 1
+            while pos < len(text) and depth2 > 0:
+                ch = text[pos]
+                if ch == "$" and not (pos > 0 and text[pos - 1] == "\\"):
+                    break
+                if ch == "\\" and pos + 1 < len(text):
+                    pos += 2
+                    continue
+                if ch == "{":
+                    depth2 += 1
+                elif ch == "}":
+                    depth2 -= 1
+                pos += 1
+
+            if depth2 != 0:
+                errors.append(f"LaTeX macro '\\{macro_name}' has unclosed second argument in {context}.")
+                continue
 
     # 7. Unclosed LaTeX environments (\begin{env} ... \end{env})
-    env_matches = re.finditer(r"\\(begin|end)\{([a-zA-Z*]+)\}", text)
-    env_stack: List[str] = []
-    for em in env_matches:
-        action = em.group(1)
-        env_name = em.group(2)
-        if action == "begin":
-            env_stack.append(env_name)
-        else:
-            if not env_stack:
-                errors.append(f"Unmatched LaTeX environment close '\\end{{{env_name}}}' in {context}.")
+    if has_backslash and ("\\begin{" in text or "\\end{" in text):
+        env_stack: List[str] = []
+        for em in _LATEX_ENV_RE.finditer(text):
+            action = em.group(1)
+            env_name = em.group(2)
+            if action == "begin":
+                env_stack.append(env_name)
             else:
-                last_env = env_stack.pop()
-                if last_env != env_name:
-                    errors.append(
-                        f"Mismatched LaTeX environment: '\\begin{{{last_env}}}' closed by '\\end{{{env_name}}}' in {context}."
-                    )
-    while env_stack:
-        env_name = env_stack.pop()
-        errors.append(f"Unclosed LaTeX environment '\\begin{{{env_name}}}' in {context}.")
+                if not env_stack:
+                    errors.append(f"Unmatched LaTeX environment close '\\end{{{env_name}}}' in {context}.")
+                else:
+                    last_env = env_stack.pop()
+                    if last_env != env_name:
+                        errors.append(
+                            f"Mismatched LaTeX environment: '\\begin{{{last_env}}}' closed by '\\end{{{env_name}}}' in {context}."
+                        )
+        while env_stack:
+            env_name = env_stack.pop()
+            errors.append(f"Unclosed LaTeX environment '\\begin{{{env_name}}}' in {context}.")
 
     # 8. Unclosed scalable delimiters (\left( ... \right), \left[ ... \right], \left\{ ... \right\})
-    left_paren = len(re.findall(r"\\left\s*\(", text))
-    right_paren = len(re.findall(r"\\right\s*\)", text))
-    if left_paren > right_paren:
-        errors.append(f"Unclosed scalable delimiter '\\left(' without matching '\\right)' in {context}.")
-    elif right_paren > left_paren:
-        errors.append(f"Unmatched scalable delimiter '\\right)' without matching '\\left(' in {context}.")
+    if has_backslash and ("\\left" in text or "\\right" in text):
+        left_paren = len(_LEFT_PAREN_RE.findall(text))
+        right_paren = len(_RIGHT_PAREN_RE.findall(text))
+        if left_paren > right_paren:
+            errors.append(f"Unclosed scalable delimiter '\\left(' without matching '\\right)' in {context}.")
+        elif right_paren > left_paren:
+            errors.append(f"Unmatched scalable delimiter '\\right)' without matching '\\left(' in {context}.")
 
-    left_bracket = len(re.findall(r"\\left\s*\[", text))
-    right_bracket = len(re.findall(r"\\right\s*\]", text))
-    if left_bracket > right_bracket:
-        errors.append(f"Unclosed scalable delimiter '\\left[' without matching '\\right]' in {context}.")
-    elif right_bracket > left_bracket:
-        errors.append(f"Unmatched scalable delimiter '\\right]' without matching '\\left[' in {context}.")
+        left_bracket = len(_LEFT_BRACKET_RE.findall(text))
+        right_bracket = len(_RIGHT_BRACKET_RE.findall(text))
+        if left_bracket > right_bracket:
+            errors.append(f"Unclosed scalable delimiter '\\left[' without matching '\\right]' in {context}.")
+        elif right_bracket > left_bracket:
+            errors.append(f"Unmatched scalable delimiter '\\right]' without matching '\\left[' in {context}.")
 
-    left_brace = len(re.findall(r"\\left\s*\\\{", text))
-    right_brace = len(re.findall(r"\\right\s*\\\}", text))
-    if left_brace > right_brace:
-        errors.append(f"Unclosed scalable delimiter '\\left\\{{' without matching '\\right\\}}' in {context}.")
-    elif right_brace > left_brace:
-        errors.append(f"Unmatched scalable delimiter '\\right\\}}' without matching '\\left\\{{' in {context}.")
+        left_brace = len(_LEFT_BRACE_RE.findall(text))
+        right_brace = len(_RIGHT_BRACE_RE.findall(text))
+        if left_brace > right_brace:
+            errors.append(f"Unclosed scalable delimiter '\\left\\{{' without matching '\\right\\}}' in {context}.")
+        elif right_brace > left_brace:
+            errors.append(f"Unmatched scalable delimiter '\\right\\}}' without matching '\\left\\{{' in {context}.")
 
-    total_left = len(re.findall(r"\\left\b", text))
-    total_right = len(re.findall(r"\\right\b", text))
-    if total_left > total_right and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
-        errors.append(f"Unclosed scalable delimiter '\\left' without matching '\\right' in {context}.")
-    elif total_right > total_left and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
-        errors.append(f"Unmatched scalable delimiter '\\right' without matching '\\left' in {context}.")
+        total_left = len(_LEFT_ANY_RE.findall(text))
+        total_right = len(_RIGHT_ANY_RE.findall(text))
+        if total_left > total_right and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
+            errors.append(f"Unclosed scalable delimiter '\\left' without matching '\\right' in {context}.")
+        elif total_right > total_left and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
+            errors.append(f"Unmatched scalable delimiter '\\right' without matching '\\left' in {context}.")
 
     # 9. Unescaped LaTeX math commands: dot{w}, bar{k}, frac{a}{b}, etc.
-    # Must be caught even when allow_template_vars=True
-    MATH_ACCENT_COMMANDS = (
-        r"dot|ddot|hat|bar|tilde|vec|breve|check|acute|grave|mathring|"
-        r"textbf|textit|textrm|textsf|texttt|mathrm|mathbf|mathit|mathsf|mathtt|"
-        r"mathcal|mathbb|mathfrak|mathscr|operatorname|sqrt|frac|dfrac|tfrac|"
-        r"binom|overset|underset|stackrel"
-    )
-    for m_cmd in re.finditer(rf"(?<!\\)\b({MATH_ACCENT_COMMANDS})\s*\{{([^{{}}\n]+)\}}", text):
-        cmd_name = m_cmd.group(1)
-        arg = m_cmd.group(2).strip()
-        errors.append(
-            f"Unescaped LaTeX math command '{cmd_name}{{{arg}}}' detected in {context}. "
-            f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{arg}}}$')."
-        )
+    if has_lbrace:
+        for m_cmd in _UNESCAPED_MATH_CMD_RE.finditer(text):
+            cmd_name = m_cmd.group(1)
+            arg = m_cmd.group(2).strip()
+            errors.append(
+                f"Unescaped LaTeX math command '{cmd_name}{{{arg}}}' detected in {context}. "
+                f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{arg}}}$')."
+            )
 
     # 10. Unsubstituted template variables: {var} or {var:.4f} and unresolved PrairieLearn tokens @var@
-    # Explicitly permit uppercase set/tuple notation (e.g. {K}, {Y}, {K, L}) in text
-    if not (allow_template_vars or context.startswith("stem_variants")):
+    if not skip_placeholders:
         errors.extend(check_unrendered_placeholders(text, context, variables=variables))
 
     # 11. Over-escaped LaTeX commands: \\frac, \\text, \\to, \\alpha, etc. in memory (R-23)
-    # Uses negative lookbehind (?<!\\) and requires an even number of backslashes (\\, \\\\, etc.)
-    # to avoid false positives on matrix row breaks immediately preceding a command (e.g. \\\frac = \\ + \frac).
-    # Inside matrix/multiline environments ([a-zA-Z]*matrix|cases|aligned|array|split|gathered),
-    # do not flag \\<var> (e.g. x\\y, p\\m) as R-23; keep detection for 4+ slashes (\\\\+) or \\<known_cmd>.
-    matrix_spans: List[Tuple[int, int]] = []
-    matrix_env_re = re.compile(
-        r"\\begin\s*\{+\s*((?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?)\s*\}+"
-        r"[\s\S]*?"
-        r"\\end\s*\{+\s*\1\s*\}+"
-    )
-    for m_env in matrix_env_re.finditer(text):
-        matrix_spans.append((m_env.start(), m_env.end()))
+    if "\\\\" in text:
+        matrix_spans: List[Tuple[int, int]] = []
+        if "\\begin" in text:
+            for m_env in _MATRIX_ENV_RE.finditer(text):
+                matrix_spans.append((m_env.start(), m_env.end()))
 
-    for m_over in re.finditer(r"(?<!\\)((?:\\\\)+)([a-zA-Z]+)", text):
-        slashes = m_over.group(1)
-        cmd_name = m_over.group(2)
-        pos = m_over.start()
-        in_matrix = any(s <= pos < e for s, e in matrix_spans)
-        num_slashes = len(slashes)
+        for m_over in _OVERESCAPED_CMD_RE.finditer(text):
+            slashes = m_over.group(1)
+            cmd_name = m_over.group(2)
+            pos = m_over.start()
+            in_matrix = any(s <= pos < e for s, e in matrix_spans)
+            num_slashes = len(slashes)
 
-        if in_matrix:
-            if num_slashes >= 4 or cmd_name.lower() in _KNOWN_LATEX_COMMANDS:
+            if in_matrix:
+                if num_slashes >= 4 or cmd_name.lower() in _KNOWN_LATEX_COMMANDS:
+                    errors.append(
+                        f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
+                        f"Use single backslash '\\{cmd_name}' in memory."
+                    )
+            else:
                 errors.append(
                     f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
                     f"Use single backslash '\\{cmd_name}' in memory."
                 )
-        else:
-            errors.append(
-                f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
-                f"Use single backslash '\\{cmd_name}' in memory."
-            )
 
     # 12. Forbidden linebreak '\\' inside inline math '$...$' outside matrix/cases environment (R-23)
-    no_disp = re.sub(r"\$\$[\s\S]*?\$\$", "", re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text))
-    env_cleaner = re.compile(
-        r"\\begin\s*\{+\s*((?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?)\s*\}+"
-        r"((?:(?!\\begin)[\s\S])*?)"
-        r"\\end\s*\{+\s*\1\s*\}+"
-    )
-    for m_inl in re.finditer(r"\$([^\$]+)\$", no_disp):
-        inner_no_env = m_inl.group(1)
-        # Iteratively strip innermost environments first to safely support nested environments
-        for _ in range(10):
-            inner_no_env, n_replaced = env_cleaner.subn("", inner_no_env)
-            if n_replaced == 0:
-                break
-        if re.search(r"\\\\(?![a-zA-Z])", inner_no_env):
-            errors.append(
-                f"Forbidden linebreak '\\\\' inside inline math '$...$' outside matrix/cases environment in {context} (R-23)."
-            )
+    if has_dollar and "\\\\" in text:
+        no_disp = _DISP_MATH_RE.sub("", clean_text) if "$$" in clean_text else clean_text
+        for m_inl in _INLINE_MATH_RE.finditer(no_disp):
+            inner_no_env = m_inl.group(1)
+            if "\\\\" not in inner_no_env:
+                continue
+            if "\\begin" in inner_no_env:
+                for _ in range(10):
+                    inner_no_env, n_replaced = _ENV_CLEANER_RE.subn("", inner_no_env)
+                    if n_replaced == 0:
+                        break
+            if _FORBIDDEN_LINEBREAK_RE.search(inner_no_env):
+                errors.append(
+                    f"Forbidden linebreak '\\\\' inside inline math '$...$' outside matrix/cases environment in {context} (R-23)."
+                )
 
     # 13. Unsupported macros (\centernot) (R-23; unescaped underscores in \text/\textrm/\mathrm checked in rule 14)
-    if re.search(r"\\centernot\b", text):
+    if has_backslash and "\\centernot" in text and _CENTERNOT_RE.search(text):
         errors.append(
             f"Unsupported LaTeX macro '\\centernot' detected in {context} (R-23); "
             f"use '\\nRightarrow', '\\nrightarrow', or '\\not'."
         )
 
     # 14. KaTeX prose overflow in text macros (\text{...}, \textrm{...}, \mathrm{...})
-    # Blocks exceeding 45 characters must be rejected with [KATEX-PROSE-OVERFLOW]
-    prose_macro_pat = re.compile(r"\\(text|textrm|mathrm)\s*\{")
-    for m in prose_macro_pat.finditer(text):
-        start_brace = m.end() - 1
-        depth = 1
-        pos = start_brace + 1
+    if has_backslash and has_lbrace and ("\\text" in text or "\\mathrm" in text):
         n = len(text)
-        while pos < n and depth > 0:
-            ch = text[pos]
-            if ch == "\\" and pos + 1 < n:
-                pos += 2
-                continue
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-            pos += 1
-        if depth == 0:
-            inner = text[start_brace + 1 : pos - 1]
-            if len(inner) > 45:
-                macro_name = m.group(1)
-                snippet = inner[:30] + "..." if len(inner) > 30 else inner
-                errors.append(
-                    f"[KATEX-PROSE-OVERFLOW] KaTeX text macro '\\{macro_name}{{{snippet}}}' exceeds 45 characters "
-                    f"({len(inner)} chars) in {context}. Split into markdown prose outside math delimiters."
-                )
-            inner_text_only = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", "", inner)
-            if re.search(r"(?<!\\)_", inner_text_only):
-                macro_name = m.group(1)
-                errors.append(
-                    f"Unescaped underscore '_' inside '\\{macro_name}{{{inner}}}' in {context} causes KaTeX ParseError."
-                )
+        for m in _PROSE_MACRO_RE.finditer(text):
+            start_brace = m.end() - 1
+            depth = 1
+            pos = start_brace + 1
+            while pos < n and depth > 0:
+                ch = text[pos]
+                if ch == "\\" and pos + 1 < n:
+                    pos += 2
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                pos += 1
+            if depth == 0:
+                inner = text[start_brace + 1 : pos - 1]
+                if len(inner) > 45:
+                    macro_name = m.group(1)
+                    snippet = inner[:30] + "..." if len(inner) > 30 else inner
+                    errors.append(
+                        f"[KATEX-PROSE-OVERFLOW] KaTeX text macro '\\{macro_name}{{{snippet}}}' exceeds 45 characters "
+                        f"({len(inner)} chars) in {context}. Split into markdown prose outside math delimiters."
+                    )
+                if "_" in inner:
+                    inner_text_only = _MATH_BLOCK_SPAN_RE.sub("", inner) if "$" in inner else inner
+                    if _UNESCAPED_UNDERSCORE_RE.search(inner_text_only):
+                        macro_name = m.group(1)
+                        errors.append(
+                            f"Unescaped underscore '_' inside '\\{macro_name}{{{inner}}}' in {context} causes KaTeX ParseError."
+                        )
 
     # 15. LaTeX math commands with backslash exposed outside math delimiters '$...$' or '$$...$$'
-    # Skips purely algebraic fields (e.g. canonical_algebraic or expression in FIB) which are mathematical formulas by specification
-    if not (
-        "canonical_algebraic" in context
-        or "expression" in context
-        or context == "correct_answer"
-        or context.startswith("correct_answer.")
-    ):
-        clean_no_math = re.sub(r"\$\$[\s\S]*?\$\$", "", clean_text)
-        clean_no_math = re.sub(r"\$[^\$]*?\$", "", clean_no_math)
-        EXPOSED_LATEX_CMD = (
-            r"operatorname|frac|dfrac|tfrac|cfrac|binom|sqrt|mathrm|mathbf|mathbb|mathcal|mathscr|mathfrak|"
-            r"bar|hat|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline|"
-            r"sum|prod|int|iint|iiint|oint|lim|limsup|liminf|infty|"
-            r"Rightarrow|rightarrow|Leftarrow|leftarrow|Leftrightarrow|leftrightarrow|xrightarrow|xleftarrow|"
-            r"le|ge|leq|geq|neq|approx|equiv|sim|simeq|subset|supset|subseteq|supseteq|notin|cap|cup|"
-            r"times|div|pm|mp|cdot|cdots|ldots|ddots|partial|nabla|begin|end"
-        )
-        for m_exp in re.finditer(rf"(?<!\\)\\(?:{EXPOSED_LATEX_CMD})\b", clean_no_math):
-            cmd = m_exp.group(0)
-            errors.append(
-                f"LaTeX command '{cmd}' exposed outside '$...$' delimiters in {context}. "
-                f"Enclose the mathematical expression in '$...$' (e.g. '${cmd}...$')."
-            )
+    if has_backslash and not skip_exposed:
+        if has_dollar:
+            clean_no_math = _DISP_MATH_RE.sub("", clean_text) if "$$" in clean_text else clean_text
+            clean_no_math = _INLINE_MATH_EMPTY_OK_RE.sub("", clean_no_math)
+        else:
+            clean_no_math = clean_text
+        if "\\" in clean_no_math:
+            for m_exp in _EXPOSED_LATEX_CMD_RE.finditer(clean_no_math):
+                cmd = m_exp.group(0)
+                errors.append(
+                    f"LaTeX command '{cmd}' exposed outside '$...$' delimiters in {context}. "
+                    f"Enclose the mathematical expression in '$...$' (e.g. '${cmd}...$')."
+                )
 
     # 16. Vacuous quantifiers (e.g. \forall x = 1, \exists y = 0)
-    for m_vac in re.finditer(r"\\(?:forall|exists)\s+[a-zA-Z\\]+\s*=\s*[-+]?\d", text):
-        errors.append(f"Vacuous quantifier detected in {context}: '{m_vac.group(0)}'.")
+    if has_backslash and ("\\forall" in text or "\\exists" in text):
+        for m_vac in _VACUOUS_QUANT_RE.finditer(text):
+            errors.append(f"Vacuous quantifier detected in {context}: '{m_vac.group(0)}'.")
 
     # 17. Newtonian dot accents on digits (e.g. \dot{0}, \dot{1})
-    for m_dot in re.finditer(r"\\dot\{\s*\d+\s*\}", text):
-        errors.append(f"Newtonian dot accent on digits detected in {context}: '{m_dot.group(0)}'.")
+    if has_backslash and "\\dot{" in text:
+        for m_dot in _DOT_DIGIT_RE.finditer(text):
+            errors.append(f"Newtonian dot accent on digits detected in {context}: '{m_dot.group(0)}'.")
 
     # 18. Raw SymPy syntax / raw '*' multiplication leaked inside KaTeX math blocks ($...$ or $$...$$) [TPL-KATEX-SYMPY-LEAK]
-    _sympy_leak_re = re.compile(r"(?:(?<![{^])\*\*|\d\s*\*\s*[a-zA-Z(\d]|(?<![\\a-zA-Z])sqrt\s*\()")
-    for mb_sym in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
-        math_seg = mb_sym.group(1) if mb_sym.group(0).startswith("$$") else mb_sym.group(2)
-        if not math_seg:
-            continue
-        m_sym = _sympy_leak_re.search(math_seg)
-        if m_sym:
-            errors.append(
-                f"[TPL-KATEX-SYMPY-LEAK] Raw SymPy syntax or '*' multiplication ('{m_sym.group(0).strip()}') leaked inside KaTeX math in {context}; "
-                f"format symbolic expressions with sympy.latex(...), '^{{...}}', or '\\cdot'/'\\times' instead of str(...)/'**'/'*'."
-            )
-            break
+    if math_blocks and ("*" in clean_text or "sqrt" in clean_text):
+        for _, math_seg in math_blocks:
+            m_sym = _SYMPY_LEAK_RE.search(math_seg)
+            if m_sym:
+                errors.append(
+                    f"[TPL-KATEX-SYMPY-LEAK] Raw SymPy syntax or '*' multiplication ('{m_sym.group(0).strip()}') leaked inside KaTeX math in {context}; "
+                    f"format symbolic expressions with sympy.latex(...), '^{{...}}', or '\\cdot'/'\\times' instead of str(...)/'**'/'*'."
+                )
+                break
 
     # 19. Tautological self-identity ($X = X$) in solution/hints [TPL-TAUTOLOGICAL-IDENTITY]
-    if any(k in context.lower() for k in ("solution", "hint")):
-        for mb_taut in re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", clean_text, flags=re.DOTALL):
-            taut_seg = mb_taut.group(1) if mb_taut.group(0).startswith("$$") else mb_taut.group(2)
-            if not taut_seg or "=" not in taut_seg:
+    if check_tautology and math_blocks and "=" in clean_text:
+        for _, taut_seg in math_blocks:
+            if "=" not in taut_seg:
                 continue
             if any(op in taut_seg for op in ("\\neq", "\\ne ", "\\leq", "\\geq", "\\equiv", "!=", "<=", ">=")):
                 continue
-            sides = [re.sub(r"\s+", "", s) for s in taut_seg.split("=")]
+            sides = [_WHITESPACE_RE.sub("", s) for s in taut_seg.split("=")]
             for idx_s in range(len(sides) - 1):
                 if len(sides[idx_s]) >= 4 and sides[idx_s] == sides[idx_s + 1]:
                     errors.append(
@@ -1006,11 +1071,101 @@ def validate_katex_syntax(
     return errors
 
 
+@functools.lru_cache(maxsize=4096)
+def _validate_katex_syntax_cached(
+    text: str,
+    allow_template_vars: bool,
+    skip_placeholders: bool,
+    skip_exposed: bool,
+    check_tautology: bool,
+) -> Tuple[str, ...]:
+    return tuple(
+        _validate_katex_syntax_impl(
+            text=text,
+            context=_CTX_SENTINEL,
+            allow_template_vars=allow_template_vars,
+            skip_placeholders=skip_placeholders,
+            skip_exposed=skip_exposed,
+            check_tautology=check_tautology,
+            variables=None,
+        )
+    )
+
+
+def validate_katex_syntax(
+    text: str,
+    context: str,
+    allow_template_vars: bool = False,
+    variables: Optional[Dict[str, Any]] = None,
+) -> List[str]:
+    """Validate KaTeX delimiter balance, absence of $$$, {{/}}, macro arity, environments, delimiters, and unsubstituted {var}."""
+    if not isinstance(text, str) or not text.strip():
+        return []
+
+    skip_placeholders = bool(allow_template_vars or context.startswith("stem_variants"))
+    skip_exposed = (
+        "canonical_algebraic" in context
+        or "expression" in context
+        or context == "correct_answer"
+        or context.startswith("correct_answer.")
+    )
+    ctx_l = context.lower()
+    check_tautology = ("solution" in ctx_l) or ("hint" in ctx_l)
+
+    # Safeguards for bounded immutable cache:
+    # 1. Bypass cache if pykatex or pykatex_validate_with_column was monkeypatched (e.g. in tests).
+    # 2. Bypass cache when `variables` can affect rule 10 (i.e. not skipping placeholders and '{' in text).
+    # 3. Always return a fresh list with `context` substituted from the immutable cached tuple.
+    can_use_cache = (
+        pykatex is _DEFAULT_PYKATEX
+        and pykatex_validate_with_column is _DEFAULT_PYKATEX_VALIDATE
+        and (variables is None or skip_placeholders or "{" not in text)
+    )
+    if can_use_cache:
+        cached_errs = _validate_katex_syntax_cached(
+            text,
+            bool(allow_template_vars),
+            skip_placeholders,
+            skip_exposed,
+            check_tautology,
+        )
+        if not cached_errs:
+            return []
+        return [e.replace(_CTX_SENTINEL, context) for e in cached_errs]
+
+    return _validate_katex_syntax_impl(
+        text=text,
+        context=context,
+        allow_template_vars=bool(allow_template_vars),
+        skip_placeholders=skip_placeholders,
+        skip_exposed=skip_exposed,
+        check_tautology=check_tautology,
+        variables=variables,
+    )
+
+
 def _normalize_expr_key(expr: str) -> str:
-    return re.sub(r"\s+", "", str(expr or "").strip().strip("$"))
+    return _WHITESPACE_RE.sub("", str(expr or "").strip().strip("$"))
 
 
 _COLLIDE_PROBE_GRID = (1.7321, 2.6183)
+_SYMPY_COLLIDE_CTX: Optional[Tuple[Any, Any, Dict[str, Any]]] = None
+
+
+def _get_sympy_collide_ctx() -> Tuple[Any, Any, Dict[str, Any]]:
+    """Lazily initialize sympy, parse_expr, and a reusable global_dict once.
+
+    Avoids sympy.sympify -> parse_expr executing `from sympy import *` on every call.
+    """
+    global _SYMPY_COLLIDE_CTX
+    if _SYMPY_COLLIDE_CTX is None:
+        import sympy as sp  # type: ignore
+        from sympy.parsing.sympy_parser import parse_expr
+
+        global_dict: Dict[str, Any] = {}
+        exec("from sympy import *", global_dict)
+        _SYMPY_COLLIDE_CTX = (sp, parse_expr, global_dict)
+    return _SYMPY_COLLIDE_CTX
 
 
 @functools.lru_cache(maxsize=4096)
@@ -1028,9 +1183,9 @@ def _expressions_collide_cached(na: str, nb: str) -> bool:
     if len(na) > 180 or len(nb) > 180:
         return False
     try:
-        import sympy as sp  # type: ignore
-        sa = sp.sympify(na.replace("^", "**"))
-        sb = sp.sympify(nb.replace("^", "**"))
+        sp, parse_expr, base_globals = _get_sympy_collide_ctx()
+        sa = parse_expr(na.replace("^", "**"), global_dict=base_globals.copy())
+        sb = parse_expr(nb.replace("^", "**"), global_dict=base_globals.copy())
         if sa == sb:
             return True
         if sa.free_symbols != sb.free_symbols:

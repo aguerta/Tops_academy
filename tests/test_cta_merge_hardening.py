@@ -242,3 +242,62 @@ def test_cross_pdf_formula_terms_boost_and_cap():
     cands_same_pdf = find_duplicate_candidates([boosted_c1, same_pdf_c2])
     assert len(cands_same_pdf) == 1
     assert "shared_formula_terms" not in cands_same_pdf[0]["signals"]
+
+
+def test_outline_budget_never_inverts_for_large_drafts():
+    """For large drafts (e.g. draft=66), recommended_min must never exceed recommended_max."""
+    huge = _build_outline_payload(
+        "c_huge",
+        "Huge",
+        "Macro",
+        [_make_comp(f"C-{i:02d}", name=f"Comp {i}") for i in range(1, 67)],
+    )
+    b = huge["target_competency_budget"]
+    assert b["draft_count"] == 66
+    assert b["recommended_max"] == 32
+    assert b["recommended_min"] <= b["recommended_max"]
+    assert b["recommended_min"] == 32
+
+
+def test_duplicate_candidates_capped_keeps_mandatory_and_strong():
+    from cta_merge import _cap_duplicate_candidates_for_harmonizer
+
+    cands = (
+        [{"pair": ["A", "B"], "mandatory": True, "strength": "weak", "score": 0.9}]
+        + [{"pair": [f"S{i}", f"T{i}"], "mandatory": False, "strength": "strong", "score": 0.8} for i in range(10)]
+        + [{"pair": [f"W{i}", f"Z{i}"], "mandatory": False, "strength": "weak", "score": 0.4} for i in range(120)]
+    )
+    capped = _cap_duplicate_candidates_for_harmonizer(cands, max_candidates=80)
+    assert len(capped) == 80
+    assert any(c.get("mandatory") for c in capped)
+    assert sum(1 for c in capped if c.get("strength") == "strong") == 10
+
+
+def test_apply_harmonize_enforces_cta_budget_exceeded(tmp_path: Path):
+    """apply_harmonize raises [CTA-BUDGET-EXCEEDED] when draft > recommended_max, candidates exist, and final > ceil(max*1.15)."""
+    import pytest
+
+    work_dir = tmp_path / "work_budget"
+    work_dir.mkdir(parents=True)
+    comps = [
+        _make_comp(
+            f"C-{i:02d}",
+            name=f"Tema Distinto {i}",
+            distractors=[_make_distractor(f"D-C{i:02d}-{j}", f"Dist {i}-{j}") for j in range(1, 4)],
+        )
+        for i in range(1, 46)
+    ]
+    draft = {"course_id": "budget_test", "title": "Budget", "macro_competency": "M", "competencies": comps}
+    (work_dir / "cta_draft.json").write_text(json.dumps(draft), encoding="utf-8")
+    (work_dir / "cta_order.json").write_text(
+        json.dumps({"order": [c["id"] for c in comps], "order_hash": "h"}), encoding="utf-8"
+    )
+    (work_dir / "duplicate_candidates.json").write_text(
+        json.dumps([{"pair": ["C-01", "C-02"], "score": 0.7, "strength": "strong"}]), encoding="utf-8"
+    )
+    (work_dir / "cta_harmonize.json").write_text(
+        json.dumps({"duplicate_decisions": [], "add_prerequisites": [], "rename": [], "drop_duplicate_distractors": []}),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match=r"CTA-BUDGET-EXCEEDED"):
+        apply_harmonize(work_dir)

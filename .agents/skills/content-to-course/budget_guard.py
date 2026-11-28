@@ -30,6 +30,20 @@ DEFAULT_MAX_TURNS = 40
 DEFAULT_MAX_TOKENS = 5_000_000
 DEFAULT_MAX_SCRIPT_LOOPS = 5
 DEFAULT_MAX_ERROR_STREAK = 3
+DEFAULT_COURSE_MAX_TOKENS = 20_000_000
+
+
+def check_course_budget(
+    total_tokens: int,
+    max_course_tokens: int = DEFAULT_COURSE_MAX_TOKENS,
+) -> Tuple[bool, Optional[str]]:
+    """Evaluate course-level cumulative token budget to prevent runaway multi-round or CTA-explosion runs."""
+    if int(total_tokens) > int(max_course_tokens):
+        return (
+            True,
+            f"COURSE_BUDGET_EXCEEDED: Course token burn ({int(total_tokens):,}) exceeded limit ({int(max_course_tokens):,}).",
+        )
+    return False, None
 
 
 def check_lock_budget(lock_data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:

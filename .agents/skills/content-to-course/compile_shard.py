@@ -567,14 +567,26 @@ def _compile_shard_body(
                 _seen_titles[_k] = str(_c.get("id"))
 
     eff_min_arch = _S4_MIN_ARCHETYPES
-    if min_archetypes is not None:
+    split_part = int(shard_entry.get("split_part") or 0) if isinstance(shard_entry, dict) else 0
+    is_adaptive_k = bool(
+        (isinstance(shard_entry, dict) and shard_entry.get("adaptive_k"))
+        or (isinstance(manifest_data, dict) and manifest_data.get("adaptive_k"))
+    )
+
+    if split_part and isinstance(shard_entry, dict) and shard_entry.get("split_min_archetypes") is not None:
+        eff_min_arch = int(shard_entry["split_min_archetypes"])
+    elif min_archetypes is not None:
         eff_min_arch = int(min_archetypes)
     elif isinstance(shard_entry, dict) and shard_entry.get("min_archetypes"):
         eff_min_arch = int(shard_entry["min_archetypes"])
     elif isinstance(manifest_data, dict) and manifest_data.get("min_archetypes"):
         eff_min_arch = int(manifest_data["min_archetypes"])
 
-    if templates_per_modality is not None:
+    if split_part and isinstance(shard_entry, dict) and shard_entry.get("split_k") is not None:
+        eff_k = max(1, int(shard_entry["split_k"]))
+    elif is_adaptive_k and isinstance(shard_entry, dict) and shard_entry.get("templates_per_modality") is not None:
+        eff_k = max(1, int(shard_entry["templates_per_modality"]))
+    elif templates_per_modality is not None:
         eff_k = max(1, int(templates_per_modality))
     elif isinstance(manifest_data, dict) and isinstance(manifest_data.get("stage4_contract"), dict) and manifest_data["stage4_contract"].get("templates_per_modality") is not None:
         eff_k = max(1, int(manifest_data["stage4_contract"]["templates_per_modality"]))
@@ -1147,20 +1159,23 @@ def _compile_shard_body(
     final_paths_by_cid: Dict[str, Path] = {}
     for cid, tpls in templates_by_cid.items():
         base_id = f"T-{cid}" if not cid.startswith("T-") else cid
+        part_offset = (split_part - 1) * 6 if split_part > 1 else 0
         for idx, tpl in enumerate(tpls, start=1):
             cur_id = tpl.get("id") or base_id
             needs_normalization = (
                 not cur_id.startswith("T-")
                 or (len(tpls) > 1 and cur_id == base_id)
+                or part_offset > 0
                 or any(tpls[j].get("id") == cur_id for j in range(len(tpls)) if j != idx - 1)
             )
             if needs_normalization:
-                unique_id = f"{base_id}-{idx:02d}"
+                unique_id = f"{base_id}-{idx + part_offset:02d}"
                 tpl["id"] = unique_id
                 tpl["template_id"] = unique_id
 
-        staged_json_path = staged_tpl_dir / f"{cid}.json"
-        final_paths_by_cid[cid] = templates_dir / f"{cid}.json"
+        out_stem = f"{cid}__part{split_part}" if split_part else cid
+        staged_json_path = staged_tpl_dir / f"{out_stem}.json"
+        final_paths_by_cid[cid] = templates_dir / f"{out_stem}.json"
         if len(tpls) == 1:
             payload = tpls[0]
         else:

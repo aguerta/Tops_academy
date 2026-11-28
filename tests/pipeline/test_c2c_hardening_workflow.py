@@ -473,3 +473,119 @@ def test_rejudge_checkpoint_resumes_without_repair_wave(tmp_path: Path) -> None:
         "C2C post-repair stage gates",
     ]
     assert not (work_dir / ".rejudge_pending.json").exists()
+
+
+def test_full_pipeline_runs_internal_stage6b_when_gates_exit_nonzero(tmp_path: Path) -> None:
+    work_dir = tmp_path / "work"
+    dispatch_dir = work_dir / "dispatch"
+    shards_dir = work_dir / "shards"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    # Mark shards already compiled so post_cta skips Stage 2-3
+    (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({"shards": [{"shard_id": "shard_01"}]}), encoding="utf-8")
+    (shards_dir / "shard_01.json").write_text(json.dumps({"templates": []}), encoding="utf-8")
+
+    mod, _, _ = _load_workflow_module(
+        {"work_dir": str(work_dir), "mode": "post_cta_pipeline", "max_repair_rounds": 2, "director_id": "d1"}
+    )
+    summaries: List[str] = []
+    gates_calls = {"n": 0}
+
+    async def _fake_run_cli(cmd: str, summary: str, env_extra: Optional[Dict[str, str]] = None) -> str:
+        summaries.append(summary)
+        if summary == "C2C dispatch judges":
+            _write_manifest(dispatch_dir / "judges.json", 1, "Judge")
+        elif summary == "C2C stage gates":
+            gates_calls["n"] += 1
+            (work_dir / "repair_matrix.json").write_text(
+                json.dumps({"failing_competencies": ["C-01"]}), encoding="utf-8"
+            )
+            raise RuntimeError("CLI command failed (C2C stage gates) with exit code 1")
+        elif summary == "C2C stage repair-matrix":
+            (work_dir / "repair_matrix.json").write_text(
+                json.dumps({"failing_competencies": ["C-01"]}), encoding="utf-8"
+            )
+        elif summary == "C2C dispatch repair":
+            _write_manifest(dispatch_dir / "repair.json", 1, "Repair")
+        elif summary == "C2C stage surgical rejudge":
+            _write_manifest(dispatch_dir / "judges.json", 1, "Rejudge")
+        elif summary == "C2C post-repair stage gates":
+            # Clean pass on post-repair gates
+            return "Command exited with code 0."
+        return "Command exited with code 0."
+
+    mod.run_cli = _fake_run_cli
+    res = asyncio.run(mod.run_c2c_workflow())
+    assert gates_calls["n"] == 1
+    assert res["repair_rounds_executed"] == 1
+    assert res["remaining_failing_ids"] == []
+    assert "C2C stage repair-matrix" in summaries
+    assert "C2C stage surgical rejudge" in summaries
+
+
+def test_repair_and_rejudge_runs_lqas_when_rejudge_triggers_override(tmp_path: Path) -> None:
+    work_dir = tmp_path / "work"
+    dispatch_dir = work_dir / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    _write_fresh_json(work_dir / ".rejudge_pending.json", {"ids": ["C-01"], "built_at": time.time() + 5})
+
+    mod, _, _ = _load_workflow_module(
+        {"work_dir": str(work_dir), "mode": "repair_and_rejudge", "ids": ["C-01"], "director_id": "d1"}
+    )
+    summaries: List[str] = []
+
+    async def _fake_run_cli(cmd: str, summary: str, env_extra: Optional[Dict[str, str]] = None) -> str:
+        summaries.append(summary)
+        if summary == "C2C stage surgical rejudge":
+            _write_manifest(dispatch_dir / "judges.json", 1, "Rejudge")
+        elif summary == "C2C stage rejudge-compare":
+            _write_fresh_json(
+                work_dir / "judge_report_rejudge.json",
+                {"lqas_followup_required": True, "single_seed_override_templates": ["T-C01-02"]},
+            )
+        elif summary == "C2C stage lqas-rejudge":
+            _write_manifest(dispatch_dir / "judges.json", 1, "LQAS")
+        return "Command exited with code 0."
+
+    mod.run_cli = _fake_run_cli
+    asyncio.run(mod.run_c2c_workflow())
+    assert "C2C stage lqas-rejudge" in summaries
+    assert "C2C stage lqas-compare" in summaries
+
+
+def test_quota_circuit_breaker_aborts_wave_on_long_reset(tmp_path: Path) -> None:
+    import pytest
+
+    manifest = tmp_path / "judges.json"
+    _write_manifest(manifest, 5, "Judge")
+    mod, _, _ = _load_workflow_module(
+        {"quota_retry_backoff_s": [0.0], "retry_backoff_s": [0.0], "startup_stagger_s": 0.0, "max_concurrency": 1}
+    )
+    calls = {"n": 0}
+
+    async def _quota_failing_agent(**kwargs: Any) -> str:
+        calls["n"] += 1
+        raise RuntimeError("RESOURCE_EXHAUSTED (code 429): Individual quota reached. Resets in 4h23m50s")
+
+    mod.agent = _quota_failing_agent
+    with pytest.raises(mod.QuotaPausedError, match=r"PAUSED_QUOTA"):
+        asyncio.run(mod.run_wave_from_manifest(str(manifest), "Quota Breaker"))
+    # Must abort immediately on long reset instead of 5 workers x 5 attempts = 25 calls
+    assert calls["n"] < 5
+
+
+def test_course_budget_guard_flags_overrun() -> None:
+    import sys
+
+    c2c_dir = str((Path(__file__).resolve().parents[2] / ".agents" / "skills" / "content-to-course").resolve())
+    if c2c_dir not in sys.path:
+        sys.path.insert(0, c2c_dir)
+    from budget_guard import check_course_budget
+
+    over, msg = check_course_budget(25_000_000)
+    assert over is True
+    assert msg and "COURSE_BUDGET_EXCEEDED" in msg
+
+    ok, msg_ok = check_course_budget(10_000_000)
+    assert ok is False
+    assert msg_ok is None

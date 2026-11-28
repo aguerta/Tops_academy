@@ -224,6 +224,29 @@ def _check_stem_equation_parity(template: Dict[str, Any]) -> List[str]:
     ]
 
 
+def _extract_reference_equation_excerpt(template: Dict[str, Any]) -> str:
+    """Extract a concise defining equation excerpt from the first stem_variant matching func_eq_re."""
+    raw_variants = template.get("stem_variants")
+    if not isinstance(raw_variants, list):
+        return ""
+    func_eq_re = re.compile(
+        r"(?:\\(?:phi|psi|Phi|Psi|dot\{[^}]+\})\s*(?:\([^)]*\))?|[A-Za-z](?:_[A-Za-z0-9{}]+)?\s*\([^)]*\)|[YVFf]\s*)\s*="
+    )
+    for sv in raw_variants:
+        if not isinstance(sv, str) or not sv.strip():
+            continue
+        m = func_eq_re.search(sv)
+        if not m:
+            continue
+        for math_m in re.finditer(r"\$[^$]+\$", sv):
+            if math_m.start() <= m.start() < math_m.end():
+                return math_m.group(0)[:120]
+        start = max(0, m.start() - 10)
+        end = min(len(sv), m.end() + 50)
+        return sv[start:end].strip()[:120]
+    return ""
+
+
 _ABS_WORD_BIAS_RE = re.compile(r"\b(?:siempre|nunca|únicamente|jamás|ignora|todo[sa]?)\b", re.IGNORECASE)
 
 
@@ -1037,20 +1060,28 @@ def check_single_template(
         ))
 
     eq_parity_violations = _check_stem_equation_parity(template)
-    for eq_field in eq_parity_violations:
-        errors.append(format_diagnostic_error(
-            "TPL-STEM-EQUATION-PARITY: OMISIÓN DE ECUACIÓN FUNCIONAL EN STEM_VARIANT",
-            competency_id,
-            tpl_id,
-            tpl_id,
-            eq_field,
-            "La variante omite la ecuación o función de producción definida en las demás variantes.",
-            f"[-] [TPL-STEM-EQUATION-PARITY] violation in '{tpl_id}': '{eq_field}' no contiene '=' pese a que la mayoría de 'stem_variants' define explícitamente la función del modelo.",
-            [
-                f"Incluir explícitamente la ecuación definitoria del modelo dentro de '{eq_field}'.",
-                "Garantizar clausura epistémica en el 100% de las variantes de 'stem_variants'.",
-            ]
-        ))
+    if eq_parity_violations:
+        eq_excerpt = _extract_reference_equation_excerpt(template)
+        excerpt_cause = f" Ecuación de referencia presente en otra variante: {eq_excerpt}" if eq_excerpt else ""
+        for eq_field in eq_parity_violations:
+            primary_action = (
+                f"Copiar/adaptar la ecuación definitoria ({eq_excerpt}) dentro de '{eq_field}'."
+                if eq_excerpt
+                else f"Incluir explícitamente la ecuación definitoria del modelo dentro de '{eq_field}'."
+            )
+            errors.append(format_diagnostic_error(
+                "TPL-STEM-EQUATION-PARITY: OMISIÓN DE ECUACIÓN FUNCIONAL EN STEM_VARIANT",
+                competency_id,
+                tpl_id,
+                tpl_id,
+                eq_field,
+                "La variante omite la ecuación o función de producción definida en las demás variantes.",
+                f"[-] [TPL-STEM-EQUATION-PARITY] violation in '{tpl_id}': '{eq_field}' no contiene '=' pese a que la mayoría de 'stem_variants' define explícitamente la función del modelo.{excerpt_cause}",
+                [
+                    primary_action,
+                    "Garantizar clausura epistémica en el 100% de las variantes de 'stem_variants'.",
+                ]
+            ))
 
     if interaction_type in ("open_symbolic", "fill_in_the_blank"):
         _unlabeled_re = re.compile(

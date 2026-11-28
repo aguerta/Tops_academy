@@ -119,6 +119,8 @@ def heal_katex_display_str(text: str) -> str:
         if not inner:
             return block
         inner = re.sub(r"(\\[a-zA-Z]+)(@[a-zA-Z_]\w*(?::[^@\s]*)?@)", r"\1 \2", inner)
+        # Wrap unbraced superscript/subscript placeholders: ^@var@ -> ^{@var@}, _@var@ -> _{@var@}
+        inner = re.sub(r"([\^_])(@[a-zA-Z_]\w*(?::[^@\s]*)?@)", r"\1{\2}", inner)
         inner = re.sub(r"(?<![A-Za-z0-9_^\\])(\d+)@([a-zA-Z_]\w*)@", r"\1 \\cdot @\2@", inner)
         inner = re.sub(r"@([a-zA-Z_]\w*)@(?=\d)", r"@\1@ \\cdot ", inner)
         inner = re.sub(

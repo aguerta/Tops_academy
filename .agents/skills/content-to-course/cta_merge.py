@@ -1184,6 +1184,20 @@ def find_duplicate_candidates(
     return candidates
 
 
+def _cap_duplicate_candidates_for_harmonizer(
+    candidates: List[Dict[str, Any]],
+    max_candidates: int = 80,
+) -> List[Dict[str, Any]]:
+    """Keep all mandatory/strong duplicate candidates and cap weaker ones to prevent read_file truncation."""
+    if len(candidates) <= max_candidates:
+        return candidates
+    priority = [c for c in candidates if c.get("mandatory") or c.get("strength") == "strong"]
+    if len(priority) >= max_candidates:
+        return priority
+    rest = [c for c in candidates if not (c.get("mandatory") or c.get("strength") == "strong")]
+    return priority + rest[: max_candidates - len(priority)]
+
+
 def _build_outline_payload(
     course_id: str,
     course_title: str,
@@ -1236,8 +1250,8 @@ def _build_outline_payload(
         outline_competencies.append(outline_entry)
 
     draft_count = len(draft_competencies)
-    recommended_min = max(14, int(round(draft_count * 0.50)))
     recommended_max = max(24, min(32, int(round(draft_count * 0.68))))
+    recommended_min = min(recommended_max, max(14, int(round(draft_count * 0.50))))
     bloom_preview = (
         compute_cta_bloom_portfolio_metrics(draft_competencies)
         if compute_cta_bloom_portfolio_metrics is not None
@@ -1750,11 +1764,12 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "order_hash": order_hash,
     }
 
+    capped_candidates = _cap_duplicate_candidates_for_harmonizer(duplicate_candidates)
     (work_path / "id_map.json").write_text(
         json.dumps(id_map_payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     (work_path / "duplicate_candidates.json").write_text(
-        json.dumps(duplicate_candidates, indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps(capped_candidates, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     (work_path / "cta_draft.json").write_text(
         json.dumps(draft_payload, indent=2, ensure_ascii=False), encoding="utf-8"
@@ -1860,8 +1875,9 @@ def prepare_harmonize_from_single_draft(work_dir: Union[str, Path]) -> Dict[str,
         "order_hash": order_hash,
     }
 
+    capped_candidates = _cap_duplicate_candidates_for_harmonizer(duplicate_candidates)
     (work_path / "cta_outline.json").write_text(json.dumps(outline_payload, indent=2, ensure_ascii=False), encoding="utf-8")
-    (work_path / "duplicate_candidates.json").write_text(json.dumps(duplicate_candidates, indent=2, ensure_ascii=False), encoding="utf-8")
+    (work_path / "duplicate_candidates.json").write_text(json.dumps(capped_candidates, indent=2, ensure_ascii=False), encoding="utf-8")
     (work_path / "cta_order.json").write_text(json.dumps(order_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
     return {
@@ -1931,6 +1947,7 @@ def apply_harmonize(
 
     orig_order: List[str] = cta_order_data.get("order", [])
     competencies: List[Dict[str, Any]] = cta_draft.get("competencies", [])
+    initial_draft_count: int = len(competencies)
 
     # Index allowed duplicate candidate pairs (normalized as sorted tuples)
     allowed_candidates_set: Set[Tuple[str, str]] = set()
@@ -2807,6 +2824,19 @@ def apply_harmonize(
         if not valid:
             for r_err in rule_errors:
                 validation_errors.append(f"validate_cta_rules failed: {r_err}")
+
+    # Hard budget gate when consolidation is needed and duplicate candidates exist
+    if not no_merge and not existing_competency_ids and candidates_list:
+        recommended_max = max(24, min(32, int(round(initial_draft_count * 0.68))))
+        if initial_draft_count > recommended_max:
+            hard_cap = int(-(-recommended_max * 115 // 100))  # ceil(recommended_max * 1.15)
+            if len(competencies) > hard_cap:
+                validation_errors.append(
+                    f"[CTA-BUDGET-EXCEEDED] El currículo armonizado retiene {len(competencies)} competencias "
+                    f"frente al techo máximo {hard_cap} (recommended_max={recommended_max}, draft={initial_draft_count}). "
+                    f"Fusiona candidatos duplicados adicionales en duplicate_decisions hasta converger a <= {hard_cap} competencias "
+                    "(respetando hipótesis disjuntas y <= 2 absorciones por sobreviviente)."
+                )
 
     # Fail-total barrier: report ALL accumulated validation errors together
     if validation_errors:
