@@ -47,7 +47,7 @@ All architectural specifications, historical certifications, and active roadmaps
 | 🗺️ [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md) | **Active Strategic Roadmap:** High-level priorities, cognitive rationale, acceptance criteria (AC), and unit economics for active milestones (**M19** $k=4$ First-Pass scaling, **M16 F2** `z3-solver`, **M9+M21** ContentCore hierarchy, **M18** Prompt-Compiler CI, **M15 F2** Lean 4). |
 | 📗 [`docs/future_milestones/MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/MILESTONES_COMPLETED.md) | **Certified Historical Ledger:** Forensic delivery record of all completed milestones (**M1, M1-T, M2, M2a, M3, M4, M6, M7, M8, M9 [Quick Wins + Phase A], M10, M11, M12, M13, M14, M14-B, M15 [F1 + DRT], M16 [F1], M17, M20 Core & M20-B Iron Mode**). |
 | 📘 [`docs/future_milestones/CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/CONOCIMIENTO_TRIBAL.md) | **Tribal Knowledge & Inference Physics:** Causal architecture, LLM streaming physics, 2D Governance FSM matrix, hardware viewport ergonomics (14" 150% zoom & Split 50%), KaTeX lessons, and 4-Archetype invariants. |
-| 🏁 [`docs/future_milestones/HANDOFF_M20_CLOSURE.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/HANDOFF_M20_CLOSURE.md) | **Milestone 20 Closure Report:** Certification handoff for the 6 Higher-Order Bloom Modalities, Iron Mode, and $k=2$ production standard. |
+| 🏁 [`docs/future_milestones/HANDOFF_M20_CLOSURE.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/HANDOFF_M20_CLOSURE.md) | **Milestone 20 Closure Report:** Certification handoff for the 6 Higher-Order Bloom Modalities, Iron Mode, and initial $k=2$ baseline (now superseded by the **$k=3$ stable production standard**). |
 | 📋 [`docs/PROJECT.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/PROJECT.md) | **Core Project Specification:** Foundation contracts, schema interfaces, and baseline subsystem definitions. |
 | 🧪 [`docs/TEST_INFRA.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/TEST_INFRA.md) & [`docs/TEST_READY.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/TEST_READY.md) | **Test Infrastructure & Readiness Specs:** E2E Playwright harness design and verification checklists. |
 | 📐 [`docs/specs/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/) | **Deep Technical Specifications:** Detailed specs for Study Harness ([`m06_study_harness.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md)), FSRS-5/6 SRS ([`m08_srs_fsrs_fluency.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m08_srs_fsrs_fluency.md)), Hierarchical ContentCore ([`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md)), Mastery 2.0 ([`m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md)), Formal Kernel ([`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md)), and 4-Axis Archetypes ([`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md)). |
@@ -70,7 +70,7 @@ All architectural specifications, historical certifications, and active roadmaps
 |  Stage 0: Multimodal Ingest    -->  Stage 1: CTA Map-Reduce      -->  Stage 2: Weighted Sharding  |
 |  (PyMuPDF session slicing,          (Sectional Analyzers +            (1:1 heavy / 2:1 light,     |
 |   direct PDF reading, evidence)      DAG Harmonizer, PRE-XX,           Typed Contract Skeletons,  |
-|                                      explicit assumptions)             k=2 stable default)        |
+|                                      explicit assumptions)             k=3 stable standard)       |
 |                                                                                |                  |
 |  Stage 6: Quality Gate Publish <--  Stage 5: Bicameral Judges    <--  Stage 3 & 4: Form-C & Build |
 |  (MPRI /100 pts, 7 Path-to-         (Alpha_Kernel = 0 dominance,      (4 Orthogonal Archetypes,   |
@@ -247,7 +247,7 @@ Course banks are validated through a 3-pass deterministic validator (`src/valida
 | :--- | :--- | :--- | :--- |
 | **R-01..R-03** | `ERR_RAW_NEWLINE` / `ESCAPE` | Lexical | RFC 8259 conformity; zero raw newlines or silent control characters (`\tau`, `\frac`, `\beta`, `\nu`, `\text`) |
 | **R-04..R-07** | `ERR_SCHEMA` / `INTEGRITY` | Schema & DAG | Draft-07 JSON Schema, Pydantic `ShardCompetenceContract`, unique IDs, valid foreign keys, acyclic `PRE-XX` / `C-XX` DAG |
-| **R-08..R-09** | `ERR_COUNT_SKILL` / `CONCEPT`| Volume Quota | Volume quotas per competency scaled by `k` (`DEFAULT_TEMPLATES_PER_MODALITY = 2` stable standard) |
+| **R-08..R-09** | `ERR_COUNT_SKILL` / `CONCEPT`| Volume Quota | Volume quotas per competency scaled by `k` (**`k=3` stable production standard**, `--templates-per-modality 3`) |
 | **R-10..R-13** | `ERR_MC` / `ERR_MS_COUNT` | Cardinality | Cardinality invariants + `[M20-MC7-CAP]` (`0 MC7` in `Skill`, $\le 1$ in `Concept`/`Fact`) & `[M20-ACTIVE-QUOTA]` ($\ge 80\%$) |
 | **R-14** | `ERR_HINT_COUNT` | Scaffolding | Graduated Socratic hints count between 3 and 5 |
 | **R-15..R-16** | `ERR_LENGTH_RATIO` / `DIST` | Psychometrics | Anti-giveaway bounds: $0.80 \cdot \min(D) \le L_{\text{correct}} \le 1.20 \cdot \max(D)$; longest/shortest $\le 25\%$ |
@@ -324,18 +324,17 @@ pytest tests/e2e/ -v
 
 ## Active Production Courses & Benchmark Telemetry
 
-Currently discovered and validated in `courses/` (`python run_platform.py --scan`):
+Currently discovered and validated in `courses/` (`python run_platform.py --scan`) under the **`k=3` M20 stable production standard**:
 
-| Course Identifier | Title | Questions | Competencies | Milestone Standard | Status |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **`estadistica_3_pre_pc2_m20`** | Estadística III: Pre-PC2 (Inferencia, Asintótica y Regresión) | **1,396** | **58** | **M20 Bloom Superior (`k=2`)** | **VALID / Active** |
-| **`mateco_4_optimizacion_v20_k_3`** | Matemática para Economistas IV: Optimización Dinámica y Estática | **963** | **27** | **M20 Platinum Pilot (`k=3`, 19.92/20, MPRI 99.65)** | **VALID / Active** |
-| **`solow_m20_v11`** | Modelo de Crecimiento de Solow-Swan (Serie Experimental FTP) | **621** | **20** | **M19/M20 FTP Benchmark (`k=3`)** | **VALID / Active** |
-| **`solow_m20_v5` .. `solow_m20_v10`** | Serie Experimental Solow M20 (Calibración de Palancas FTP `v5`–`v10`) | **402 – 597** | **17 – 20** | **M19/M20 Telemetry Series (`k=2..3`)** | **VALID / Active** |
+| Course Identifier | Title | Questions | Competencies | Milestone Standard & Telemetry | Status |
+| :--- | :--- | :---: | :---: | :--- | :--- |
+| **`mateco_4_optimizacion_k3_v2_m20`** | Matemática para Economistas IV: Optimización Dinámica y Estática | **903** | **27** | **M20 Platinum (`k=3`, `20.00/20`, `MPRI 100.0`, Bloom `3.98`, `44.4%` FTP, `$11.97`)** | **VALID / Active** |
+| **`solow_v17_m20`** | Modelo de Crecimiento de Solow-Swan | **606** | **19** | **M20 Platinum (`k=3`, `19.92/20`, `MPRI 99.65`, Bloom `3.96`, `52.6%` FTP, `$8.27`)** | **VALID / Active** |
+| **`estadistica_3_pre_cl_k3`** | Estadística III: Pre-CL (Inferencia y Asintótica) | **558** | **18** | **M20 Platinum (`k=3`, `19.92/20`, `MPRI 99.65`, Bloom `3.97`, `38.9%` FTP, `$6.67`)** | **VALID / Active** |
 
-- **Benchmark Highlights (`docs/future_milestones/FUTURE_MILESTONES.md`)**:
-  - **Quality Peak (`mateco_4_optimizacion_v20_k_3`)**: **19.92 / 20.0 QM/OSCQR (`PLATINUM MASTERY`)**, **MPRI 99.65 / 100**, `risk_score = 0.05`, average Bloom level **3.931 (`Tier ÉLITE`)** across 963 items.
-  - **Throughput & First-Time Pass Record (`solow_m20_v13` / `v12` with M19 6 FTP Levers)**: Stage 3 First-Time Pass elevated from `0–9.5%` to **`30.0–38.5%`**, generating **621 higher-order items in `12.85 min` (`1.24 s/question`, `5.46x` parallel speedup)** using **`8.61M` gross tokens (`USD 8.13`, `-48.1%` token reduction)**.
+- **Benchmark Highlights (`k=3` Stable Standard vs. `k=4` Experimental Frontier):**
+  - **`k=3` Production Stability (`mateco_4_optimizacion_k3_v2_m20`, `solow_v17_m20`, `solow_v15_m20`, `estadistica_3_pre_cl_k3`)**: Consistently achieves **19.92–20.00 / 20.0 QM/OSCQR**, **MPRI 99.65–100.0 / 100**, **Bloom 3.96–3.98 (`68.8%–70.8%` Analyze+Evaluate)**, and **38.9%–52.6% Stage 3 First-Time Pass (FTP)** at **$6.67–$11.97 USD** (`$0.37–$0.46/competency`, `6.28M–10.99M` gross tokens, only `+$1.10` over `k=2` on Solow).
+  - **`k=4` Experimental Instability (`mateco_4_optimizacion_k4_v2` / `k4_m20`)**: Scaling past 12 templates/shard to 16 templates in a single monolithic file triggers a non-linear attention/compile cliff: FTP collapses from `44.4%` to **`18.8%`**, full-file rewrites jump `5.7x` (`3.2%` $\to$ `18.4%`), cost jumps to **`$17.23`** (`$14.54` normalized to 27 comps, `16.52M` gross tokens), and `Analyze+Evaluate` drops `-6.0 pp` (`70.8%` $\to$ `64.8%`, QM `19.60`, MPRI `98.12`). **`k=3` remains the certified production ceiling** until `k=4` sub-shard splitting and parity auto-healing land in M19.
 
 ---
 
@@ -361,7 +360,7 @@ Full forensic logs and commit hashes are documented in [`docs/future_milestones/
 | **M15 (F1 + DRT)** | **Formal Multi-Agent Governance FSM & Hypothesis DRT** | 2D `decidirEstrategiaEdicion` in `c2c_hook_guard.py` (blocks global rewrites on $<6$ errors), 40-turn/5M-token hard cap, Hypothesis DRT property suite |
 | **M16 (F1)** | **Shift-Left Mathematical Certification & 4 Orthogonal Archetypes** | `Stage Contract v4.0`, 4 mandatory archetypes (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`), explicit `assumptions`, `[DIAG-MAGIC-MULT]` |
 | **M17** | **Curricular DAG, Epistemic Closure & Bicameral Arbitration ($\alpha_{\text{Kernel}}=0$)** | Acyclic connected DAG & epistemic monotonicity ($K_t \subseteq K_{t+1}$), $\alpha_{\text{Kernel}}=0$ judge dominance, `[TPL-EPISTEMIC-CLOSURE]` hard gate on `open_symbolic` (`0/497` false positives) |
-| **M20 (Core + 20-B Iron Mode)** | **6 Higher-Order Bloom Modalities, `TPL-D3`, `0 MC7` in Skill & Iron Mode** | `open_symbolic`, `proof_dag`, `adversarial_break`, `unstructured_model`, `invariant_canvas`, `concept_matching`; `[M20-MC7-CAP]`, `[M20-ACTIVE-QUOTA]` ($\ge 80\%$); `IronExamSession.tsx` + `MetacognitiveModal.tsx`; `k=2` stable production standard |
+| **M20 (Core + 20-B Iron Mode)** | **6 Higher-Order Bloom Modalities, `TPL-D3`, `0 MC7` in Skill & Iron Mode** | `open_symbolic`, `proof_dag`, `adversarial_break`, `unstructured_model`, `invariant_canvas`, `concept_matching`; `[M20-MC7-CAP]`, `[M20-ACTIVE-QUOTA]` ($\ge 80\%$); `IronExamSession.tsx` + `MetacognitiveModal.tsx`; **`k=3` stable production standard** |
 
 ---
 
@@ -371,7 +370,7 @@ Current engineering priorities tracked in [`docs/future_milestones/FUTURE_MILEST
 
 | Priority | Milestone | Target Objective & Current Status | Spec Reference |
 | :---: | :--- | :--- | :--- |
-| 🧬 **P0** | **Milestone 19: Sustainable Scaling to $k=4$ (`1,284+` Items), *First-Pass* Architecture ($\ge 75\%$ FTP) & Google AI Pro Quota Protection** | **6 FTP Levers ✅ Implemented in code (2026-11-22)** (`c2c_ver`, Typed Contract Skeletons, Rejection Sampling, `[TPL-ORPHAN-VARS]`/`[PROSE-NORM]` auto-healing, `1:1`/`2:1` weighted sharding, `.rejudge_pending.json`), raising Stage 3 FTP to `30.0–38.5%`. Remaining: converge `Skill` FTP to $\ge 75\%$ and certify full $k=4$ run (`<= 11.55M` gross tokens, `< 10 min`). | [`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
+| 🧬 **P0** | **Milestone 19: Sustainable Scaling to $k=4$ (`1,284+` Items), *First-Pass* Architecture ($\ge 75\%$ FTP) & Google AI Pro Quota Protection** | **6 FTP Levers ✅ Implemented (`k=3` certified stable at `38.9–52.6%` FTP, `20.0/20`, `MPRI 100.0`, `$6.67–$11.97`).** Remaining for **$k=4$**: break the 16-template monolithic-file cliff (`18.8%` FTP, `18.4%` full rewrites, `$17.23`) via 2-part sub-shard splitting (`2×8` templates), auto-healing stem-parity rules, and capping `k=4` on heavy `Skill` shards (`<= 11.55M` gross tokens). | [`sintesis_plantillas_arquetipos.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/sintesis_plantillas_arquetipos.md) |
 | 📐 **P1** | **Milestone 16 (Phase 2): Automated Algebraic Deduction with `z3-solver` (Python)** | **Phase 1 ✅ active in shadow mode (`[Z3-RULE-WARNING]` in `shard_ast_transforms.py`, `150 ms` timeout, `0` false positives across `805` templates)**. Remaining (~1 d): Phase 2 bounded AST verification in `check_templates.py` for `TPL-D4`. | [`m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | 🏛️ **P1** | **Milestone 9 (Merged with M21): Native LLM Ordered `modules[]`, Contrasting Cases `ContentCore` & PPT Challenge** | Quick Wins + Phase A (`modulesPreserveOrder`) ✅ closed. Remaining (~0.5–1 d): Phase B native LLM emission of ordered `modules[]` + `ContentCore` (upgraded to `1–2` **Contrasting Cases** in Block 4), slide/note deduplication, Subtopic Quizzes (3–5 items), and PPT Challenge (8–12 items). | [`m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
 | 🔬 **P1/P2** | **Milestone 22 (Gated): `N=1` Falsifiable Telemetry, Cold Transfer Probe & Fluency $\to$ Adaptive Expertise Transition** | **Phase 0 (P1 Gate):** Preserve `archetype` in published JSONs, add minimal `N=1` local event log (H1–H4), and ship a **Cold Unlabeled Transfer Probe**. **Phase 1 (P2, evidence-gated):** Only build interventions proven by Phase 0 (4-strikes incorporation loop, `masteryTier` scaffolding fade-out, unlabeled cross-unit / qualitative-gate transfer). | [`05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/05_Auditoria_First_Principles_Adaptive_Expertise_y_Milestones.md) |
@@ -402,9 +401,9 @@ Tops_academy/
 │   ├── qa_reports/ & run_reports/           # Standardized QA and execution telemetry summaries
 │   └── unified_reports/                     # Consolidated pedagogical + telemetry audit reports
 ├── courses/                                 # Active published course banks (.json) & CTA analyses (.md)
-│   ├── estadistica_3_pre_pc2_m20.json       # 1,396 questions, 58 competencies (M20 Bloom Superior)
-│   ├── mateco_4_optimizacion_v20_k_3.json   # 963 questions, 27 competencies (19.92/20 Platinum)
-│   ├── solow_m20_v5.json .. v11.json        # Solow-Swan M19/M20 FTP experimental benchmark series
+│   ├── mateco_4_optimizacion_k3_v2_m20.json # 903 questions, 27 competencies (k=3, 20.0/20, MPRI 100)
+│   ├── solow_v17_m20.json                   # 606 questions, 19 competencies (k=3, 19.92/20, 52.6% FTP)
+│   ├── estadistica_3_pre_cl_k3.json         # 558 questions, 18 competencies (k=3, 19.92/20, $6.67)
 │   └── fixtures/                            # Canonical test course fixtures
 ├── content/                                 # Immutable academic source PDFs (gitignored zero-bloat)
 ├── platform/                                # Subsystem 3: React 18 + Vite + TypeScript + PWA Platform
